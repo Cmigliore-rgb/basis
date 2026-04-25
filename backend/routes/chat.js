@@ -1,0 +1,102 @@
+const express = require('express');
+const router = express.Router();
+const Groq = require('groq-sdk');
+
+const SYSTEM_PROMPT = `You are a personal financial advisor assistant built into Ledger, a personal finance dashboard.
+
+CRITICAL RULES:
+- You will be given the user's REAL financial data below. Use ONLY those exact numbers. Never invent, estimate, or use placeholder figures.
+- If the data section is empty or a field is missing, say "I don't see that data connected yet" — do NOT make up numbers.
+- Every dollar figure you state must come directly from the provided data.
+
+Be concise, specific, and actionable. Format dollar amounts with $ and commas. If you spot trends or anomalies, call them out.
+
+You can help with:
+- Spending analysis and patterns
+- Budget tracking and recommendations
+- Investment portfolio review
+- Savings rate and financial health
+- Specific transaction questions
+- General financial planning
+
+Keep responses conversational but data-driven. Use bullet points for lists.`;
+
+router.post('/', async (req, res) => {
+  const { message, history = [], context = {} } = req.body;
+
+  if (!message) {
+    return res.status(400).json({ error: 'message is required' });
+  }
+
+  const { accounts = [], transactions = [], holdings = [], budget = {} } = context;
+  const contextBlock = buildContextBlock(accounts, transactions, holdings, budget);
+
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT + '\n\n' + contextBlock },
+    ...history.map(msg => ({ role: msg.role === 'assistant' ? 'assistant' : 'user', content: msg.content })),
+    { role: 'user', content: message },
+  ];
+
+  console.log('Chat context — accounts:', accounts.length, '| txns:', transactions.length, '| holdings:', holdings.length);
+  console.log('Context block preview:\n', contextBlock.slice(0, 500));
+
+  try {
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages,
+      max_tokens: 1024,
+    });
+
+    const text = completion.choices[0]?.message?.content || '';
+    res.json({ reply: text });
+  } catch (err) {
+    console.error('Groq API error:', err.message);
+    res.status(500).json({ error: 'Failed to get response', details: err.message });
+  }
+});
+
+function buildContextBlock(accounts, transactions, holdings, budget) {
+  const lines = ['## My Financial Data\n'];
+
+  if (accounts.length) {
+    lines.push('### Accounts');
+    for (const a of accounts) {
+      const balance = a.balance ?? 'N/A';
+      lines.push(`- ${a.name} (${a.subtype || a.type || 'account'}): $${Number(balance).toLocaleString()}`);
+    }
+    lines.push('');
+  }
+
+  if (holdings.length) {
+    lines.push('### Investment Holdings');
+    for (const h of holdings) {
+      lines.push(`- ${h.ticker || h.name}: ${h.quantity} shares @ $${h.price ?? 'N/A'} = $${Number(h.value || 0).toLocaleString()}`);
+    }
+    lines.push('');
+  }
+
+  if (transactions.length) {
+    lines.push('### Recent Transactions (last 30 days)');
+    for (const t of transactions) {
+      const amt = t.amount != null ? `$${Math.abs(t.amount).toFixed(2)}` : '';
+      const direction = t.amount > 0 ? 'debit' : 'credit';
+      lines.push(`- [${t.date || ''}] ${t.name}: ${amt} (${direction})${t.category ? ` — ${t.category}` : ''}`);
+    }
+    lines.push('');
+  }
+
+  if (budget && Object.keys(budget).length) {
+    lines.push('### Budget Summary (this month)');
+    for (const [category, data] of Object.entries(budget)) {
+      if (typeof data === 'object' && data.spent != null) {
+        lines.push(`- ${category}: $${Number(data.spent).toLocaleString()} spent`);
+      }
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+module.exports = router;

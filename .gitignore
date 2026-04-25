@@ -1,0 +1,18 @@
+node_modules/
+.env
+backend/.env
+backend/data.json
+frontend/.env
+frontend/dist/
+dist/
+.DS_Store
+*.log
+
+# Zip archives / downloaded SDKs
+*.zip
+
+# Teller mTLS certificates — treat like passwords
+backend/certificate.pem
+backend/private_key.pem
+*.pem
+*.key

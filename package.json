@@ -1,0 +1,16 @@
+{
+  "name": "ledger",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently --names \"backend,frontend,ngrok\" --prefix-colors \"blue,green,yellow\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\" \"ngrok http --domain=appendix-irritant-headsman.ngrok-free.dev 3001\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
