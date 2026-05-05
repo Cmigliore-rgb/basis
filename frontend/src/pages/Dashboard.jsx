@@ -1,37 +1,55 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import PlaidLink from '../features/plaid/PlaidLink';
-import TellerConnect from '../features/teller/TellerConnect';
 
-const BG       = '#0f0f0f';
-const SIDE_BG  = '#141414';
-const CARD_BG  = '#1c1c1e';
-const BORDER_C = '#2a2a2a';
+const BG       = 'var(--bg,       #0f0f0f)';
+const SIDE_BG  = 'var(--side-bg,  #141414)';
+const CARD_BG  = 'var(--card-bg,  #1c1c1e)';
+const BORDER_C = 'var(--border-c, #2a2a2a)';
 const BORDER   = `1px solid ${BORDER_C}`;
-const TEXT     = '#f0f0f0';
-const TEXT2    = '#8e8e93';
-const TEXT3    = '#555';
-const MUTED    = '#2a2a2a';
-const BLUE     = '#4da3ff';
-const BLUE_BTN = '#0066f5';
-const RED      = '#f87171';
-const GREEN    = '#4ade80';
+const TEXT     = 'var(--text,     #f0f0f0)';
+const TEXT2    = 'var(--text2,    #8e8e93)';
+const TEXT3    = 'var(--text3,    #555555)';
+const MUTED    = 'var(--muted,    #2a2a2a)';
+const DARK     = 'var(--inner-dark, #111111)';
+const EXAMPLE_BG = 'var(--example-bg, #0a1628)';
+const OVERLAY  = 'var(--overlay,  rgba(0,0,0,0.6))';
+const BLUE     = 'var(--accent,     #4da3ff)';
+const BLUE_BTN = 'var(--accent-btn, #0066f5)';
+const RED      = 'var(--red,   #f87171)';
+const GREEN    = 'var(--green, #4ade80)';
 const YELLOW   = '#fbbf24';
 
 const CARD = { background: CARD_BG, border: BORDER, borderRadius: 10, padding: 24 };
 
 const NAV = [
-  { key: 'overview',    label: 'Overview',    icon: '⊞' },
-  { key: 'banking',     label: 'Banking',     icon: '⬡' },
-  { key: 'investments', label: 'Investments', icon: '◈' },
-  { key: 'budgeting',   label: 'Budgeting',   icon: '◎' },
-  { key: 'trends',      label: 'Trends',         icon: '◬' },
-  { key: 'subscriptions', label: 'Subscriptions', icon: '↻' },
-  { key: 'goals',         label: 'Goals',          icon: '◎' },
-  { key: 'news',        label: 'News Feed',      icon: '◉' },
-  { key: 'learn',       label: 'Learn',          icon: '◈' },
-  { key: 'assistant',   label: 'AI Assistant',icon: '✦' },
+  { key: 'overview',       label: 'Overview',     icon: '⊞', premium: false, section: 'finance'   },
+  { key: 'cashflow',       label: 'Cash Flow',    icon: '⬡', premium: false, section: 'finance'   },
+  { key: 'investments',    label: 'Investments',  icon: '◈', premium: false, section: 'finance'   },
+  { key: 'insights',       label: 'Market Insights', icon: '◬', premium: true,  section: 'finance'   },
+  { key: 'learn',          label: 'Learn',        icon: '✦', premium: false, section: 'finance'   },
+  { key: 'edu-courses',    label: 'My Courses',   icon: '◫', premium: false, section: 'education' },
 ];
+
+const PANEL_SUBTABS = {
+  cashflow: [
+    { key: 'banking',      label: 'Banking' },
+    { key: 'budgeting',    label: 'Budgeting' },
+    { key: 'taxes',        label: 'Taxes' },
+    { key: 'scholarship',  label: 'Scholarship' },
+  ],
+  insights: [
+    { key: 'markets', label: 'Markets' },
+    { key: 'news',    label: 'News' },
+    { key: 'signals', label: 'Signal Engine' },
+    { key: 'options', label: 'Options' },
+  ],
+  learn: [
+    { key: 'essentials', label: 'The Essentials' },
+    { key: 'analyst',    label: 'The Analyst' },
+  ],
+};
 
 const fmt = (n) =>
   typeof n === 'number'
@@ -41,19 +59,105 @@ const fmt = (n) =>
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
 
+function Frac({ n, d, sz = 13 }) {
+  return (
+    <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', verticalAlign: 'middle', lineHeight: 1, margin: '0 2px' }}>
+      <span style={{ fontSize: sz, borderBottom: '1px solid currentColor', paddingBottom: 2, lineHeight: 1.4, whiteSpace: 'nowrap' }}>{n}</span>
+      <span style={{ fontSize: sz, paddingTop: 2, lineHeight: 1.4, whiteSpace: 'nowrap' }}>{d}</span>
+    </span>
+  );
+}
+
+function EduEnrollCard({ user, onEnrolled }) {
+  const [code, setCode] = useState('');
+  const [status, setStatus] = useState(null); // null | {validating} | {course} | {error} | {enrolled}
+  const timer = useRef(null);
+  const { login } = useAuth();
+
+  useEffect(() => {
+    const raw = code.trim().toUpperCase();
+    if (!raw) { setStatus(null); return; }
+    setStatus({ validating: true });
+    clearTimeout(timer.current);
+    timer.current = setTimeout(async () => {
+      try {
+        const { data } = await api.post('/auth/validate-code', { code: raw });
+        setStatus({ course: data.course });
+      } catch {
+        setStatus({ error: 'Code not found' });
+      }
+    }, 500);
+    return () => clearTimeout(timer.current);
+  }, [code]);
+
+  const enroll = async () => {
+    try {
+      const { data } = await api.post('/auth/enroll', { code: code.trim().toUpperCase() });
+      if (data.token && data.user) login(data.token, data.user);
+      setStatus({ enrolled: true });
+      setCode('');
+      if (onEnrolled) onEnrolled();
+    } catch (err) {
+      setStatus({ error: err.response?.data?.error || 'Enrollment failed' });
+    }
+  };
+
+  const enrollments = user?.enrollments || [];
+
+  return (
+    <div style={{ ...CARD, marginBottom: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Courses</div>
+      <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Your enrolled courses and Education Mode access.</div>
+
+      {enrollments.length > 0 ? (
+        <div style={{ marginBottom: 16 }}>
+          {enrollments.map(e => (
+            <div key={e.code} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{e.course_name}</div>
+                <div style={{ fontSize: 11, color: TEXT2 }}>{e.instructor_name} · {e.semester}</div>
+              </div>
+              <span style={{ fontSize: 10, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.1)', padding: '2px 8px', borderRadius: 4, letterSpacing: '0.5px', textTransform: 'uppercase' }}>{e.code}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ fontSize: 13, color: TEXT3, marginBottom: 16 }}>No courses enrolled yet.</div>
+      )}
+
+      <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Add a Course</div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          type="text" placeholder="Enter course code" value={code}
+          onChange={e => setCode(e.target.value)}
+          style={{ flex: 1, padding: '9px 12px', background: BG, border: status?.course ? '1px solid rgba(74,222,128,0.4)' : status?.error ? '1px solid rgba(248,113,113,0.35)' : BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', textTransform: 'uppercase', letterSpacing: '1px' }}
+        />
+        <button onClick={enroll} disabled={!status?.course}
+          style={{ padding: '9px 16px', background: status?.course ? 'rgba(74,222,128,0.1)' : MUTED, border: status?.course ? '1px solid rgba(74,222,128,0.3)' : BORDER, borderRadius: 8, color: status?.course ? GREEN : TEXT3, fontSize: 12, fontWeight: 700, cursor: status?.course ? 'pointer' : 'default', whiteSpace: 'nowrap' }}>
+          Enroll
+        </button>
+      </div>
+      {status?.validating && <div style={{ marginTop: 6, fontSize: 12, color: TEXT3 }}>Checking…</div>}
+      {status?.course && <div style={{ marginTop: 6, fontSize: 12, color: GREEN }}>✓ {status.course.course_name} · {status.course.instructor_name}</div>}
+      {status?.error && <div style={{ marginTop: 6, fontSize: 12, color: RED }}>{status.error}</div>}
+      {status?.enrolled && <div style={{ marginTop: 6, fontSize: 12, color: GREEN }}>✓ Enrolled! Switching to Education Mode…</div>}
+    </div>
+  );
+}
+
 // Simple SVG line chart
 function NetWorthChart({ snapshots }) {
   if (!snapshots || snapshots.length === 0) {
     return (
       <div style={{ height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT2, fontSize: 13 }}>
-        No data yet — will populate on first load
+        No data yet. Loads on first use.
       </div>
     );
   }
   if (snapshots.length === 1) {
     return (
       <div style={{ padding: '16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ color: TEXT2, fontSize: 13 }}>Started tracking today — chart fills in over time</span>
+        <span style={{ color: TEXT2, fontSize: 13 }}>Started today. Chart builds up over time.</span>
         <span style={{ fontWeight: 700, fontSize: 18, fontFamily: 'monospace' }}>{fmt(snapshots[0].value)}</span>
       </div>
     );
@@ -156,7 +260,7 @@ function TickerBar({ indices, active }) {
   );
 }
 
-function SP500Chart({ candles, period, onPeriodChange }) {
+function SP500Chart({ candles, period, onPeriodChange, hidePeriods }) {
   if (!candles || candles.length < 2) {
     return (
       <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT2, fontSize: 13 }}>
@@ -208,16 +312,18 @@ function SP500Chart({ candles, period, onPeriodChange }) {
             {' '}({changePct >= 0 ? '+' : ''}{changePct.toFixed(2)}%)
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          {PERIODS.map(({ key, label }) => (
-            <button key={key} onClick={() => onPeriodChange(key)} style={{
-              padding: '4px 12px', borderRadius: 6, border: 'none', fontSize: 12,
-              cursor: 'pointer', fontWeight: 600, transition: 'background 0.15s',
-              background: period === key ? BLUE_BTN : MUTED,
-              color: period === key ? '#fff' : TEXT2,
-            }}>{label}</button>
-          ))}
-        </div>
+        {!hidePeriods && (
+          <div style={{ display: 'flex', gap: 4 }}>
+            {PERIODS.map(({ key, label }) => (
+              <button key={key} onClick={() => onPeriodChange(key)} style={{
+                padding: '4px 12px', borderRadius: 6, border: 'none', fontSize: 12,
+                cursor: 'pointer', fontWeight: 600, transition: 'background 0.15s',
+                background: period === key ? BLUE_BTN : MUTED,
+                color: period === key ? '#fff' : TEXT2,
+              }}>{label}</button>
+            ))}
+          </div>
+        )}
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
@@ -254,39 +360,56 @@ function SP500Chart({ candles, period, onPeriodChange }) {
 
 function FearGreedGauge({ score, rating }) {
   if (score == null) return null;
-  const W = 200, H = 122, CX = 100, CY = 108, R = 80;
-
-  const scoreToAngle = s => Math.PI - (s / 100) * Math.PI;
-  const arcPoint = (s, r = R) => {
-    const a = scoreToAngle(s);
-    return { x: CX + r * Math.cos(a), y: CY - r * Math.sin(a) };
-  };
-  const arcPath = (from, to) => {
-    const p1 = arcPoint(from), p2 = arcPoint(to);
-    return `M ${p1.x.toFixed(1)} ${p1.y.toFixed(1)} A ${R} ${R} 0 0 1 ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
-  };
 
   const ZONES = [
-    { from: 0,  to: 25,  color: '#ef4444' },
-    { from: 25, to: 45,  color: '#f97316' },
-    { from: 45, to: 55,  color: '#eab308' },
-    { from: 55, to: 75,  color: '#22c55e' },
-    { from: 75, to: 100, color: '#16a34a' },
+    { label: 'Extreme Fear',  max: 25,  color: '#ef4444' },
+    { label: 'Fear',          max: 45,  color: '#f97316' },
+    { label: 'Neutral',       max: 55,  color: '#eab308' },
+    { label: 'Greed',         max: 75,  color: '#22c55e' },
+    { label: 'Extreme Greed', max: 100, color: '#16a34a' },
   ];
-  const zoneColor = ZONES.find(z => score <= z.to)?.color || '#16a34a';
-  const needle = arcPoint(score, R * 0.82);
+  const zone = ZONES.find(z => score <= z.max) || ZONES[ZONES.length - 1];
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-      <path d={`M ${CX - R} ${CY} A ${R} ${R} 0 0 1 ${CX + R} ${CY}`} fill="none" stroke={MUTED} strokeWidth={14} strokeLinecap="round" />
-      {ZONES.map(z => <path key={z.from} d={arcPath(z.from, z.to)} fill="none" stroke={z.color} strokeWidth={14} strokeLinecap="butt" />)}
-      <line x1={CX} y1={CY} x2={needle.x.toFixed(1)} y2={needle.y.toFixed(1)} stroke="#fff" strokeWidth={2.5} strokeLinecap="round" />
-      <circle cx={CX} cy={CY} r={5} fill="#fff" />
-      <text x={CX} y={CY - 26} textAnchor="middle" fontSize={26} fontWeight="700" fill={zoneColor}>{score}</text>
-      <text x={CX} y={CY - 10} textAnchor="middle" fontSize={10} fill={TEXT2}>{rating}</text>
-      <text x={CX - R + 2} y={H - 1} textAnchor="start" fontSize={7.5} fill={TEXT3}>Extreme Fear</text>
-      <text x={CX + R - 2} y={H - 1} textAnchor="end" fontSize={7.5} fill={TEXT3}>Extreme Greed</text>
-    </svg>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, marginBottom: 18 }}>
+        <span style={{ fontSize: 56, fontWeight: 800, fontFamily: 'monospace', color: zone.color, lineHeight: 1 }}>{score}</span>
+        <div style={{ paddingBottom: 4 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: zone.color }}>{zone.label}</div>
+          <div style={{ fontSize: 11, color: TEXT3 }}>out of 100</div>
+        </div>
+      </div>
+
+      <div style={{ position: 'relative', marginBottom: 8 }}>
+        <div style={{ height: 10, borderRadius: 5, background: 'linear-gradient(to right, #ef4444 0%, #f97316 25%, #eab308 45%, #22c55e 70%, #16a34a 100%)' }}>
+          <div style={{
+            position: 'absolute', top: '50%', left: `${score}%`,
+            transform: 'translate(-50%, -50%)',
+            width: 18, height: 18, borderRadius: '50%',
+            background: '#fff', border: `3px solid ${zone.color}`,
+            boxShadow: `0 0 0 3px ${zone.color}33, 0 2px 6px rgba(0,0,0,0.5)`,
+            transition: 'left 0.4s ease',
+          }} />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: TEXT3, marginTop: 6 }}>
+        <span>Extreme Fear</span>
+        <span style={{ transform: 'translateX(50%)' }}>Neutral</span>
+        <span>Extreme Greed</span>
+      </div>
+
+      <div style={{ display: 'flex', gap: 4, marginTop: 14, flexWrap: 'wrap' }}>
+        {ZONES.map(z => {
+          const active = z.label === zone.label;
+          return (
+            <div key={z.label} style={{ flex: 1, minWidth: 60, padding: '5px 8px', borderRadius: 6, textAlign: 'center', background: active ? `${z.color}22` : DARK, border: `1px solid ${active ? z.color : BORDER_C}` }}>
+              <div style={{ fontSize: 8, fontWeight: 700, whiteSpace: 'nowrap', color: active ? z.color : TEXT3 }}>{z.label}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -297,7 +420,7 @@ function AdviceBox({ onGetAdvice, loading, text }) {
         onClick={onGetAdvice}
         disabled={loading}
         style={{
-          padding: '8px 18px', background: '#0d1f3c', color: BLUE,
+          padding: '8px 18px', background: EXAMPLE_BG, color: BLUE,
           border: `1px solid ${BLUE}`, borderRadius: 8,
           cursor: loading ? 'default' : 'pointer', fontSize: 13, fontWeight: 600,
           display: 'inline-flex', alignItems: 'center', gap: 6, opacity: loading ? 0.75 : 1,
@@ -307,10 +430,10 @@ function AdviceBox({ onGetAdvice, loading, text }) {
         {loading ? 'Analyzing…' : 'Get Recommendation'}
       </button>
       <div style={{ marginTop: 6, fontSize: 11, color: TEXT3, maxWidth: 560 }}>
-        AI-generated recommendations are for informational purposes only and do not constitute financial, investment, tax, or legal advice. Ledger and its developers are not liable for any decisions made based on these suggestions. Always consult a qualified professional before acting on financial information.
+        AI-generated recommendations are for informational purposes only and do not constitute financial, investment, tax, or legal advice. Basis and its developers are not liable for any decisions made based on these suggestions. Always consult a qualified professional before acting on financial information.
       </div>
       {text && (
-        <div style={{ marginTop: 12, padding: '14px 18px', background: '#0a1628', border: `1px solid #1a3a6b`, borderRadius: 8, fontSize: 13, lineHeight: 1.65, color: TEXT, whiteSpace: 'pre-wrap' }}>
+        <div style={{ marginTop: 12, padding: '14px 18px', background: EXAMPLE_BG, border: `1px solid var(--example-border, #1a3a6b)`, borderRadius: 8, fontSize: 13, lineHeight: 1.65, color: TEXT, whiteSpace: 'pre-wrap' }}>
           {text}
         </div>
       )}
@@ -351,7 +474,7 @@ function OptionsChain() {
   });
 
   return (
-    <div className="lc" style={{ ...CARD, marginTop: 24 }}>
+    <div data-tour="options-chain" className="lc" style={{ ...CARD, marginTop: 24 }}>
       <div style={{ fontWeight: 600, marginBottom: 16, fontSize: 15 }}>Options Chain
         <span style={{ fontSize: 11, color: TEXT2, fontWeight: 400, marginLeft: 8 }}>Black-Scholes Greeks · live data</span>
       </div>
@@ -432,86 +555,237 @@ function OptionsChain() {
   );
 }
 
+function StraddleBuilder() {
+  const [ticker, setTicker] = useState('');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [strikeIdx, setStrikeIdx] = useState(null);
+
+  const load = async (sym, exp) => {
+    setLoading(true); setError('');
+    try {
+      const r = await api.get(`/options/${encodeURIComponent(sym)}`, { params: exp ? { expiration: exp } : {} });
+      setData(r.data);
+      if (!exp && r.data.expiration) setExpiry(r.data.expiration);
+      if (r.data.calls?.length) {
+        const atm = r.data.calls.reduce((b, c) => Math.abs(c.strike - r.data.price) < Math.abs(b.strike - r.data.price) ? c : b);
+        setStrikeIdx(r.data.calls.findIndex(c => c.strike === atm.strike));
+      }
+    } catch (e) { setError(e.response?.data?.error || 'Could not load options data'); }
+    finally { setLoading(false); }
+  };
+
+  const BTN = (active) => ({ padding: '5px 14px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: active ? BLUE_BTN : MUTED, color: active ? '#fff' : TEXT2 });
+
+  const strikes = data ? [...new Set([...(data.calls || []).map(c => c.strike), ...(data.puts || []).map(p => p.strike)])].sort((a, b) => a - b) : [];
+  const selectedStrike = (strikeIdx != null && strikes[strikeIdx] != null) ? strikes[strikeIdx] : null;
+  const callC = selectedStrike && data ? (data.calls || []).find(c => c.strike === selectedStrike) : null;
+  const putC  = selectedStrike && data ? (data.puts  || []).find(p => p.strike === selectedStrike) : null;
+
+  const mid = (c) => c ? ((c.bid || 0) + (c.ask || c.lastPrice || 0)) / 2 : null;
+  const callPrem = mid(callC);
+  const putPrem  = mid(putC);
+  const totalDebit = (callPrem != null && putPrem != null) ? callPrem + putPrem : null;
+  const upperBE = (selectedStrike != null && totalDebit != null) ? selectedStrike + totalDebit : null;
+  const lowerBE = (selectedStrike != null && totalDebit != null) ? selectedStrike - totalDebit : null;
+
+  const pnlRows = (() => {
+    if (!selectedStrike || totalDebit == null) return [];
+    const range = Math.max(totalDebit * 4, data.price * 0.12);
+    const rows = [];
+    for (let i = 0; i <= 10; i++) {
+      const price = selectedStrike - range + (range * 2 / 10) * i;
+      const pnl = Math.max(price - selectedStrike, 0) + Math.max(selectedStrike - price, 0) - totalDebit;
+      rows.push({ price: +price.toFixed(2), pnl: +pnl.toFixed(2) });
+    }
+    return rows;
+  })();
+
+  return (
+    <div style={{ ...CARD, marginTop: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
+        <div style={{ fontWeight: 600, fontSize: 15 }}>Straddle Builder</div>
+        <span style={{ fontSize: 11, color: TEXT2 }}>Long call + long put at the same strike</span>
+      </div>
+      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>
+        Profits when the underlying moves significantly in either direction. Max loss is the total premium paid (at expiry, at strike).
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', background: MUTED, border: BORDER, borderRadius: 7, padding: '6px 10px', gap: 4 }}>
+          <input value={ticker} onChange={e => setTicker(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && ticker.trim() && load(ticker.trim(), '')}
+            placeholder="AAPL, SPY…" style={{ background: 'none', border: 'none', outline: 'none', color: TEXT, fontSize: 13, fontFamily: 'monospace', width: 110 }} />
+        </div>
+        <button onClick={() => ticker.trim() && load(ticker.trim(), '')} disabled={loading || !ticker.trim()} style={{ ...BTN(true), opacity: loading || !ticker.trim() ? 0.6 : 1 }}>
+          {loading ? 'Loading…' : 'Load'}
+        </button>
+        {data && (
+          <>
+            <select value={expiry} onChange={e => { setExpiry(e.target.value); load(data.ticker, e.target.value); }}
+              style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, padding: '5px 10px', cursor: 'pointer' }}>
+              {data.expirations.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <select value={strikeIdx ?? ''} onChange={e => setStrikeIdx(Number(e.target.value))}
+              style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, padding: '5px 10px', cursor: 'pointer' }}>
+              {strikes.map((s, i) => <option key={s} value={i}>{fmt(s)}{Math.abs(s - data.price) < data.price * 0.006 ? ' ★ ATM' : ''}</option>)}
+            </select>
+            <span style={{ fontSize: 13, color: TEXT2 }}>{data.ticker} @ <span style={{ fontWeight: 700, fontFamily: 'monospace', color: TEXT }}>{fmt(data.price)}</span></span>
+          </>
+        )}
+      </div>
+
+      {error && <div style={{ color: RED, fontSize: 13, marginBottom: 12 }}>{error}</div>}
+
+      {data && selectedStrike && (
+        <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+          {/* Metrics + Greeks */}
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 14 }}>
+              {[
+                { label: 'Call Premium', value: callPrem != null ? `$${callPrem.toFixed(2)}` : '—', color: GREEN },
+                { label: 'Put Premium',  value: putPrem  != null ? `$${putPrem.toFixed(2)}`  : '—', color: RED },
+                { label: 'Total Debit',  value: totalDebit != null ? `$${(totalDebit * 100).toFixed(2)}` : '—', color: TEXT, sub: 'per contract' },
+                { label: 'Upper B/E',    value: upperBE != null ? fmt(upperBE) : '—', color: GREEN, sub: 'call profits above' },
+                { label: 'Lower B/E',    value: lowerBE != null ? fmt(lowerBE) : '—', color: RED,   sub: 'put profits below' },
+                { label: 'Max Loss',     value: totalDebit != null ? `$${(totalDebit * 100).toFixed(2)}` : '—', color: RED, sub: 'stock stays at strike' },
+              ].map(({ label, value, color, sub }) => (
+                <div key={label} style={{ background: DARK, borderRadius: 8, padding: '11px 13px' }}>
+                  <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 3 }}>{label}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color }}>{value}</div>
+                  {sub && <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>{sub}</div>}
+                </div>
+              ))}
+            </div>
+            <div style={{ background: DARK, borderRadius: 8, padding: '12px 14px' }}>
+              <div style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Combined Greeks</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                {[
+                  { g: 'Delta', v: callC?.delta != null && putC?.delta != null ? (callC.delta + putC.delta).toFixed(3) : '~0', color: BLUE, note: 'near neutral' },
+                  { g: 'Gamma', v: callC?.gamma != null && putC?.gamma != null ? (callC.gamma + putC.gamma).toFixed(4) : '—', color: GREEN, note: 'long γ' },
+                  { g: 'Theta', v: callC?.theta != null && putC?.theta != null ? (callC.theta + putC.theta).toFixed(4) : '—', color: RED,   note: 'time decay' },
+                  { g: 'Vega',  v: callC?.vega  != null && putC?.vega  != null ? (callC.vega  + putC.vega ).toFixed(4) : '—', color: GREEN, note: 'long vol' },
+                ].map(({ g, v, color, note }) => (
+                  <div key={g} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 10, color: TEXT3, marginBottom: 3 }}>{g}</div>
+                    <div style={{ fontSize: 13, fontFamily: 'monospace', fontWeight: 700, color }}>{v}</div>
+                    <div style={{ fontSize: 9, color: TEXT3 }}>{note}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* P&L table */}
+          <div>
+            <div style={{ fontSize: 12, color: TEXT2, fontWeight: 600, marginBottom: 10 }}>
+              P&L at Expiry <span style={{ fontWeight: 400, color: TEXT3 }}>(per share · ×100 per contract)</span>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr style={{ borderBottom: BORDER }}>
+                  {['Price', 'P&L / share', 'P&L / contract'].map(h => (
+                    <th key={h} style={{ padding: '5px 10px', textAlign: h === 'Price' ? 'left' : 'right', fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pnlRows.map(({ price, pnl }, i) => {
+                  const isStrike = Math.abs(price - selectedStrike) < selectedStrike * 0.003;
+                  return (
+                    <tr key={i} style={{ borderBottom: `1px solid ${BORDER_C}`, background: isStrike ? 'rgba(251,191,36,0.06)' : 'transparent' }}>
+                      <td style={{ padding: '6px 10px', fontFamily: 'monospace', color: isStrike ? YELLOW : TEXT, fontWeight: isStrike ? 700 : 400 }}>
+                        {fmt(price)}{isStrike ? ' ← strike' : ''}
+                      </td>
+                      <td style={{ padding: '6px 10px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600, color: pnl >= 0 ? GREEN : RED }}>
+                        {pnl >= 0 ? '+' : ''}{pnl.toFixed(2)}
+                      </td>
+                      <td style={{ padding: '6px 10px', textAlign: 'right', fontFamily: 'monospace', color: pnl >= 0 ? GREEN : RED }}>
+                        {pnl >= 0 ? '+' : ''}{(pnl * 100).toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {!data && !loading && !error && (
+        <div style={{ color: TEXT3, fontSize: 13 }}>Enter a ticker to build a straddle. Works best on high-IV names before earnings or major events.</div>
+      )}
+    </div>
+  );
+}
+
 const LEARN_CONTENT = [
   {
-    category: 'markets',
-    label: 'Markets & Economy',
-    color: '#4da3ff',
-    items: [
-      { id: 'indices', title: 'Market Indices', icon: '📈',
-        summary: 'Benchmarks that track a basket of stocks to measure overall market performance.',
-        body: 'The S&P 500 tracks the 500 largest U.S. companies and is the most widely used measure of stock market health. The Dow Jones Industrial Average (DJIA) tracks just 30 large blue-chip companies. The Nasdaq Composite is tech-heavy and includes over 3,000 companies listed on the Nasdaq exchange.',
-        formula: null,
-        example: 'If the S&P 500 is up 1.2% today, the average large-cap U.S. stock gained roughly 1.2%.' },
-      { id: 'feargreed', title: 'Fear & Greed Index', icon: '🌡️',
-        summary: 'A CNN composite score (0–100) measuring whether investors are fearful or greedy.',
-        body: 'The index combines 7 indicators: stock price momentum, stock price strength, stock price breadth, put/call ratio, junk bond demand, market volatility (VIX), and safe-haven demand. Extreme Fear (0–25) often signals a buying opportunity; Extreme Greed (75–100) may signal overvaluation.',
-        formula: null,
-        example: 'A score of 18 means "Extreme Fear" — historically a period where patient investors buy at a discount.' },
-      { id: 'marketcap', title: 'Market Capitalization', icon: '🏢',
-        summary: 'The total market value of a company\'s outstanding shares.',
-        body: 'Market cap = Share Price × Shares Outstanding. Categories: Mega-cap (>$200B), Large-cap ($10B–$200B), Mid-cap ($2B–$10B), Small-cap ($300M–$2B), Micro-cap (<$300M). Large-caps are generally more stable; small-caps offer higher growth potential with more risk.',
-        formula: 'Market Cap = Price × Shares Outstanding',
-        example: 'Apple at $200/share × 15.3B shares = ~$3.06 trillion market cap.' },
-      { id: 'bull-bear', title: 'Bull vs. Bear Markets', icon: '🐂',
-        summary: 'A bull market rises 20%+ from a recent low; a bear market falls 20%+ from a recent high.',
-        body: 'Bull markets are periods of rising prices and investor optimism, typically driven by strong economic growth. Bear markets are prolonged downturns of 20% or more, often linked to recessions. The average bull market lasts ~5 years; the average bear market lasts ~9 months.',
-        formula: null,
-        example: 'The 2020 COVID crash was a bear market (−34% in 33 days), followed by one of history\'s fastest bull recoveries.' },
-    ],
-  },
-  {
-    category: 'options',
-    label: 'Options Trading',
-    color: '#fbbf24',
-    items: [
-      { id: 'calls-puts', title: 'Calls & Puts', icon: '⚖️',
-        summary: 'A call gives the right to buy; a put gives the right to sell.',
-        body: 'A call option gives you the right (but not obligation) to buy 100 shares of a stock at the strike price before expiration. You buy calls when you expect the stock to rise. A put option gives you the right to sell 100 shares at the strike price — you buy puts when you expect a decline or want downside protection.',
-        formula: null,
-        example: 'You buy an AAPL $200 call expiring in 30 days for $3.50 ($350 total). If AAPL hits $215, your call is worth ~$15 — a 4× gain.' },
-      { id: 'itm-otm', title: 'ITM / ATM / OTM', icon: '🎯',
-        summary: 'Describes whether the strike price is favorable relative to the current stock price.',
-        body: 'In The Money (ITM): for a call, the stock price is above the strike — the option has intrinsic value. At The Money (ATM): stock price equals the strike. Out of The Money (OTM): for a call, the stock is below the strike — the option has only time value. ITM options cost more but are less risky; OTM options are cheaper but expire worthless more often.',
-        formula: null,
-        example: 'Stock at $150. A $140 call is ITM (intrinsic value $10). A $150 call is ATM. A $160 call is OTM.' },
-      { id: 'iv', title: 'Implied Volatility', icon: '〰️',
-        summary: 'The market\'s forecast of how much a stock will move, expressed as an annual % standard deviation.',
-        body: 'IV is derived from the market price of an option using the Black-Scholes model — it\'s what\'s implied by what people are willing to pay. High IV means the market expects big moves; options are expensive. Low IV means calm expectations; options are cheap. IV spikes before earnings announcements and major events.',
-        formula: 'IV is extracted from option price by solving Black-Scholes for σ',
-        example: 'AAPL IV of 28% means the market expects AAPL to move ±28% over the next year, or roughly ±1.8% per week.' },
-      { id: 'delta', title: 'Delta (Δ)', icon: 'Δ',
-        summary: 'How much the option price moves per $1 move in the stock. Also approximates probability of expiring ITM.',
-        body: 'Delta ranges from 0 to 1 for calls (0 to −1 for puts). A delta of 0.50 means the option gains $0.50 for every $1 rise in the stock. Deep ITM options have delta near 1 (move dollar-for-dollar with stock). Deep OTM options have delta near 0. A 0.30 delta call has roughly 30% probability of expiring in the money.',
-        formula: 'Δ = ∂V/∂S = N(d₁) for calls, N(d₁)−1 for puts',
-        example: 'You hold 1 AAPL call with Δ=0.45. AAPL rises $5 → your option gains ~$2.25.' },
-      { id: 'gamma', title: 'Gamma (Γ)', icon: 'Γ',
-        summary: 'The rate of change of delta per $1 move in the stock. Highest near ATM and near expiration.',
-        body: 'Gamma measures how quickly your delta changes. High gamma means your position becomes more directional faster as the stock moves. Gamma is highest for ATM options close to expiration — small stock moves can cause large swings in option value. Long options have positive gamma; short options have negative gamma.',
-        formula: 'Γ = N\'(d₁) / (S · σ · √T)',
-        example: 'Delta is 0.50, Gamma is 0.05. If stock rises $1 → delta becomes 0.55. Another $1 → delta ~0.60.' },
-      { id: 'theta', title: 'Theta (Θ)', icon: 'Θ',
-        summary: 'Daily time decay — how much option value is lost per day, all else equal.',
-        body: 'Every day that passes, an option loses value simply due to the passage of time — this is time decay. Theta is negative for option buyers (you lose value each day) and positive for sellers. Theta accelerates as expiration approaches, especially in the final 30 days. This is why option sellers love time, and buyers prefer longer expirations.',
-        formula: 'Θ ≈ [−S·N\'(d₁)·σ / (2√T) − rKe^(−rT)·N(d₂)] / 365',
-        example: 'Your option has Θ = −0.05. Over a weekend (3 days), it loses ~$0.15 in value with no stock movement.' },
-      { id: 'vega', title: 'Vega (V)', icon: 'V',
-        summary: 'How much the option price changes per 1% change in implied volatility.',
-        body: 'Vega is positive for both calls and puts (higher IV → higher option price). Long options benefit from IV increases (vega is positive). Short options are hurt by IV increases. Vega is highest for ATM options and longer expirations. Traders who expect a volatility spike will buy options before earnings; those expecting a calm market sell options.',
-        formula: 'V = S · N\'(d₁) · √T / 100',
-        example: 'Your option has Vega = 0.12. IV jumps from 25% to 30% (+5%) → option gains ~$0.60, even with no stock movement.' },
-    ],
-  },
-  {
-    category: 'personal',
-    label: 'Personal Finance',
+    category: 'essentials',
+    label: 'The Essentials',
     color: '#4ade80',
     items: [
       { id: 'networth', title: 'Net Worth', icon: '💰',
         summary: 'The total value of what you own minus what you owe.',
-        body: 'Net worth is the single most important number in personal finance. Assets include cash, investments, real estate, and vehicles. Liabilities include mortgages, student loans, credit card debt, and car loans. Growing your net worth over time — by earning more, saving more, investing, and reducing debt — is the foundation of financial health.',
+        body: 'Net worth is the single most important number in personal finance. Assets include cash, investments, real estate, and vehicles. Liabilities include mortgages, student loans, credit card debt, and car loans. Growing your net worth over time, through earning more, saving more, investing, and reducing debt, is the foundation of financial health.',
         formula: 'Net Worth = Total Assets − Total Liabilities',
         example: 'You have $15,000 in savings, $30,000 in investments, and $8,000 in credit card debt → Net Worth = $37,000.' },
+      { id: '503020', title: '50/30/20 Rule', icon: '📊',
+        summary: 'A simple budgeting framework: 50% needs, 30% wants, 20% savings.',
+        body: 'Needs (50%): rent, utilities, groceries, minimum debt payments. Wants (30%): dining out, subscriptions, entertainment, travel. Savings/Debt (20%): emergency fund, retirement (401k/IRA), investments, extra debt payoff. The framework is a starting point. High cost-of-living cities may require 60%+ on needs.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Savings Rate = <Frac n="Income − Expenses" d="Income" /> × 100</span>,
+        example: 'Income: $5,000/month → $2,500 needs, $1,500 wants, $1,000 savings/investing.' },
+      { id: 'emergency', title: 'Emergency Fund', icon: '🛡️',
+        summary: '3–6 months of expenses in liquid savings as a financial safety net.',
+        body: 'An emergency fund prevents you from going into debt when unexpected expenses arise: job loss, medical bills, car repairs. Keep it in a high-yield savings account (HYSA) earning 4–5% APY, not invested in stocks. Once funded, don\'t touch it except for true emergencies. Salaried employees need 3 months; freelancers/variable income need 6+.',
+        formula: 'Target = Monthly Expenses × 3 to 6',
+        example: 'Monthly expenses of $3,500 → Emergency fund target: $10,500 to $21,000.' },
+      { id: 'compound', title: 'Compound Interest', icon: '🔁',
+        summary: 'Earning returns on your returns, the most powerful force in personal finance.',
+        body: 'Einstein allegedly called compound interest the "eighth wonder of the world." Starting early matters enormously: $10,000 invested at 25 grows to ~$217,000 by 65 at 8% annual return. The same $10,000 invested at 35 grows to only ~$100,000. Time in the market beats timing the market.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',gap:3}}>A = P(1 + <Frac n="r" d="n" />)<sup style={{fontSize:11}}>nt</sup></span>,
+        example: '$500/month from age 25 at 8% → $1.74M at 65. Starting at 35 → only $745K. The 10-year delay costs ~$1M.' },
+      { id: 'credit-score', title: 'Credit Score', icon: '🏅',
+        summary: 'A 300–850 score that determines your borrowing rate on everything from apartments to car loans.',
+        body: 'Your FICO score has five components: Payment History (35%), so never miss a payment; Amounts Owed (30%), so keep credit utilization below 30%; Length of Credit History (15%), where older accounts help; Credit Mix (10%), where having both revolving and installment credit helps; and New Credit (10%), where hard inquiries temporarily lower your score. A score above 740 unlocks the best rates; below 670 is subprime.',
+        formula: 'FICO = f(Payment History 35%, Utilization 30%, Length 15%, Mix 10%, New Credit 10%)',
+        example: 'Your card limit is $5,000 and your balance is $2,200 → utilization = 44%. Paying it to $1,500 drops utilization to 30% and can raise your score 20–40 points in one cycle.' },
+      { id: 'retirement-accounts', title: 'Roth IRA & 401(k)', icon: '🏦',
+        summary: 'Tax-advantaged accounts that are the single most powerful tools for building long-term wealth.',
+        body: '401(k): Pre-tax contributions reduce your taxable income today; you pay taxes on withdrawal in retirement. Always contribute at least enough to get the full employer match, since that\'s a 50–100% instant return. Roth IRA: Post-tax contributions; all growth is tax-free forever. 2025 limits: 401(k) = $23,500, IRA = $7,000. The optimal order: 401(k) to match → Roth IRA to max → 401(k) to max.',
+        formula: 'After-tax value: Traditional 401k = Balance × (1 − tax rate at withdrawal)  |  Roth IRA = Balance × 1',
+        example: '$6,000/yr in a Roth IRA at 22, growing at 8%, is worth $1.68M tax-free at 65. Same money in a taxable account at 22% cap gains tax → ~$1.31M.' },
+      { id: 'taxes-101', title: 'Taxes 101', icon: '🧾',
+        summary: 'How income taxes actually work: marginal vs. effective rate, deductions, and W-2 basics.',
+        body: 'The US uses a progressive tax system: you pay each bracket\'s rate only on the income within that bracket, not your entire income. The standard deduction ($14,600 single in 2024) reduces your taxable income before brackets apply. Effective rate = total tax ÷ gross income, always lower than your marginal (top) bracket. W-2 employees have taxes withheld automatically; freelancers pay quarterly estimated taxes.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Effective Rate = <Frac n="Total Tax Owed" d="Gross Income" /> × 100</span>,
+        example: 'Single filer, $65,000 income: subtract $14,600 standard deduction → $50,400 taxable. Tax = $1,160 (10% on first $11,600) + $4,266 (12% on next $35,550) + $739 (22% on last $3,250) = ~$6,165. Effective rate: 9.5%, not 22%.' },
+      { id: 'inflation', title: 'Inflation & Purchasing Power', icon: '📉',
+        summary: 'Inflation erodes the value of cash over time. Your real return is what\'s left after subtracting inflation.',
+        body: 'The Consumer Price Index (CPI) measures average price changes across a basket of goods. The Fed targets 2% annual inflation. At 3% inflation, $1,000 today buys what $744 buys in 10 years. This is why holding cash is a losing proposition long-term; it loses purchasing power each year. Real return = nominal return minus inflation. A savings account at 1% when inflation is 3% = −2% real return.',
+        formula: 'Real Return ≈ Nominal Return − Inflation Rate   |   Future Purchasing Power = PV ÷ (1 + i)ⁿ',
+        example: 'Your HYSA earns 5% APY and inflation is 3.1% → real return ≈ 1.9%. S&P 500 historical nominal return ≈ 10%/yr, real return ≈ 7%/yr after inflation.' },
+      { id: 'rent-vs-buy', title: 'Renting vs. Buying', icon: '🏠',
+        summary: 'Buying isn\'t always better. The 5-year rule and price-to-rent ratio tell you when it makes sense.',
+        body: 'Buying costs: down payment (3–20%), closing costs (2–5%), property taxes (~1%/yr), maintenance (~1%/yr), insurance. Renting costs: monthly rent + renters insurance (~$15/mo). The Price-to-Rent ratio = home price ÷ annual rent. Below 15: buying likely wins. 15–20: depends on your situation. Above 20: renting is usually cheaper. The 5-year rule: if you\'re not staying 5+ years, transaction costs likely outweigh equity gains.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Price-to-Rent = <Frac n="Home Price" d="Annual Rent" /> &nbsp;|&nbsp; Break-even ≈ 5 years</span>,
+        example: 'Home: $400,000. Comparable rent: $2,000/mo ($24,000/yr). P/R ratio = 16.7, which is borderline. If you\'re staying 7+ years in a low-inventory market, buying likely wins. If you\'ll move in 3 years, rent.' },
+      { id: 'debt-payoff', title: 'Debt Payoff: Avalanche vs. Snowball', icon: '❄️',
+        summary: 'Two proven strategies for eliminating debt: one saves more money, the other builds momentum.',
+        body: 'Avalanche method: pay minimums on all debts, put every extra dollar toward the highest-interest debt first. Mathematically optimal, it saves the most in interest. Snowball method: pay minimums on all debts, put every extra dollar toward the smallest balance first. Psychologically powerful, quick wins keep you motivated. Both beat paying randomly. Credit card debt (18–29% APR) is almost always the highest priority regardless of method.',
+        formula: 'Avalanche: sort by APR descending   |   Snowball: sort by balance ascending',
+        example: 'Debts: $500 credit card at 24%, $3,000 car loan at 6%, $8,000 student loan at 4.5%. Avalanche: attack the credit card first. Snowball: same answer here since the smallest balance is also the highest rate. Avalanche wins when the orders diverge.' },
+      { id: 'insurance', title: 'Insurance Basics', icon: '☂️',
+        summary: 'Insurance trades a small certain cost (premium) for protection against a large uncertain loss.',
+        body: 'Health insurance is critical: one ER visit without coverage can cost $10,000+. Understand your deductible (what you pay before insurance kicks in), copay, and out-of-pocket maximum. Renters insurance covers your belongings if your apartment is robbed or burns, costs about $15/mo, and covers $20,000+ in stuff. Auto insurance: liability is legally required in most states; comprehensive/collision protects your car. Life insurance is only needed if someone depends on your income. Term life (10–30yr fixed premium) is almost always better than whole life for young earners.',
+        formula: 'Expected Value of Insurance = (Probability of Loss × Loss Amount) − Premium',
+        example: '30% chance of a $5,000 claim. EV of the loss = $1,500. If the premium is $500/yr, insurance is a good deal. Insurers profit by pooling thousands of policies; you buy peace of mind and catastrophic coverage.' },
+      { id: 'dca', title: 'Dollar-Cost Averaging', icon: '📅',
+        summary: 'Invest a fixed amount on a regular schedule to remove emotion and timing risk from investing.',
+        body: 'Dollar-cost averaging (DCA) means investing the same dollar amount at regular intervals (weekly, monthly) regardless of market conditions. When prices are low, your fixed amount buys more shares. When prices are high, it buys fewer. Over time, your average cost per share is lower than if you had tried to time the market. The biggest benefit is behavioral: you can\'t panic-sell if you\'re on autopilot.',
+        formula: 'Avg Cost per Share = Total Amount Invested ÷ Total Shares Purchased',
+        example: 'Invest $500/mo in an S&P 500 index fund for 12 months. Month 3 crashes 15%, so you buy 15% more shares that month. Average purchase price ends up lower than the year\'s average price, even with the crash.' },
       { id: 'allocation', title: 'Asset Allocation', icon: '🥧',
         summary: 'How your money is split across different asset classes to balance risk and return.',
         body: 'The classic guideline: subtract your age from 110 to get your stock percentage (the rest in bonds). At 25: 85% stocks, 15% bonds. At 60: 50% stocks, 50% bonds. Stocks offer higher long-term returns but more volatility. Bonds are more stable but lower return. Cash provides safety but loses to inflation over time.',
@@ -519,31 +793,840 @@ const LEARN_CONTENT = [
         example: 'A 30-year-old might hold 80% stocks (S&P 500 index fund), 15% bonds, 5% cash.' },
       { id: 'diversification', title: 'Diversification', icon: '🎲',
         summary: 'Spreading investments across assets so one loss doesn\'t sink your portfolio.',
-        body: 'Diversification reduces unsystematic risk — the risk specific to one company or sector. A portfolio of 20–30 uncorrelated stocks eliminates most company-specific risk. Index funds provide instant diversification across hundreds or thousands of companies. Geographic diversification (international stocks) reduces country-specific risk.',
+        body: 'Diversification reduces unsystematic risk, the kind specific to one company or sector. A portfolio of 20–30 uncorrelated stocks eliminates most company-specific risk. Index funds provide instant diversification across hundreds or thousands of companies. Geographic diversification (international stocks) reduces country-specific risk.',
         formula: 'σ_portfolio < average(σ_individual) when correlations < 1',
         example: 'Holding only one tech stock is high risk. Holding an S&P 500 index fund means one company\'s bankruptcy barely moves your portfolio.' },
-      { id: '503020', title: '50/30/20 Rule', icon: '📊',
-        summary: 'A simple budgeting framework: 50% needs, 30% wants, 20% savings.',
-        body: 'Needs (50%): rent, utilities, groceries, minimum debt payments. Wants (30%): dining out, subscriptions, entertainment, travel. Savings/Debt (20%): emergency fund, retirement (401k/IRA), investments, extra debt payoff. The framework is a starting point — high cost-of-living cities may require 60%+ on needs.',
-        formula: 'Savings Rate = (Income − Expenses) / Income × 100',
-        example: 'Income: $5,000/month → $2,500 needs, $1,500 wants, $1,000 savings/investing.' },
-      { id: 'emergency', title: 'Emergency Fund', icon: '🛡️',
-        summary: '3–6 months of expenses in liquid savings as a financial safety net.',
-        body: 'An emergency fund prevents you from going into debt when unexpected expenses arise — job loss, medical bills, car repairs. Keep it in a high-yield savings account (HYSA) earning 4–5% APY, not invested in stocks. Once funded, don\'t touch it except for true emergencies. Salaried employees need 3 months; freelancers/variable income need 6+.',
-        formula: 'Target = Monthly Expenses × 3 to 6',
-        example: 'Monthly expenses of $3,500 → Emergency fund target: $10,500 to $21,000.' },
-      { id: 'compound', title: 'Compound Interest', icon: '🔁',
-        summary: 'Earning returns on your returns — the most powerful force in personal finance.',
-        body: 'Einstein allegedly called compound interest the "eighth wonder of the world." Starting early matters enormously: $10,000 invested at 25 grows to ~$217,000 by 65 at 8% annual return. The same $10,000 invested at 35 grows to only ~$100,000. Time in the market beats timing the market.',
-        formula: 'A = P(1 + r/n)^(nt)',
-        example: '$500/month from age 25 at 8% → $1.74M at 65. Starting at 35 → only $745K. The 10-year delay costs ~$1M.' },
+      { id: 'indices', title: 'Market Indices', icon: '📈',
+        summary: 'Benchmarks that track a basket of stocks to measure overall market performance.',
+        body: 'The S&P 500 tracks the 500 largest U.S. companies and is the most widely used measure of stock market health. The Dow Jones Industrial Average (DJIA) tracks just 30 large blue-chip companies. The Nasdaq Composite is tech-heavy and includes over 3,000 companies listed on the Nasdaq exchange.',
+        formula: 'Index Level = Σ(Price_i × Shares_i) / Divisor   (market-cap weighted)',
+        example: 'If the S&P 500 is up 1.2% today, the average large-cap U.S. stock gained roughly 1.2%.' },
+      { id: 'bull-bear', title: 'Bull vs. Bear Markets', icon: '🐂',
+        summary: 'A bull market rises 20%+ from a recent low; a bear market falls 20%+ from a recent high.',
+        body: 'Bull markets are periods of rising prices and investor optimism, typically driven by strong economic growth. Bear markets are prolonged downturns of 20% or more, often linked to recessions. The average bull market lasts ~5 years; the average bear market lasts ~9 months.',
+        formula: 'Bull: Price ≥ +20% from recent low   |   Bear: Price ≤ −20% from recent high',
+        example: 'The 2020 COVID crash was a bear market (−34% in 33 days), followed by one of history\'s fastest bull recoveries.' },
+      { id: 'feargreed', title: 'Fear & Greed Index', icon: '🌡️',
+        summary: 'A CNN composite score (0–100) measuring whether investors are fearful or greedy.',
+        body: 'The index combines 7 indicators: stock price momentum, stock price strength, stock price breadth, put/call ratio, junk bond demand, market volatility (VIX), and safe-haven demand. Extreme Fear (0–25) often signals a buying opportunity; Extreme Greed (75–100) may signal overvaluation.',
+        formula: 'Score = equal-weight avg of 7 signals   |   0–24: Extreme Fear · 25–49: Fear · 50–74: Greed · 75–100: Extreme Greed',
+        example: 'A score of 18 means "Extreme Fear," historically a period where patient investors buy at a discount.' },
+    ],
+  },
+  {
+    category: 'analyst',
+    label: 'The Analyst',
+    color: '#4da3ff',
+    items: [
+      { id: 'dcf', title: 'DCF Valuation', icon: '🔭',
+        summary: 'A company\'s intrinsic value equals the present value of all its future free cash flows.',
+        body: 'Discounted Cash Flow (DCF) is the foundation of fundamental investing. You forecast a company\'s free cash flow (FCF) for 5–10 years, then estimate a terminal value for everything after that. Both are discounted back to today using a discount rate (WACC, the weighted average cost of capital). If the DCF value exceeds the current share price, the stock may be undervalued.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>V = <span style={{fontSize:11}}>Σ</span><Frac n="FCFₜ" d={<span>(1+r)<sup style={{fontSize:11}}>t</sup></span>} /> + <Frac n="TV" d={<span>(1+r)<sup style={{fontSize:11}}>n</sup></span>} /></span>,
+        example: 'A company with $100M FCF growing 8%/yr, WACC=10%, terminal growth=3%: TV = $100M×1.08⁵×(1.03)/(0.10−0.03). Discount back → total intrinsic value ~$1.8B.' },
+      { id: 'lbo', title: 'LBO Basics', icon: '🏗️',
+        summary: 'Acquire a company using mostly debt, then repay it with the target\'s own cash flows.',
+        body: 'In a leveraged buyout, a private equity firm acquires a company with 60–80% debt and 20–40% equity. The target\'s operating cash flows service and pay down the debt over 3–7 years. At exit (IPO or sale), the remaining equity, now a larger share of a less-leveraged company, generates the return. LBOs work best on stable, cash-generative businesses with predictable revenues.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>MOIC = <Frac n="Exit Equity Value" d="Equity Invested" /> <span style={{margin:'0 6px',opacity:0.4}}>|</span> IRR = rate where NPV = 0</span>,
+        example: 'PE firm buys a company for $500M (80% debt, $100M equity). Sells it 5yrs later for $900M with $300M debt remaining → exit equity = $600M. MOIC = 6×, IRR ≈ 43%.' },
+      { id: 'tenk', title: 'Reading a 10-K', icon: '📑',
+        summary: 'The SEC annual report and the most information-dense document a public company produces.',
+        body: 'A 10-K has four critical sections: (1) Business, covering what the company does and how it makes money; (2) Risk Factors, management\'s own list of what could go wrong (read these seriously); (3) MD&A (Management Discussion & Analysis), management\'s narrative on results, often more useful than the numbers alone; (4) Financial Statements: income statement, balance sheet, cash flow statement, and footnotes. The footnotes reveal revenue recognition policies, debt covenants, and off-balance-sheet items.',
+        formula: 'Net Income = Revenue − COGS − OpEx − Interest − Taxes   |   FCF = Operating Cash Flow − CapEx',
+        example: 'Apple\'s 10-K risk factors note "dependence on a single supplier for components" and "foreign exchange exposure." These aren\'t boilerplate; analysts model around them.' },
+      { id: 'marketcap', title: 'Market Cap & Enterprise Value', icon: '🏢',
+        summary: 'Market cap is what equity costs to buy; enterprise value is what the whole business costs.',
+        body: 'Market Cap = Share Price × Shares Outstanding. Enterprise Value (EV) = Market Cap + Total Debt − Cash. EV represents the theoretical takeover price, what you\'d pay for the entire business net of cash you\'d receive. EV/EBITDA is the most common valuation multiple because it\'s capital-structure neutral (unlike P/E).',
+        formula: 'EV = Market Cap + Debt − Cash   |   EV/EBITDA = comparable valuation multiple',
+        example: 'Apple: $3T market cap, ~$100B debt, ~$60B cash → EV ≈ $3.04T. If EBITDA = $135B → EV/EBITDA ≈ 22.5×.' },
+      { id: 'fi-pricing', title: 'Bond Pricing & YTM', icon: '💲',
+        summary: 'Bond price = present value of all cash flows. YTM is the single rate that explains the price.',
+        body: 'A bond\'s price equals the sum of all discounted coupon payments plus the discounted par value. YTM (yield to maturity) is the internal rate of return, the single discount rate that makes the PV of cash flows equal to the price. Price and yield move inversely. When YTM > coupon rate → discount bond (price < par). When YTM < coupon rate → premium bond (price > par).',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>P = <span style={{fontSize:11}}>Σ</span><Frac n="C" d={<span>(1+y)<sup style={{fontSize:11}}>t</sup></span>} /> + <Frac n="F" d={<span>(1+y)<sup style={{fontSize:11}}>T</sup></span>} /></span>,
+        example: '$1,000 par, 5% coupon, 10yr, YTM=6%: P = Σ$25/(1.03)ᵗ + $1,000/(1.03)²⁰ = $925.61 (semi-annual, discount bond).' },
+      { id: 'fi-termstructure', title: 'Yield Curve & Term Structure', icon: '📉',
+        summary: 'The yield curve plots interest rates across maturities, forming the backbone of fixed income and macro.',
+        body: 'Spot rate s(t): the YTM on a zero-coupon bond maturing at time t. Forward rate: the implied rate for a future period, extracted from spot rates via no-arbitrage. The yield curve shape signals economic expectations: normal (upward sloping) = growth expected; inverted = recession signal; flat = uncertainty. Every inversion since 1955 has preceded a recession, making it the most watched macro indicator.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:3}}>f(t₁,t₂) = [<Frac n={<span>(1+s₂)<sup style={{fontSize:10}}>t₂</sup></span>} d={<span>(1+s₁)<sup style={{fontSize:10}}>t₁</sup></span>} />]<sup style={{fontSize:10,verticalAlign:'super'}}><Frac n="1" d="t₂−t₁" sz={9}/></sup> − 1</span>,
+        example: '2yr spot=4%, 3yr spot=4.5% → implied 1yr forward rate starting in year 2 ≈ 5.5%. The market is pricing in rate increases.' },
+      { id: 'fi-duration', title: 'Duration & DV01', icon: '⚖️',
+        summary: 'How sensitive is a bond\'s price to interest rate changes?',
+        body: 'Macaulay Duration D_mac: weighted average time to receive cash flows (in years). Modified Duration D_mod: % price change per 1% (100bp) parallel shift in yields. DV01 (Dollar Value of 01): dollar price change per 1bp move, the standard trader risk measure. Convexity accounts for the curvature of the price-yield relationship; long bonds have positive convexity, meaning they gain more when rates fall than they lose when rates rise.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4,rowGap:6}}>D<sub>mod</sub> = <Frac n="D_mac" d="1+y" /> <span style={{margin:'0 6px',opacity:0.4}}>|</span> DV01 = D<sub>mod</sub> × P × 0.0001</span>,
+        example: 'Bond with D_mod=7, price=$950, DV01=$0.665. If yields rise 50bps → ΔP ≈ −7×0.005×$950 = −$33.25.' },
+      { id: 'fi-credit', title: 'Credit Risk & Spreads', icon: '⚠️',
+        summary: 'The yield premium a bond pays above Treasuries as compensation for default risk.',
+        body: 'Credit spread: the yield premium over a risk-free Treasury of the same maturity. Credit ratings (AAA→D) assess default probability; investment grade is BBB- and above. Probability of Default (PD) and Loss Given Default (LGD = 1 − recovery rate R) drive spread. CDS (Credit Default Swaps): insurance-like contracts where the protection buyer pays a periodic spread and receives par if the issuer defaults.',
+        formula: 'Credit Spread ≈ PD × LGD = PD × (1 − R)',
+        example: 'BBB bond: PD=1.5%/yr, recovery=40% → spread ≈ 1.5%×60% = 90bps. If Treasuries yield 4.5%, the bond yields ≈ 5.4%.' },
+      { id: 'calls-puts', title: 'Options: Calls & Puts', icon: '⚖️',
+        summary: 'A call gives the right to buy; a put gives the right to sell.',
+        body: 'A call option gives you the right (but not obligation) to buy 100 shares of a stock at the strike price before expiration. You buy calls when you expect the stock to rise. A put option gives you the right to sell 100 shares at the strike price; buy puts when you expect a decline or want downside protection. Options are used by portfolio managers to hedge positions and by analysts to imply market expectations.',
+        formula: 'Call Payoff = max(S − K, 0)   |   Put Payoff = max(K − S, 0)   |   Profit = Payoff − Premium',
+        example: 'You buy an AAPL $200 call expiring in 30 days for $3.50 ($350 total). If AAPL hits $215, your call is worth ~$15, a 4x gain.' },
+      { id: 'iv', title: 'Implied Volatility', icon: '〰️',
+        summary: 'The market\'s forecast of future price movement, derived from option prices.',
+        body: 'IV is derived from the market price of an option using the Black-Scholes model, specifically what\'s implied by what people are willing to pay. High IV means the market expects big moves; options are expensive. Low IV means calm expectations; options are cheap. IV spikes before earnings announcements and major events. The VIX tracks implied volatility on the S&P 500 and is widely known as the market\'s fear gauge.',
+        formula: 'IV is extracted from option price by solving Black-Scholes for σ',
+        example: 'AAPL IV of 28% means the market expects AAPL to move ±28% over the next year, or roughly ±1.8% per week.' },
+      { id: 'delta', title: 'Option Greeks: Delta & Gamma', icon: 'Δ',
+        summary: 'Delta measures directional exposure; gamma measures how fast delta changes.',
+        body: 'Delta (Δ): how much the option price moves per $1 move in the stock. Ranges 0–1 for calls, 0 to −1 for puts. A 0.50 delta call approximates a 50% chance of expiring in the money. Gamma (Γ): rate of change of delta per $1 stock move. It peaks near ATM and near expiration, where options positions become most volatile.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Δ = N(d₁) &nbsp;|&nbsp; Γ = <Frac n="N′(d₁)" d="S · σ · √T" /></span>,
+        example: 'AAPL call: Δ=0.45, Γ=0.05. Stock rises $5 → option gains ~$2.25 and delta moves to ~0.70. Now you\'re more exposed.' },
     ],
   },
 ];
 
+function YieldCurveChart({ yieldCurve }) {
+  const { tenors, date } = yieldCurve;
+  if (!tenors || tenors.length < 2) return (
+    <div style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT2, fontSize: 13 }}>
+      Loading yield curve data…
+    </div>
+  );
+
+  const W = 560, H = 160, PAD = { top: 16, right: 20, bottom: 32, left: 52 };
+  const innerW = W - PAD.left - PAD.right;
+  const innerH = H - PAD.top - PAD.bottom;
+
+  const rates = tenors.map(t => t.rate);
+  const minR = Math.min(...rates) - 0.2;
+  const maxR = Math.max(...rates) + 0.2;
+  const maxYrs = tenors[tenors.length - 1].years;
+
+  const toX = (yrs) => PAD.left + (yrs / maxYrs) * innerW;
+  const toY = (r)   => PAD.top + innerH - ((r - minR) / (maxR - minR)) * innerH;
+
+  const points = tenors.map(t => `${toX(t.years)},${toY(t.rate)}`).join(' ');
+  const areaPoints = `${toX(tenors[0].years)},${PAD.top + innerH} ${points} ${toX(tenors[tenors.length - 1].years)},${PAD.top + innerH}`;
+
+  const isInverted = tenors[0].rate > tenors[tenors.length - 1].rate;
+  const lineColor = isInverted ? '#f87171' : '#a78bfa';
+
+  return (
+    <div style={{ ...CARD, marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+        <div style={{ fontWeight: 600, fontSize: 14 }}>
+          US Treasury Yield Curve
+          <span style={{ fontSize: 11, color: isInverted ? RED : GREEN, fontWeight: 600, marginLeft: 8 }}>
+            {isInverted ? '▼ Inverted' : '▲ Normal'}
+          </span>
+        </div>
+        <div style={{ fontSize: 11, color: TEXT3 }}>as of {date}</div>
+      </div>
+      <div style={{ display: 'flex', gap: 20, marginBottom: 10 }}>
+        {tenors.map(t => (
+          <div key={t.label} style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase' }}>{t.label}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'monospace', color: lineColor }}>{t.rate.toFixed(2)}%</div>
+          </div>
+        ))}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+        <defs>
+          <linearGradient id="yc-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={lineColor} stopOpacity={0.18} />
+            <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        {[minR + 0.2, (minR + maxR) / 2, maxR - 0.2].map(r => (
+          <g key={r}>
+            <line x1={PAD.left} x2={W - PAD.right} y1={toY(r)} y2={toY(r)} stroke={BORDER_C} strokeWidth={1} strokeDasharray="4 4" />
+            <text x={PAD.left - 4} y={toY(r) + 4} textAnchor="end" fontSize={9} fill={TEXT3}>{r.toFixed(1)}%</text>
+          </g>
+        ))}
+        <polygon points={areaPoints} fill="url(#yc-fill)" />
+        <polyline points={points} fill="none" stroke={lineColor} strokeWidth={2} strokeLinejoin="round" />
+        {tenors.map(t => (
+          <g key={t.label}>
+            <circle cx={toX(t.years)} cy={toY(t.rate)} r={3.5} fill={lineColor} />
+            <text x={toX(t.years)} y={H - 4} textAnchor="middle" fontSize={9} fill={TEXT3}>{t.label}</text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+const FINANCE_TOUR_STEPS = [
+  { sel: '[data-tour="brand"]',                panel: 'overview',   side: 'right',
+    title: 'Welcome to Basis',
+    body: 'Basis keeps your full financial picture in one place: accounts, spending, investments, and market data. This tour walks through each section of the personal finance platform.' },
+  { sel: '[data-tour="overview-cards"]',       panel: 'overview',   side: 'bottom',
+    title: 'Your Financial Snapshot',
+    body: 'Net worth, total cash across linked accounts, and portfolio value update in real time. Net worth (assets minus liabilities) is the single most important number in personal finance.' },
+  { sel: '[data-tour="overview-txns"]',        panel: 'overview',   side: 'top',
+    title: 'Recent Transactions',
+    body: 'Every purchase flowing through linked accounts shows here with merchant name, category, and amount. Green means income, red means expense. This feed is what powers your budget analysis.' },
+  { sel: '[data-tour="nav-cashflow"]',         panel: 'cashflow',   tab: 'banking',   side: 'right',
+    title: 'Cash Flow',
+    body: 'Cash Flow covers the three pillars of personal finance: Banking (accounts and balances), Budgeting (spending by category), and Taxes (federal bracket estimator). You can drag the tabs to reorder them.' },
+  { sel: '[data-tour="banking-accounts"]',     panel: 'cashflow',   tab: 'banking',   side: 'bottom',
+    title: 'Linked Accounts',
+    body: 'Each card shows the institution, account type, and live balance. Cash and savings accounts feed directly into your net worth calculation. Connect accounts via Plaid in Settings, usually takes under a minute.' },
+  { sel: '[data-tour="budgeting-tabs"]',       panel: 'cashflow',   tab: 'budgeting', side: 'bottom',
+    title: 'Budget Tracker',
+    body: 'Spending is automatically sorted into categories like Food, Transport, and Housing. The 50/30/20 rule is applied: 50% needs, 30% wants, 20% savings. Set a cap on any category to trigger alerts.' },
+  { sel: '[data-tour="taxes-brackets"]',       panel: 'cashflow',   tab: 'taxes',     side: 'bottom',
+    title: 'Tax Estimator',
+    body: 'Enter gross income, 401(k) contributions, and deduction type. Basis calculates your effective and marginal rates across every federal bracket. Good for modeling a raise or side income.' },
+  { sel: '[data-tour="nav-investments"]',      panel: 'investments',                  side: 'right',
+    title: 'Investments',
+    body: 'Your full portfolio in one place: holdings, allocation breakdown, and unrealized P&L per position. Prices update via live market feeds during trading hours.' },
+  { sel: '[data-tour="investments-holdings"]', panel: 'investments',                  side: 'bottom',
+    title: 'Portfolio Holdings',
+    body: 'Each row shows ticker, shares held, cost basis, live price, total value, and gain/loss. The allocation ring on the right breaks down how much of your portfolio each position makes up.' },
+  { sel: '[data-tour="markets-sp500"]',        panel: 'insights',   insightsTab: 'markets', side: 'bottom',
+    title: 'Market Data',
+    body: 'The S&P 500 chart, Fear and Greed index, yield curve, and major index levels give you market context without leaving the app. News pulls from financial sources and is filtered for relevance.' },
+  { sel: '[data-tour="nav-learn"]',            panel: 'learn',                        side: 'right',
+    title: 'The Essentials',
+    body: 'Structured lessons on budgeting, compound interest, credit scores, and investing basics, each with the underlying formula and a plain-English explanation. Work through them at your own pace.' },
+  { sel: '[data-tour="nav-settings"]',         panel: 'settings',                     side: 'right',
+    title: 'Settings',
+    body: 'Link bank accounts and brokerages via Plaid, manage notification preferences, set budget category limits, and control which panels and tabs are visible on your dashboard.' },
+];
+
+const STUDENT_TOUR_STEPS = [
+  { sel: '[data-tour="brand"]',                panel: 'overview',   side: 'right',
+    title: 'Welcome to Basis',
+    body: 'Basis connects your real financial life with your coursework. Track accounts, analyze spending, and build real financial skills, all in one place. This tour walks through every section of the platform.' },
+  { sel: '[data-tour="overview-cards"]',       panel: 'overview',   side: 'bottom',
+    title: 'Your Financial Snapshot',
+    body: 'Net worth, total cash, and portfolio value update in real time when you link accounts. Net worth (assets minus liabilities) is the single most important number in personal finance. This is yours.' },
+  { sel: '[data-tour="overview-txns"]',        panel: 'overview',   side: 'top',
+    title: 'Recent Transactions',
+    body: 'Every transaction flowing through linked accounts appears here with merchant, category, and amount. Green means income, red means expense. Your real spending data is what makes every analysis meaningful.' },
+  { sel: '[data-tour="nav-cashflow"]',         panel: 'cashflow',   tab: 'banking',   side: 'right',
+    title: 'Cash Flow',
+    body: 'Cash Flow covers the three pillars of personal finance: Banking, Budgeting, and Taxes. There is also a Scholarship tab built specifically for Georgia students tracking HOPE and Zell Miller eligibility.' },
+  { sel: '[data-tour="banking-accounts"]',     panel: 'cashflow',   tab: 'banking',   side: 'bottom',
+    title: 'Linked Accounts',
+    body: 'Each card shows the institution, account type, and live balance. These feed into your net worth calculation automatically. Connect real accounts via Plaid in Settings, or explore with sample data first.' },
+  { sel: '[data-tour="scholarship-header"]',   panel: 'cashflow',   tab: 'scholarship', side: 'bottom',
+    title: 'Scholarship Health',
+    body: 'Tracks HOPE and Zell Miller eligibility in real time. Enter your current GPA, credit hours, and this semester\'s courses. Basis projects your HOPE GPA and flags whether your award is safe, at risk, or lost.' },
+  { sel: '[data-tour="budgeting-tabs"]',       panel: 'cashflow',   tab: 'budgeting', side: 'bottom',
+    title: 'Budget Tracker',
+    body: 'Spending is automatically sorted into categories and the 50/30/20 rule is applied: 50% needs, 30% wants, 20% savings. Set a cap on any category to get alerted before you go over.' },
+  { sel: '[data-tour="taxes-brackets"]',       panel: 'cashflow',   tab: 'taxes',     side: 'bottom',
+    title: 'Tax Estimator',
+    body: 'Enter gross income, 401(k) contributions, and deduction type. Basis shows your federal tax liability bracket by bracket with your effective and marginal rates. Try adjusting income to see how it shifts.' },
+  { sel: '[data-tour="nav-investments"]',      panel: 'investments',                  side: 'right',
+    title: 'Investments',
+    body: 'Your full portfolio with live prices, allocation breakdown, and unrealized P&L. The Portfolio Simulator lets you build and test hypothetical allocations before putting real money to work.' },
+  { sel: '[data-tour="markets-sp500"]',        panel: 'insights',   insightsTab: 'markets', side: 'bottom',
+    title: 'Market Data',
+    body: 'Live S&P 500 chart, Fear and Greed index, yield curve, and major index levels give you market context without leaving the app. These are the same indicators referenced in class discussions.' },
+  { sel: '[data-tour="nav-learn"]',            panel: 'learn',                        side: 'right',
+    title: 'The Essentials',
+    body: 'Lessons on budgeting, compound interest, credit scores, and investing basics, each with the underlying formula and a plain-English explanation. Work through them at your own pace alongside the course.' },
+  { sel: '[data-tour="nav-settings"]',         panel: 'settings',                     side: 'right',
+    title: 'Settings',
+    body: 'Link bank accounts and brokerages via Plaid, manage notifications, and customize which panels and tabs are visible on your dashboard.' },
+];
+
+const PROFESSOR_TOUR_STEPS = [
+  { sel: '[data-tour="brand"]',                panel: 'overview',   side: 'right',
+    title: 'Welcome to Basis',
+    body: 'Basis is what your class will use to connect real financial data with coursework. This tour walks through the personal finance tools so you know exactly what each person in your course is working with.' },
+  { sel: '[data-tour="overview-cards"]',       panel: 'overview',   side: 'bottom',
+    title: 'Financial Snapshot',
+    body: 'Net worth, total cash, and portfolio value update in real time when accounts are linked. In demo mode, Basis loads realistic synthetic data so anyone can complete work without connecting personal accounts.' },
+  { sel: '[data-tour="overview-txns"]',        panel: 'overview',   side: 'top',
+    title: 'Transaction Feed',
+    body: 'Every transaction shows up here with merchant, category, and amount. This is the raw data behind budget analysis and spending pattern work. Real accounts and sample data both work the same way.' },
+  { sel: '[data-tour="nav-cashflow"]',         panel: 'cashflow',   tab: 'banking',   side: 'right',
+    title: 'Cash Flow Panel',
+    body: 'Four tabs: Banking, Budgeting, Taxes, and Scholarship. Each one maps to a major unit in your course. This is where most of the hands-on personal finance work happens.' },
+  { sel: '[data-tour="banking-accounts"]',     panel: 'cashflow',   tab: 'banking',   side: 'bottom',
+    title: 'Account Overview',
+    body: 'Each linked account shows its type, institution, and balance. Balances roll into the net worth calculation automatically, which makes balance sheet construction concrete rather than abstract.' },
+  { sel: '[data-tour="scholarship-header"]',   panel: 'cashflow',   tab: 'scholarship', side: 'bottom',
+    title: 'Scholarship Health',
+    body: 'Tracks HOPE and Zell Miller eligibility in real time. Users enter their GPA, credit hours, and current-semester courses. The sensitivity table shows how each grade change shifts scholarship status.' },
+  { sel: '[data-tour="budgeting-tabs"]',       panel: 'cashflow',   tab: 'budgeting', side: 'bottom',
+    title: 'Budget Tracker',
+    body: 'Transactions are auto-categorized and the 50/30/20 rule is applied automatically. Per-category spending limits can be set to trigger alerts. This is the foundation of most budget-focused work in the course.' },
+  { sel: '[data-tour="taxes-brackets"]',       panel: 'cashflow',   tab: 'taxes',     side: 'bottom',
+    title: 'Tax Estimator',
+    body: 'Enter gross income, 401(k) contributions, and deduction type to see federal tax broken down bracket by bracket. Effective rate, marginal rate, and total liability are all shown. Covers the tax planning unit directly.' },
+  { sel: '[data-tour="nav-investments"]',      panel: 'investments',                  side: 'right',
+    title: 'Investments',
+    body: 'Full portfolio view with live prices, allocation, and unrealized P&L. The Portfolio Simulator dataset lets anyone build hypothetical allocations and review Sharpe ratios, diversification scores, and 10-year projections.' },
+  { sel: '[data-tour="markets-sp500"]',        panel: 'insights',   insightsTab: 'markets', side: 'bottom',
+    title: 'Market Data',
+    body: 'Live S&P 500 chart, Fear and Greed index, yield curve, and index levels. These indicators appear in course material and give real-world grounding to investment and macroeconomics discussions.' },
+  { sel: '[data-tour="nav-learn"]',            panel: 'learn',                        side: 'right',
+    title: 'The Essentials Library',
+    body: 'Lessons covering budgeting fundamentals, compound interest, credit scores, and investing basics. Each topic includes the formula and a plain-English explanation, structured to mirror your syllabus.' },
+  { sel: '[data-tour="nav-settings"]',         panel: 'settings',                     side: 'right',
+    title: 'Settings',
+    body: 'Individuals link accounts, manage notifications, and customize their dashboard here. Your Professor Hub, accessible from the sidebar, is where you manage course codes, rosters, and grading.' },
+];
+
+
+function Tour({ steps, step, onNext, onPrev, onClose, containerRef }) {
+  const [rect, setRect] = React.useState(null);
+
+  React.useEffect(() => {
+    const sel = steps[step].sel;
+    const container = containerRef?.current;
+
+    // Temporarily re-enable overflow so scrollIntoView works, then re-lock
+    if (container) container.style.overflowY = 'auto';
+    const el = document.querySelector(sel);
+    if (el) {
+      el.scrollIntoView({ block: 'center', behavior: 'instant' });
+      setRect(el.getBoundingClientRect());
+    } else {
+      setRect(null);
+    }
+    if (container) container.style.overflowY = 'hidden';
+
+    // Keep spotlight synced if any residual browser reflow shifts things
+    const measure = () => {
+      const e = document.querySelector(sel);
+      if (e) setRect(e.getBoundingClientRect());
+    };
+    window.addEventListener('scroll', measure, true);
+    return () => window.removeEventListener('scroll', measure, true);
+  }, [step, steps, containerRef]);
+
+  const { title, body, side } = steps[step];
+  const PAD = 8;
+  const TW = 300;
+  const TH = 280; // estimated tooltip height
+  const GAP = 14;
+  const M  = 14;  // minimum margin from viewport edge
+
+  const spotStyle = rect ? {
+    position: 'fixed',
+    top:    rect.top    - PAD,
+    left:   rect.left   - PAD,
+    width:  rect.width  + PAD * 2,
+    height: rect.height + PAD * 2,
+    borderRadius: 10,
+    boxShadow: '0 0 0 9999px rgba(0,0,0,0.75)',
+    zIndex: 9998,
+    pointerEvents: 'none',
+    outline: '2px solid rgba(77,163,255,0.6)',
+  } : null;
+
+  const tipStyle = (() => {
+    const base = { position: 'fixed', zIndex: 9999, width: TW, background: CARD_BG, border: BORDER, borderRadius: 14, padding: '22px 24px', boxShadow: '0 12px 40px rgba(0,0,0,0.7)' };
+    if (!rect) return { ...base, top: '50%', left: '50%', transform: 'translate(-50%,-50%)' };
+
+    // Horizontal: center on element, clamped inside viewport
+    const idealLeft = rect.left + rect.width / 2 - TW / 2;
+    const left = Math.max(M, Math.min(idealLeft, window.innerWidth - TW - M));
+
+    if (side === 'right') {
+      // Right of element; fall back to left side if too close to viewport edge
+      const tipLeft = rect.right + GAP + TW + M <= window.innerWidth
+        ? rect.right + GAP
+        : Math.max(M, rect.left - TW - GAP);
+      const top = Math.max(M, Math.min(rect.top + rect.height / 2 - TH / 2, window.innerHeight - TH - M));
+      return { ...base, top, left: tipLeft };
+    }
+
+    // 'bottom' or 'top' — pick whichever side has more room, always stay in viewport
+    const spaceBelow = window.innerHeight - rect.bottom - GAP;
+    const spaceAbove = rect.top - GAP;
+    const preferAbove = side === 'top' && spaceAbove >= TH;
+
+    if (preferAbove || (spaceAbove >= TH && spaceBelow < TH)) {
+      return { ...base, top: Math.max(M, rect.top - TH - GAP), left };
+    }
+    return { ...base, top: Math.min(rect.bottom + GAP, window.innerHeight - TH - M), left };
+  })();
+
+  return (
+    <>
+      {spotStyle && <div style={spotStyle} />}
+      <div style={tipStyle}>
+        <div style={{ fontSize: 10, color: BLUE, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 8 }}>
+          {step + 1} / {steps.length}
+        </div>
+        <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 10, color: TEXT }}>{title}</div>
+        <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.65, marginBottom: 20 }}>{body}</div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 12, cursor: 'pointer', padding: 0 }}>Skip</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {step > 0 && <button onClick={onPrev} style={{ padding: '7px 16px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>← Back</button>}
+            {step < steps.length - 1
+              ? <button onClick={onNext} style={{ padding: '7px 16px', background: BLUE_BTN, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>Next →</button>
+              : <button onClick={onClose} style={{ padding: '7px 16px', background: GREEN, border: 'none', borderRadius: 8, color: '#000', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>Done ✓</button>
+            }
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginTop: 16 }}>
+          {steps.map((_, i) => (
+            <div key={i} style={{ height: 5, borderRadius: 3, background: i === step ? BLUE : MUTED, width: i === step ? 20 : 6, transition: 'all 0.2s' }} />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// key: 'YYYY-M-D' (no zero-padding)
+const COURSE_CALENDAR_EVENTS = {
+  '2026-1-25': [{ type: 'quiz',       label: 'Quiz 1' }],
+  '2026-2-1':  [{ type: 'quiz',       label: 'Quiz 2' }],
+  '2026-2-8':  [{ type: 'quiz',       label: 'Quiz 3' }, { type: 'assignment', label: 'Social Capital' }],
+  '2026-2-15': [{ type: 'exam',       label: 'Exam 1 (Ch. 1–3)' }, { type: 'assignment', label: 'TVM Assignment' }],
+  '2026-2-22': [{ type: 'quiz',       label: 'Quiz 4' }],
+  '2026-3-1':  [{ type: 'quiz',       label: 'Quiz 5' }],
+  '2026-3-8':  [{ type: 'quiz',       label: 'Quiz 6' }, { type: 'assignment', label: 'PF Project 1' }],
+  '2026-3-9':  [{ type: 'break',      label: 'Spring Break' }],
+  '2026-3-10': [{ type: 'break',      label: 'Spring Break' }],
+  '2026-3-11': [{ type: 'break',      label: 'Spring Break' }],
+  '2026-3-12': [{ type: 'break',      label: 'Spring Break' }],
+  '2026-3-13': [{ type: 'break',      label: 'Spring Break' }],
+  '2026-3-14': [{ type: 'break',      label: 'Spring Break' }],
+  '2026-3-15': [{ type: 'break',      label: 'Spring Break' }],
+  '2026-3-22': [{ type: 'quiz',       label: 'Quiz 7' }, { type: 'assignment', label: 'Tax Assignment' }],
+  '2026-3-29': [{ type: 'exam',       label: 'Exam 2 (Ch. 4–6)' }],
+  '2026-4-5':  [{ type: 'quiz',       label: 'Quiz 8' }, { type: 'assignment', label: 'PF Project 2' }],
+  '2026-4-12': [{ type: 'quiz',       label: 'Quiz 9' }],
+  '2026-4-19': [{ type: 'quiz',       label: 'Quiz 10' }],
+  '2026-4-25': [{ type: 'today',      label: 'Today' }],
+  '2026-4-26': [{ type: 'exam',       label: 'Exam 3 (Ch. 7–9)' }],
+  '2026-5-4':  [{ type: 'assignment', label: 'Future Forecasting' }, { type: 'assignment', label: 'Honors' }],
+};
+// Apr 20–26 is current week
+const CURRENT_WEEK_KEYS = new Set(['2026-4-20','2026-4-21','2026-4-22','2026-4-23','2026-4-24','2026-4-25','2026-4-26']);
+
+const COURSE_MODULES = [
+  { week: 'Jan 12–18',   topic: 'Class Overview · Interior Finance',           chapter: 'Ch. 1',     assignments: [],                                          datasetId: 'ds-net-worth',  current: false },
+  { week: 'Jan 19–25',   topic: 'Interior and Exterior Finance',                chapter: 'Ch. 1 & 2', assignments: ['Quiz 1'],                                   datasetId: 'ds-net-worth',  current: false },
+  { week: 'Jan 26–Feb 1',topic: 'Exterior Finance',                             chapter: 'Ch. 2',     assignments: ['Quiz 2'],                                   datasetId: 'ds-budget',     current: false },
+  { week: 'Feb 2–8',     topic: 'Exterior Finance · Earnings and Income',       chapter: 'Ch. 2 & 3', assignments: ['Quiz 3', 'Social Capital Assignment'],      datasetId: 'ds-budget',     current: false },
+  { week: 'Feb 9–15',    topic: 'Earnings and Income',                          chapter: 'Ch. 3',     assignments: ['Exam 1 (Ch. 1–3)', 'TVM Assignment'],       datasetId: 'ds-tvm',        current: false },
+  { week: 'Feb 16–22',   topic: 'Personal Taxation – The Basics',               chapter: 'Ch. 4',     assignments: ['Quiz 4'],                                   datasetId: null,            current: false },
+  { week: 'Feb 23–Mar 1',topic: 'Personal Taxation – The Basics',               chapter: 'Ch. 4',     assignments: ['Quiz 5'],                                   datasetId: null,            current: false },
+  { week: 'Mar 2–8',     topic: 'Checking Accounts, Credit Scores & Cards',     chapter: 'Ch. 5',     assignments: ['Quiz 6', 'Personal Finance Project 1'],     datasetId: 'ds-credit',     current: false },
+  { week: 'Mar 9–15',    topic: 'Spring Break',                                 chapter: '—',         assignments: [],                                          datasetId: null,            current: false, isBreak: true },
+  { week: 'Mar 16–22',   topic: 'Loans and Housing Decisions',                  chapter: 'Ch. 6',     assignments: ['Quiz 7', 'Tax Assignment'],                 datasetId: 'ds-housing',    current: false },
+  { week: 'Mar 23–29',   topic: 'Savings',                                      chapter: 'Ch. 7',     assignments: ['Exam 2 (Ch. 4–6)'],                        datasetId: 'ds-tvm',        current: false },
+  { week: 'Mar 30–Apr 5',topic: 'Investments',                                  chapter: 'Ch. 7 & 8', assignments: ['Quiz 8', 'Personal Finance Project 2'],     datasetId: 'ds-portfolio',  current: false },
+  { week: 'Apr 6–12',    topic: 'Investments – cont\'d',                        chapter: 'Ch. 8',     assignments: ['Quiz 9'],                                   datasetId: 'ds-portfolio',  current: false },
+  { week: 'Apr 13–19',   topic: 'Risk Management and Insurance',                chapter: 'Ch. 9',     assignments: ['Quiz 10'],                                  datasetId: null,            current: false },
+  { week: 'Apr 20–26',   topic: 'Risk Management and Insurance',                chapter: 'Ch. 9',     assignments: ['Exam 3 (Ch. 7–9)'],                        datasetId: null,            current: true  },
+  { week: 'Apr 27–May 4',topic: 'No Class',                                     chapter: '—',         assignments: ['Future Forecasting Assignment', 'Honors'],  datasetId: 'ds-tvm',        current: false },
+];
+
+const PREBUILT_DATASETS = [
+  {
+    id: 'ds-net-worth',  title: 'Net Worth Snapshot',             subtitle: 'Interior Finance · Ch. 1',
+    description: 'Complete balance sheet for a 22-year-old college senior: checking, savings, student loans, and auto loan.',
+    category: 'Net Worth',  color: '#4da3ff',  difficulty: 'Beginner',
+    concepts: ['Assets vs Liabilities', 'Net Worth Formula', 'Personal Balance Sheet'],
+    stats: [['Net Worth', '$2,840'], ['Assets', '$4,350'], ['Liabilities', '$1,510']],
+    overview: 'Students calculate net worth from raw account data, classify assets and liabilities, and build a 12-month improvement plan targeting positive net worth.',
+  },
+  {
+    id: 'ds-budget',     title: 'College Student Monthly Budget', subtitle: 'Exterior Finance · Ch. 2',
+    description: 'Monthly income ($1,800) and spending across 9 categories for a part-time working student. Includes a budget deficit to diagnose.',
+    category: 'Budgeting',  color: '#22c55e',  difficulty: 'Beginner',
+    concepts: ['Fixed vs Variable Expenses', '50/30/20 Rule', 'Budget Surplus/Deficit'],
+    stats: [['Income', '$1,800/mo'], ['Spending', '$1,924/mo'], ['Deficit', '−$124/mo']],
+    overview: 'Students identify spending categories causing a deficit, apply the 50/30/20 rule, and propose a revised budget. Links to Basis Budgeting tools for live visualization.',
+  },
+  {
+    id: 'ds-tvm',        title: 'Time Value of Money Scenarios',  subtitle: 'Savings · Ch. 7',
+    description: 'Three compound interest scenarios: $1,000 lump sum at 6%, $200/month contributions at 7%, and emergency fund build-out.',
+    category: 'Savings',    color: '#f97316',  difficulty: 'Intermediate',
+    concepts: ['Compound Interest', 'Present / Future Value', 'Rule of 72', 'Emergency Fund'],
+    stats: [['Scenarios', '3'], ['Time Horizon', '5–30 yr'], ['Rate Range', '4–8%']],
+    overview: 'Students work through FV and PV calculations, compare lump-sum vs. monthly contribution strategies, and verify results using the Rule of 72.',
+  },
+  {
+    id: 'ds-portfolio',  title: 'Beginner Investment Portfolio',  subtitle: 'Investments · Ch. 7 & 8',
+    description: 'A $5,000 starter portfolio across 4 diversified ETFs showing asset allocation, sector weights, and YTD returns.',
+    category: 'Investments', color: '#a855f7', difficulty: 'Intermediate',
+    concepts: ['Diversification', 'Asset Allocation', 'Index Funds', 'Risk vs Return'],
+    stats: [['Portfolio', '$5,000'], ['Positions', '4 ETFs'], ['YTD', '+7.2%']],
+    overview: 'Students analyze allocation, compute weighted portfolio return, identify concentration risk, and propose a rebalancing strategy. Maps directly to the Basis Investments panel.',
+  },
+  {
+    id: 'ds-credit',     title: 'Credit Card & Score Profile',    subtitle: 'Credit · Ch. 5',
+    description: 'Two credit cards with balances, a 680 credit score, and 18 months of payment history showing utilization and on-time payment impact.',
+    category: 'Credit',     color: '#ef4444',  difficulty: 'Intermediate',
+    concepts: ['Credit Utilization', 'Payment History', 'Score Factors', 'Min vs Full Payment'],
+    stats: [['Score', '680'], ['Total Limit', '$8,000'], ['Utilization', '43%']],
+    overview: 'Students calculate utilization rate, simulate score changes from paying down balances, and compare total interest paid under minimum vs. accelerated payment plans.',
+  },
+  {
+    id: 'ds-housing',    title: 'Mortgage vs. Rent Decision',     subtitle: 'Housing · Ch. 6',
+    description: 'Side-by-side analysis: renting ($1,200/mo) vs. buying ($285,000, 5% down, 30-yr fixed at 7.1%) with full amortization schedule.',
+    category: 'Housing',    color: '#eab308',  difficulty: 'Advanced',
+    concepts: ['Mortgage Amortization', 'Down Payment', 'DTI Ratio', 'Break-Even Horizon'],
+    stats: [['Home Price', '$285,000'], ['Down Pmt', '5%'], ['Monthly', '$1,938']],
+    overview: 'Students build an amortization schedule, calculate DTI ratio, compare 5-year total cost of renting vs. owning, and find the break-even point.',
+  },
+];
+
+const MAJOR_ASSIGNMENTS = [
+  { id: 'a1', title: 'Social Capital Assignment',    week: 'Feb 2–8',      chapter: 'Ch. 2 & 3', datasetId: 'ds-budget',    status: 'completed', points: 50,  dueDate: '2026-02-08',
+    description: 'Analyze how financial networks influence personal wealth-building. Use the College Student Budget to identify where social capital could improve financial outcomes.' },
+  { id: 'a2', title: 'TVM Assignment',               week: 'Feb 9–15',     chapter: 'Ch. 3',     datasetId: 'ds-tvm',       status: 'completed', points: 100, dueDate: '2026-02-15',
+    description: 'Apply TVM principles using the compound interest scenarios. Calculate PV, FV, and demonstrate the Rule of 72 for each of the three scenarios.' },
+  { id: 'a3', title: 'Personal Finance Project 1',   week: 'Mar 2–8',      chapter: 'Ch. 1–5',   datasetId: 'ds-budget',    status: 'completed', points: 150, dueDate: '2026-03-08',
+    description: 'Comprehensive analysis using the Budget and Credit datasets. Calculate net worth, propose a balanced budget, evaluate credit health, and build a 6-month plan.' },
+  { id: 'a4', title: 'Tax Assignment',               week: 'Mar 16–22',    chapter: 'Ch. 4',     datasetId: null,           status: 'completed', points: 75,  dueDate: '2026-03-22',
+    description: 'Calculate effective and marginal tax rates for three income scenarios. Compare standard vs. itemized deductions and model the impact of pre-tax retirement contributions.' },
+  { id: 'a5', title: 'Personal Finance Project 2',   week: 'Mar 30–Apr 5', chapter: 'Ch. 6–8',   datasetId: 'ds-portfolio', status: 'active',    points: 150, dueDate: '2026-04-05',
+    description: 'Deep-dive into the Investment Portfolio and Mortgage vs. Rent datasets. Build an amortization schedule, analyze diversification, and model a 10-year wealth projection.' },
+  { id: 'a6', title: 'Future Forecasting Assignment', week: 'Apr 13–20',    chapter: 'Ch. 7–9',   datasetId: 'ds-tvm',       status: 'active',    points: 150, dueDate: '2026-04-20',
+    description: 'Build a 30-year financial forecast: retirement projections, insurance needs analysis, and net worth trajectory using multiple savings rate scenarios.' },
+  { id: 'a7', title: 'Honors Supplemental',           week: 'Apr 27–May 4', chapter: 'Ch. 1–9',   datasetId: null,           status: 'upcoming',  points: 100, dueDate: '2026-05-04',
+    description: 'Synthesize all course concepts into a complete personal financial plan covering budget, credit, debt payoff, investment strategy, insurance, and 30-year projections.' },
+];
+
+const COURSES = [
+  {
+    id: 'fina3000',
+    code: 'FINA 3000',
+    name: 'Personal Finance',
+    instructor: 'Prof. Thomas',
+    semester: 'Spring 2026',
+    color: '#4ade80',
+    classTimes: 'MWF 11:15–12:05 AM',
+    classDays: ['Mon', 'Wed', 'Fri'],
+    location: 'Brooks Hall 101',
+    officeHours: 'Tue/Thu 2:00–4:00 PM',
+    modules: COURSE_MODULES,
+    assignments: MAJOR_ASSIGNMENTS,
+  },
+  {
+    id: 'fina4200',
+    code: 'FINA 4200',
+    name: 'Investment Analysis',
+    instructor: 'Prof. Thomas',
+    semester: 'Spring 2026',
+    color: '#4da3ff',
+    classTimes: 'TTh 12:30–1:45 PM',
+    classDays: ['Tue', 'Thu'],
+    location: 'Terry College 302',
+    officeHours: 'Mon/Wed 3:00–5:00 PM',
+    modules: [
+      { week: 'Jan 12–18',     topic: 'Financial Markets Overview',   chapter: 'Ch. 1',   assignments: ['Quiz 1'],                         datasetId: 'ds-portfolio', current: false },
+      { week: 'Jan 19–25',     topic: 'Equity Securities',            chapter: 'Ch. 2',   assignments: ['Quiz 2'],                         datasetId: 'ds-portfolio', current: false },
+      { week: 'Jan 26–Feb 1',  topic: 'Debt Securities',              chapter: 'Ch. 2',   assignments: [],                                 datasetId: null,           current: false },
+      { week: 'Feb 2–8',       topic: 'Risk & Return',                chapter: 'Ch. 3',   assignments: ['Quiz 3'],                         datasetId: 'ds-portfolio', current: false },
+      { week: 'Feb 9–15',      topic: 'Portfolio Theory',             chapter: 'Ch. 4',   assignments: ['Stock Analysis Report'],          datasetId: 'ds-portfolio', current: false },
+      { week: 'Feb 16–22',     topic: 'CAPM',                         chapter: 'Ch. 4',   assignments: ['Quiz 4'],                         datasetId: null,           current: false },
+      { week: 'Feb 23–Mar 1',  topic: 'Market Efficiency',            chapter: 'Ch. 5',   assignments: ['Quiz 5'],                         datasetId: null,           current: false },
+      { week: 'Mar 2–8',       topic: 'Equity Valuation',             chapter: 'Ch. 6',   assignments: ['Portfolio Construction Project'], datasetId: 'ds-portfolio', current: false },
+      { week: 'Mar 9–15',      topic: 'Spring Break',                 chapter: '—',       assignments: [],                                 datasetId: null,           current: false, isBreak: true },
+      { week: 'Mar 16–22',     topic: 'Fixed Income',                 chapter: 'Ch. 7',   assignments: ['Quiz 6'],                         datasetId: null,           current: false },
+      { week: 'Mar 23–29',     topic: 'Derivatives: Options',         chapter: 'Ch. 8',   assignments: ['Options Pricing Assignment'],     datasetId: null,           current: true  },
+      { week: 'Mar 30–Apr 5',  topic: 'Derivatives: Futures',         chapter: 'Ch. 8',   assignments: ['Quiz 7'],                         datasetId: null,           current: false },
+      { week: 'Apr 6–12',      topic: 'Alternative Investments',      chapter: 'Ch. 9',   assignments: ['Quiz 8'],                         datasetId: null,           current: false },
+      { week: 'Apr 13–19',     topic: 'Portfolio Management',         chapter: 'Ch. 10',  assignments: ['Quiz 9'],                         datasetId: 'ds-portfolio', current: false },
+      { week: 'Apr 20–26',     topic: 'Performance Evaluation',       chapter: 'Ch. 10',  assignments: [],                                 datasetId: null,           current: false },
+      { week: 'Apr 27–May 4',  topic: 'Final Review',                 chapter: '—',       assignments: ['Final Portfolio Report'],         datasetId: 'ds-portfolio', current: false },
+    ],
+    assignments: [
+      { id: 'i1', title: 'Stock Analysis Report',          week: 'Feb 9–15',     chapter: 'Ch. 3–4', datasetId: 'ds-portfolio', status: 'completed', points: 100,
+        description: 'Pick two S&P 500 equities. Calculate expected return and beta using 12 months of price data, then compare to the CAPM prediction.' },
+      { id: 'i2', title: 'Portfolio Construction Project', week: 'Mar 2–8',      chapter: 'Ch. 4–6', datasetId: 'ds-portfolio', status: 'completed', points: 150,
+        description: 'Build a 5-asset diversified portfolio using the Beginner Investment Portfolio dataset. Optimize for Sharpe ratio and justify asset weights.' },
+      { id: 'i3', title: 'Options Pricing Assignment',     week: 'Mar 23–29',    chapter: 'Ch. 8',   datasetId: null,           status: 'active',    points: 75,
+        description: 'Price a European call option using Black-Scholes. Sensitivity analysis on volatility and time-to-expiry. Submit a one-page memo.' },
+      { id: 'i4', title: 'Final Portfolio Report',         week: 'Apr 27–May 4', chapter: 'Ch. 1–10', datasetId: 'ds-portfolio', status: 'upcoming', points: 200,
+        description: 'Comprehensive portfolio analysis: performance attribution, risk-adjusted returns, benchmark comparison, and 12-month forward outlook.' },
+    ],
+  },
+];
+
+const ALL_ASSIGNMENTS_MAP = Object.fromEntries(
+  COURSES.flatMap(c => c.assignments).map(a => [a.id, a])
+);
+
+const DEMO_ANNOUNCEMENTS = [
+  { id: 1, from: 'Prof. Thomas', course: 'FINA 3000', date: '2026-04-24', title: 'Future Forecasting Assignment Posted', body: 'Assignment 6 is now live in the Assignments tab. Forecasting model templates are available under Content → Resources. Due April 20; late submissions accepted through May 4 for partial credit.' },
+  { id: 2, from: 'Prof. Thomas', course: 'FINA 3000', date: '2026-04-17', title: 'Projects 1–3 Graded', body: 'Scores and written feedback are posted. Check the Assignments tab. Office hours this week are Tue/Thu 2–4 PM in Brooks Hall 101 if you have questions.' },
+  { id: 3, from: 'Prof. Thomas', course: 'FINA 4200', date: '2026-04-15', title: 'Options Pricing Memo: Deadline Extended', body: 'Extended to April 28 due to the exam schedule conflict. Peer review submissions (2 reviews) earn up to 10 pts extra credit. Details on the course page.' },
+];
+
+// ── Signal Engine ─────────────────────────────────────────────────────────────
+const MOAT_DB = {
+  AAPL:1.15, MSFT:1.20, GOOGL:1.10, GOOG:1.10, AMZN:1.12, META:1.08,
+  NVDA:1.18, TSLA:0.92, JPM:1.05, V:1.22, MA:1.22, WMT:1.08, JNJ:1.12,
+  PG:1.15, KO:1.18, PEP:1.12, DIS:0.98, NFLX:1.02, AMD:1.05, INTC:0.95,
+  QCOM:1.05, ORCL:1.08, CSCO:1.05, IBM:0.95, CRM:1.05, ADBE:1.10,
+  NOW:1.08, UNH:1.08, GS:1.00, MS:1.00, BAC:0.98, XOM:0.95, CVX:0.95,
+  T:0.90, VZ:0.90, BA:0.88, GE:0.95, SNAP:0.85, COIN:0.82, HOOD:0.80,
+};
+
+const SECTOR_GRAPH = {
+  AAPL:  { sector:'Consumer Tech', suppliers:['QCOM','SWKS','AVGO','TSM'], peers:['MSFT','GOOGL','META'], indices:['QQQ','SPY'] },
+  MSFT:  { sector:'Cloud/Software', suppliers:['NVDA','INTC','ORCL'], peers:['AAPL','GOOGL','AMZN'], indices:['QQQ','SPY'] },
+  NVDA:  { sector:'Semiconductors', suppliers:['AMAT','LRCX','KLAC'], peers:['AMD','INTC','QCOM'], indices:['QQQ','SOXX'] },
+  TSLA:  { sector:'EV/Auto', suppliers:['ALB','SQM','LIT'], peers:['GM','F','RIVN'], indices:['SPY','QQQ'] },
+  AMZN:  { sector:'E-Commerce/Cloud', suppliers:['NVDA','AMD'], peers:['MSFT','GOOGL','WMT'], indices:['QQQ','SPY'] },
+  META:  { sector:'Social Media', suppliers:['NVDA','QCOM'], peers:['GOOGL','SNAP','NFLX'], indices:['QQQ','SPY'] },
+  GOOGL: { sector:'Advertising/Cloud', suppliers:['NVDA','AMD'], peers:['META','MSFT','AAPL'], indices:['QQQ','SPY'] },
+  JPM:   { sector:'Banking', suppliers:[], peers:['BAC','GS','MS','WFC'], indices:['XLF','KBE','SPY'] },
+  GS:    { sector:'Investment Banking', suppliers:[], peers:['JPM','MS','BAC'], indices:['XLF','KBE','SPY'] },
+  XOM:   { sector:'Energy', suppliers:[], peers:['CVX','BP','SLB'], indices:['XLE','SPY'] },
+  CVX:   { sector:'Energy', suppliers:[], peers:['XOM','BP','SLB'], indices:['XLE','SPY'] },
+};
+
+const SIGNAL_KNOWN_TICKERS = [
+  'AAPL','MSFT','GOOGL','GOOG','AMZN','META','NVDA','TSLA','JPM','V','MA',
+  'WMT','JNJ','PG','KO','PEP','DIS','NFLX','AMD','INTC','QCOM','ORCL','CSCO',
+  'CRM','ADBE','NOW','UNH','GS','MS','BAC','XOM','CVX','T','VZ','BA','GE',
+  'IBM','SNAP','RIVN','F','GM','COIN','HOOD','SPY','QQQ','SOXX','XLF','XLE',
+];
+
+function signalExtractTickers(text, existing = []) {
+  const up = text.toUpperCase();
+  return [...new Set([...existing, ...SIGNAL_KNOWN_TICKERS.filter(t => up.includes(t))])];
+}
+
+function scoreArticle(article) {
+  const raw = ((article.headline || '') + ' ' + (article.summary || '')).toLowerCase();
+
+  // M: Financial magnitude
+  let M = 0.20;
+  if (/trillion|all.time record|historic crash|emergency|default|collapse|meltdown|fraud|sec charge/i.test(raw)) M = 0.95;
+  else if (/billion|acquisition|merger|ipo|bankruptcy|layoff|rate cut|rate hike|earnings beat|earnings miss/i.test(raw)) M = 0.78;
+  else if (/revenue|earnings|profit|loss|margin|eps|guidance|forecast|inflation|gdp|federal reserve/i.test(raw)) M = 0.55;
+  else if (/upgrade|downgrade|target price|analyst|outlook|price target/i.test(raw)) M = 0.38;
+
+  // P: Source credibility + confirmation
+  const srcP = { WSJ: 0.80, Bloomberg: 0.85, Reuters: 0.82, 'Yahoo Finance': 0.60 };
+  let P = srcP[article.source] || 0.62;
+  if (/sec filing|confirmed|reported quarterly|8-k|10-k|10-q|press release/i.test(raw)) P = Math.min(0.95, P + 0.12);
+  if (/rumor|allegedly|could|may speculate|source close|unconfirmed/i.test(raw)) P = Math.max(0.15, P - 0.20);
+
+  // I: Immediacy
+  let I = 0.45;
+  if (/trading halt|circuit breaker|breaking|just in|flash crash|emergency/i.test(raw)) I = 0.95;
+  else if (/today|this morning|after hours|premarket|open bell|close bell/i.test(raw)) I = 0.80;
+  else if (/this week|upcoming earnings|next week|days away/i.test(raw)) I = 0.62;
+  else if (/long.term|structural|strategic plan|five.year|decade|multi.year/i.test(raw)) I = 0.15;
+
+  // R: Moat-adjusted resilience
+  const tickers = signalExtractTickers(raw, article.symbols || []);
+  const isNeg = /drop|fall|crash|plunge|miss|loss|decline|warn|cut|bankrupt|downgrade|short seller/i.test(raw);
+  let R = 1.0;
+  let bestMoat = null;
+  tickers.forEach(sym => {
+    const m = MOAT_DB[sym];
+    if (!m) return;
+    bestMoat = bestMoat === null ? m : (isNeg ? Math.min(bestMoat, m) : Math.max(bestMoat, m));
+  });
+  if (bestMoat !== null) R = isNeg ? Math.max(0.55, 2 - bestMoat) : Math.min(1.45, bestMoat);
+
+  const signal = Math.min(1, M * P * I * R);
+
+  // Analyst verdict (template)
+  const magDesc = M > 0.8 ? 'material EBITDA impact with potential multi-quarter margin compression'
+    : M > 0.6 ? 'moderate near-term revenue implications and guidance risk'
+    : M > 0.4 ? 'limited direct P&L impact but incremental sentiment pressure'
+    : 'minimal fundamental impact; primarily sentiment-driven';
+  const urgency = I > 0.8 ? 'Immediate repricing expected at open.'
+    : I > 0.55 ? 'Near-term repricing likely within the trading week.'
+    : 'Long-duration structural factor with terminal value implications.';
+  const primaryTicker = tickers.find(t => MOAT_DB[t]) || null;
+  const moatLabel = primaryTicker ? (MOAT_DB[primaryTicker] > 1.1 ? 'wide' : MOAT_DB[primaryTicker] > 1.0 ? 'narrow' : 'no') : null;
+  const moatNote = moatLabel === 'wide'
+    ? `${primaryTicker}'s wide moat — durable pricing power and high switching costs — ${isNeg ? 'dampens downside vol and limits multiple compression' : 'amplifies the structural alpha thesis'}.`
+    : moatLabel === 'narrow'
+    ? `Narrow moat provides partial buffer; ${isNeg ? 'watch for operating leverage bleed' : 'limited durable upside beyond near-term rerating'}.`
+    : 'No identifiable moat; elevated sensitivity to macro and sector rotation.';
+  const verdict = `Signal ${signal.toFixed(3)} (M=${M.toFixed(2)} P=${P.toFixed(2)} I=${I.toFixed(2)} R=${R.toFixed(2)}): This event represents ${magDesc}. ${urgency} ${moatNote}`;
+
+  return { M: +M.toFixed(2), P: +P.toFixed(2), I: +I.toFixed(2), R: +R.toFixed(2), signal: +signal.toFixed(3), tickers, isNeg, verdict };
+}
+
+const DATASET_TARGET_PANEL = {
+  'ds-net-worth':  'edu-sandbox',
+  'ds-budget':     'edu-sandbox',
+  'ds-tvm':        'edu-sandbox',
+  'ds-portfolio':  'edu-sandbox',
+  'ds-credit':     'edu-sandbox',
+  'ds-housing':    'edu-sandbox',
+};
+
+const SANDBOX_DATA = (() => {
+  const now  = new Date();
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const C = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const P = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+  const cat = primary => ({ personal_finance_category: { primary } });
+  return {
+  'ds-budget': {
+    transactions: [
+      // ── Current month ──────────────────────────────────────────────────────
+      { merchant_name: 'Athens Property Mgmt', name: 'Athens Property Mgmt', amount: 650,   date: `${C}-01`, ...cat('RENT_AND_UTILITIES') },
+      { merchant_name: 'Georgia Power',        name: 'Georgia Power',        amount: 82,    date: `${C}-03`, ...cat('RENT_AND_UTILITIES') },
+      { merchant_name: 'AT&T Mobile',          name: 'AT&T Mobile',          amount: 45,    date: `${C}-05`, ...cat('RENT_AND_UTILITIES') },
+      { merchant_name: 'Kroger',               name: 'Kroger',               amount: 68.43, date: `${C}-02`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Kroger',               name: 'Kroger',               amount: 74.12, date: `${C}-09`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Kroger',               name: 'Kroger',               amount: 71.55, date: `${C}-16`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Kroger',               name: 'Kroger',               amount: 65.90, date: `${C}-23`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: "Chick-fil-A",          name: "Chick-fil-A",          amount: 12.47, date: `${C}-03`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: "Jimmy John's",         name: "Jimmy John's",         amount: 12.75, date: `${C}-04`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Panda Express',        name: 'Panda Express',        amount: 11.20, date: `${C}-07`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Chipotle',             name: 'Chipotle',             amount: 13.50, date: `${C}-10`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: "McDonald's",           name: "McDonald's",           amount: 9.85,  date: `${C}-11`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: "Domino's Pizza",       name: "Domino's Pizza",       amount: 22.40, date: `${C}-13`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: "Moe's SW Grill",       name: "Moe's SW Grill",       amount: 14.30, date: `${C}-18`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: "Zaxby's",              name: "Zaxby's",              amount: 14.90, date: `${C}-17`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Panera Bread',         name: 'Panera Bread',         amount: 16.85, date: `${C}-22`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'IHOP',                 name: 'IHOP',                 amount: 17.80, date: `${C}-24`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Waffle House',         name: 'Waffle House',         amount: 11.60, date: `${C}-25`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Starbucks',            name: 'Starbucks',            amount: 7.90,  date: `${C}-08`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: "Jittery Joe's",        name: "Jittery Joe's Coffee", amount: 6.50,  date: `${C}-15`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Dutch Bros',           name: 'Dutch Bros Coffee',    amount: 5.90,  date: `${C}-17`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Starbucks',            name: 'Starbucks',            amount: 9.20,  date: `${C}-20`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Dutch Bros',           name: 'Dutch Bros Coffee',    amount: 7.75,  date: `${C}-24`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Athens Transit',       name: 'Athens Transit Pass',  amount: 45,    date: `${C}-01`, ...cat('TRANSPORTATION') },
+      { merchant_name: 'Uber',                 name: 'Uber',                 amount: 18.40, date: `${C}-06`, ...cat('TRANSPORTATION') },
+      { merchant_name: 'Uber',                 name: 'Uber',                 amount: 21.50, date: `${C}-19`, ...cat('TRANSPORTATION') },
+      { merchant_name: 'Netflix',              name: 'Netflix',              amount: 15.49, date: `${C}-01`, ...cat('ENTERTAINMENT') },
+      { merchant_name: 'Spotify',              name: 'Spotify Premium',      amount: 10.99, date: `${C}-01`, ...cat('ENTERTAINMENT') },
+      { merchant_name: 'Steam',                name: 'Steam Purchase',       amount: 29.99, date: `${C}-08`, ...cat('ENTERTAINMENT') },
+      { merchant_name: 'Regal Cinemas',        name: 'Regal Cinemas',        amount: 24.50, date: `${C}-12`, ...cat('ENTERTAINMENT') },
+      { merchant_name: 'AMC Theaters',         name: 'AMC Theaters',         amount: 21.00, date: `${C}-19`, ...cat('ENTERTAINMENT') },
+      { merchant_name: 'Live Concert',         name: 'Athfest Ticket',       amount: 22.50, date: `${C}-23`, ...cat('ENTERTAINMENT') },
+      { merchant_name: 'Great Clips',          name: 'Great Clips',          amount: 22,    date: `${C}-09`, ...cat('PERSONAL_CARE') },
+      { merchant_name: 'CVS Pharmacy',         name: 'CVS Pharmacy',         amount: 31.45, date: `${C}-14`, ...cat('PERSONAL_CARE') },
+      { merchant_name: 'Target',               name: 'Target Personal',      amount: 28.90, date: `${C}-20`, ...cat('PERSONAL_CARE') },
+      { merchant_name: 'Amazon',               name: 'Amazon.com',           amount: 67.32, date: `${C}-06`, ...cat('GENERAL_MERCHANDISE') },
+      { merchant_name: 'Target',               name: 'Target',               amount: 43.18, date: `${C}-16`, ...cat('GENERAL_MERCHANDISE') },
+      { merchant_name: 'Amazon',               name: 'Amazon.com',           amount: 38.50, date: `${C}-17`, ...cat('GENERAL_MERCHANDISE') },
+      { merchant_name: 'Old Navy',             name: 'Old Navy',             amount: 58.97, date: `${C}-21`, ...cat('GENERAL_MERCHANDISE') },
+      { merchant_name: 'Amazon',               name: 'Amazon.com',           amount: 28.50, date: `${C}-24`, ...cat('GENERAL_MERCHANDISE') },
+      { merchant_name: 'UGA Bookstore',        name: 'UGA Bookstore',        amount: 89.95, date: `${C}-03`, ...cat('EDUCATION') },
+      { merchant_name: 'Chegg',                name: 'Chegg Study',          amount: 19.95, date: `${C}-01`, ...cat('EDUCATION') },
+      { merchant_name: 'Office Depot',         name: 'Office Depot',         amount: 34.50, date: `${C}-11`, ...cat('EDUCATION') },
+      // ── Previous month (for Trends comparison) ─────────────────────────────
+      { merchant_name: 'Athens Property Mgmt', name: 'Athens Property Mgmt', amount: 650,   date: `${P}-01`, ...cat('RENT_AND_UTILITIES') },
+      { merchant_name: 'Georgia Power',        name: 'Georgia Power',        amount: 94.20, date: `${P}-03`, ...cat('RENT_AND_UTILITIES') },
+      { merchant_name: 'AT&T Mobile',          name: 'AT&T Mobile',          amount: 45,    date: `${P}-05`, ...cat('RENT_AND_UTILITIES') },
+      { merchant_name: 'Kroger',               name: 'Kroger',               amount: 72.10, date: `${P}-01`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Kroger',               name: 'Kroger',               amount: 68.90, date: `${P}-08`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Kroger',               name: 'Kroger',               amount: 75.44, date: `${P}-15`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Kroger',               name: 'Kroger',               amount: 61.20, date: `${P}-22`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: "Chick-fil-A",          name: "Chick-fil-A",          amount: 11.85, date: `${P}-04`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Chipotle',             name: 'Chipotle',             amount: 14.75, date: `${P}-09`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: "McDonald's",           name: "McDonald's",           amount: 8.40,  date: `${P}-12`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Waffle House',         name: 'Waffle House',         amount: 13.20, date: `${P}-18`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Starbucks',            name: 'Starbucks',            amount: 8.65,  date: `${P}-07`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Starbucks',            name: 'Starbucks',            amount: 6.90,  date: `${P}-21`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Athens Transit',       name: 'Athens Transit Pass',  amount: 45,    date: `${P}-01`, ...cat('TRANSPORTATION') },
+      { merchant_name: 'Uber',                 name: 'Uber',                 amount: 14.80, date: `${P}-10`, ...cat('TRANSPORTATION') },
+      { merchant_name: 'Netflix',              name: 'Netflix',              amount: 15.49, date: `${P}-01`, ...cat('ENTERTAINMENT') },
+      { merchant_name: 'Spotify',              name: 'Spotify Premium',      amount: 10.99, date: `${P}-01`, ...cat('ENTERTAINMENT') },
+      { merchant_name: 'Regal Cinemas',        name: 'Regal Cinemas',        amount: 24.50, date: `${P}-14`, ...cat('ENTERTAINMENT') },
+      { merchant_name: 'CVS Pharmacy',         name: 'CVS Pharmacy',         amount: 28.60, date: `${P}-11`, ...cat('PERSONAL_CARE') },
+      { merchant_name: 'Target',               name: 'Target Personal',      amount: 19.45, date: `${P}-19`, ...cat('PERSONAL_CARE') },
+      { merchant_name: 'Amazon',               name: 'Amazon.com',           amount: 84.15, date: `${P}-05`, ...cat('GENERAL_MERCHANDISE') },
+      { merchant_name: 'Target',               name: 'Target',               amount: 52.30, date: `${P}-13`, ...cat('GENERAL_MERCHANDISE') },
+      { merchant_name: 'Amazon',               name: 'Amazon.com',           amount: 31.99, date: `${P}-20`, ...cat('GENERAL_MERCHANDISE') },
+      { merchant_name: 'Walmart',              name: 'Walmart',              amount: 47.62, date: `${P}-25`, ...cat('GENERAL_MERCHANDISE') },
+      { merchant_name: 'Chegg',                name: 'Chegg Study',          amount: 19.95, date: `${P}-01`, ...cat('EDUCATION') },
+    ],
+  },
+  'ds-portfolio': {
+    holdings: [
+      { security: { ticker_symbol: 'VTI',  name: 'Vanguard Total Stock Market ETF'  }, quantity: 8.523,  institution_price: 234.82, cost_basis: 1812.50 },
+      { security: { ticker_symbol: 'BND',  name: 'Vanguard Total Bond Market ETF'   }, quantity: 6.802,  institution_price:  73.52, cost_basis:  480.00 },
+      { security: { ticker_symbol: 'VXUS', name: 'Vanguard Total Intl Stock ETF'    }, quantity: 18.750, institution_price:  53.28, cost_basis:  950.00 },
+      { security: { ticker_symbol: 'SCHD', name: 'Schwab US Dividend Equity ETF'    }, quantity: 20.120, institution_price:  74.56, cost_basis:  980.00 },
+    ],
+  },
+  'ds-net-worth': {
+    accounts: [
+      { account_id: 'sb-chk', name: 'UGA CU Checking',     institution_name: 'UGA Credit Union', subtype: 'checking', type: 'depository', balances: { current: 1200 } },
+      { account_id: 'sb-sav', name: 'UGA CU Savings',      institution_name: 'UGA Credit Union', subtype: 'savings',  type: 'depository', balances: { current: 3150 } },
+      { account_id: 'sb-car', name: 'Auto Loan',            institution_name: 'UGA Credit Union', subtype: 'auto',     type: 'loan',       balances: { current: -1510 } },
+    ],
+    transactions: [],
+  },
+  'ds-credit': {
+    creditScore: 672,
+    creditScoreChange: -8,
+    scoreLabel: 'Fair',
+    scoreFactors: [
+      { factor: 'Payment History',      weight: 35, rating: 'Good',     detail: '18 months of on-time payments. No missed or late payments.', color: '#4ade80' },
+      { factor: 'Credit Utilization',   weight: 30, rating: 'High',     detail: '43% overall utilization (>30% hurts score). Biggest drag.', color: '#f87171' },
+      { factor: 'Credit History Length',weight: 15, rating: 'Fair',     detail: 'Oldest account ~2 years. Score improves as accounts age.',   color: '#fbbf24' },
+      { factor: 'Credit Mix',           weight: 10, rating: 'Good',     detail: 'Checking account + 2 credit cards = healthy mix.',           color: '#4ade80' },
+      { factor: 'New Credit Inquiries', weight: 10, rating: 'Good',     detail: 'No hard inquiries in the past 12 months.',                   color: '#4ade80' },
+    ],
+    paymentHistory: [
+      { month: 'Nov 2025', paid: true }, { month: 'Dec 2025', paid: true },
+      { month: 'Jan 2026', paid: true }, { month: 'Feb 2026', paid: true },
+      { month: 'Mar 2026', paid: true }, { month: 'Apr 2026', paid: null },
+    ],
+    accounts: [
+      { account_id: 'sb-chk2', name: 'Chase Checking',          institution_name: 'Chase',    subtype: 'checking',    type: 'depository', balances: { current: 847 } },
+      { account_id: 'sb-cc1',  name: 'Chase Freedom Unlimited', institution_name: 'Chase',    subtype: 'credit card', type: 'credit',     balances: { current: -1850, limit: 4500 } },
+      { account_id: 'sb-cc2',  name: 'Discover It Student',     institution_name: 'Discover', subtype: 'credit card', type: 'credit',     balances: { current: -1610, limit: 3500 } },
+    ],
+    transactions: [
+      { merchant_name: 'Netflix',     name: 'Netflix',         amount: 15.49, date: `${C}-01`, ...cat('ENTERTAINMENT') },
+      { merchant_name: 'Spotify',     name: 'Spotify Premium', amount: 10.99, date: `${C}-01`, ...cat('ENTERTAINMENT') },
+      { merchant_name: 'Amazon',      name: 'Amazon.com',      amount: 67.32, date: `${C}-06`, ...cat('GENERAL_MERCHANDISE') },
+      { merchant_name: 'Target',      name: 'Target',          amount: 43.18, date: `${C}-16`, ...cat('GENERAL_MERCHANDISE') },
+      { merchant_name: 'Kroger',      name: 'Kroger',          amount: 68.43, date: `${C}-02`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Starbucks',   name: 'Starbucks',       amount: 7.90,  date: `${C}-08`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Chipotle',    name: 'Chipotle',        amount: 13.50, date: `${C}-10`, ...cat('FOOD_AND_DRINK') },
+      { merchant_name: 'Uber',        name: 'Uber',            amount: 18.40, date: `${C}-06`, ...cat('TRANSPORTATION') },
+    ],
+  },
+  'ds-tvm': {
+    scenarios: [
+      { label: 'Lump Sum: Rule of 72',      principal: 1000, monthly: 0,   rate: 6,   years: 30 },
+      { label: 'Monthly Contributions',    principal: 0,    monthly: 200, rate: 7,   years: 30 },
+      { label: 'Emergency Fund Build-Out', principal: 500,  monthly: 150, rate: 4.5, years: 10 },
+    ],
+  },
+  'ds-housing': {
+    rent: 1200, homePrice: 285000, downPct: 0.05, rate: 7.1, termYears: 30,
+    propertyTaxRate: 0.012, insurancePerYear: 1800, appreciationRate: 0.03,
+  },
+  };
+})();
+
+function DragSection({ id, panel, order, onReorder, children }) {
+  const [over, setOver] = React.useState(false);
+  return (
+    <div
+      draggable
+      onDragStart={e => { e.dataTransfer.setData('text/plain', `${panel}|||${id}`); e.currentTarget.style.opacity = '0.45'; }}
+      onDragEnd={e => { e.currentTarget.style.opacity = '1'; }}
+      onDragOver={e => { e.preventDefault(); setOver(true); }}
+      onDragLeave={() => setOver(false)}
+      onDrop={e => {
+        e.preventDefault(); setOver(false);
+        const [srcPanel, srcId] = e.dataTransfer.getData('text/plain').split('|||');
+        if (srcPanel === panel && srcId !== id) onReorder(srcId, id);
+      }}
+      style={{ order: order.indexOf(id), outline: over ? '2px dashed rgba(77,163,255,0.4)' : '2px solid transparent', outlineOffset: 3, borderRadius: 12, position: 'relative' }}
+      className="drag-section"
+    >
+      <div className="drag-handle" title="Drag to reorder" style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab', color: '#555', fontSize: 13, borderRadius: 5, background: 'rgba(255,255,255,0.06)', opacity: 0, transition: 'opacity 0.15s', userSelect: 'none' }}>⠿</div>
+      {children}
+    </div>
+  );
+}
+
 export default function Dashboard() {
-  const [panel, setPanel] = useState('overview');
+  const { user, logout, isPremium, isProfessor, isAdmin, isStudent, isUser } = useAuth();
+  const [panel, setPanel] = useState(() => localStorage.getItem('basis_panel') || 'overview');
   const [accounts, setAccounts] = useState([]);
+  const [isDemoData, setIsDemoData] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [holdings, setHoldings] = useState([]);
   const [budget, setBudget] = useState([]);
@@ -558,6 +1641,19 @@ export default function Dashboard() {
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
   const [goalForm, setGoalForm] = useState({ name: '', target: '', accountId: '' });
+  const [notifPrefs, setNotifPrefs] = useState({ email: '', budgetAlert: true, budgetThreshold: 80, goalAlert: true, lowBalanceAlert: true, lowBalanceAmt: 500 });
+  const [notifSaving, setNotifSaving] = useState(false);
+  const [notifEmailStatus, setNotifEmailStatus] = useState(null);
+  const [notifConfigured, setNotifConfigured] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [feedbackSent, setFeedbackSent] = useState(false);
+  const [profCustomTabs, setProfCustomTabs] = useState(() => { try { return JSON.parse(localStorage.getItem('basis_prof_tabs') || '{}'); } catch { return {}; } });
+  const [profCustomContent, setProfCustomContent] = useState(() => { try { return JSON.parse(localStorage.getItem('basis_prof_content') || '{}'); } catch { return {}; } });
+  const [showAddTab, setShowAddTab] = useState(false);
+  const [addTabName, setAddTabName] = useState('');
+  const [showAddContentModal, setShowAddContentModal] = useState(null);
+  const [addContentForm, setAddContentForm] = useState({ title: '', url: '', description: '' });
   const [tickerFilter, setTickerFilter] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
@@ -568,13 +1664,281 @@ export default function Dashboard() {
   const [marketTickers, setMarketTickers] = useState({ indices: [], active: [] });
   const [sp500Candles, setSp500Candles] = useState([]);
   const [sp500Period, setSp500Period] = useState('3mo');
-  const [learnCategory, setLearnCategory] = useState('markets');
+  const [learnCategory, setLearnCategory] = useState(() => {
+    try {
+      const h = new Set(JSON.parse(localStorage.getItem('basis_hidden_subtabs') || '[]'));
+      const saved = JSON.parse(localStorage.getItem('basis_layout_order') || '{}')['learn-tabs'];
+      const def = PANEL_SUBTABS.learn.map(s => s.key);
+      const order = saved?.length ? [...saved.filter(id => def.includes(id)), ...def.filter(id => !saved.includes(id))] : def;
+      return order.find(v => !h.has(`learn:${v}`)) || 'essentials';
+    } catch { return 'essentials'; }
+  });
   const [learnExpanded, setLearnExpanded] = useState(new Set());
+  const [yieldCurve, setYieldCurve] = useState({ tenors: [], date: null });
+  const [budgetTab, setBudgetTab] = useState('income');
+  const [showTour, setShowTour] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+  const [holdingsExpanded, setHoldingsExpanded] = useState(false);
+  const [expandedDataset, setExpandedDataset] = useState(null);
+  const [sandboxDataset, setSandboxDataset] = useState(null);
+  const [connectBannerDismissed, setConnectBannerDismissed] = useState(
+    () => localStorage.getItem('ledger_connect_banner_dismissed') === '1'
+  );
+  const [toast, setToast] = useState(null);
+  const [layoutOrder, setLayoutOrder] = useState(() => { try { return JSON.parse(localStorage.getItem('basis_layout_order') || '{}'); } catch { return {}; } });
+  const getOrder = (key, defaults) => { const s = layoutOrder[key]; if (!s?.length) return defaults; const ss = new Set(s); return [...s.filter(id => defaults.includes(id)), ...defaults.filter(id => !ss.has(id))]; };
+  const handleReorder = (key, defaults) => (srcId, tgtId) => { const order = getOrder(key, defaults); const si = order.indexOf(srcId), ti = order.indexOf(tgtId); if (si === -1 || ti === -1 || si === ti) return; const next = [...order]; next.splice(si, 1); next.splice(ti, 0, srcId); setLayoutOrder(prev => ({ ...prev, [key]: next })); };
+  const resetLayout = (key) => setLayoutOrder(prev => { const n = { ...prev }; delete n[key]; return n; });
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (!user?.id) return false;
+    return localStorage.getItem(`basis_onboarded_${user.id}`) !== '1';
+  });
+  const [taxIncome, setTaxIncome] = useState('65000');
+  const [taxFiling, setTaxFiling] = useState('single');
+  const [schHours,      setSchHours]      = useState('45');
+  const [schHopeGPA,    setSchHopeGPA]    = useState('3.20');
+  const [schSemesters,  setSchSemesters]  = useState('3');
+  const [schCourses,    setSchCourses]    = useState([
+    { id: 1, name: '', credits: '3', grade: 'B' },
+    { id: 2, name: '', credits: '3', grade: 'B' },
+    { id: 3, name: '', credits: '3', grade: 'B' },
+    { id: 4, name: '', credits: '3', grade: 'B' },
+    { id: 5, name: '', credits: '3', grade: 'B' },
+  ]);
+  const [schSensIdx,    setSchSensIdx]    = useState(0);
+  const [schNextId,     setSchNextId]     = useState(6);
+  const [tax401k, setTax401k] = useState('0');
+  const [taxItemized, setTaxItemized] = useState('0');
+  const mainRef = useRef(null);
+  const [courseView, setCourseView] = useState('schedule'); // 'schedule' | 'calendar'
+  const [calMonth, setCalMonth] = useState(3); // 0=Jan … 4=May (default April)
+  const [theme, setTheme] = useState(() => localStorage.getItem('basis_theme') || 'light');
+  useEffect(() => {
+    const r = document.documentElement;
+    if (theme === 'light') {
+      r.style.setProperty('--bg',           '#f2f2f7');
+      r.style.setProperty('--side-bg',      '#ffffff');
+      r.style.setProperty('--card-bg',      '#ffffff');
+      r.style.setProperty('--border-c',     '#d1d1d6');
+      r.style.setProperty('--text',         '#111111');
+      r.style.setProperty('--text2',        '#555558');
+      r.style.setProperty('--text3',        '#8e8e93');
+      r.style.setProperty('--muted',        '#e5e5ea');
+      r.style.setProperty('--inner-dark',   '#f0f0f5');
+      r.style.setProperty('--example-bg',   '#eef4ff');
+      r.style.setProperty('--example-border', '#b3cef5');
+      r.style.setProperty('--overlay',      'rgba(0,0,0,0.35)');
+      r.style.setProperty('--accent',       '#1a5fd4');
+      r.style.setProperty('--accent-btn',   '#0052cc');
+      r.style.setProperty('--green',        '#16a34a');
+      r.style.setProperty('--red',          '#dc2626');
+    } else {
+      ['--bg','--side-bg','--card-bg','--border-c','--text','--text2','--text3','--muted','--inner-dark','--example-bg','--example-border','--overlay','--accent','--accent-btn','--green','--red']
+        .forEach(v => r.style.removeProperty(v));
+    }
+    localStorage.setItem('basis_theme', theme);
+  }, [theme]);
+
+  const [hiddenPanels, setHiddenPanels] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('basis_hidden') || '[]')); } catch { return new Set(); }
+  });
+  const toggleHidden = (key) => {
+    setHiddenPanels(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      localStorage.setItem('basis_hidden', JSON.stringify([...next]));
+      return next;
+    });
+  };
+
+  const [hiddenSubtabs, setHiddenSubtabs] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('basis_hidden_subtabs') || '[]')); } catch { return new Set(); }
+  });
+  const toggleSubtabHidden = (panelKey, subtabKey) => {
+    const id = `${panelKey}:${subtabKey}`;
+    const hiding = !hiddenSubtabs.has(id);
+    setHiddenSubtabs(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      localStorage.setItem('basis_hidden_subtabs', JSON.stringify([...next]));
+      return next;
+    });
+    if (hiding) {
+      const nextHidden = new Set(hiddenSubtabs);
+      nextHidden.add(id);
+      const subtabs = PANEL_SUBTABS[panelKey];
+      if (!subtabs) return;
+      const firstVisible = subtabs.find(s => !nextHidden.has(`${panelKey}:${s.key}`));
+      if (!firstVisible) return;
+      if (panelKey === 'cashflow' && cashFlowTab === subtabKey) setCashFlowTab(firstVisible.key);
+      if (panelKey === 'insights' && insightsTab === subtabKey) setInsightsTab(firstVisible.key);
+      if (panelKey === 'learn'    && learnCategory === subtabKey) setLearnCategory(firstVisible.key);
+    }
+  };
+  const isSubtabHidden = (panelKey, subtabKey) => hiddenSubtabs.has(`${panelKey}:${subtabKey}`);
+
+  const [expandedTabRows, setExpandedTabRows] = useState(new Set());
+  const toggleExpandTabRow = (key) => {
+    setExpandedTabRows(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
+  useEffect(() => {
+    const handle = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handle);
+    return () => window.removeEventListener('resize', handle);
+  }, []);
+  const g3 = isMobile ? '1fr 1fr' : 'repeat(3, 1fr)';
+  const g2 = isMobile ? '1fr' : '1fr 1fr';
+
+  const [tvmPV, setTvmPV] = useState('1000');
+  const [tvmPMT, setTvmPMT] = useState('200');
+  const [tvmRate, setTvmRate] = useState('7');
+  const [tvmYears, setTvmYears] = useState('30');
+  const [housingAmort, setHousingAmort] = useState(false);
+  const [simAlloc, setSimAlloc] = useState({ VTI: 40, BND: 10, VXUS: 25, SCHD: 25 });
+  const [housingRate, setHousingRate]     = useState('');
+  const [housingDown, setHousingDown]     = useState('');
+  const [housingIncome, setHousingIncome] = useState('');
+  const [cashFlowTab, setCashFlowTab] = useState(() => {
+    try {
+      const h = new Set(JSON.parse(localStorage.getItem('basis_hidden_subtabs') || '[]'));
+      const saved = JSON.parse(localStorage.getItem('basis_layout_order') || '{}')['cashflow-tabs'];
+      const def = PANEL_SUBTABS.cashflow.map(s => s.key);
+      const order = saved?.length ? [...saved.filter(id => def.includes(id)), ...def.filter(id => !saved.includes(id))] : def;
+      return order.find(v => !h.has(`cashflow:${v}`)) || 'banking';
+    } catch { return 'banking'; }
+  });
+  const [selectedBankAccount, setSelectedBankAccount] = useState(null);
+  const [selectedInstitution, setSelectedInstitution] = useState(null);
+  const [insightsTab, setInsightsTab] = useState(() => {
+    try {
+      const h = new Set(JSON.parse(localStorage.getItem('basis_hidden_subtabs') || '[]'));
+      const saved = JSON.parse(localStorage.getItem('basis_layout_order') || '{}')['insights-tabs'];
+      const def = PANEL_SUBTABS.insights.map(s => s.key);
+      const order = saved?.length ? [...saved.filter(id => def.includes(id)), ...def.filter(id => !saved.includes(id))] : def;
+      return order.find(v => !h.has(`insights:${v}`)) || 'markets';
+    } catch { return 'markets'; }
+  });
+  const [signalFilter, setSignalFilter] = useState(null);
+  const [showAllTxns, setShowAllTxns] = useState(false);
+  const [showAllNews, setShowAllNews] = useState(false);
+  const [marketView, setMarketView]         = useState('most_actives');
+  const [marketViewData, setMarketViewData] = useState([]);
+  const [loadingMarketView, setLoadingMarketView] = useState(false);
+  const [customTickers, setCustomTickers]   = useState(() => { try { return JSON.parse(localStorage.getItem('basis_tickers') || '[]'); } catch { return []; } });
+  const [customTickerData, setCustomTickerData] = useState([]);
+  const [tickerInput, setTickerInput]       = useState('');
+  const [selectedTicker, setSelectedTicker] = useState(null);
+  const [tickerChartCandles, setTickerChartCandles] = useState([]);
+  const [tickerChartPeriod, setTickerChartPeriod] = useState('3mo');
+  const [extendedTickerData, setExtendedTickerData] = useState({});
+  const [calendarEvents, setCalendarEvents] = useState(() => { try { return JSON.parse(localStorage.getItem('basis_calendar') || '[]'); } catch { return []; } });
+  const [calViewDate, setCalViewDate]       = useState(() => new Date());
+  const [showEventForm, setShowEventForm]   = useState(false);
+  const [eventForm, setEventForm]           = useState({ title: '', date: '', type: 'reminder', note: '' });
+  const [editingEvent, setEditingEvent]     = useState(null);
+  const [showLinkCal, setShowLinkCal]       = useState(false);
+  const [selectedDay, setSelectedDay]       = useState(null);
+  const [showCreateAssignment, setShowCreateAssignment] = useState(false);
+  const [customAssignments, setCustomAssignments] = useState([]);
+  const [createForm, setCreateForm] = useState({ title: '', description: '', chapter: 'Ch. 1', datasetId: '', points: '100', week: '' });
+  const [createAssignCourseId, setCreateAssignCourseId] = useState(null);
+  const [viewAs, setViewAs] = useState(null); // null | 'professor' | 'student'
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteSelectedCourse, setInviteSelectedCourse] = useState(null);
+  const [profCodes, setProfCodes] = useState([]);
+  const [profStudents, setProfStudents] = useState({});
+  const [selectedProfCode, setSelectedProfCode] = useState('');
+  const [newCodeForm, setNewCodeForm] = useState({ code: '', course_id: '', course_name: '', semester: 'Spring 2026' });
+  const [showNewCode, setShowNewCode] = useState(false);
+  const [newCodeError, setNewCodeError] = useState('');
+  const [eduMode, setEduMode] = useState(() => {
+    const saved = localStorage.getItem('basis_edu_mode');
+    if (saved !== null) return saved === 'true';
+    return !!(user?.enrollments?.length);
+  });
+  const switchEduMode = (val) => { localStorage.setItem('basis_edu_mode', String(val)); setEduMode(val); };
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const enrolledCourses = (() => {
+    if (isProfessor || isAdmin) return COURSES;
+    const ids = new Set(
+      (user?.enrollments || []).map(e => (e.course_id || '').toLowerCase().replace(/\s+/g, ''))
+    );
+    const filtered = COURSES.filter(c => ids.has(c.id.toLowerCase()));
+    return filtered.length > 0 ? filtered : COURSES;
+  })();
+  const [eduInnerTab, setEduInnerTab] = useState('content');
+  const [contentFolder, setContentFolder] = useState('slides');
+  const [openSlideIdx, setOpenSlideIdx] = useState(null);
+  const [syllabusFile, setSyllabusFile] = useState(null);
+  const [mirrorStudentView, setMirrorStudentView] = useState(false);
+  const [hiddenItems, setHiddenItems] = useState({});
+  const [pushSearch, setPushSearch] = useState('');
+  const [pushTarget, setPushTarget] = useState({});
+  const [submittedAssignments, setSubmittedAssignments] = useState(new Set());
+  const [submissionDetails, setSubmissionDetails] = useState({});
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showSubmit, setShowSubmit] = useState(null); // assignment object | null
+  const [submitNote, setSubmitNote] = useState('');
+  const [showGrade, setShowGrade] = useState(null); // submission object from professor hub
+  const [gradeForm, setGradeForm] = useState({ grade: '', feedback: '' });
+  const [gradeLoading, setGradeLoading] = useState(false);
+  const [profLoadingCode, setProfLoadingCode] = useState('');
+  const [profHubTab, setProfHubTab] = useState('analytics');
+  const [profAnnouncements, setProfAnnouncements] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('basis_announcements') || 'null') || DEMO_ANNOUNCEMENTS; }
+    catch { return DEMO_ANNOUNCEMENTS; }
+  });
+  const [annForm, setAnnForm] = useState({ courseCode: '', title: '', body: '' });
+  const [showAnnForm, setShowAnnForm] = useState(false);
+  const [expandedStudent, setExpandedStudent] = useState(null);
+  const [inboxNotifs, setInboxNotifs] = useState([]);
+  const [notifPanelOpen, setNotifPanelOpen] = useState(false);
+  const [accent, setAccent] = useState(() => localStorage.getItem('basis_accent') || 'blue');
+  const ACCENT_PRESETS = {
+    blue:   { accent: '#4da3ff', btn: '#0066f5' },
+    purple: { accent: '#a78bfa', btn: '#7c3aed' },
+    green:  { accent: '#4ade80', btn: '#16a34a' },
+    orange: { accent: '#f97316', btn: '#ea580c' },
+    rose:   { accent: '#fb7185', btn: '#e11d48' },
+  };
+  useEffect(() => {
+    const r = document.documentElement;
+    const p = ACCENT_PRESETS[accent] || ACCENT_PRESETS.blue;
+    r.style.setProperty('--accent',     p.accent);
+    r.style.setProperty('--accent-btn', p.btn);
+    localStorage.setItem('basis_accent', accent);
+  }, [accent]);
+  useEffect(() => { localStorage.setItem('basis_panel', panel); }, [panel]);
+  useEffect(() => { localStorage.setItem('basis_layout_order', JSON.stringify(layoutOrder)); }, [layoutOrder]);
+  useEffect(() => { localStorage.setItem('basis_calendar', JSON.stringify(calendarEvents)); }, [calendarEvents]);
+  useEffect(() => { localStorage.setItem('basis_announcements', JSON.stringify(profAnnouncements)); }, [profAnnouncements]);
+  useEffect(() => {
+    if (!user) return;
+    const fetchNotifs = () => api.get('/notifications/inbox').then(r => setInboxNotifs(r.data.notifications || [])).catch(() => {});
+    fetchNotifs();
+    const id = setInterval(fetchNotifs, 30000);
+    return () => clearInterval(id);
+  }, [user]);
+
+  const effectiveProfessor = isAdmin && viewAs ? viewAs === 'professor' : isProfessor;
+  const effectiveStudent   = isAdmin && viewAs ? viewAs === 'student'   : user?.role === 'student';
+  const canSeeAI           = isAdmin && !viewAs;
+
+  // Lock main panel scrolling while tour is active
+  useEffect(() => {
+    if (!mainRef.current) return;
+    mainRef.current.style.overflowY = showTour ? 'hidden' : 'auto';
+  }, [showTour]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [acc, tellerAcc, txns, tellerTxns, hold, news, snaps, limits, goalsRes, marketRes, tickersRes, sp500Res] = await Promise.allSettled([
+      const [acc, tellerAcc, txns, tellerTxns, hold, news, snaps, limits, goalsRes, marketRes, tickersRes, sp500Res, yieldRes] = await Promise.allSettled([
         api.get('/plaid/accounts'),
         api.get('/teller/accounts'),
         api.get('/transactions'),
@@ -587,12 +1951,14 @@ export default function Dashboard() {
         api.get('/market/fear-greed'),
         api.get('/market/tickers'),
         api.get('/market/sp500', { params: { period: '3mo' } }),
+        api.get('/market/yield-curve'),
       ]);
 
       const plaidAccounts = acc.status       === 'fulfilled' ? acc.value.data.accounts            || [] : [];
       const tAccounts     = tellerAcc.status === 'fulfilled' ? tellerAcc.value.data.accounts      || [] : [];
       const allAccounts   = [...plaidAccounts, ...tAccounts];
       setAccounts(allAccounts);
+      setIsDemoData(acc.status === 'fulfilled' ? !!acc.value.data.demo : false);
 
       const plaidTxns = txns.status       === 'fulfilled' ? txns.value.data.transactions      || [] : [];
       const tTxns     = tellerTxns.status === 'fulfilled' ? tellerTxns.value.data.transactions || [] : [];
@@ -621,7 +1987,8 @@ export default function Dashboard() {
       if (goalsRes.status === 'fulfilled') setGoals(goalsRes.value.data.goals         || []);
       if (marketRes.status   === 'fulfilled') setFearGreed(marketRes.value.data);
       if (tickersRes.status  === 'fulfilled') setMarketTickers(tickersRes.value.data);
-      if (sp500Res.status    === 'fulfilled') setSp500Candles(sp500Res.value.data.candles || []);
+      if (sp500Res.status  === 'fulfilled') setSp500Candles(sp500Res.value.data.candles || []);
+      if (yieldRes.status  === 'fulfilled') setYieldCurve(yieldRes.value.data);
 
       // Record today's net worth snapshot
       const cash      = allAccounts.reduce((s, a) => s + (a.balances?.current || 0), 0);
@@ -636,6 +2003,139 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // Load notification prefs
+  useEffect(() => {
+    api.get('/notifications/prefs').then(r => {
+      if (r.data.prefs && Object.keys(r.data.prefs).length) setNotifPrefs(p => ({ ...p, ...r.data.prefs }));
+      setNotifConfigured(r.data.emailConfigured);
+    }).catch(() => {});
+  }, []);
+
+  // Check notification conditions after data loads
+  useEffect(() => {
+    if (!notifPrefs.budgetAlert && !notifPrefs.goalAlert && !notifPrefs.lowBalanceAlert) return;
+    const COOLDOWN = 24 * 60 * 60 * 1000;
+    const lastSent = JSON.parse(localStorage.getItem('basis_notif_sent') || '{}');
+    const now = Date.now();
+    const trigger = async (type, subject, details, key) => {
+      if (lastSent[key] && now - lastSent[key] < COOLDOWN) return;
+      try {
+        await api.post('/notifications/send', { type, subject, details });
+        lastSent[key] = now;
+        localStorage.setItem('basis_notif_sent', JSON.stringify(lastSent));
+      } catch {}
+    };
+    if (notifPrefs.goalAlert) {
+      goals.forEach(g => {
+        const acct = accounts.find(a => a.account_id === g.accountId);
+        const current = acct ? (acct.balances?.current || 0) : 0;
+        if (current >= g.target) trigger('goal_reached', `Goal reached: ${g.name}`, { goalName: g.name }, `goal_${g.id}`);
+      });
+    }
+    if (notifPrefs.lowBalanceAlert) {
+      accounts.filter(a => a.type === 'depository').forEach(a => {
+        const bal = a.balances?.current || 0;
+        if (bal < notifPrefs.lowBalanceAmt) trigger('low_balance', `Low balance: ${a.name}`, { accountName: a.name, balance: fmt(bal) }, `lowbal_${a.account_id}`);
+      });
+    }
+    if (notifPrefs.budgetAlert) {
+      budget.forEach(b => {
+        const limit = budgetLimits[b.category];
+        if (!limit) return;
+        const pct = (b.total / limit) * 100;
+        if (pct >= notifPrefs.budgetThreshold) {
+          trigger('budget_alert', `Budget alert: ${b.category}`, { category: b.category, spent: fmt(b.total), limit: fmt(limit), pct: Math.round(pct) }, `budget_${b.category}`);
+        }
+      });
+    }
+  }, [goals, accounts, budget, budgetLimits, notifPrefs]);
+
+  // Live ticker bar: refresh every 2 minutes
+  useEffect(() => {
+    const id = setInterval(async () => {
+      try { const r = await api.get('/market/tickers'); if (r.data) setMarketTickers(r.data); } catch {}
+    }, 120000);
+    return () => clearInterval(id);
+  }, []);
+
+  const fetchExtendedData = useCallback(async (symbols) => {
+    if (!symbols.length) return;
+    try {
+      const r = await api.get('/market/quotes-extended', { params: { symbols: symbols.join(',') } });
+      const map = {};
+      (r.data.quotes || []).forEach(q => { map[q.symbol] = q; });
+      setExtendedTickerData(prev => ({ ...prev, ...map }));
+    } catch {}
+  }, []);
+
+  const fetchTickerChart = useCallback(async (symbol, period) => {
+    setTickerChartCandles([]);
+    try {
+      const r = await api.get(`/market/chart/${symbol}`, { params: { period } });
+      setTickerChartCandles(r.data.candles || []);
+    } catch {}
+  }, []);
+
+  // Fetch screener or custom-ticker data when marketView changes
+  const fetchMarketView = useCallback(async (view, tickers) => {
+    setLoadingMarketView(true);
+    try {
+      if (view === 'your_list') {
+        if (!tickers.length) { setCustomTickerData([]); return; }
+        const r = await api.get('/market/quotes', { params: { symbols: tickers.join(',') } });
+        const quotes = r.data.quotes || [];
+        setCustomTickerData(quotes);
+        fetchExtendedData(quotes.map(q => q.symbol));
+      } else {
+        const r = await api.get('/market/screener', { params: { type: view } });
+        const quotes = r.data.quotes || [];
+        setMarketViewData(quotes);
+        fetchExtendedData(quotes.map(q => q.symbol));
+      }
+    } catch (e) { console.error('Market view error:', e); }
+    finally { setLoadingMarketView(false); }
+  }, [fetchExtendedData]);
+
+  useEffect(() => {
+    if (insightsTab === 'markets') fetchMarketView(marketView, customTickers);
+  }, [marketView, insightsTab, fetchMarketView]);
+
+  useEffect(() => {
+    api.get('/submissions/my')
+      .then(r => {
+        setSubmittedAssignments(new Set(r.data.submittedIds || []));
+        const details = {};
+        (r.data.submissions || []).forEach(s => { details[s.assignment_id] = s; });
+        setSubmissionDetails(details);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!effectiveProfessor) return;
+    api.get('/professor/dashboard')
+      .then(r => {
+        const codes = r.data.codes || [];
+        setProfCodes(codes);
+        setSelectedProfCode(prev => prev || (codes[0]?.code ?? ''));
+      })
+      .catch(() => {});
+  }, [effectiveProfessor]);
+
+  useEffect(() => {
+    if (!effectiveProfessor || !selectedProfCode) return;
+    setProfLoadingCode(selectedProfCode);
+    Promise.all([
+      api.get(`/professor/students/${selectedProfCode}`),
+      api.get(`/professor/submissions/${selectedProfCode}`),
+    ]).then(([sr, subr]) => {
+      setProfStudents(prev => ({
+        ...prev,
+        [selectedProfCode]: { students: sr.data.students || [], submissions: subr.data.submissions || [] },
+      }));
+    }).catch(() => {}).finally(() => setProfLoadingCode(''));
+  }, [effectiveProfessor, selectedProfCode]);
 
   const fetchNews = useCallback(async (tickers) => {
     try {
@@ -690,10 +2190,45 @@ export default function Dashboard() {
     }
   }, [accounts, transactions, holdings, budget, budgetLimits]);
 
-  const totalCash      = accounts.filter(a => !a.closed).reduce((s, a) => s + (a.balances?.current || 0), 0);
+  const totalCash      = accounts.filter(a => !a.closed && a.type !== 'investment').reduce((s, a) => s + (a.balances?.current || 0), 0);
   const totalPortfolio = holdings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
   const netWorth       = totalCash + totalPortfolio;
   const monthlySpend   = budget.reduce((s, b) => s + b.total, 0);
+
+  const sbData = sandboxDataset ? (SANDBOX_DATA[sandboxDataset] || {}) : {};
+  const sbBudget = sbData.transactions ? (() => {
+    const byCategory = {};
+    sbData.transactions.filter(t => t.amount > 0).forEach(t => {
+      const cat = t.personal_finance_category?.primary || t.category?.[0] || 'Other';
+      byCategory[cat] = (byCategory[cat] || 0) + t.amount;
+    });
+    return Object.entries(byCategory)
+      .map(([category, total]) => ({ category, total: Math.round(total * 100) / 100 }))
+      .sort((a, b) => b.total - a.total);
+  })() : null;
+  const activeAccounts       = sbData.accounts     || accounts;
+  const activeHoldings       = sbData.holdings     || holdings;
+  const activeTxns           = sbData.transactions || transactions;
+  const activeBudget         = sbBudget            || budget;
+  const activeMonthlySpend   = activeBudget.reduce((s, b) => s + b.total, 0);
+  const activeTotalPortfolio = activeHoldings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (panel !== 'investments') return;
+    const symbols = activeHoldings.map(h => h.security?.ticker_symbol).filter(Boolean);
+    if (symbols.length) fetchExtendedData(symbols);
+  }, [panel, activeHoldings, fetchExtendedData]);
+
+  const SandboxBanner = sandboxDataset ? (
+    <div style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, padding: '10px 16px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 12, cursor: 'pointer', padding: '4px 10px', fontWeight: 600 }}>← Datasets</button>
+        <div style={{ fontSize: 12, color: GREEN, fontWeight: 700 }}>◫ Sandbox · {PREBUILT_DATASETS.find(d => d.id === sandboxDataset)?.title} · Education Mode</div>
+      </div>
+      <button onClick={() => setSandboxDataset(null)} style={{ background: 'none', border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 11, cursor: 'pointer', padding: '3px 10px' }}>Exit sandbox ×</button>
+    </div>
+  ) : null;
 
   const sendMessage = useCallback(async () => {
     const text = chatInput.trim();
@@ -726,47 +2261,742 @@ export default function Dashboard() {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, chatLoading]);
 
-  const navBtn = (key, label, icon) => (
-    <button
-      key={key}
-      onClick={() => setPanel(key)}
-      style={{
-        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-        padding: '10px 20px', border: 'none',
-        background: panel === key ? '#1a2744' : 'transparent',
-        color: panel === key ? BLUE : TEXT2,
-        fontWeight: panel === key ? 600 : 400,
-        cursor: 'pointer', fontSize: 14, textAlign: 'left',
-        borderLeft: `3px solid ${panel === key ? BLUE : 'transparent'}`,
-      }}
-    >
-      <span style={{ fontSize: 15, lineHeight: 1 }}>{icon}</span>
-      {label}
-    </button>
-  );
+  useEffect(() => {
+    if (!canSeeAI) return;
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setPanel('assistant');
+        switchEduMode(false);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [canSeeAI]);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: BG, fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 14, color: TEXT }}>
 
-      {/* ── SIDEBAR ─────────────────────────────────────── */}
-      <aside style={{ width: 220, flexShrink: 0, background: SIDE_BG, borderRight: BORDER, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '24px 20px 20px', borderBottom: BORDER }}>
-          <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>Ledger</div>
-          <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Finance OS</div>
+      {/* ── TOAST ──────────────────────────────────────── */}
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, background: CARD_BG, border: `1px solid ${toast.color || BORDER_C}`, borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 13, fontWeight: 600, color: TEXT, pointerEvents: 'none' }}>
+          <span style={{ color: toast.color || GREEN, fontSize: 16 }}>{toast.icon || '✓'}</span>
+          {toast.message}
         </div>
-        <nav style={{ flex: 1, paddingTop: 12 }}>
-          {NAV.map(({ key, label, icon }) => navBtn(key, label, icon))}
+      )}
+
+      {/* ── ONBOARDING ─────────────────────────────────── */}
+      {showOnboarding && (() => {
+        const dismiss = (panelKey, edu) => {
+          localStorage.setItem(`basis_onboarded_${user.id}`, '1');
+          setShowOnboarding(false);
+          if (edu !== undefined) switchEduMode(edu);
+          if (panelKey) setPanel(panelKey);
+        };
+        const isProfOrAdmin = isProfessor || isAdmin;
+        const isStudentRole = user?.role === 'student';
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+            <div style={{ background: CARD_BG, border: BORDER, borderRadius: 16, padding: 36, width: '100%', maxWidth: 480, boxShadow: '0 32px 80px rgba(0,0,0,0.6)' }}>
+              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 6 }}>Welcome to Basis{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</div>
+              <div style={{ fontSize: 14, color: TEXT2, marginBottom: 32, lineHeight: 1.6 }}>
+                {isProfOrAdmin && !isStudentRole
+                  ? 'Your professor account is ready. Set up your course or explore the platform first.'
+                  : isStudentRole
+                  ? 'Your student account is ready. Head to your courses or explore the finance dashboard first.'
+                  : 'Your account is ready. Connect your accounts to get started, or explore with demo data.'}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {isProfOrAdmin && !isStudentRole && <>
+                  <button onClick={() => dismiss('prof-dashboard', true)}
+                    style={{ padding: '14px 20px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 10, color: GREEN, fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>⊟ Set up my course</span><span style={{ opacity: 0.6 }}>→</span>
+                  </button>
+                  <button onClick={() => dismiss('overview', false)}
+                    style={{ padding: '14px 20px', background: MUTED, border: BORDER, borderRadius: 10, color: TEXT2, fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>⊞ Explore the finance dashboard</span><span style={{ opacity: 0.6 }}>→</span>
+                  </button>
+                </>}
+                {isStudentRole && <>
+                  <button onClick={() => dismiss('edu-courses', true)}
+                    style={{ padding: '14px 20px', background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 10, color: '#a78bfa', fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>◫ Go to my courses</span><span style={{ opacity: 0.6 }}>→</span>
+                  </button>
+                  <button onClick={() => dismiss('overview', false)}
+                    style={{ padding: '14px 20px', background: MUTED, border: BORDER, borderRadius: 10, color: TEXT2, fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>⊞ Explore the finance dashboard</span><span style={{ opacity: 0.6 }}>→</span>
+                  </button>
+                </>}
+                {!isProfOrAdmin && !isStudentRole && <>
+                  <button onClick={() => { dismiss('overview', false); setTimeout(() => window._plaidLinkHandler?.open(), 300); }}
+                    style={{ padding: '14px 20px', background: 'rgba(77,163,255,0.1)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 10, color: BLUE, fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>🔗 Connect my accounts</span><span style={{ opacity: 0.6 }}>→</span>
+                  </button>
+                  <button onClick={() => dismiss('overview', false)}
+                    style={{ padding: '14px 20px', background: MUTED, border: BORDER, borderRadius: 10, color: TEXT2, fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>⊞ Explore with demo data</span><span style={{ opacity: 0.6 }}>→</span>
+                  </button>
+                </>}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── MOBILE TOP BAR ─────────────────────────────── */}
+      {isMobile && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 52, background: SIDE_BG, borderBottom: BORDER, zIndex: 200, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>Basis</span>
+            {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
+          </div>
+          <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
+            🔔
+            {inboxNotifs.filter(n => !n.read).length > 0 && (
+              <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, background: RED, borderRadius: 8, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px', border: `2px solid ${SIDE_BG}` }}>
+                {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
+              </span>
+            )}
+          </button>
+          <button onClick={() => { setPanel('settings'); switchEduMode(false); }} style={{ background: panel === 'settings' ? 'rgba(255,255,255,0.08)' : MUTED, border: panel === 'settings' ? `1px solid ${BORDER_C}` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
+            ⚙
+          </button>
+        </div>
+      )}
+
+      {/* ── SIDEBAR ─────────────────────────────────────── */}
+      <aside style={{ width: 220, flexShrink: 0, background: SIDE_BG, borderRight: BORDER, display: isMobile ? 'none' : 'flex', flexDirection: 'column' }}>
+        <div data-tour="brand" style={{ padding: '18px 16px 16px', borderBottom: BORDER, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>Basis</div>
+            <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Finance OS</div>
+          </div>
+          <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
+            🔔
+            {inboxNotifs.filter(n => !n.read).length > 0 && (
+              <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 17, height: 17, background: RED, borderRadius: 9, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', border: `2px solid ${SIDE_BG}` }}>
+                {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
+              </span>
+            )}
+          </button>
+        </div>
+        <nav style={{ flex: 1, paddingTop: 10, overflowY: 'auto' }}>
+
+          {/* ── PERSONAL FINANCE SECTION ── */}
+          {eduMode ? (
+            /* Collapsed — single switch pill */
+            <button onClick={() => { switchEduMode(false); setPanel('overview'); }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', margin: '4px 0', background: 'transparent', border: 'none', color: BLUE, cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: 'left', borderBottom: `1px solid ${BORDER_C}`, paddingBottom: 10, marginBottom: 4, transition: 'all 0.15s' }}>
+              <span style={{ flex: 1, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Personal Finance</span>
+              <span style={{ fontSize: 11, fontWeight: 600 }}>← Switch</span>
+            </button>
+          ) : (
+            <>
+              <div style={{ padding: '4px 20px 6px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: BLUE }}>Personal Finance</div>
+              {(() => {
+                const _NAV_DEF = NAV.filter(n => n.section === 'finance').map(n => n.key);
+                const _navOrder = getOrder('nav-order', _NAV_DEF);
+                const _orderedNav = _navOrder.map(k => NAV.find(n => n.key === k)).filter(n => n && !hiddenPanels.has(n.key));
+                return _orderedNav.map(({ key, label, icon, premium }) => {
+                  const locked = premium && !isAdmin;
+                  return (
+                    <button key={key} data-tour={`nav-${key}`}
+                      draggable
+                      onDragStart={e => e.dataTransfer.setData('text/plain', `nav-order|||${key}`)}
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={e => { e.preventDefault(); const [, srcId] = e.dataTransfer.getData('text/plain').split('|||'); if (srcId !== key) handleReorder('nav-order', _NAV_DEF)(srcId, key); }}
+                      onClick={() => { setPanel(key); switchEduMode(false); }}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 20px', background: (panel === key && !eduMode) ? 'rgba(255,255,255,0.06)' : 'transparent', border: 'none', borderLeft: (panel === key && !eduMode) ? `2px solid ${BLUE}` : '2px solid transparent', color: (panel === key && !eduMode) ? TEXT : TEXT2, cursor: 'grab', fontSize: 13, fontWeight: (panel === key && !eduMode) ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
+                      <span style={{ fontSize: 14, opacity: locked ? 0.4 : 1 }}>{icon}</span>
+                      <span style={{ flex: 1 }}>{label}</span>
+                      {locked && <span style={{ fontSize: 9, fontWeight: 700, color: '#fbbf24', background: 'rgba(251,191,36,0.12)', padding: '2px 5px', borderRadius: 4 }}>PRO</span>}
+                    </button>
+                  );
+                });
+              })()}
+            </>
+          )}
+
+          {/* ── EDUCATION SECTION ── */}
+          {!isUser && (!eduMode ? (
+            /* Collapsed — single switch pill */
+            <button onClick={() => { switchEduMode(true); setPanel('edu-courses'); }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', margin: '4px 0', background: 'transparent', border: 'none', color: GREEN, cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: 'left', borderTop: `1px solid ${BORDER_C}`, marginTop: 6, transition: 'all 0.15s' }}>
+              <span style={{ flex: 1, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Education</span>
+              <span style={{ fontSize: 11, fontWeight: 600 }}>Switch →</span>
+            </button>
+          ) : (
+            <>
+              <div style={{ padding: '12px 20px 6px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: GREEN, borderTop: `1px solid ${BORDER_C}`, marginTop: 6 }}>
+                <span style={{ flex: 1 }}>Education</span>
+              </div>
+              {NAV.filter(n => n.section === 'education' && !hiddenPanels.has(n.key)).map(({ key, label, icon }) => (
+                <button key={key} data-tour={`nav-${key}`} onClick={() => { setPanel(key); switchEduMode(true); }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 20px', background: panel === key ? 'rgba(74,222,128,0.07)' : 'transparent', border: 'none', borderLeft: panel === key ? `2px solid ${GREEN}` : '2px solid transparent', color: panel === key ? GREEN : TEXT2, cursor: 'pointer', fontSize: 13, fontWeight: panel === key ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
+                  <span style={{ fontSize: 14 }}>{icon}</span>
+                  <span>{label}</span>
+                </button>
+              ))}
+              {effectiveProfessor && (
+                <button onClick={() => { setPanel('prof-dashboard'); switchEduMode(true); }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 20px', background: panel === 'prof-dashboard' ? 'rgba(74,222,128,0.07)' : 'transparent', border: 'none', borderLeft: panel === 'prof-dashboard' ? `2px solid ${GREEN}` : '2px solid transparent', color: panel === 'prof-dashboard' ? GREEN : TEXT2, cursor: 'pointer', fontSize: 13, fontWeight: panel === 'prof-dashboard' ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
+                  <span style={{ fontSize: 14 }}>⊟</span>
+                  <span>Professor Hub</span>
+                </button>
+              )}
+            </>
+          ))}
+          {/* Connect Account + Tour + Settings — anchored under Education section */}
+          <div style={{ padding: '10px 14px 4px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {isAdmin && !viewAs && (
+              <div data-tour="connect">
+                <PlaidLink onSuccess={fetchAll} locked={false} onLocked={() => {}} />
+              </div>
+            )}
+            {!(isAdmin && !viewAs) && (
+              <button
+                onClick={() => { switchEduMode(false); setPanel('overview'); setTourStep(0); setShowTour(true); }}
+                style={{ width: '100%', padding: '8px 0', background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.25)', borderRadius: 8, color: BLUE, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+              >
+                ✦ Take a Tour
+              </button>
+            )}
+            <button data-tour="nav-settings" onClick={() => setPanel('settings')}
+              style={{ width: '100%', padding: '8px 0', background: panel === 'settings' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: panel === 'settings' ? `1px solid ${BORDER_C}` : `1px solid ${BORDER_C}`, borderRadius: 8, color: panel === 'settings' ? TEXT : TEXT2, fontSize: 12, fontWeight: panel === 'settings' ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.15s' }}>
+              ⚙ Settings
+              {hiddenPanels.size > 0 && <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(251,191,36,0.15)', color: YELLOW, padding: '2px 5px', borderRadius: 4 }}>{hiddenPanels.size} hidden</span>}
+            </button>
+          </div>
         </nav>
-        <div style={{ padding: 16, borderTop: BORDER, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <PlaidLink onSuccess={fetchAll} />
-          <TellerConnect onSuccess={fetchAll} />
+        <div style={{ padding: '12px 16px 16px', borderTop: BORDER, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ marginTop: 0, padding: '10px 12px', background: DARK, borderRadius: 8, border: viewAs ? '1px solid rgba(251,191,36,0.4)' : BORDER }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 2 }}>{user?.name}</div>
+            <div style={{ fontSize: 11, color: TEXT2 }}>{user?.email}</div>
+            <div style={{ display: 'flex', gap: 6, marginTop: 6, alignItems: 'center' }}>
+              {viewAs ? (
+                <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: 'rgba(251,191,36,0.15)', color: YELLOW }}>Viewing as {viewAs}</span>
+              ) : (
+                <>
+                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: isPremium ? 'rgba(74,222,128,0.12)' : 'rgba(142,142,147,0.12)', color: isPremium ? '#4ade80' : TEXT2 }}>{user?.tier}</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>{user?.role}</span>
+                </>
+              )}
+              <button onClick={logout} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: TEXT3, fontSize: 11, cursor: 'pointer', padding: 0 }}>Sign out</button>
+            </div>
+          </div>
         </div>
       </aside>
 
+      {/* ── NOTIFICATION PANEL ─────────────────────────── */}
+      {notifPanelOpen && (
+        <>
+          <div onClick={() => setNotifPanelOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 299 }} />
+          <div style={{ position: 'fixed', left: isMobile ? 0 : 228, right: isMobile ? 0 : 'auto', top: isMobile ? 52 : 64, zIndex: 300, width: isMobile ? '100%' : 340, maxHeight: isMobile ? '70vh' : 480, background: CARD_BG, border: BORDER, borderRadius: isMobile ? '0 0 14px 14px' : 14, boxShadow: '0 16px 48px rgba(0,0,0,0.45)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 16px', borderBottom: `1px solid ${BORDER_C}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, flex: 1 }}>Notifications</div>
+              {inboxNotifs.some(n => !n.read) && (
+                <button onClick={() => {
+                  api.patch('/notifications/inbox/read-all').catch(() => {});
+                  setInboxNotifs(p => p.map(n => ({ ...n, read: 1 })));
+                }} style={{ fontSize: 11, color: BLUE, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}>
+                  Mark all read
+                </button>
+              )}
+              <button onClick={() => setNotifPanelOpen(false)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {inboxNotifs.length === 0 ? (
+                <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: TEXT3 }}>
+                  <div style={{ fontSize: 24, marginBottom: 8 }}>🔔</div>
+                  No notifications yet
+                </div>
+              ) : inboxNotifs.map((n, i) => (
+                <div key={n.id} onClick={() => {
+                  if (!n.read) {
+                    api.patch(`/notifications/inbox/${n.id}/read`).catch(() => {});
+                    setInboxNotifs(p => p.map(x => x.id === n.id ? { ...x, read: 1 } : x));
+                  }
+                }} style={{ padding: '12px 16px', borderBottom: i < inboxNotifs.length - 1 ? `1px solid ${BORDER_C}` : 'none', cursor: 'pointer', background: n.read ? 'transparent' : 'rgba(77,163,255,0.04)', transition: 'background 0.15s' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: n.read ? 'transparent' : BLUE, flexShrink: 0, marginTop: 5 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
+                        <div style={{ fontSize: 13, fontWeight: n.read ? 500 : 700, color: TEXT, lineHeight: 1.35 }}>{n.title}</div>
+                        <div style={{ fontSize: 10, color: TEXT3, flexShrink: 0, marginTop: 1 }}>
+                          {new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </div>
+                      </div>
+                      {n.body && <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{n.body}</div>}
+                      <div style={{ fontSize: 10, color: TEXT3, marginTop: 4, textTransform: 'capitalize' }}>{n.type.replace('_', ' ')}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── CREATE ASSIGNMENT MODAL ─────────────────────── */}
+      {showCreateAssignment && (
+        <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) { setShowCreateAssignment(false); setCreateAssignCourseId(null); } }}>
+          <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, padding: 28, width: '100%', maxWidth: 520, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ fontWeight: 700, fontSize: 18 }}>Create Assignment</div>
+              <button onClick={() => { setShowCreateAssignment(false); setCreateAssignCourseId(null); }} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Course</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {COURSES.map(c => (
+                  <button key={c.id} onClick={() => setCreateAssignCourseId(c.id)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: createAssignCourseId === c.id ? `${c.color}0e` : BG, border: createAssignCourseId === c.id ? `1px solid ${c.color}44` : BORDER, borderRadius: 9, cursor: 'pointer', textAlign: 'left' }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{c.name}</div>
+                      <div style={{ fontSize: 11, color: TEXT3 }}>{c.code} · {c.semester}</div>
+                    </div>
+                    {createAssignCourseId === c.id && <span style={{ fontSize: 11, fontWeight: 700, color: c.color }}>✓</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {[
+              { label: 'Title', key: 'title', type: 'text', placeholder: 'e.g. Net Worth Statement' },
+              { label: 'Week / Due', key: 'week', type: 'text', placeholder: 'e.g. Feb 9–15' },
+              { label: 'Points', key: 'points', type: 'number', placeholder: '100' },
+            ].map(f => (
+              <div key={f.key} style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{f.label}</label>
+                <input type={f.type} placeholder={f.placeholder} value={createForm[f.key]}
+                  onChange={e => setCreateForm(p => ({ ...p, [f.key]: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+            ))}
+            <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Chapter</label>
+                <select value={createForm.chapter} onChange={e => setCreateForm(p => ({ ...p, chapter: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none' }}>
+                  {['Ch. 1','Ch. 2','Ch. 3','Ch. 4','Ch. 5','Ch. 6','Ch. 7','Ch. 8','Ch. 9'].map(c => <option key={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Linked Dataset</label>
+                <select value={createForm.datasetId} onChange={e => setCreateForm(p => ({ ...p, datasetId: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none' }}>
+                  <option value="">None</option>
+                  {PREBUILT_DATASETS.map(d => <option key={d.id} value={d.id}>{d.title}</option>)}
+                </select>
+              </div>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Description</label>
+              <textarea rows={3} placeholder="Assignment instructions..." value={createForm.description}
+                onChange={e => setCreateForm(p => ({ ...p, description: e.target.value }))}
+                style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.5 }} />
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => { setShowCreateAssignment(false); setCreateAssignCourseId(null); }} style={{ padding: '10px 18px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button disabled={!createForm.title.trim() || !createAssignCourseId} onClick={() => {
+                setCustomAssignments(prev => [...prev, {
+                  id: `custom-${Date.now()}`,
+                  courseId: createAssignCourseId,
+                  title: createForm.title.trim(),
+                  week: createForm.week || 'TBD',
+                  chapter: createForm.chapter,
+                  datasetId: createForm.datasetId || null,
+                  points: parseInt(createForm.points) || 100,
+                  description: createForm.description,
+                  status: 'upcoming',
+                  custom: true,
+                }]);
+                setCreateForm({ title: '', description: '', chapter: 'Ch. 1', datasetId: '', points: '100', week: '' });
+                setCreateAssignCourseId(null);
+                setShowCreateAssignment(false);
+                setPanel('edu-assignments');
+              }} style={{ padding: '10px 18px', background: createForm.title.trim() && createAssignCourseId ? 'rgba(74,222,128,0.15)' : MUTED, border: createForm.title.trim() && createAssignCourseId ? '1px solid rgba(74,222,128,0.4)' : BORDER, borderRadius: 8, color: createForm.title.trim() && createAssignCourseId ? GREEN : TEXT3, fontSize: 13, fontWeight: 700, cursor: createForm.title.trim() && createAssignCourseId ? 'pointer' : 'default', transition: 'all 0.15s' }}>
+                Create Assignment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── LINK CALENDAR MODAL ─────────────────────────── */}
+      {showLinkCal && (
+        <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowLinkCal(false); }}>
+          <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, padding: 28, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ fontWeight: 700, fontSize: 18 }}>Link Calendar</div>
+              <button onClick={() => setShowLinkCal(false)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
+            </div>
+            <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, marginBottom: 20 }}>
+              Connect an external calendar to sync your financial events, bill due dates, and reminders.
+            </div>
+            {[
+              { name: 'Apple Calendar', icon: '🗓', desc: 'Export as .ics file', color: '#888', available: true },
+            ].map(opt => (
+              <div key={opt.name} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: DARK, border: BORDER, borderRadius: 10, marginBottom: 10 }}>
+                <span style={{ fontSize: 22 }}>{opt.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: TEXT }}>{opt.name}</div>
+                  <div style={{ fontSize: 11, color: TEXT3 }}>{opt.desc}</div>
+                </div>
+                {opt.available ? (
+                  <button onClick={() => {
+                    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Basis//EN'];
+                    calendarEvents.forEach(ev => {
+                      const d = ev.date.replace(/-/g, '');
+                      lines.push('BEGIN:VEVENT', `DTSTART;VALUE=DATE:${d}`, `SUMMARY:${ev.title}`, `DESCRIPTION:${ev.note || ''}`, 'END:VEVENT');
+                    });
+                    lines.push('END:VCALENDAR');
+                    const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar' });
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'basis-calendar.ics'; a.click();
+                  }} style={{ padding: '7px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 7, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+                    Export .ics
+                  </button>
+                ) : (
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, background: MUTED, color: TEXT3 }}>Coming soon</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── UPGRADE MODAL ───────────────────────────────── */}
+      {showUpgrade && (
+        <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowUpgrade(false); }}>
+          <div style={{ position: 'relative', background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: 32, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.6)' }}>
+            <button onClick={() => setShowUpgrade(false)} style={{ position: 'absolute', top: 14, right: 14, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: TEXT2, fontSize: 16, cursor: 'pointer', lineHeight: 1, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <div style={{ fontSize: 28, marginBottom: 10 }}>⭐</div>
+              <div style={{ fontWeight: 800, fontSize: 22, marginBottom: 6 }}>Upgrade to Premium</div>
+              <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.6 }}>Connect real accounts, unlock AI insights, and get a complete picture of your finances.</div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 28 }}>
+              {/* Free */}
+              <div style={{ padding: '16px 18px', background: DARK, borderRadius: 12, border: BORDER }}>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: TEXT3, marginBottom: 14 }}>Free</div>
+                {[
+                  'Education mode',
+                  'Learn library (17 topics)',
+                  'Sandbox financial data',
+                  'Options chain tool',
+                  'Tax estimator',
+                ].map(f => (
+                  <div key={f} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 9 }}>
+                    <span style={{ color: TEXT3, fontSize: 13, lineHeight: '18px', flexShrink: 0 }}>✓</span>
+                    <span style={{ fontSize: 12, color: TEXT2, lineHeight: '18px' }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Premium */}
+              <div style={{ padding: '16px 18px', background: 'rgba(77,163,255,0.05)', borderRadius: 12, border: '1px solid rgba(77,163,255,0.25)' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: BLUE, marginBottom: 14 }}>Premium</div>
+                {[
+                  'Everything in Free',
+                  'Real account connection',
+                  'Financial assistant',
+                  'Live portfolio P&L',
+                  'Market Insights (charts, screener, news)',
+                  'Personalized budget analysis',
+                  'Net worth history',
+                  'Video lessons & walkthroughs',
+                  'Practice quizzes',
+                  'Downloadable templates',
+                ].map((f, i) => (
+                  <div key={f} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 9 }}>
+                    <span style={{ color: i === 0 ? TEXT3 : BLUE, fontSize: 13, lineHeight: '18px', flexShrink: 0 }}>✓</span>
+                    <span style={{ fontSize: 12, color: i === 0 ? TEXT2 : TEXT, fontWeight: i === 0 ? 400 : 500, lineHeight: '18px' }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Resource library */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 12 }}>Curated Resource Library</div>
+              <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 8 }}>
+                {[
+                  { name: 'Investopedia',        icon: '📚', color: BLUE   },
+                  { name: 'NerdWallet',          icon: '🧮', color: GREEN  },
+                  { name: 'Khan Academy',        icon: '🎓', color: '#10b981' },
+                  { name: 'IRS.gov',             icon: '🏛️', color: RED    },
+                  { name: 'FRED — St. Louis Fed',icon: '📈', color: YELLOW },
+                  { name: 'SEC Investor Ed.',    icon: '⚖️', color: '#a78bfa' },
+                ].map(r => (
+                  <div key={r.name} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 10px', background: DARK, borderRadius: 8, border: BORDER }}>
+                    <span style={{ fontSize: 14 }}>{r.icon}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: r.color, lineHeight: 1.3 }}>{r.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={() => { window.open('mailto:connoraltonmigliore@gmail.com?subject=Basis Premium Access', '_blank'); }}
+              style={{ width: '100%', padding: '14px 0', background: BLUE_BTN, border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>
+              Get Premium Access →
+            </button>
+            <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3 }}>Currently in early access. Reach out to get set up.</div>
+          </div>
+        </div>
+      )}
+
+      {/* ── SUBMIT ASSIGNMENT MODAL ─────────────────────── */}
+      {showSubmit && (
+        <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowSubmit(null); }}>
+          <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, padding: 28, width: '100%', maxWidth: 500, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ fontWeight: 700, fontSize: 18 }}>Submit Assignment</div>
+              <button onClick={() => setShowSubmit(null)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
+            </div>
+            <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>{showSubmit.title} · {showSubmit.chapter} · {showSubmit.points} pts</div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Your Response / Notes</label>
+              <textarea
+                rows={5}
+                placeholder="Paste your analysis, key findings, or notes here. Your professor will see this along with your submission."
+                value={submitNote}
+                onChange={e => setSubmitNote(e.target.value)}
+                style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.55 }}
+              />
+            </div>
+
+            {showSubmit.datasetId && (
+              <div style={{ marginBottom: 20, padding: '10px 14px', background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 8, fontSize: 12, color: TEXT2 }}>
+                <span style={{ color: GREEN, fontWeight: 700 }}>Tip: </span>Open the linked dataset before submitting to make sure your numbers match.
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowSubmit(null)} style={{ padding: '10px 18px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={async () => {
+                const courseCode = user?.enrollments?.[0]?.code || 'B-TERRY-26';
+                await api.post('/submissions', {
+                  assignment_id: showSubmit.id,
+                  course_code: courseCode,
+                  notes: submitNote,
+                }).catch(() => {});
+                setSubmittedAssignments(prev => new Set([...prev, showSubmit.id]));
+                setShowSubmit(null);
+                setSubmitNote('');
+              }} style={{ padding: '10px 20px', background: 'rgba(74,222,128,0.15)', border: '1px solid rgba(74,222,128,0.4)', borderRadius: 8, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                Submit →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── GRADING MODAL ──────────────────────────────── */}
+      {showGrade && (() => {
+        const assign = ALL_ASSIGNMENTS_MAP[showGrade.assignment_id];
+        const maxPts = assign?.points ?? 100;
+        const gradeNum = parseInt(gradeForm.grade);
+        const validGrade = !isNaN(gradeNum) && gradeNum >= 0 && gradeNum <= maxPts;
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+            onClick={e => { if (e.target === e.currentTarget) setShowGrade(null); }}>
+            <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, padding: 28, width: '100%', maxWidth: 560, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 2 }}>Grade Submission</div>
+                  <div style={{ fontSize: 13, color: TEXT2 }}>{assign?.title || showGrade.assignment_id} · {maxPts} pts possible</div>
+                </div>
+                <button onClick={() => setShowGrade(null)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
+              </div>
+
+              {/* Student info */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: DARK, borderRadius: 9, border: BORDER, margin: '16px 0' }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(77,163,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: BLUE, flexShrink: 0 }}>
+                  {(showGrade.student_name || '?')[0].toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{showGrade.student_name}</div>
+                  <div style={{ fontSize: 11, color: TEXT2 }}>{showGrade.student_email} · Submitted {new Date(showGrade.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+              </div>
+
+              {/* Student's response */}
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Student Response</div>
+                <div style={{ padding: '12px 14px', background: DARK, border: BORDER, borderRadius: 9, fontSize: 13, color: showGrade.notes ? TEXT : TEXT3, lineHeight: 1.6, minHeight: 60, fontStyle: showGrade.notes ? 'normal' : 'italic' }}>
+                  {showGrade.notes || 'No notes submitted.'}
+                </div>
+              </div>
+
+              {/* Grade input */}
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 14, marginBottom: 18 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Points Earned</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <input
+                      type="number" min={0} max={maxPts}
+                      placeholder="0"
+                      value={gradeForm.grade}
+                      onChange={e => setGradeForm(p => ({ ...p, grade: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 12px', background: BG, border: validGrade ? '1px solid rgba(74,222,128,0.4)' : BORDER, borderRadius: 8, color: TEXT, fontSize: 18, fontWeight: 700, fontFamily: 'monospace', outline: 'none', textAlign: 'center' }}
+                    />
+                    <span style={{ fontSize: 14, color: TEXT2, flexShrink: 0 }}>/ {maxPts}</span>
+                  </div>
+                  {gradeForm.grade && validGrade && (
+                    <div style={{ marginTop: 5, fontSize: 12, color: gradeNum / maxPts >= 0.9 ? GREEN : gradeNum / maxPts >= 0.7 ? YELLOW : RED, fontWeight: 600 }}>
+                      {Math.round((gradeNum / maxPts) * 100)}%
+                      {gradeNum / maxPts >= 0.9 ? ' · A' : gradeNum / maxPts >= 0.8 ? ' · B' : gradeNum / maxPts >= 0.7 ? ' · C' : gradeNum / maxPts >= 0.6 ? ' · D' : ' · F'}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Feedback <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></div>
+                  <textarea
+                    rows={3}
+                    placeholder="Great work on the amortization schedule. Watch your DTI calculation: use gross income, not net."
+                    value={gradeForm.feedback}
+                    onChange={e => setGradeForm(p => ({ ...p, feedback: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.5 }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button onClick={() => setShowGrade(null)} style={{ padding: '10px 18px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <button disabled={!validGrade || gradeLoading} onClick={async () => {
+                  setGradeLoading(true);
+                  try {
+                    await api.patch(`/professor/submissions/${showGrade.id}`, { grade: parseInt(gradeForm.grade), feedback: gradeForm.feedback, assignmentTitle: assign?.title || showGrade.assignment_id, assignmentPoints: maxPts });
+                    const r = await api.get(`/professor/submissions/${showGrade.course_code}`);
+                    setProfStudents(prev => ({
+                      ...prev,
+                      [showGrade.course_code]: { ...prev[showGrade.course_code], submissions: r.data.submissions || [] },
+                    }));
+                    setShowGrade(null);
+                    setGradeForm({ grade: '', feedback: '' });
+                    setToast({ message: 'Grade saved', color: GREEN, icon: '✓' });
+                    setTimeout(() => setToast(null), 3000);
+                  } catch {
+                    setToast({ message: 'Failed to save grade', color: RED, icon: '✕' });
+                    setTimeout(() => setToast(null), 3000);
+                  } finally { setGradeLoading(false); }
+                }} style={{ padding: '10px 22px', background: validGrade ? 'rgba(74,222,128,0.15)' : MUTED, border: validGrade ? '1px solid rgba(74,222,128,0.4)' : BORDER, borderRadius: 8, color: validGrade ? GREEN : TEXT3, fontSize: 13, fontWeight: 700, cursor: validGrade ? 'pointer' : 'default', opacity: gradeLoading ? 0.7 : 1 }}>
+                  {gradeLoading ? 'Saving…' : 'Save Grade →'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── INVITE STUDENTS MODAL ───────────────────────── */}
+      {showInvite && (() => {
+        const COURSE_CODES = {
+          fina3000: 'B-FINA3000-26',
+          fina4200: 'B-FINA4200-26',
+        };
+        const sel = COURSES.find(c => c.id === inviteSelectedCourse);
+        const courseCode = sel ? COURSE_CODES[sel.id] : null;
+        const inviteLink = courseCode ? `${window.location.origin}/join/${courseCode.toLowerCase()}` : null;
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+            onClick={e => { if (e.target === e.currentTarget) { setShowInvite(false); setInviteSelectedCourse(null); } }}>
+            <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, padding: 28, width: '100%', maxWidth: 480, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <div style={{ fontWeight: 700, fontSize: 18 }}>Invite Students</div>
+                <button onClick={() => { setShowInvite(false); setInviteSelectedCourse(null); }} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
+              </div>
+
+              <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, marginBottom: 20 }}>
+                Select a course, then share the code or link. Students with a <strong style={{ color: TEXT }}>.edu email</strong> get free access, no credit card required.
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Select Course</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {COURSES.map(c => (
+                    <button key={c.id} onClick={() => setInviteSelectedCourse(c.id)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: inviteSelectedCourse === c.id ? `${c.color}0e` : DARK, border: inviteSelectedCourse === c.id ? `1px solid ${c.color}44` : BORDER, borderRadius: 10, cursor: 'pointer', textAlign: 'left' }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{c.name}</div>
+                        <div style={{ fontSize: 11, color: TEXT3 }}>{c.code} · {c.semester}</div>
+                      </div>
+                      {inviteSelectedCourse === c.id && <span style={{ fontSize: 11, fontWeight: 700, color: c.color }}>✓</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {sel && courseCode && (
+                <>
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Course Code</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: DARK, border: `1px solid rgba(74,222,128,0.3)`, borderRadius: 10 }}>
+                      <span style={{ flex: 1, fontFamily: 'monospace', fontSize: 20, fontWeight: 700, color: GREEN, letterSpacing: '2px' }}>{courseCode}</span>
+                      <button onClick={() => navigator.clipboard.writeText(courseCode)} style={{ padding: '6px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 7, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Copy</button>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Invite Link</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: DARK, border: BORDER, borderRadius: 10 }}>
+                      <span style={{ flex: 1, fontSize: 12, color: TEXT2, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inviteLink}</span>
+                      <button onClick={() => navigator.clipboard.writeText(inviteLink)} style={{ flexShrink: 0, padding: '6px 14px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Copy</button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div style={{ padding: '12px 16px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>
+                <strong style={{ color: BLUE }}>How it works:</strong> Students visit the link or enter the code at sign-up. Their account is automatically enrolled in your course and Education Mode is enabled with the assigned datasets.
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── MAIN CONTENT ────────────────────────────────── */}
-      <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-        <TickerBar indices={marketTickers.indices} active={marketTickers.active} />
-        <div style={{ flex: 1, padding: 32 }}>
+      {showTour && (() => {
+        const _tourSteps = effectiveProfessor ? PROFESSOR_TOUR_STEPS : effectiveStudent ? STUDENT_TOUR_STEPS : FINANCE_TOUR_STEPS;
+        const _applyStep = (s) => {
+          if (s.panel) { setPanel(s.panel); switchEduMode(false); }
+          if (s.tab) setCashFlowTab(s.tab);
+          if (s.insightsTab) setInsightsTab(s.insightsTab);
+        };
+        return (
+          <Tour
+            steps={_tourSteps}
+            step={Math.min(tourStep, _tourSteps.length - 1)}
+            containerRef={mainRef}
+            onClose={() => { setShowTour(false); if (mainRef.current) mainRef.current.style.overflowY = 'auto'; }}
+            onNext={() => {
+              const next = Math.min(tourStep + 1, _tourSteps.length - 1);
+              setTourStep(next);
+              _applyStep(_tourSteps[next]);
+            }}
+            onPrev={() => {
+              const prev = Math.max(tourStep - 1, 0);
+              setTourStep(prev);
+              _applyStep(_tourSteps[prev]);
+            }}
+          />
+        );
+      })()}
+
+      <main ref={mainRef} style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', paddingTop: isMobile ? 52 : 0 }}>
+        {panel === 'insights' && <TickerBar indices={marketTickers.indices} active={marketTickers.active} />}
+        <div style={{ flex: 1, padding: isMobile ? '20px 16px 84px' : 32 }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: TEXT2 }}>
             Syncing your accounts...
@@ -778,6 +3008,16 @@ export default function Dashboard() {
                 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
                 30% { transform: translateY(-5px); opacity: 1; }
               }
+              @keyframes signal-pulse {
+                0%, 100% { box-shadow: 0 0 0 0 rgba(248,113,113,0.5); }
+                50% { box-shadow: 0 0 0 6px rgba(248,113,113,0); }
+              }
+              @keyframes signal-pulse-yellow {
+                0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.5); }
+                50% { box-shadow: 0 0 0 6px rgba(251,191,36,0); }
+              }
+              .sig-pulse-red    { animation: signal-pulse 1.6s ease-in-out infinite; }
+              .sig-pulse-yellow { animation: signal-pulse-yellow 2s ease-in-out infinite; }
               @keyframes ticker-move {
                 from { transform: translateX(0); }
                 to   { transform: translateX(-50%); }
@@ -790,25 +3030,465 @@ export default function Dashboard() {
                 will-change: transform;
               }
               .ticker-scroll:hover { animation-play-state: paused; }
+              .drag-section:hover .drag-handle { opacity: 1 !important; }
+              .drag-section[draggable] { cursor: default; }
               .lc { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
-              .lc:hover { border-color: #3d3d3d !important; box-shadow: 0 4px 22px rgba(0,0,0,0.45); }
+              .lc:hover { border-color: var(--border-c, #3d3d3d) !important; box-shadow: 0 4px 22px rgba(0,0,0,0.25); }
               .lr { transition: background 0.1s; }
               .lr:hover td { background: rgba(255,255,255,0.04); }
               button { transition: opacity 0.15s, transform 0.1s; }
               button:hover:not(:disabled) { opacity: 0.88; }
               button:active:not(:disabled) { transform: scale(0.97); }
+              @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+              @media (max-width: 768px) {
+                .tab-bar { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-wrap: nowrap !important; }
+                .tab-bar::-webkit-scrollbar { display: none; }
+                .tab-bar button { flex-shrink: 0; }
+                .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+                .table-wrap table { min-width: 540px; }
+                h1 { font-size: 18px !important; }
+              }
             `}</style>
 
-            {/* ── OVERVIEW ──────────────────────────────── */}
-            {panel === 'overview' && (
-              <div>
-                <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 700 }}>Overview</h1>
-                <AdviceBox onGetAdvice={() => getAdvice('overview')} loading={adviceState.overview?.loading} text={adviceState.overview?.text} />
+            {/* ── ADMIN VIEW-AS BANNER ──────────────────── */}
+            {viewAs && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 10, marginBottom: 24 }}>
+                <span style={{ fontSize: 13 }}>👁</span>
+                <span style={{ fontSize: 13, color: YELLOW, fontWeight: 600 }}>Previewing as {viewAs === 'professor' ? 'Professor' : 'Student'}</span>
+                <span style={{ fontSize: 12, color: TEXT2 }}>— instructor-only controls are {viewAs === 'professor' ? 'visible' : 'hidden'}</span>
+                <button onClick={() => setViewAs(null)} style={{ marginLeft: 'auto', padding: '5px 12px', background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 6, color: YELLOW, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Exit Preview</button>
+              </div>
+            )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24, marginTop: 24 }}>
+            {/* ── OVERVIEW ──────────────────────────────── */}
+            {panel === 'overview' && eduMode && (() => {
+              const activeCourse = enrolledCourses.find(c => c.id === selectedCourseId) || enrolledCourses[0];
+              const modules      = activeCourse.modules;
+              const currentIdx   = modules.findIndex(m => m.current);
+              const current      = modules[currentIdx];
+              const baseAssign   = activeCourse.assignments;
+              const extraAssign  = customAssignments.filter(a => a.courseId === selectedCourseId);
+              const completed    = baseAssign.filter(a => a.status === 'completed');
+              const upcoming     = [...baseAssign, ...extraAssign].filter(a => a.status === 'upcoming');
+              const active       = [...baseAssign, ...extraAssign].filter(a => a.status === 'active');
+              const allAssign    = [...baseAssign, ...extraAssign];
+              const totalPts     = completed.reduce((s, a) => s + (a.points || 0), 0);
+              const progressPct  = Math.round(((currentIdx + 1) / modules.length) * 100);
+              const semesterStart = modules[0]?.week?.split('–')[0]?.trim() ?? '';
+              const lastWeekParts = (modules[modules.length - 1]?.week ?? '').split('–');
+              const semesterEnd   = lastWeekParts[lastWeekParts.length - 1]?.trim() ?? '';
+              const dsMap       = Object.fromEntries(PREBUILT_DATASETS.map(d => [d.id, d]));
+              const currentDs   = current?.datasetId ? dsMap[current.datasetId] : null;
+              // Datasets linked to upcoming/active assignments
+              const featuredDs  = PREBUILT_DATASETS.filter(d =>
+                allAssign.some(a => a.datasetId === d.id && a.status !== 'completed')
+              ).slice(0, 3);
+              const displayDs   = featuredDs.length ? featuredDs : PREBUILT_DATASETS.slice(0, 3);
+              const codeStudents  = profStudents[selectedProfCode] || { students: [], submissions: [] };
+              const totalEnrolled = profCodes.reduce((s, c) => s + (c.student_count || 0), 0);
+              const totalSubs     = profCodes.reduce((s, c) => s + (c.submission_count || 0), 0);
+              const pendingSubs   = codeStudents.submissions.filter(s => s.grade == null).length;
+              const gradedSubs    = codeStudents.submissions.filter(s => s.grade != null);
+              const avgScore      = gradedSubs.length ? Math.round(
+                gradedSubs.reduce((sum, s) => {
+                  const asgn = ALL_ASSIGNMENTS_MAP[s.assignment_id];
+                  return sum + (s.grade / (asgn?.points ?? 100)) * 100;
+                }, 0) / gradedSubs.length
+              ) : null;
+
+              const now2 = new Date();
+              const overdue = allAssign.filter(a => {
+                if (submittedAssignments.has(a.id) || a.status === 'completed') return false;
+                const due = a.dueDate ? new Date(a.dueDate) : null;
+                return due && due < now2;
+              });
+
+              const allCoursesAssign = enrolledCourses.flatMap(c => [...c.assignments, ...(customAssignments.filter(a => a.courseId === c.id))]);
+              const allCoursesCompleted = allCoursesAssign.filter(a => a.status === 'completed').length;
+              const allCoursesActive = allCoursesAssign.filter(a => a.status === 'active').length;
+              const allCoursesOverdue = allCoursesAssign.filter(a => {
+                if (submittedAssignments.has(a.id) || a.status === 'completed') return false;
+                const due = a.dueDate ? new Date(a.dueDate) : null;
+                return due && due < now2;
+              }).length;
+
+              const hour = now2.getHours();
+              const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+              const firstName = user?.name?.split(' ')[0] || 'there';
+
+              return (
+                <div>
+                  {/* Course selector */}
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>Your Courses ({enrolledCourses.length})</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${enrolledCourses.length}, 1fr)`, gap: 12 }}>
+                      {enrolledCourses.map(c => {
+                        const cidx = c.modules.findIndex(m => m.current);
+                        const cpct = Math.round(((cidx + 1) / c.modules.length) * 100);
+                        const cdone = c.assignments.filter(a => a.status === 'completed').length;
+                        const active = c.id === selectedCourseId;
+                        return (
+                          <button key={c.id} onClick={() => setSelectedCourseId(c.id)}
+                            style={{ padding: '14px 16px', borderRadius: 10, border: active ? `2px solid ${c.color}` : BORDER, background: active ? `${c.color}0a` : CARD_BG, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                              <span style={{ fontSize: 10, fontWeight: 700, color: c.color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{c.code}</span>
+                              {active && <span style={{ fontSize: 9, fontWeight: 700, color: c.color, background: `${c.color}18`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>Active</span>}
+                            </div>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 2 }}>{c.name}</div>
+                            <div style={{ fontSize: 11, color: TEXT2, marginBottom: 10 }}>{c.instructor} · {c.semester}</div>
+                            <div style={{ height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden', marginBottom: 6 }}>
+                              <div style={{ height: '100%', width: `${cpct}%`, background: c.color, borderRadius: 2 }} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: TEXT3 }}>
+                              <span>Week {cidx + 1} of {c.modules.length}</span>
+                              <span>{cdone}/{c.assignments.length} assignments</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* ── Hero banner ── */}
+                  <div style={{ ...CARD, marginBottom: 20, padding: '22px 26px', border: '1px solid rgba(74,222,128,0.2)', background: 'rgba(74,222,128,0.025)' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5 }}>
+                          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>
+                            {`${greeting}, ${firstName}`}
+                          </h1>
+                        </div>
+                        <div style={{ fontSize: 13, color: TEXT2 }}>
+                          Education Mode · {enrolledCourses.length} {enrolledCourses.length === 1 ? 'course' : 'courses'} enrolled
+                        </div>
+                      </div>
+                      {effectiveProfessor && (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button onClick={() => setShowCreateAssignment(true)} style={{ padding: '8px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ Assignment</button>
+                          <button onClick={() => setShowInvite(true)} style={{ padding: '8px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Invite Students</button>
+                          <button onClick={() => setPanel('prof-dashboard')} style={{ padding: '8px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Professor Hub →</button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
+                        <div style={{ height: '100%', width: `${progressPct}%`, background: GREEN, borderRadius: 3, transition: 'width 0.4s ease' }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3 }}>
+                        <span>{semesterStart}</span>
+                        <span style={{ color: GREEN, fontWeight: 700 }}>{progressPct}% of semester complete</span>
+                        <span>{semesterEnd}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, paddingTop: 14, borderTop: `1px solid rgba(74,222,128,0.15)` }}>
+                      {(effectiveProfessor ? [
+                        ['Enrolled',       totalEnrolled || 4,                   'students',           TEXT  ],
+                        ['Submissions',    totalSubs || 9,                       'received',           BLUE  ],
+                        ['Pending Review', pendingSubs != null ? pendingSubs : 4,'awaiting grade',     YELLOW],
+                        ['Avg Score',      avgScore != null ? `${avgScore}%` : '88%', 'class average', GREEN ],
+                      ] : [
+                        ['Courses',   enrolledCourses.length,                               enrolledCourses.length === 1 ? 'enrolled' : 'enrolled',          TEXT  ],
+                        ['Done',      `${allCoursesCompleted} / ${allCoursesAssign.length}`,'assignments',                                                 GREEN ],
+                        ['Active',    allCoursesActive,                                    allCoursesActive === 1 ? 'assignment' : 'assignments',           allCoursesActive ? BLUE : TEXT2],
+                        ['Overdue',   allCoursesOverdue,                                   allCoursesOverdue === 1 ? 'assignment' : 'assignments',          allCoursesOverdue ? RED : TEXT2],
+                      ]).map(([label, value, sub, color]) => (
+                        <div key={label} style={{ paddingRight: 20 }}>
+                          <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 4 }}>{label}</div>
+                          <div style={{ fontSize: 22, fontWeight: 800, color, letterSpacing: '-0.5px', marginBottom: 2 }}>{value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3 }}>{sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── Student: focus card (next/active assignment) ── */}
+                  {!effectiveProfessor && (active[0] || upcoming[0]) && (() => {
+                    const focus = active[0] || upcoming[0];
+                    const fDs   = focus.datasetId ? dsMap[focus.datasetId] : null;
+                    const submitted = submittedAssignments.has(focus.id);
+                    const detail    = submissionDetails[focus.id];
+                    return (
+                      <div style={{ ...CARD, marginBottom: 16, padding: '20px 24px', border: `1px solid ${active[0] ? 'rgba(77,163,255,0.35)' : 'rgba(74,222,128,0.25)'}`, background: active[0] ? 'rgba(77,163,255,0.03)' : 'rgba(74,222,128,0.02)' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8, color: active[0] ? BLUE : GREEN }}>
+                              {active[0] ? '● Active Now' : '↑ Up Next'}
+                            </div>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{focus.title}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, marginBottom: 10 }}>{focus.chapter} · Due {focus.week} · {focus.points} pts</div>
+                            <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, marginBottom: fDs ? 14 : 0 }}>{focus.description}</div>
+                            {fDs && (
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 12px', background: `${fDs.color}0e`, border: `1px solid ${fDs.color}30`, borderRadius: 8 }}>
+                                <span style={{ fontSize: 10, fontWeight: 700, color: fDs.color, textTransform: 'uppercase' }}>Dataset</span>
+                                <span style={{ fontSize: 12, fontWeight: 600, color: TEXT }}>{fDs.title}</span>
+                                <span style={{ fontSize: 11, color: TEXT3 }}>·</span>
+                                <span style={{ fontSize: 11, color: TEXT2 }}>{fDs.subtitle}</span>
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0, minWidth: 160 }}>
+                            {fDs && (
+                              <button onClick={() => { setSandboxDataset(fDs.id); setPanel(DATASET_TARGET_PANEL[fDs.id]); }}
+                                style={{ padding: '11px 20px', background: `${fDs.color}18`, border: `1px solid ${fDs.color}44`, borderRadius: 9, color: fDs.color, fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                Open Dataset →
+                              </button>
+                            )}
+                            {submitted ? (
+                              <div style={{ padding: '11px 20px', background: 'rgba(74,222,128,0.07)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 9, textAlign: 'center' }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: GREEN }}>✓ Submitted</div>
+                                {detail?.grade != null
+                                  ? <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>{detail.grade} / {focus.points} pts</div>
+                                  : <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>Awaiting grade</div>}
+                              </div>
+                            ) : (
+                              <button onClick={() => { setShowSubmit(focus); setSubmitNote(''); }}
+                                style={{ padding: '11px 20px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 9, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                Submit Work →
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── Professor: pending grading queue ── */}
+                  {effectiveProfessor && codeStudents.submissions.filter(s => s.grade == null).length > 0 && (
+                    <div style={{ ...CARD, marginBottom: 16, border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.02)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                        <div style={{ fontSize: 10, color: YELLOW, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                          Needs Grading · {codeStudents.submissions.filter(s => s.grade == null).length} pending
+                        </div>
+                        <button onClick={() => setPanel('prof-dashboard')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Go to Hub →</button>
+                      </div>
+                      {codeStudents.submissions.filter(s => s.grade == null).slice(0, 4).map(s => {
+                        const asgn = ALL_ASSIGNMENTS_MAP[s.assignment_id];
+                        return (
+                          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(77,163,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: BLUE, flexShrink: 0 }}>
+                              {(s.student_name || '?')[0]}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{s.student_name}</div>
+                              <div style={{ fontSize: 11, color: TEXT2 }}>{asgn?.title || s.assignment_id} · submitted {new Date(s.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                            </div>
+                            <button onClick={() => { setShowGrade(s); setGradeForm({ grade: '', feedback: '' }); }}
+                              style={{ padding: '5px 12px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 6, color: GREEN, fontSize: 11, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+                              Grade →
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 16 }}>
+                    {/* Current module */}
+                    <div style={{ ...CARD }}>
+                      <div style={{ fontSize: 10, color: GREEN, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>Current Module</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{current?.topic}</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>{current?.week}</div>
+                      {currentDs && (
+                        <div style={{ padding: '10px 12px', background: `${currentDs.color}0e`, border: `1px solid ${currentDs.color}30`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: currentDs.color, marginBottom: 2 }}>Active Dataset</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{currentDs.title}</div>
+                          </div>
+                          <button onClick={() => { setSandboxDataset(currentDs.id); setPanel(DATASET_TARGET_PANEL[currentDs.id]); }} style={{ padding: '6px 12px', background: `${currentDs.color}18`, border: `1px solid ${currentDs.color}44`, borderRadius: 7, color: currentDs.color, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Open →</button>
+                        </div>
+                      )}
+                      {current?.assignments?.length > 0 && (
+                        <div>
+                          <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 8 }}>This Week</div>
+                          {current.assignments.map(a => (
+                            <div key={a} style={{ fontSize: 12, color: TEXT2, padding: '5px 0', borderBottom: `1px solid ${BORDER_C}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ color: TEXT3, fontSize: 10 }}>◎</span>{a}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {effectiveProfessor ? (
+                      /* Professor: assignment management view */
+                      <div style={{ ...CARD }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                          <div style={{ fontSize: 10, color: BLUE, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>Assignment Status</div>
+                          <button onClick={() => setPanel('edu-assignments')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Manage all →</button>
+                        </div>
+                        {allAssign.slice(0, 4).map(a => {
+                          const statusColor = a.status === 'completed' ? GREEN : a.status === 'active' ? BLUE : TEXT3;
+                          const _allSubs = Object.values(profStudents).flatMap(d => d.submissions || []);
+                          const _total = profCodes.reduce((s, c) => s + (c.student_count || 0), 0);
+                          const submitted = a.status !== 'upcoming' ? `${_allSubs.filter(s => s.assignment_id === a.id).length} / ${_total}` : '—';
+                          return (
+                            <div key={a.id} style={{ padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{a.title}</span>
+                                <span style={{ fontSize: 11, fontWeight: 700, color: statusColor }}>{submitted} submitted</span>
+                              </div>
+                              <div style={{ fontSize: 11, color: TEXT2, display: 'flex', gap: 10 }}>
+                                <span>{a.chapter}</span><span>·</span>
+                                <span>Due {a.week}</span><span>·</span>
+                                <span style={{ textTransform: 'capitalize', color: statusColor }}>{a.status}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <button onClick={() => setShowCreateAssignment(true)} style={{ marginTop: 12, width: '100%', padding: '8px 0', background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 7, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ Create Assignment</button>
+                      </div>
+                    ) : (
+                      /* Student: personal upcoming view */
+                      <div style={{ ...CARD }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ fontSize: 10, color: YELLOW, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>Your Upcoming Work</div>
+                            {overdue.length > 0 && <span style={{ fontSize: 9, fontWeight: 700, color: RED, background: 'rgba(248,113,113,0.12)', padding: '2px 7px', borderRadius: 8 }}>{overdue.length} overdue</span>}
+                          </div>
+                          <button onClick={() => setPanel('edu-assignments')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>View all →</button>
+                        </div>
+                        {overdue.length > 0 && (
+                          <div style={{ marginBottom: 10, paddingBottom: 10, borderBottom: `1px solid ${BORDER_C}` }}>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: RED, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>Overdue</div>
+                            {overdue.map(a => (
+                              <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                                <div>
+                                  <span style={{ fontSize: 13, fontWeight: 600, color: RED }}>{a.title}</span>
+                                  <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>Due {a.week} · {a.points} pts</div>
+                                </div>
+                                <button onClick={() => { setShowSubmit(a); setSubmitNote(''); }} style={{ fontSize: 10, fontWeight: 700, color: RED, background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>Submit →</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {upcoming.length === 0 && active.length === 0 && overdue.length === 0 ? (
+                          <div style={{ fontSize: 13, color: TEXT3, padding: '20px 0', textAlign: 'center' }}>You're all caught up</div>
+                        ) : [...active, ...upcoming].slice(0, 4).map(a => {
+                          const ds = a.datasetId ? dsMap[a.datasetId] : null;
+                          const submitted = submittedAssignments.has(a.id);
+                          return (
+                            <div key={a.id} style={{ padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{a.title}</span>
+                                {submitted
+                                  ? <span style={{ fontSize: 10, fontWeight: 700, color: GREEN }}>✓ Submitted</span>
+                                  : <button onClick={() => { setShowSubmit(a); setSubmitNote(''); }} style={{ fontSize: 10, fontWeight: 700, color: BLUE, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Submit →</button>
+                                }
+                              </div>
+                              <div style={{ fontSize: 11, color: TEXT2, display: 'flex', gap: 10, alignItems: 'center' }}>
+                                <span>Due {a.week}</span><span>·</span>
+                                <span>{a.points} pts</span>
+                                {ds && <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, color: ds.color }}>{ds.title.split(' ').slice(0,2).join(' ')}</span>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Dataset highlights */}
+                  <div style={{ ...CARD }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                      <div>
+                        <div style={{ fontSize: 15, fontWeight: 700 }}>Dataset Library</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Practice datasets for your coursework. No real account needed.</div>
+                      </div>
+                      <button onClick={() => { setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ padding: '7px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>View all {PREBUILT_DATASETS.length} →</button>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12 }}>
+                      {displayDs.map(ds => (
+                        <div key={ds.id} style={{ padding: '14px 16px', background: `${ds.color}08`, border: `1px solid ${ds.color}25`, borderRadius: 10 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: ds.color, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{ds.category}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: TEXT, marginBottom: 4, lineHeight: 1.3 }}>{ds.title}</div>
+                          <div style={{ fontSize: 11, color: TEXT2, marginBottom: 12, lineHeight: 1.4 }}>{ds.subtitle}</div>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 10, fontWeight: 600, color: TEXT3 }}>{ds.difficulty}</span>
+                            <button onClick={() => { setSandboxDataset(ds.id); setPanel(DATASET_TARGET_PANEL[ds.id]); }} style={{ padding: '5px 10px', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 6, color: ds.color, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Explore →</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Professor-only class snapshot */}
+                  {effectiveProfessor && (() => {
+                    const _snapTotal = profCodes.reduce((s, c) => s + (c.student_count || 0), 0);
+                    const _snapSubs  = profCodes.reduce((s, c) => s + (c.submission_count || 0), 0);
+                    const _gradedSubs = Object.values(profStudents).flatMap(d => d.submissions || []).filter(s => s.grade != null);
+                    const _avgPcts = _gradedSubs.map(s => { const a = ALL_ASSIGNMENTS_MAP[s.assignment_id]; return a ? (s.grade / a.points) * 100 : null; }).filter(v => v != null);
+                    const _avg = _avgPcts.length > 0 ? Math.round(_avgPcts.reduce((a, b) => a + b, 0) / _avgPcts.length) : null;
+                    return (
+                    <div style={{ ...CARD, marginTop: 16 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Class Snapshot</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                        {[
+                          { label: 'Enrolled',        value: _snapTotal || '—', sub: 'students',       color: TEXT },
+                          { label: 'Submissions',      value: _snapTotal > 0 ? `${_snapSubs} / ${_snapTotal}` : '—', sub: 'all assignments', color: GREEN },
+                          { label: 'Avg Score',        value: _avg != null ? `${_avg}%` : '—', sub: 'class average', color: BLUE },
+                          { label: 'Custom Datasets',  value: customAssignments.length || '0', sub: 'created by you', color: '#a78bfa' },
+                        ].map(({ label, value, sub, color }) => (
+                          <div key={label} style={{ padding: '14px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
+                            <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                            <div style={{ fontSize: 22, fontWeight: 700, color, marginBottom: 2 }}>{value}</div>
+                            <div style={{ fontSize: 11, color: TEXT3 }}>{sub}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    );
+                  })()}
+                </div>
+              );
+            })()}
+
+            {panel === 'overview' && !eduMode && (() => {
+              const _h = new Date().getHours();
+              const _g = _h < 12 ? 'Good morning' : _h < 17 ? 'Good afternoon' : 'Good evening';
+              const _n = user?.name?.split(' ')[0] || 'there';
+              const _OV_DEF = ['stats', 'chart', 'health', 'goals', 'txns', 'calendar'];
+              const _ovOrder = getOrder('overview', _OV_DEF);
+              const _ovReorder = handleReorder('overview', _OV_DEF);
+              const _ovCustom = !!layoutOrder['overview'];
+              return (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 24 }}>
+                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>{_g}, {_n}</h1>
+                  {_ovCustom && <button onClick={() => resetLayout('overview')} style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 11, cursor: 'pointer', padding: 0 }}>Reset layout</button>}
+                </div>
+
+                {isAdmin && !viewAs && isDemoData && !connectBannerDismissed && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)', borderLeft: '3px solid #4ade80', borderRadius: 10, marginBottom: 24 }}>
+                    <span style={{ fontSize: 20 }}>🔗</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>You're viewing demo data</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Connect your bank and investment accounts to see your real finances.</div>
+                    </div>
+                    <button
+                      onClick={() => window._plaidLinkHandler?.open()}
+                      style={{ padding: '7px 14px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 7, color: '#4ade80', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      + Connect Account
+                    </button>
+                    <button
+                      onClick={() => { setConnectBannerDismissed(true); localStorage.setItem('ledger_connect_banner_dismissed', '1'); }}
+                      style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 16, cursor: 'pointer', lineHeight: 1, padding: '2px 4px', flexShrink: 0 }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
+                {canSeeAI && <AdviceBox onGetAdvice={() => getAdvice('overview')} loading={adviceState.overview?.loading} text={adviceState.overview?.text} />}
+
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <DragSection id="stats" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
+                <div data-tour="overview-cards" style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24, marginTop: 24 }}>
                   {[
                     { label: 'Net Worth',       value: fmt(netWorth),       sub: 'Cash + Portfolio' },
-                    { label: 'Cash & Deposits', value: fmt(totalCash),      sub: `${accounts.length} account${accounts.length !== 1 ? 's' : ''}` },
+                    { label: 'Cash & Deposits', value: fmt(totalCash),      sub: (() => { const n = accounts.filter(a => !a.closed && a.type !== 'investment').length; return `${n} account${n !== 1 ? 's' : ''}`; })() },
                     { label: 'Portfolio Value', value: fmt(totalPortfolio), sub: `${holdings.length} position${holdings.length !== 1 ? 's' : ''}` },
                   ].map(({ label, value, sub }) => (
                     <div key={label} className="lc" style={CARD}>
@@ -819,36 +3499,213 @@ export default function Dashboard() {
                   ))}
                 </div>
 
-                <div className="lc" style={{ ...CARD, marginBottom: 24 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 4, fontSize: 13, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px' }}>S&P 500</div>
-                  <SP500Chart candles={sp500Candles} period={sp500Period} onPeriodChange={fetchSP500} />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 24 }}>
-                  <div className="lc" style={CARD}>
-                    <div style={{ fontWeight: 600, marginBottom: 16 }}>Net Worth History</div>
+                </DragSection>
+                <DragSection id="chart" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
+                {snapshots.length > 0 && (
+                  <div style={{ ...CARD, marginBottom: 16 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Net Worth History</div>
                     <NetWorthChart snapshots={snapshots} />
                   </div>
-                  <div className="lc" style={CARD}>
-                    <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Market Sentiment</div>
-                    {fearGreed ? (
-                      <FearGreedGauge score={fearGreed.score} rating={fearGreed.rating} />
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 110, color: TEXT2, fontSize: 12 }}>Loading…</div>
-                    )}
-                  </div>
-                </div>
+                )}
 
+                </DragSection>
+                <DragSection id="health" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
+                {(() => {
+                  const hasData = accounts.length > 0 || transactions.length > 0;
+                  const monthlyExp = activeMonthlySpend > 50 ? activeMonthlySpend : 1620;
+                  const monthsCovered = hasData ? (totalCash / Math.max(monthlyExp, 1)) : 2.1;
+
+                  const emergencyScore = Math.round(Math.min(monthsCovered / 6, 1) * 25);
+
+                  const catsWithLimits = activeBudget.filter(b => budgetLimits[b.category]);
+                  const catsUnder = catsWithLimits.filter(b => b.total <= budgetLimits[b.category]);
+                  const budgetScore = catsWithLimits.length > 0
+                    ? Math.round((catsUnder.length / catsWithLimits.length) * 25)
+                    : hasData ? 10 : 13;
+
+                  const investScore = holdings.length === 0
+                    ? (hasData ? 0 : 14)
+                    : Math.round(Math.min(holdings.length / 5, 1) * 25);
+
+                  const linkedGoals = goals.filter(g => g.accountId);
+                  const goalsScore = goals.length === 0
+                    ? (hasData ? 6 : 10)
+                    : linkedGoals.length === 0 ? 8
+                    : Math.round(Math.min(
+                        linkedGoals.reduce((s, g) => {
+                          const acct = accounts.find(a => a.account_id === g.accountId);
+                          const curr = acct ? (acct.balances?.current || 0) : 0;
+                          return s + Math.min(curr / Math.max(g.target, 1), 1);
+                        }, 0) / linkedGoals.length, 1
+                      ) * 25);
+
+                  const total = Math.min(emergencyScore + budgetScore + investScore + goalsScore, 100);
+                  const scoreColor = total >= 80 ? GREEN : total >= 60 ? BLUE : total >= 40 ? YELLOW : RED;
+                  const scoreLabel = total >= 80 ? 'Excellent' : total >= 60 ? 'Good' : total >= 40 ? 'Fair' : 'Needs Work';
+
+                  const gaugeRad = Math.PI * (1 - total / 100);
+                  const gx = (90 + 70 * Math.cos(gaugeRad)).toFixed(1);
+                  const gy = (100 - 70 * Math.sin(gaugeRad)).toFixed(1);
+
+                  const factors = [
+                    { name: 'Emergency Fund',  score: emergencyScore, max: 25, tip: monthsCovered < 3 && hasData ? `${monthsCovered.toFixed(1)} mo covered — target 6` : null },
+                    { name: 'Budget Control',  score: budgetScore,    max: 25, tip: catsWithLimits.length === 0 && hasData ? 'Set limits in Budgeting → Expenses' : null },
+                    { name: 'Investments',     score: investScore,    max: 25, tip: holdings.length === 0 && hasData ? 'No positions — visit Investments' : null },
+                    { name: 'Savings Goals',   score: goalsScore,     max: 25, tip: goals.length === 0 && hasData ? 'Create a goal in Budgeting → Goals' : null },
+                  ];
+
+                  return (
+                    <div style={{ ...CARD, marginBottom: 16, display: 'grid', gridTemplateColumns: '170px 1fr', gap: 28, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <svg width={170} height={108} viewBox="0 0 180 110" style={{ display: 'block' }}>
+                          <path d="M 20 100 A 70 70 0 0 1 160 100" fill="none" stroke={MUTED} strokeWidth={13} strokeLinecap="round" />
+                          {total > 0 && (
+                            <path d={`M 20 100 A 70 70 0 0 1 ${gx} ${gy}`} fill="none" stroke={scoreColor} strokeWidth={13} strokeLinecap="round" />
+                          )}
+                          <text x="90" y="89" textAnchor="middle" fill={scoreColor} fontSize="30" fontWeight="800" fontFamily="monospace">{total}</text>
+                          <text x="90" y="107" textAnchor="middle" fill={scoreColor} fontSize="11" fontWeight="700">{scoreLabel}</text>
+                        </svg>
+                        <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>out of 100 · {!hasData && 'demo'}</div>
+                      </div>
+
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Financial Health Score</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+                          {factors.map(f => {
+                            const r = f.score / f.max;
+                            const fc = r >= 0.8 ? GREEN : r >= 0.6 ? BLUE : r >= 0.4 ? YELLOW : RED;
+                            return (
+                              <div key={f.name}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                  <span style={{ fontSize: 12, color: TEXT }}>{f.name}</span>
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: fc, fontFamily: 'monospace' }}>{f.score}/{f.max}</span>
+                                </div>
+                                <div style={{ height: 5, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: `${r * 100}%`, background: fc, borderRadius: 3, transition: 'width 0.4s ease' }} />
+                                </div>
+                                {f.tip && <div style={{ fontSize: 10, color: TEXT3, marginTop: 3 }}>{f.tip}</div>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                </DragSection>
+                <DragSection id="goals" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
+                <div className="lc" style={{ ...CARD, marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: goals.length ? 16 : 0 }}>
+                    <div style={{ fontWeight: 600 }}>Savings Goals</div>
+                    <button onClick={() => { setShowGoalForm(true); setEditingGoal(null); setGoalForm({ name: '', target: '', accountId: '' }); }}
+                      style={{ padding: '5px 14px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                      + New Goal
+                    </button>
+                  </div>
+                  {showGoalForm && (
+                    <div style={{ marginBottom: 16, padding: 16, background: DARK, borderRadius: 8, border: BORDER }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 12 }}>
+                        {[
+                          { label: 'Goal Name',      type: 'text',   key: 'name',      placeholder: 'e.g. Emergency Fund' },
+                          { label: 'Target Amount',  type: 'number', key: 'target',    placeholder: 'e.g. 10000' },
+                        ].map(({ label, type, key, placeholder }) => (
+                          <div key={key}>
+                            <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>{label}</div>
+                            <input type={type} value={goalForm[key]} onChange={e => setGoalForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
+                              style={{ width: '100%', padding: '8px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                          </div>
+                        ))}
+                        <div>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>Link Account</div>
+                          <select value={goalForm.accountId} onChange={e => setGoalForm(f => ({ ...f, accountId: e.target.value }))}
+                            style={{ width: '100%', padding: '8px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: goalForm.accountId ? TEXT : TEXT2, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}>
+                            <option value="">No account</option>
+                            {accounts.map(a => <option key={a.account_id} value={a.account_id}>{a.name} ({fmt(a.balances?.current)})</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={async () => {
+                          if (!goalForm.name || !goalForm.target) return;
+                          try {
+                            if (editingGoal) {
+                              const res = await api.put(`/goals/${editingGoal.id}`, goalForm);
+                              setGoals(prev => prev.map(g => g.id === editingGoal.id ? res.data.goal : g));
+                            } else {
+                              const res = await api.post('/goals', goalForm);
+                              setGoals(prev => [...prev, res.data.goal]);
+                            }
+                            setShowGoalForm(false); setEditingGoal(null); setGoalForm({ name: '', target: '', accountId: '' });
+                          } catch (err) { console.error(err); }
+                        }} style={{ padding: '7px 18px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                          {editingGoal ? 'Save' : 'Create'}
+                        </button>
+                        <button onClick={() => { setShowGoalForm(false); setEditingGoal(null); }} style={{ padding: '7px 14px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, cursor: 'pointer', fontSize: 12 }}>Cancel</button>
+                      </div>
+                    </div>
+                  )}
+                  {goals.length === 0 && !showGoalForm ? (
+                    <div style={{ color: TEXT3, fontSize: 13, padding: '8px 0' }}>No goals yet. Track your savings targets here.</div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                      {goals.map(goal => {
+                        const acct    = accounts.find(a => a.account_id === goal.accountId);
+                        const current = acct ? (acct.balances?.current || 0) : 0;
+                        const pct     = Math.min((current / goal.target) * 100, 100);
+                        const done    = current >= goal.target;
+                        const barColor = done ? GREEN : pct >= 75 ? BLUE : BLUE_BTN;
+                        return (
+                          <div key={goal.id} style={{ background: DARK, borderRadius: 8, padding: '14px 16px', border: BORDER }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{goal.name}</div>
+                                <div style={{ fontSize: 11, color: TEXT3 }}>{acct ? acct.name : 'No account linked'}</div>
+                              </div>
+                              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                {done && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase' }}>Done</span>}
+                                <button onClick={() => { setEditingGoal(goal); setGoalForm({ name: goal.name, target: String(goal.target), accountId: goal.accountId || '' }); setShowGoalForm(true); }}
+                                  style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}>Edit</button>
+                                <button onClick={async () => { await api.delete(`/goals/${goal.id}`); setGoals(prev => prev.filter(g => g.id !== goal.id)); }}
+                                  style={{ background: 'none', border: 'none', color: RED, cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}>✕</button>
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                              <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px', color: done ? GREEN : TEXT }}>{acct ? fmt(current) : '—'}</span>
+                              <span style={{ fontSize: 12, color: TEXT2 }}>of {fmt(goal.target)}</span>
+                            </div>
+                            <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${acct ? pct : 0}%`, background: barColor, borderRadius: 3, transition: 'width 0.4s ease' }} />
+                            </div>
+                            <div style={{ fontSize: 11, color: TEXT3, marginTop: 5 }}>
+                              {acct ? `${pct.toFixed(0)}% · ${done ? 'Goal reached!' : fmt(goal.target - current) + ' to go'}` : 'Link an account to track'}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                </DragSection>
+
+                <DragSection id="txns" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
                 <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16 }}>
-                  <div className="lc" style={CARD}>
-                    <div style={{ fontWeight: 600, marginBottom: 16 }}>Recent Transactions</div>
+                  <div data-tour="overview-txns" className="lc" style={CARD}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                      <div style={{ fontWeight: 600 }}>Recent Transactions</div>
+                      {transactions.length > 5 && (
+                        <button onClick={() => setShowAllTxns(v => !v)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 12, cursor: 'pointer', padding: 0 }}>
+                          {showAllTxns ? 'Show less ↑' : `+${transactions.length - 5} more ↓`}
+                        </button>
+                      )}
+                    </div>
                     {transactions.length === 0 ? (
                       <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>No transactions yet</div>
-                    ) : transactions.slice(0, 8).map((t, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < 7 ? `1px solid ${BORDER_C}` : 'none' }}>
+                    ) : (showAllTxns ? transactions : transactions.slice(0, 5)).map((t, i, arr) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
                         <div>
                           <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
-                          <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} &middot; {t.personal_finance_category?.primary || t.category?.[0] || 'Other'}</div>
+                          <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} · {t.personal_finance_category?.primary || t.category?.[0] || 'Other'}</div>
                         </div>
                         <div style={{ fontWeight: 600, color: t.amount > 0 ? RED : GREEN, fontFamily: 'monospace' }}>
                           {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
@@ -856,178 +3713,646 @@ export default function Dashboard() {
                       </div>
                     ))}
                   </div>
-
                   <div className="lc" style={CARD}>
-                    <div style={{ fontWeight: 600, marginBottom: 16 }}>Market Alerts</div>
-                    {articles.slice(0, 5).map((a, i) => (
-                      <div key={i} style={{ padding: '10px 0', borderBottom: i < 4 ? `1px solid ${BORDER_C}` : 'none' }}>
-                        <a href={a.url} target="_blank" rel="noreferrer" style={{ color: TEXT, textDecoration: 'none', fontSize: 13, fontWeight: 500, lineHeight: 1.4, display: 'block' }}>
-                          {a.headline}
-                        </a>
-                        <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>
-                          {a.source} &middot; {fmtDate(a.created_at)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── BANKING ───────────────────────────────── */}
-            {panel === 'banking' && (
-              <div>
-                <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 700 }}>Banking</h1>
-                <AdviceBox onGetAdvice={() => getAdvice('banking')} loading={adviceState.banking?.loading} text={adviceState.banking?.text} />
-                {accounts.length === 0 ? (
-                  <div style={{ ...CARD, textAlign: 'center', padding: 48, color: TEXT2, marginBottom: 24, marginTop: 24 }}>
-                    No accounts connected. Use the connect buttons in the sidebar.
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24, marginTop: 24 }}>
-                    {accounts.map(a => (
-                      <div key={a.account_id} className="lc" style={{ ...CARD, opacity: a.closed ? 0.6 : 1 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ fontSize: 11, color: BLUE, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{a.institution_name}</div>
-                          {a.closed && <span style={{ fontSize: 10, fontWeight: 700, color: TEXT3, background: MUTED, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Closed</span>}
-                        </div>
-                        <div style={{ fontWeight: 600, margin: '6px 0 2px', fontSize: 15 }}>{a.name}</div>
-                        <div style={{ fontSize: 28, fontWeight: 700, margin: '8px 0 4px', letterSpacing: '-0.5px', color: a.closed ? TEXT3 : TEXT }}>{a.closed ? '—' : fmt(a.balances?.current)}</div>
-                        <div style={{ fontSize: 12, color: TEXT2, textTransform: 'capitalize' }}>{a.subtype}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="lc" style={CARD}>
-                  <div style={{ fontWeight: 600, marginBottom: 16 }}>Transactions — Last 30 Days</div>
-                  {transactions.length === 0 ? (
-                    <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>No transactions found</div>
-                  ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ borderBottom: BORDER }}>
-                          {['Date', 'Merchant', 'Category', 'Amount'].map(h => (
-                            <th key={h} style={{ padding: '8px 12px', textAlign: h === 'Amount' ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {transactions.map((t, i) => (
-                          <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                            <td style={{ padding: '10px 12px', color: TEXT2, fontSize: 13, whiteSpace: 'nowrap' }}>{fmtDate(t.date)}</td>
-                            <td style={{ padding: '10px 12px', fontWeight: 500 }}>{t.merchant_name || t.name}</td>
-                            <td style={{ padding: '10px 12px', color: TEXT2, fontSize: 13 }}>{t.personal_finance_category?.primary || t.category?.[0] || '—'}</td>
-                            <td style={{ padding: '10px 12px', fontWeight: 600, color: t.amount > 0 ? RED : GREEN, textAlign: 'right', fontFamily: 'monospace' }}>
-                              {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ── INVESTMENTS ───────────────────────────── */}
-            {panel === 'investments' && (
-              <div>
-                <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 700 }}>Investments</h1>
-                <AdviceBox onGetAdvice={() => getAdvice('investments')} loading={adviceState.investments?.loading} text={adviceState.investments?.text} />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24, marginTop: 24 }}>
-                  {[
-                    { label: 'Portfolio Value', value: fmt(totalPortfolio) },
-                    { label: 'Positions',        value: holdings.length },
-                    { label: 'Avg Position',     value: holdings.length ? fmt(totalPortfolio / holdings.length) : '—' },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="lc" style={CARD}>
-                      <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-                      <div style={{ fontSize: 30, fontWeight: 700, marginTop: 8, letterSpacing: '-0.5px' }}>{value}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                      <div style={{ fontWeight: 600 }}>Market Alerts</div>
+                      {articles.length > 5 && (
+                        <button onClick={() => setShowAllNews(v => !v)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 12, cursor: 'pointer', padding: 0 }}>
+                          {showAllNews ? 'Show less ↑' : `+${articles.length - 5} more ↓`}
+                        </button>
+                      )}
                     </div>
-                  ))}
+                    {(showAllNews ? articles : articles.slice(0, 5)).map((a, i, arr) => (
+                      <div key={i} style={{ padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
+                        <a href={a.url} target="_blank" rel="noreferrer" style={{ color: TEXT, textDecoration: 'none', fontSize: 13, fontWeight: 500, lineHeight: 1.4, display: 'block' }}>{a.headline}</a>
+                        <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{a.source} · {fmtDate(a.created_at)}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="lc" style={CARD}>
-                  <div style={{ fontWeight: 600, marginBottom: 16 }}>Holdings</div>
-                  {holdings.length === 0 ? (
-                    <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>No holdings found. Connect an investment account via Plaid.</div>
-                  ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ borderBottom: BORDER }}>
-                          {['Ticker', 'Name', 'Shares', 'Price', 'Value', 'P&L'].map(h => (
-                            <th key={h} style={{ padding: '8px 12px', textAlign: ['Shares', 'Price', 'Value', 'P&L'].includes(h) ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {holdings.map((h, i) => {
-                          const ticker = h.security?.ticker_symbol || '—';
-                          const name   = h.security?.name || '—';
-                          const qty    = h.quantity || 0;
-                          const price  = h.institution_price || 0;
-                          const value  = qty * price;
-                          const cost   = h.cost_basis || 0;
-                          const pnl    = cost > 0 ? value - cost : null;
+                </DragSection>
+
+                <DragSection id="calendar" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
+                {(() => {
+                  const EVENT_TYPES = {
+                    reminder:     { label: 'Reminder',     color: BLUE   },
+                    bill:         { label: 'Bill Due',      color: RED    },
+                    income:       { label: 'Income',        color: GREEN  },
+                    subscription: { label: 'Subscription',  color: '#f97316' },
+                    goal:         { label: 'Goal',          color: '#a78bfa' },
+                  };
+                  const yr  = calViewDate.getFullYear();
+                  const mo  = calViewDate.getMonth();
+                  const firstDay = new Date(yr, mo, 1).getDay();
+                  const daysInMonth = new Date(yr, mo + 1, 0).getDate();
+                  const todayStr = new Date().toISOString().split('T')[0];
+                  const monthStr = `${yr}-${String(mo + 1).padStart(2, '0')}`;
+                  const monthLabel = calViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+                  const saveEvent = () => {
+                    if (!eventForm.title.trim() || !eventForm.date) return;
+                    if (editingEvent) {
+                      const updated = calendarEvents.map(e => e.id === editingEvent.id ? { ...e, ...eventForm, title: eventForm.title.trim() } : e);
+                      setCalendarEvents(updated);
+                    } else {
+                      setCalendarEvents(prev => [...prev, { id: `cal-${Date.now()}`, ...eventForm, title: eventForm.title.trim() }]);
+                    }
+                    setEventForm({ title: '', date: '', type: 'reminder', note: '' });
+                    setEditingEvent(null);
+                    setShowEventForm(false);
+                    setSelectedDay(null);
+                  };
+
+                  return (
+                    <div className="lc" style={{ ...CARD, marginTop: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                        <div style={{ fontWeight: 600 }}>Calendar</div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button onClick={() => setShowLinkCal(true)} style={{ padding: '5px 12px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Link Calendar</button>
+                          <button onClick={() => { setEventForm({ title: '', date: selectedDay || '', type: 'reminder', note: '' }); setEditingEvent(null); setShowEventForm(v => !v); }} style={{ padding: '5px 12px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ Event</button>
+                        </div>
+                      </div>
+
+                      {showEventForm && (
+                        <div style={{ marginBottom: 16, padding: 14, background: DARK, borderRadius: 9, border: BORDER }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
+                            <div>
+                              <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>Title</div>
+                              <input autoFocus value={eventForm.title} onChange={e => setEventForm(f => ({ ...f, title: e.target.value }))}
+                                placeholder="e.g. Rent Due" onKeyDown={e => e.key === 'Enter' && saveEvent()}
+                                style={{ width: '100%', padding: '8px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>Date</div>
+                              <input type="date" value={eventForm.date} onChange={e => setEventForm(f => ({ ...f, date: e.target.value }))}
+                                style={{ width: '100%', padding: '8px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box', colorScheme: 'dark' }} />
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>Type</div>
+                              <select value={eventForm.type} onChange={e => setEventForm(f => ({ ...f, type: e.target.value }))}
+                                style={{ width: '100%', padding: '8px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none' }}>
+                                {Object.entries(EVENT_TYPES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                          <div style={{ marginBottom: 10 }}>
+                            <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>Note (optional)</div>
+                            <input value={eventForm.note} onChange={e => setEventForm(f => ({ ...f, note: e.target.value }))}
+                              placeholder="e.g. $1,200 rent"
+                              style={{ width: '100%', padding: '8px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                          </div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button onClick={saveEvent} disabled={!eventForm.title.trim() || !eventForm.date}
+                              style={{ padding: '7px 16px', background: eventForm.title.trim() && eventForm.date ? 'rgba(74,222,128,0.15)' : MUTED, border: eventForm.title.trim() && eventForm.date ? '1px solid rgba(74,222,128,0.35)' : BORDER, borderRadius: 7, color: eventForm.title.trim() && eventForm.date ? GREEN : TEXT3, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                              {editingEvent ? 'Save' : 'Add Event'}
+                            </button>
+                            <button onClick={() => { setShowEventForm(false); setEditingEvent(null); setEventForm({ title: '', date: '', type: 'reminder', note: '' }); }}
+                              style={{ padding: '7px 14px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Month nav */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                        <button onClick={() => setCalViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
+                          style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '4px 10px', cursor: 'pointer', fontSize: 14, fontWeight: 700 }}>‹</button>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{monthLabel}</div>
+                        <button onClick={() => setCalViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
+                          style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '4px 10px', cursor: 'pointer', fontSize: 14, fontWeight: 700 }}>›</button>
+                      </div>
+
+                      {/* Day headers */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
+                        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+                          <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.5px', paddingBottom: 4 }}>{d}</div>
+                        ))}
+                      </div>
+
+                      {/* Day grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+                        {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
+                        {Array.from({ length: daysInMonth }).map((_, i) => {
+                          const day = i + 1;
+                          const dateStr = `${monthStr}-${String(day).padStart(2, '0')}`;
+                          const dayEvents = calendarEvents.filter(e => e.date === dateStr);
+                          const isToday = dateStr === todayStr;
+                          const isSel = selectedDay === dateStr;
                           return (
-                            <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                              <td style={{ padding: '10px 12px', fontWeight: 700, color: BLUE, fontSize: 13 }}>{ticker}</td>
-                              <td style={{ padding: '10px 12px', fontSize: 13, color: TEXT2, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</td>
-                              <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{qty.toFixed(4)}</td>
-                              <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{fmt(price)}</td>
-                              <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, fontFamily: 'monospace' }}>{fmt(value)}</td>
-                              <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: pnl === null ? TEXT3 : pnl >= 0 ? GREEN : RED }}>
-                                {pnl === null ? '—' : `${pnl >= 0 ? '+' : ''}${fmt(pnl)}`}
-                              </td>
-                            </tr>
+                            <div key={day} onClick={() => { setSelectedDay(isSel ? null : dateStr); setEventForm(f => ({ ...f, date: dateStr })); setShowEventForm(true); setEditingEvent(null); }}
+                              style={{ minHeight: 56, padding: '4px 5px', borderRadius: 7, border: isToday ? `1px solid ${BLUE}` : isSel ? `1px solid ${GREEN}` : `1px solid ${BORDER_C}`, background: isToday ? 'rgba(77,163,255,0.06)' : isSel ? 'rgba(74,222,128,0.04)' : 'transparent', cursor: 'pointer', transition: 'background 0.1s' }}>
+                              <div style={{ fontSize: 11, fontWeight: isToday ? 700 : 400, color: isToday ? BLUE : TEXT2, marginBottom: 3 }}>{day}</div>
+                              {dayEvents.slice(0, 2).map(ev => (
+                                <div key={ev.id} onClick={e => { e.stopPropagation(); setEditingEvent(ev); setEventForm({ title: ev.title, date: ev.date, type: ev.type, note: ev.note || '' }); setShowEventForm(true); }}
+                                  style={{ fontSize: 9, fontWeight: 600, color: '#fff', background: EVENT_TYPES[ev.type]?.color || BLUE, borderRadius: 3, padding: '1px 4px', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+                                  {ev.title}
+                                </div>
+                              ))}
+                              {dayEvents.length > 2 && <div style={{ fontSize: 9, color: TEXT3 }}>+{dayEvents.length - 2}</div>}
+                            </div>
                           );
                         })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-                <OptionsChain />
-              </div>
-            )}
+                      </div>
 
-            {/* ── BUDGETING ─────────────────────────────── */}
-            {panel === 'budgeting' && (
+                      {/* Upcoming events */}
+                      {(() => {
+                        const upcoming = calendarEvents.filter(e => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
+                        if (!upcoming.length) return null;
+                        return (
+                          <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${BORDER_C}` }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Upcoming</div>
+                            {upcoming.map(ev => (
+                              <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                                <div style={{ width: 8, height: 8, borderRadius: '50%', background: EVENT_TYPES[ev.type]?.color || BLUE, flexShrink: 0 }} />
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{ev.title}</div>
+                                  {ev.note && <div style={{ fontSize: 11, color: TEXT3 }}>{ev.note}</div>}
+                                </div>
+                                <div style={{ fontSize: 11, color: TEXT2, whiteSpace: 'nowrap' }}>{new Date(ev.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                                <button onClick={() => setCalendarEvents(prev => prev.filter(e => e.id !== ev.id))}
+                                  style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 14, padding: '0 2px', lineHeight: 1 }}>×</button>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  );
+                })()}
+                </DragSection>
+                </div>{/* end flex layout */}
+              </div>
+              );
+            })()}
+
+            {/* ── CASH FLOW ─────────────────────────────── */}
+            {panel === 'cashflow' && (() => {
+              const _CF_DEF = ['banking', 'budgeting', 'taxes', 'scholarship'];
+              const _cfOrder = getOrder('cashflow-tabs', _CF_DEF);
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+                  <div style={{ display: 'flex', gap: 2, background: DARK, borderRadius: 9, padding: 3, width: 'fit-content' }}>
+                    {_cfOrder.filter(v => !isSubtabHidden('cashflow', v)).map(v => {
+                      const l = { banking: 'Banking', budgeting: 'Budgeting', taxes: 'Taxes', scholarship: 'Scholarship' }[v];
+                      if (!l) return null;
+                      return (
+                        <button key={v}
+                          draggable
+                          onDragStart={e => e.dataTransfer.setData('text/plain', `cashflow-tabs|||${v}`)}
+                          onDragOver={e => e.preventDefault()}
+                          onDrop={e => { e.preventDefault(); const [, srcId] = e.dataTransfer.getData('text/plain').split('|||'); if (srcId !== v) handleReorder('cashflow-tabs', _CF_DEF)(srcId, v); }}
+                          onClick={() => setCashFlowTab(v)}
+                          style={{ padding: '6px 20px', borderRadius: 7, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: cashFlowTab === v ? CARD_BG : 'transparent', color: cashFlowTab === v ? TEXT : TEXT2, transition: 'all 0.15s' }}>
+                          {l}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {layoutOrder['cashflow-tabs'] && <button onClick={() => resetLayout('cashflow-tabs')} style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 11, cursor: 'pointer', padding: 0 }}>Reset</button>}
+                </div>
+              );
+            })()}
+            {panel === 'cashflow' && cashFlowTab === 'banking' && (() => {
+              const bankingAccounts = activeAccounts.filter(a => a.type !== 'investment');
+              const institutions = [...new Set(bankingAccounts.map(a => a.institution_name).filter(Boolean))];
+              const visibleAccounts = selectedInstitution
+                ? bankingAccounts.filter(a => a.institution_name === selectedInstitution)
+                : bankingAccounts;
+
+              if (selectedBankAccount) {
+                const acct = activeAccounts.find(a => a.account_id === selectedBankAccount);
+                const acctTxns = activeTxns.filter(t => t.account_id === selectedBankAccount);
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                      <button onClick={() => setSelectedBankAccount(null)} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>{acct?.name}</h1>
+                    </div>
+                    {acct && (
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
+                        {[
+                          { label: 'Current Balance', value: acct.closed ? '—' : fmt(acct.balances?.current), color: acct.closed ? TEXT3 : TEXT },
+                          { label: 'Account Type', value: acct.subtype || acct.type || '—', color: TEXT2 },
+                          { label: 'Institution', value: acct.institution_name || '—', color: BLUE },
+                        ].map(({ label, value, color }) => (
+                          <div key={label} className="lc" style={CARD}>
+                            <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>{label}</div>
+                            <div style={{ fontSize: 20, fontWeight: 700, color, textTransform: 'capitalize' }}>{value}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="lc" style={CARD}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <div style={{ fontWeight: 600 }}>Transactions</div>
+                        <span style={{ fontSize: 12, color: TEXT2 }}>{acctTxns.length} transactions</span>
+                      </div>
+                      {acctTxns.length === 0 ? (
+                        <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>No transactions for this account</div>
+                      ) : (
+                        <>
+                          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                              <tr style={{ borderBottom: BORDER }}>
+                                {['Date', 'Merchant', 'Category', 'Amount'].map(h => (
+                                  <th key={h} style={{ padding: '6px 12px', textAlign: h === 'Amount' ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {acctTxns.map((t, i) => (
+                                <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                  <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(t.date)}</td>
+                                  <td style={{ padding: '8px 12px', fontSize: 13, fontWeight: 500 }}>{t.merchant_name || t.name}</td>
+                                  <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12, textTransform: 'capitalize' }}>{(t.personal_finance_category?.primary || t.category?.[0] || '—').replace(/_/g, ' ').toLowerCase()}</td>
+                                  <td style={{ padding: '8px 12px', fontWeight: 600, color: t.amount > 0 ? RED : GREEN, textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>
+                                    {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div>
+                  <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>Banking</h1>
+                  {SandboxBanner}
+                  {canSeeAI && <AdviceBox onGetAdvice={() => getAdvice('banking')} loading={adviceState.banking?.loading} text={adviceState.banking?.text} />}
+                  {activeAccounts.length === 0 ? (
+                    <div style={{ ...CARD, textAlign: 'center', padding: 48, color: TEXT2, marginTop: 24 }}>
+                      No accounts connected. Use the connect buttons in the sidebar.
+                    </div>
+                  ) : (
+                    <>
+                      {institutions.length > 1 && (
+                        <div style={{ display: 'flex', gap: 6, marginBottom: 20, marginTop: 8 }}>
+                          <button onClick={() => setSelectedInstitution(null)}
+                            style={{ padding: '6px 16px', borderRadius: 7, border: selectedInstitution === null ? `1px solid ${BLUE}` : BORDER, background: selectedInstitution === null ? 'rgba(77,163,255,0.1)' : MUTED, color: selectedInstitution === null ? BLUE : TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                            All
+                          </button>
+                          {institutions.map(inst => (
+                            <button key={inst} onClick={() => setSelectedInstitution(inst)}
+                              style={{ padding: '6px 16px', borderRadius: 7, border: selectedInstitution === inst ? `1px solid ${BLUE}` : BORDER, background: selectedInstitution === inst ? 'rgba(77,163,255,0.1)' : MUTED, color: selectedInstitution === inst ? BLUE : TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                              {inst}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <div data-tour="banking-accounts" style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 8, marginTop: institutions.length > 1 ? 0 : 24 }}>
+                        {visibleAccounts.map(a => (
+                          <div key={a.account_id} className="lc" onClick={() => { setSelectedBankAccount(a.account_id); setShowAllTxns(false); }}
+                            style={{ ...CARD, opacity: a.closed ? 0.6 : 1, cursor: 'pointer' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ fontSize: 11, color: BLUE, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{a.institution_name}</div>
+                              {a.closed && <span style={{ fontSize: 10, fontWeight: 700, color: TEXT3, background: MUTED, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Closed</span>}
+                            </div>
+                            <div style={{ fontWeight: 600, margin: '6px 0 2px', fontSize: 15 }}>{a.name}</div>
+                            <div style={{ fontSize: 28, fontWeight: 700, margin: '8px 0 4px', letterSpacing: '-0.5px', color: a.closed ? TEXT3 : TEXT }}>{a.closed ? '—' : fmt(a.balances?.current)}</div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ fontSize: 12, color: TEXT2, textTransform: 'capitalize' }}>{a.subtype}</div>
+                              <div style={{ fontSize: 11, color: TEXT3 }}>View transactions →</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {/* ── Credit Score ──────────────────────── */}
+                  {(() => {
+                    const sbCredit = SANDBOX_DATA['ds-credit'];
+                    const score = sbCredit.creditScore;
+                    const scoreLabel = sbCredit.scoreLabel;
+                    const scoreChange = sbCredit.creditScoreChange;
+                    const SCORE_MIN = 300, SCORE_MAX = 850, SCORE_RANGE = 550;
+                    const scoreRanges = [
+                      { label: 'Poor',        min: 300, max: 579, color: '#f87171' },
+                      { label: 'Fair',        min: 580, max: 669, color: '#f97316' },
+                      { label: 'Good',        min: 670, max: 739, color: '#fbbf24' },
+                      { label: 'Very Good',   min: 740, max: 799, color: '#4ade80' },
+                      { label: 'Exceptional', min: 800, max: 850, color: '#4da3ff' },
+                    ];
+                    const activeRange = scoreRanges.find(r => score >= r.min && score <= r.max) || scoreRanges[1];
+                    const CX = 90, CY = 58, R = 52;
+                    const angleDeg = (s) => (1 - (s - SCORE_MIN) / SCORE_RANGE) * 180;
+                    const toXY = (deg, radius) => {
+                      const rad = deg * Math.PI / 180;
+                      return [CX + radius * Math.cos(rad), CY - radius * Math.sin(rad)];
+                    };
+                    const arcPath = (fromScore, toScore, radius) => {
+                      const [px1, py1] = toXY(angleDeg(fromScore), radius);
+                      const [px2, py2] = toXY(angleDeg(toScore), radius);
+                      return `M ${px1},${py1} A ${radius},${radius} 0 0,1 ${px2},${py2}`;
+                    };
+                    const [needleX, needleY] = toXY(angleDeg(score), R - 10);
+                    return (
+                      <div className="lc" style={{ ...CARD, marginTop: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                          <div style={{ fontWeight: 600 }}>Credit Score</div>
+                          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: 'rgba(77,163,255,0.1)', color: BLUE, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Demo</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: 20, alignItems: 'center' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <svg viewBox="0 0 180 100" style={{ width: '100%', display: 'block' }}>
+                              <path d={`M ${CX - R},${CY} A ${R},${R} 0 0,1 ${CX + R},${CY}`} fill="none" stroke="#2a2a2a" strokeWidth={10} strokeLinecap="round" />
+                              {scoreRanges.map(z => (
+                                <path key={z.label} d={arcPath(z.min, z.max, R)} fill="none" stroke={z.color} strokeWidth={8} strokeLinecap="butt" />
+                              ))}
+                              <line x1={CX} y1={CY} x2={needleX} y2={needleY} stroke="#f0f0f0" strokeWidth={2} strokeLinecap="round" />
+                              <circle cx={CX} cy={CY} r={4} fill="#f0f0f0" />
+                              <text x={CX} y={CY + 22} textAnchor="middle" fill={activeRange.color} fontSize={22} fontWeight={700}>{score}</text>
+                              <text x={CX} y={CY + 36} textAnchor="middle" fill="#888" fontSize={10}>{scoreLabel}</text>
+                            </svg>
+                          </div>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                              <span style={{ fontSize: 13, color: TEXT2 }}>Recent change:</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: scoreChange < 0 ? RED : GREEN }}>{scoreChange > 0 ? '+' : ''}{scoreChange} pts</span>
+                            </div>
+                            {sbCredit.scoreFactors.slice(0, 4).map(f => (
+                              <div key={f.factor} style={{ marginBottom: 8 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                                  <span style={{ fontSize: 11, color: TEXT2 }}>{f.factor}</span>
+                                  <span style={{ fontSize: 11, fontWeight: 600, color: f.color }}>{f.rating}</span>
+                                </div>
+                                <div style={{ height: 3, background: MUTED, borderRadius: 2 }}>
+                                  <div style={{ height: '100%', width: `${Math.min(f.weight * 3, 100)}%`, background: f.color, borderRadius: 2 }} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              );
+            })()}
+            {panel === 'cashflow' && cashFlowTab === 'budgeting' && (() => {
+              const isDemoData = transactions.some(t => t.transaction_id?.startsWith('demo_'));
+              return (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-                  {selectedCategory && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                  {selectedCategory && budgetTab === 'spending' && (
                     <button onClick={() => setSelectedCategory(null)} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>
                       ← Back
                     </button>
                   )}
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>
-                    {selectedCategory ? selectedCategory.replace(/_/g, ' ').toLowerCase() : 'Budgeting'}
+                    {selectedCategory && budgetTab === 'spending' ? selectedCategory.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()) : 'Budgeting'}
                   </h1>
                 </div>
+                {SandboxBanner}
 
-                {!selectedCategory ? (
-                  <>
-                    <AdviceBox onGetAdvice={() => getAdvice('budgeting')} loading={adviceState.budgeting?.loading} text={adviceState.budgeting?.text} />
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24, marginTop: 24 }}>
-                      {[
-                        { label: 'Month-to-Date Spend', value: fmt(monthlySpend) },
-                        { label: 'Top Category',         value: budget[0]?.category?.replace(/_/g, ' ') || '—' },
-                        { label: 'Categories Tracked',   value: budget.length },
-                      ].map(({ label, value }) => (
-                        <div key={label} className="lc" style={CARD}>
-                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-                          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 8, letterSpacing: '-0.5px' }}>{value}</div>
+                {/* Subtabs */}
+                {!selectedCategory && (
+                  <div data-tour="budgeting-tabs" style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: BORDER, paddingBottom: 14 }}>
+                    {[['income', 'Income'], ['spending', 'Expenses'], ['trends', 'Trends'], ['subscriptions', 'Subscriptions'], ['goals', 'Goals']].map(([key, label]) => (
+                      <button key={key} onClick={() => setBudgetTab(key)}
+                        style={{ padding: '7px 18px', borderRadius: 8, border: budgetTab === key ? `1px solid ${BLUE}` : BORDER,
+                          background: budgetTab === key ? 'rgba(77,163,255,0.1)' : MUTED,
+                          color: budgetTab === key ? BLUE : TEXT2,
+                          fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s' }}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {budgetTab === 'income' && (() => {
+                  const now = new Date();
+                  const INCOME_CATS = new Set(['income', 'transfer in', 'payroll', 'wages', 'salary', 'deposit', 'interest', 'dividends', 'rent', 'financial aid']);
+                  const isIncomeTxn = t => {
+                    if (t.amount >= 0) return false;
+                    const cat = (t.personal_finance_category?.primary || t.category?.[0] || '').toLowerCase().replace(/_/g, ' ');
+                    return [...INCOME_CATS].some(k => cat.includes(k));
+                  };
+
+                  const realMonths = [];
+                  for (let i = 5; i >= 0; i--) {
+                    const d     = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const start = new Date(d.getFullYear(), d.getMonth(), 1);
+                    const end   = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+                    const txns  = activeTxns.filter(t => { const td = new Date(t.date); return td >= start && td <= end && isIncomeTxn(t); });
+                    const srcMap = {};
+                    txns.forEach(t => {
+                      const c = (t.personal_finance_category?.primary || t.category?.[0] || 'Other').replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+                      srcMap[c] = (srcMap[c] || 0) + Math.abs(t.amount);
+                    });
+                    const topSrc = Object.entries(srcMap).sort((a, b) => b[1] - a[1])[0]?.[0]?.split(' ').slice(0, 2).join(' ') || null;
+                    realMonths.push({ total: txns.reduce((s, t) => s + Math.abs(t.amount), 0), topSrc });
+                  }
+                  const hasRealIncome = realMonths.some(m => m.total > 50);
+
+                  const MOCK_TOTALS   = [1420, 1850, 1200, 1550, 1350, 1800];
+                  const MOCK_TOP_SRCS = ['Wages', 'Financial Aid', 'Wages', 'Wages', 'Wages', 'Wages'];
+                  // This-month sources sum to 1800 (matches MOCK_TOTALS current month)
+                  const MOCK_SOURCES_MTD = [
+                    { cat: 'Wages / Part-time', amt: 1125 },
+                    { cat: 'Financial Aid',      amt: 450  },
+                    { cat: 'Freelance',          amt: 175  },
+                    { cat: 'Interest / Savings', amt: 50   },
+                  ];
+
+                  const useReal = hasRealIncome && !isDemoData;
+
+                  const months = [];
+                  for (let i = 5; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const label = d.toLocaleDateString('en-US', { month: 'short' });
+                    const total  = useReal ? realMonths[5 - i].total  : MOCK_TOTALS[5 - i];
+                    const topSrc = useReal ? realMonths[5 - i].topSrc : MOCK_TOP_SRCS[5 - i];
+                    months.push({ label, total, topSrc, isCurrent: i === 0 });
+                  }
+
+                  const maxAmt = Math.max(...months.map(m => m.total), 1);
+                  const thisM = months[5], lastM = months[4];
+                  const diff = thisM.total - lastM.total;
+                  const pct  = lastM.total > 0 ? (diff / lastM.total) * 100 : null;
+
+                  // Sources: this month only (consistent with Spending by Category)
+                  let sources;
+                  if (useReal) {
+                    const mtdStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                    const mtdEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+                    const sourceMap = {};
+                    activeTxns
+                      .filter(t => { const td = new Date(t.date); return td >= mtdStart && td <= mtdEnd && isIncomeTxn(t); })
+                      .forEach(t => {
+                        const cat = (t.personal_finance_category?.primary || t.category?.[0] || 'Other').replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+                        sourceMap[cat] = (sourceMap[cat] || 0) + Math.abs(t.amount);
+                      });
+                    sources = Object.entries(sourceMap).map(([cat, amt]) => ({ cat, amt })).sort((a, b) => b.amt - a.amt);
+                  } else {
+                    sources = MOCK_SOURCES_MTD;
+                  }
+                  const totalIncome = sources.reduce((s, x) => s + x.amt, 0);
+
+                  return (
+                    <div>
+                      {(!hasRealIncome || isDemoData) && (
+                        <div style={{ padding: '9px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, fontSize: 12, color: BLUE, marginBottom: 20, marginTop: 4 }}>
+                          Demo data. Connect accounts to see your real finances.
                         </div>
-                      ))}
+                      )}
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
+                        {[
+                          { label: 'This Month',   value: fmt(thisM.total),  color: GREEN },
+                          { label: 'Last Month',   value: fmt(lastM.total),  color: TEXT  },
+                          { label: 'Month Change', value: pct !== null ? `${diff >= 0 ? '+' : ''}${pct.toFixed(0)}%` : '—', color: pct !== null ? (diff >= 0 ? GREEN : RED) : TEXT2 },
+                        ].map(({ label, value, color }) => (
+                          <div key={label} className="lc" style={CARD}>
+                            <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
+                            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 8, letterSpacing: '-0.5px', color }}>{value}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ ...CARD, marginBottom: 16 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 20 }}>Monthly Income: Last 6 Months</div>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 140 }}>
+                          {months.map((m, i) => (
+                            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                              <div style={{ fontSize: 11, color: m.isCurrent ? TEXT : TEXT2, fontWeight: 600, fontFamily: 'monospace', textAlign: 'center' }}>
+                                {m.total >= 1000 ? `$${(m.total/1000).toFixed(1)}k` : `$${Math.round(m.total)}`}
+                              </div>
+                              <div style={{ width: '100%', height: `${Math.max(4, (m.total / maxAmt) * 100)}px`, background: m.isCurrent ? GREEN : 'rgba(74,222,128,0.35)', borderRadius: '4px 4px 0 0', transition: 'height 0.3s ease', flexShrink: 0 }} />
+                              <div style={{ fontSize: 11, color: m.isCurrent ? TEXT : TEXT3, fontWeight: m.isCurrent ? 600 : 400 }}>{m.label}</div>
+                              {m.topSrc && <div style={{ fontSize: 9, color: TEXT3, textAlign: 'center', lineHeight: 1.2, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.topSrc}</div>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 600, marginBottom: 16 }}>Income by Source: This Month</div>
+                        {sources.map(({ cat, amt }, i) => {
+                          const barPct = totalIncome > 0 ? (amt / totalIncome) * 100 : 0;
+                          return (
+                            <div key={i} style={{ marginBottom: 14 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                                <span style={{ fontSize: 13, fontWeight: 500 }}>{cat}</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: GREEN }}>{fmt(amt)}</span>
+                              </div>
+                              <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${barPct}%`, background: GREEN, borderRadius: 3, opacity: 0.75 }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
+                  );
+                })()}
+
+                {budgetTab === 'spending' && (!selectedCategory ? (
+                  <>
+                    {(() => {
+                      const now = new Date();
+                      const expMonths = [];
+                      for (let i = 5; i >= 0; i--) {
+                        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                        const start = new Date(d.getFullYear(), d.getMonth(), 1);
+                        const end   = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+                        const label = d.toLocaleDateString('en-US', { month: 'short' });
+                        const txns  = activeTxns.filter(t => { const td = new Date(t.date); return td >= start && td <= end && t.amount > 0; });
+                        const total = txns.reduce((s, t) => s + t.amount, 0);
+                        const catMap = {};
+                        txns.forEach(t => { const c = (t.personal_finance_category?.primary || t.category?.[0] || 'Other').replace(/_/g, ' ').toLowerCase(); catMap[c] = (catMap[c] || 0) + t.amount; });
+                        const topCat = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+                        expMonths.push({ label, total, topCat, isCurrent: i === 0 });
+                      }
+                      const hasRealIncomeCheck = activeTxns.some(t => {
+                        if (t.amount >= 0) return false;
+                        const cat = (t.personal_finance_category?.primary || t.category?.[0] || '').toLowerCase().replace(/_/g, ' ');
+                        return ['income','payroll','wages','salary','deposit','financial aid'].some(k => cat.includes(k)) && Math.abs(t.amount) > 50;
+                      });
+                      const hasRealExp = hasRealIncomeCheck && expMonths.some(m => m.total > 20);
+                      const MOCK_EXP = [
+                        { label: expMonths[0].label, total: 1340, topCat: 'food and drink', isCurrent: false },
+                        { label: expMonths[1].label, total: 1720, topCat: 'dining',          isCurrent: false },
+                        { label: expMonths[2].label, total: 1100, topCat: 'food and drink', isCurrent: false },
+                        { label: expMonths[3].label, total: 1460, topCat: 'entertainment',  isCurrent: false },
+                        { label: expMonths[4].label, total: 1270, topCat: 'food and drink', isCurrent: false },
+                        { label: expMonths[5].label, total: 1620, topCat: 'food and drink', isCurrent: true  },
+                      ];
+                      const display = hasRealExp ? expMonths : MOCK_EXP;
+                      const maxExp = Math.max(...display.map(m => m.total), 1);
+                      const thisExp = display[5], lastExp = display[4];
+                      const expDiff = thisExp.total - lastExp.total;
+                      const expPct  = lastExp.total > 0 ? (expDiff / lastExp.total) * 100 : null;
+                      const toTitle = s => s.replace(/\b\w/g, c => c.toUpperCase());
+                      return (
+                        <>
+                          {!hasRealExp && (
+                            <div style={{ padding: '9px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, fontSize: 12, color: BLUE, marginBottom: 16, marginTop: 4 }}>
+                              Demo data. Connect accounts to see your real finances.
+                            </div>
+                          )}
+                          <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
+                            {[
+                              { label: 'Month-to-Date Spend', value: fmt(hasRealExp ? activeMonthlySpend : 1620) },
+                              { label: 'Top Category',         value: toTitle(hasRealExp ? (activeBudget[0]?.category?.replace(/_/g, ' ').toLowerCase() || '—') : 'Food and Drink') },
+                              { label: 'Month Change',         value: expPct !== null ? `${expDiff >= 0 ? '+' : ''}${expPct.toFixed(0)}%` : '—', color: expPct !== null ? (expDiff <= 0 ? GREEN : RED) : TEXT2 },
+                            ].map(({ label, value, color }) => (
+                              <div key={label} className="lc" style={CARD}>
+                                <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
+                                <div style={{ fontSize: 28, fontWeight: 700, marginTop: 8, letterSpacing: '-0.5px', color: color || TEXT }}>{value}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ ...CARD, marginBottom: 16 }}>
+                            <div style={{ fontWeight: 600, marginBottom: 20 }}>Monthly Expenses: Last 6 Months</div>
+                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 140 }}>
+                              {display.map((m, i) => (
+                                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                                  <div style={{ fontSize: 11, color: m.isCurrent ? TEXT : TEXT2, fontWeight: 600, fontFamily: 'monospace', textAlign: 'center' }}>
+                                    {m.total >= 1000 ? `$${(m.total/1000).toFixed(1)}k` : `$${Math.round(m.total)}`}
+                                  </div>
+                                  <div style={{ width: '100%', height: `${Math.max(4, (m.total / maxExp) * 100)}px`, background: m.isCurrent ? RED : 'rgba(248,113,113,0.35)', borderRadius: '4px 4px 0 0', transition: 'height 0.3s ease', flexShrink: 0 }} />
+                                  <div style={{ fontSize: 11, color: m.isCurrent ? TEXT : TEXT3, fontWeight: m.isCurrent ? 600 : 400 }}>{m.label}</div>
+                                  {m.topCat && <div style={{ fontSize: 9, color: TEXT3, textAlign: 'center', lineHeight: 1.2, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{m.topCat}</div>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
 
                     <div className="lc" style={CARD}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                        <div style={{ fontWeight: 600 }}>Spending by Category — This Month</div>
+                        <div style={{ fontWeight: 600 }}>Spending by Category: This Month</div>
                         <div style={{ fontSize: 12, color: TEXT2 }}>Click name to see transactions · Click amount to set limit</div>
                       </div>
 
-                      {budget.length === 0 ? (
-                        <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>No budget data. Connect accounts to see spending.</div>
-                      ) : budget.map((b, i) => {
+                      {activeBudget.length === 0 ? (() => {
+                        const MOCK_CATS = [
+                          { category: 'food and drink',     total: 520 },
+                          { category: 'rent and utilities', total: 350 },
+                          { category: 'shopping',           total: 300 },
+                          { category: 'transportation',     total: 190 },
+                          { category: 'entertainment',      total: 140 },
+                          { category: 'personal care',      total: 120 },
+                        ];
+                        const mockMax = MOCK_CATS[0].total;
+                        return MOCK_CATS.map((b, i) => (
+                          <div key={i} style={{ marginBottom: 20 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                              <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>{b.category}</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: TEXT }}>{fmt(b.total)}</span>
+                            </div>
+                            <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${(b.total / mockMax) * 100}%`, background: BLUE_BTN, borderRadius: 3, opacity: 0.6, transition: 'width 0.3s ease' }} />
+                            </div>
+                          </div>
+                        ));
+                      })() : activeBudget.map((b, i) => {
                         const limit = budgetLimits[b.category];
                         const pct   = limit ? Math.min((b.total / limit) * 100, 100) : null;
                         const over  = limit && b.total > limit;
@@ -1045,12 +4370,12 @@ export default function Dashboard() {
                                 <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>
                                   {b.category.replace(/_/g, ' ').toLowerCase()}
                                 </span>
-                                <span style={{ fontSize: 11, color: TEXT3, marginLeft: 8 }}>
-                                  {limit && !isEditing ? `limit: ${fmt(limit)}` : !isEditing ? '+ set limit' : ''}
-                                </span>
                               </button>
 
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: over ? RED : TEXT }}>
+                                  {fmt(b.total)}{limit && !isEditing ? ` / ${fmt(limit)}` : ''}
+                                </span>
                                 {isEditing ? (
                                   <>
                                     <input
@@ -1062,7 +4387,7 @@ export default function Dashboard() {
                                         if (e.key === 'Escape') { setEditingLimit(null); setLimitInput(''); }
                                       }}
                                       placeholder="Monthly limit $"
-                                      style={{ width: 130, padding: '4px 8px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, outline: 'none' }}
+                                      style={{ width: 120, padding: '4px 8px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, outline: 'none' }}
                                     />
                                     <button onClick={() => saveLimit(b.category, limitInput)} style={{ padding: '4px 10px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Save</button>
                                     {limit && <button onClick={() => saveLimit(b.category, '')} style={{ padding: '4px 8px', background: MUTED, color: RED, border: BORDER, borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Remove</button>}
@@ -1071,18 +4396,16 @@ export default function Dashboard() {
                                 ) : (
                                   <button
                                     onClick={() => { setEditingLimit(b.category); setLimitInput(limit ? String(limit) : ''); }}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                    style={{ padding: '3px 9px', background: MUTED, border: BORDER, borderRadius: 6, color: limit ? TEXT2 : BLUE, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
                                   >
-                                    <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: over ? RED : TEXT }}>
-                                      {fmt(b.total)}{limit ? ` / ${fmt(limit)}` : ''}
-                                    </span>
+                                    {limit ? 'Edit limit' : '+ Set limit'}
                                   </button>
                                 )}
                               </div>
                             </div>
 
                             <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${pct !== null ? pct : Math.min((b.total / (budget[0]?.total || 1)) * 100, 100)}%`, background: barColor, borderRadius: 3, transition: 'width 0.3s ease' }} />
+                              <div style={{ height: '100%', width: `${pct !== null ? pct : Math.min((b.total / (activeBudget[0]?.total || 1)) * 100, 100)}%`, background: barColor, borderRadius: 3, transition: 'width 0.3s ease' }} />
                             </div>
                             {over && <div style={{ fontSize: 11, color: RED, marginTop: 4 }}>Over budget by {fmt(b.total - limit)}</div>}
                           </div>
@@ -1094,7 +4417,7 @@ export default function Dashboard() {
                   <>
                     {(() => {
                       const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-                      const catTxns = transactions.filter(t => {
+                      const catTxns = activeTxns.filter(t => {
                         const cat = t.personal_finance_category?.primary || t.category?.[0] || 'Other';
                         return cat === selectedCategory && t.amount > 0 && new Date(t.date) >= monthStart;
                       });
@@ -1102,7 +4425,7 @@ export default function Dashboard() {
                       const limit = budgetLimits[selectedCategory];
                       return (
                         <>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
                             {[
                               { label: 'Total Spent', value: fmt(total) },
                               { label: 'Transactions', value: catTxns.length },
@@ -1134,245 +4457,320 @@ export default function Dashboard() {
                       );
                     })()}
                   </>
-                )}
-              </div>
-            )}
+                ))}
 
-            {/* ── TRENDS ───────────────────────────────── */}
-            {panel === 'trends' && (() => {
-              const now = new Date();
-              const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-              const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-              const lastMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 0);
+                {budgetTab === 'trends' && (() => {
+                  const now = new Date();
+                  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                  const lastMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 0);
+                  const inRange = (t, from, to) => { const d = new Date(t.date); return d >= from && d <= to; };
+                  const thisTxns = activeTxns.filter(t => inRange(t, thisMonthStart, now));
+                  const lastTxns = activeTxns.filter(t => inRange(t, lastMonthStart, lastMonthEnd));
+                  const income   = txns => txns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+                  const expenses = txns => txns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+                  const thisIncome = income(thisTxns), thisExpenses = expenses(thisTxns);
+                  const lastIncome = income(lastTxns),  lastExpenses = expenses(lastTxns);
+                  const thisNet = thisIncome - thisExpenses, lastNet = lastIncome - lastExpenses;
+                  const cashFlowMax = Math.max(thisIncome, thisExpenses, lastIncome, lastExpenses, 1);
+                  const catSpend = txns => { const m = {}; txns.filter(t => t.amount > 0).forEach(t => { const c = t.personal_finance_category?.primary || t.category?.[0] || 'Other'; m[c] = (m[c] || 0) + t.amount; }); return m; };
+                  const thisSpend = catSpend(thisTxns), lastSpend = catSpend(lastTxns);
+                  const allCats = [...new Set([...Object.keys(thisSpend), ...Object.keys(lastSpend)])].sort((a, b) => (thisSpend[b] || 0) - (thisSpend[a] || 0));
+                  const thisMonthLabel = now.toLocaleDateString('en-US', { month: 'long' });
+                  const lastMonthLabel = new Date(now.getFullYear(), now.getMonth() - 1).toLocaleDateString('en-US', { month: 'long' });
+                  const MOCK_TRENDS = [
+                    { cat: 'Food and Drink',  last: 312, curr: 267 },
+                    { cat: 'Dining Out',      last: 198, curr: 267 },
+                    { cat: 'Entertainment',   last: 85,  curr: 120 },
+                    { cat: 'Transportation',  last: 145, curr: 98  },
+                    { cat: 'Groceries',       last: 210, curr: 185 },
+                    { cat: 'Personal Care',   last: 45,  curr: 62  },
+                    { cat: 'Subscriptions',   last: 81,  curr: 81  },
+                    { cat: 'Shopping',        last: 320, curr: 180 },
+                    { cat: 'Utilities',       last: 0,   curr: 28  },
+                  ];
+                  const useMockTrends = allCats.length < 3;
+                  const trendRows = useMockTrends
+                    ? MOCK_TRENDS.map(({ cat, last, curr }) => ({ cat, last, curr }))
+                    : allCats.map(cat => ({ cat: cat.replace(/_/g, ' ').toLowerCase(), last: lastSpend[cat] || 0, curr: thisSpend[cat] || 0 }));
+                  return (
+                    <>
+                      {(useMockTrends || isDemoData) && (
+                        <div style={{ padding: '9px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, fontSize: 12, color: BLUE, marginBottom: 16 }}>
+                          Demo data. Connect accounts to see your real finances.
+                        </div>
+                      )}
+                      <div className="lc" style={CARD}>
+                        <div style={{ fontWeight: 600, marginBottom: 20 }}>Spending by Category: {lastMonthLabel} vs {thisMonthLabel}</div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Category', lastMonthLabel, thisMonthLabel, 'Change'].map((h, idx) => (
+                                <th key={h} style={{ padding: '8px 12px', textAlign: idx === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {trendRows.map(({ cat, last, curr }) => {
+                              const diff = curr - last, pct = last > 0 ? ((diff / last) * 100) : null;
+                              const changeColor = diff > 0 ? RED : diff < 0 ? GREEN : TEXT2;
+                              return (
+                                <tr key={cat} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                  <td style={{ padding: '11px 12px', fontWeight: 500, textTransform: 'capitalize', fontSize: 13 }}>{cat}</td>
+                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: TEXT2 }}>{last > 0 ? fmt(last) : '—'}</td>
+                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{curr > 0 ? fmt(curr) : '—'}</td>
+                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: changeColor }}>
+                                    {diff === 0 ? '—' : `${diff > 0 ? '+' : ''}${fmt(Math.abs(diff))}`}
+                                    {pct !== null && <span style={{ fontSize: 11, marginLeft: 5, opacity: 0.7 }}>({pct > 0 ? '+' : ''}{pct.toFixed(0)}%)</span>}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  );
+                })()}
 
-              const inRange = (t, from, to) => {
-                const d = new Date(t.date);
-                return d >= from && d <= to;
-              };
+                {budgetTab === 'subscriptions' && (() => {
+                  const MOCK_SUBS = [
+                    { name: 'Spotify', avgAmt: 5.99,  frequency: 'Monthly', monthlyCost: 5.99,  lastDate: '2026-04-01' },
+                    { name: 'Netflix', avgAmt: 15.49, frequency: 'Monthly', monthlyCost: 15.49, lastDate: '2026-04-03' },
+                    { name: 'YouTube Premium', avgAmt: 13.99, frequency: 'Monthly', monthlyCost: 13.99, lastDate: '2026-04-05' },
+                    { name: 'ChatGPT Plus', avgAmt: 20.00, frequency: 'Monthly', monthlyCost: 20.00, lastDate: '2026-04-10' },
+                    { name: 'Apple iCloud+', avgAmt: 2.99, frequency: 'Monthly', monthlyCost: 2.99, lastDate: '2026-04-12' },
+                    { name: 'Hulu', avgAmt: 7.99, frequency: 'Monthly', monthlyCost: 7.99, lastDate: '2026-04-02' },
+                    { name: 'Amazon Prime', avgAmt: 14.99, frequency: 'Monthly', monthlyCost: 14.99, lastDate: '2026-03-28' },
+                  ];
+                  const groups = {};
+                  activeTxns.filter(t => t.amount > 0).forEach(t => {
+                    const key = (t.merchant_name || t.name || '').toLowerCase().trim();
+                    if (!key) return;
+                    if (!groups[key]) groups[key] = { name: t.merchant_name || t.name, txns: [] };
+                    groups[key].txns.push(t);
+                  });
+                  const subs = [];
+                  Object.values(groups).forEach(({ name, txns }) => {
+                    if (txns.length < 2) return;
+                    const sorted = [...txns].sort((a, b) => new Date(a.date) - new Date(b.date));
+                    const amounts = sorted.map(t => t.amount);
+                    const avgAmt  = amounts.reduce((s, a) => s + a, 0) / amounts.length;
+                    if (amounts.some(a => Math.abs(a - avgAmt) / avgAmt > 0.15)) return;
+                    const gaps = [];
+                    for (let i = 1; i < sorted.length; i++) gaps.push((new Date(sorted[i].date) - new Date(sorted[i - 1].date)) / 86400000);
+                    const avgGap = gaps.reduce((s, g) => s + g, 0) / gaps.length;
+                    if (gaps.some(g => Math.abs(g - avgGap) > avgGap * 0.5)) return;
+                    let frequency, monthlyCost;
+                    if      (avgGap >= 5   && avgGap <= 9)   { frequency = 'Weekly';     monthlyCost = avgAmt * 4.33; }
+                    else if (avgGap >= 12  && avgGap <= 18)  { frequency = 'Bi-weekly';  monthlyCost = avgAmt * 2.17; }
+                    else if (avgGap >= 26  && avgGap <= 40)  { frequency = 'Monthly';    monthlyCost = avgAmt; }
+                    else if (avgGap >= 85  && avgGap <= 100) { frequency = 'Quarterly';  monthlyCost = avgAmt / 3; }
+                    else if (avgGap >= 340 && avgGap <= 390) { frequency = 'Annual';     monthlyCost = avgAmt / 12; }
+                    else return;
+                    subs.push({ name, avgAmt, frequency, monthlyCost, lastDate: sorted[sorted.length - 1].date });
+                  });
+                  subs.sort((a, b) => b.monthlyCost - a.monthlyCost);
+                  const displaySubs = subs.length > 0 ? subs : MOCK_SUBS;
+                  const isMockData = subs.length === 0;
+                  const totalMonthly = displaySubs.reduce((s, sub) => s + sub.monthlyCost, 0);
+                  return (
+                    <>
+                      {(isMockData || isDemoData) && (
+                        <div style={{ padding: '9px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, fontSize: 12, color: BLUE, marginBottom: 20 }}>
+                          Demo data. Connect accounts to see your real finances.
+                        </div>
+                      )}
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
+                        {[
+                          { label: 'Monthly Cost', value: fmt(totalMonthly) },
+                          { label: 'Annual Cost', value: fmt(totalMonthly * 12) },
+                          { label: isMockData ? 'Sample Subs' : 'Detected', value: displaySubs.length },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="lc" style={CARD}>
+                            <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
+                            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 8, letterSpacing: '-0.5px' }}>{value}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="lc" style={CARD}>
+                        <div style={{ fontWeight: 600, marginBottom: 20 }}>Recurring Charges</div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Merchant', 'Frequency', 'Per Charge', 'Monthly Cost', 'Last Charge'].map(h => (
+                                <th key={h} style={{ padding: '8px 12px', textAlign: ['Per Charge', 'Monthly Cost'].includes(h) ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {displaySubs.map((sub, i) => (
+                              <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                <td style={{ padding: '11px 12px', fontWeight: 500 }}>{sub.name}</td>
+                                <td style={{ padding: '11px 12px' }}><span style={{ background: MUTED, color: TEXT2, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600 }}>{sub.frequency}</span></td>
+                                <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{fmt(sub.avgAmt)}</td>
+                                <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: RED }}>{fmt(sub.monthlyCost)}</td>
+                                <td style={{ padding: '11px 12px', color: TEXT2, fontSize: 13 }}>{fmtDate(sub.lastDate)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {!isMockData && (
+                          <div style={{ marginTop: 16, padding: '12px 16px', background: MUTED, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
+                            Detected by finding charges with consistent amounts recurring on a regular schedule.
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
 
-              const thisTxns = transactions.filter(t => inRange(t, thisMonthStart, now));
-              const lastTxns = transactions.filter(t => inRange(t, lastMonthStart, lastMonthEnd));
+                {budgetTab === 'goals' && (() => {
+                  const PRESET_GOALS = [
+                    { name: 'Emergency Fund',     target: 10000, icon: '🛡️', desc: '3–6 months of expenses' },
+                    { name: 'House Down Payment', target: 50000, icon: '🏠', desc: '20% down on a $250k home' },
+                    { name: 'New Car',            target: 8000,  icon: '🚗', desc: 'Solid used car fund' },
+                    { name: 'Vacation Fund',      target: 3000,  icon: '✈️', desc: 'Annual travel budget' },
+                    { name: 'Pay Off Credit Card',target: 5000,  icon: '💳', desc: 'Clear high-interest debt' },
+                    { name: 'Wedding Fund',       target: 20000, icon: '💍', desc: 'Average US wedding cost' },
+                    { name: 'College Fund',       target: 25000, icon: '🎓', desc: '529 savings head start' },
+                    { name: 'Home Renovation',    target: 15000, icon: '🔨', desc: 'Kitchen/bath upgrade' },
+                  ];
 
-              // Cash flow helpers
-              const income   = txns => txns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
-              const expenses = txns => txns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+                  const totalSaved  = goals.reduce((s, g) => { const a = accounts.find(ac => ac.account_id === g.accountId); return s + (a ? (a.balances?.current || 0) : 0); }, 0);
+                  const totalTarget = goals.reduce((s, g) => s + g.target, 0);
 
-              const thisIncome   = income(thisTxns);
-              const thisExpenses = expenses(thisTxns);
-              const lastIncome   = income(lastTxns);
-              const lastExpenses = expenses(lastTxns);
-              const thisNet = thisIncome - thisExpenses;
-              const lastNet = lastIncome - lastExpenses;
-
-              const cashFlowMax = Math.max(thisIncome, thisExpenses, lastIncome, lastExpenses, 1);
-
-              // Spending trends by category
-              const catSpend = (txns) => {
-                const map = {};
-                txns.filter(t => t.amount > 0).forEach(t => {
-                  const cat = t.personal_finance_category?.primary || t.category?.[0] || 'Other';
-                  map[cat] = (map[cat] || 0) + t.amount;
-                });
-                return map;
-              };
-              const thisSpend = catSpend(thisTxns);
-              const lastSpend = catSpend(lastTxns);
-              const allCats = [...new Set([...Object.keys(thisSpend), ...Object.keys(lastSpend)])]
-                .sort((a, b) => (thisSpend[b] || 0) - (thisSpend[a] || 0));
-
-              const thisMonthLabel = now.toLocaleDateString('en-US', { month: 'long' });
-              const lastMonthLabel = new Date(now.getFullYear(), now.getMonth() - 1).toLocaleDateString('en-US', { month: 'long' });
-
-              return (
-                <div>
-                  <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 700 }}>Trends</h1>
-
-                  {/* ── Cash Flow ── */}
-                  <div style={{ ...CARD, marginBottom: 24 }}>
-                    <div style={{ fontWeight: 600, marginBottom: 20 }}>Cash Flow</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-                      {[
-                        { label: thisMonthLabel, inc: thisIncome, exp: thisExpenses, net: thisNet },
-                        { label: lastMonthLabel, inc: lastIncome, exp: lastExpenses, net: lastNet },
-                      ].map(({ label, inc, exp, net }) => (
-                        <div key={label}>
-                          <div style={{ fontSize: 12, color: TEXT2, fontWeight: 600, marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
-
-                          {[{ val: inc, color: GREEN, lbl: 'Income' }, { val: exp, color: RED, lbl: 'Expenses' }].map(({ val, color, lbl }) => (
-                            <div key={lbl} style={{ marginBottom: 12 }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                                <span style={{ fontSize: 12, color: TEXT2 }}>{lbl}</span>
-                                <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color }}>{fmt(val)}</span>
-                              </div>
-                              <div style={{ height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: `${(val / cashFlowMax) * 100}%`, background: color, borderRadius: 4, transition: 'width 0.4s ease' }} />
-                              </div>
+                  return (
+                    <div>
+                      {/* Summary stats */}
+                      {goals.length > 0 && (
+                        <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12, marginBottom: 20 }}>
+                          {[
+                            { label: 'Total Goals', value: goals.length },
+                            { label: 'Saved So Far', value: fmt(totalSaved), color: GREEN },
+                            { label: 'Total Target', value: fmt(totalTarget) },
+                          ].map(({ label, value, color }) => (
+                            <div key={label} style={{ background: DARK, borderRadius: 8, padding: '13px 16px' }}>
+                              <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{label}</div>
+                              <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'monospace', color: color || TEXT }}>{value}</div>
                             </div>
                           ))}
+                        </div>
+                      )}
 
-                          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: BORDER, marginTop: 4 }}>
-                            <span style={{ fontSize: 12, color: TEXT2 }}>Net</span>
-                            <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: net >= 0 ? GREEN : RED }}>
-                              {net >= 0 ? '+' : ''}{fmt(net)}
-                            </span>
+                      {/* Preset templates */}
+                      <div style={{ marginBottom: 20 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: TEXT }}>Quick Start Templates</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                          {PRESET_GOALS.map(p => (
+                            <button key={p.name} onClick={() => { setGoalForm({ name: p.name, target: String(p.target), accountId: '' }); setEditingGoal(null); setShowGoalForm(true); }}
+                              style={{ padding: '11px 10px', background: DARK, border: BORDER, borderRadius: 8, cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
+                              onMouseEnter={e => e.currentTarget.style.borderColor = BLUE}
+                              onMouseLeave={e => e.currentTarget.style.borderColor = BORDER_C}>
+                              <div style={{ fontSize: 18, marginBottom: 5 }}>{p.icon}</div>
+                              <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 2 }}>{p.name}</div>
+                              <div style={{ fontSize: 10, color: TEXT3 }}>{fmt(p.target)} · {p.desc}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* New goal form */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showGoalForm ? 12 : 16 }}>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>My Goals</div>
+                        <button onClick={() => { setShowGoalForm(true); setEditingGoal(null); setGoalForm({ name: '', target: '', accountId: '' }); }}
+                          style={{ padding: '6px 14px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                          + New Goal
+                        </button>
+                      </div>
+
+                      {showGoalForm && (
+                        <div style={{ marginBottom: 16, padding: 16, background: DARK, borderRadius: 8, border: BORDER }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 12 }}>
+                            {[
+                              { label: 'Goal Name', key: 'name', type: 'text', placeholder: 'e.g. Emergency Fund' },
+                              { label: 'Target Amount', key: 'target', type: 'number', placeholder: 'e.g. 10000' },
+                            ].map(({ label, key, type, placeholder }) => (
+                              <div key={key}>
+                                <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>{label}</div>
+                                <input type={type} value={goalForm[key]} onChange={e => setGoalForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
+                                  style={{ width: '100%', padding: '8px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                              </div>
+                            ))}
+                            <div>
+                              <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>Link Account</div>
+                              <select value={goalForm.accountId} onChange={e => setGoalForm(f => ({ ...f, accountId: e.target.value }))}
+                                style={{ width: '100%', padding: '8px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: goalForm.accountId ? TEXT : TEXT2, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}>
+                                <option value="">No account</option>
+                                {accounts.map(a => <option key={a.account_id} value={a.account_id}>{a.name} ({fmt(a.balances?.current)})</option>)}
+                              </select>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button onClick={async () => {
+                              if (!goalForm.name || !goalForm.target) return;
+                              try {
+                                if (editingGoal) {
+                                  const res = await api.put(`/goals/${editingGoal.id}`, goalForm);
+                                  setGoals(prev => prev.map(g => g.id === editingGoal.id ? res.data.goal : g));
+                                } else {
+                                  const res = await api.post('/goals', goalForm);
+                                  setGoals(prev => [...prev, res.data.goal]);
+                                }
+                                setShowGoalForm(false); setEditingGoal(null); setGoalForm({ name: '', target: '', accountId: '' });
+                              } catch (err) { console.error(err); }
+                            }} style={{ padding: '7px 18px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                              {editingGoal ? 'Save' : 'Create'}
+                            </button>
+                            <button onClick={() => { setShowGoalForm(false); setEditingGoal(null); }} style={{ padding: '7px 14px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, cursor: 'pointer', fontSize: 12 }}>Cancel</button>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                      )}
 
-                  {/* ── Spending Trends ── */}
-                  <div className="lc" style={CARD}>
-                    <div style={{ fontWeight: 600, marginBottom: 20 }}>
-                      Spending by Category — {lastMonthLabel} vs {thisMonthLabel}
-                    </div>
-                    {allCats.length === 0 ? (
-                      <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>Not enough transaction history yet</div>
-                    ) : (
-                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                          <tr style={{ borderBottom: BORDER }}>
-                            <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Category</th>
-                            <th style={{ padding: '8px 12px', textAlign: 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lastMonthLabel}</th>
-                            <th style={{ padding: '8px 12px', textAlign: 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{thisMonthLabel}</th>
-                            <th style={{ padding: '8px 12px', textAlign: 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Change</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {allCats.map((cat, i) => {
-                            const last = lastSpend[cat] || 0;
-                            const curr = thisSpend[cat] || 0;
-                            const diff = curr - last;
-                            const pct  = last > 0 ? ((diff / last) * 100) : null;
-                            const changeColor = diff > 0 ? RED : diff < 0 ? GREEN : TEXT2;
+                      {goals.length === 0 ? (
+                        <div style={{ color: TEXT3, fontSize: 13, padding: '20px 0', textAlign: 'center' }}>No goals yet. Use a template above or click New Goal.</div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                          {goals.map(goal => {
+                            const acct = accounts.find(a => a.account_id === goal.accountId);
+                            const current = acct ? (acct.balances?.current || 0) : 0;
+                            const pct = Math.min((current / goal.target) * 100, 100);
+                            const done = current >= goal.target;
+                            const barColor = done ? GREEN : pct >= 75 ? BLUE : BLUE_BTN;
                             return (
-                              <tr key={cat} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                                <td style={{ padding: '11px 12px', fontWeight: 500, textTransform: 'capitalize', fontSize: 13 }}>
-                                  {cat.replace(/_/g, ' ').toLowerCase()}
-                                </td>
-                                <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: TEXT2 }}>{last > 0 ? fmt(last) : '—'}</td>
-                                <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{curr > 0 ? fmt(curr) : '—'}</td>
-                                <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: changeColor }}>
-                                  {diff === 0 ? '—' : `${diff > 0 ? '+' : ''}${fmt(Math.abs(diff))}`}
-                                  {pct !== null && <span style={{ fontSize: 11, marginLeft: 5, opacity: 0.7 }}>({pct > 0 ? '+' : ''}{pct.toFixed(0)}%)</span>}
-                                </td>
-                              </tr>
+                              <div key={goal.id} style={{ background: DARK, borderRadius: 8, padding: '14px 16px', border: done ? `1px solid ${GREEN}44` : BORDER }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                                  <div>
+                                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{goal.name}</div>
+                                    <div style={{ fontSize: 11, color: TEXT3 }}>{acct ? acct.name : 'No account linked'}</div>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                    {done && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase' }}>Done ✓</span>}
+                                    <button onClick={() => { setEditingGoal(goal); setGoalForm({ name: goal.name, target: String(goal.target), accountId: goal.accountId || '' }); setShowGoalForm(true); }}
+                                      style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}>Edit</button>
+                                    <button onClick={async () => { await api.delete(`/goals/${goal.id}`); setGoals(prev => prev.filter(g => g.id !== goal.id)); }}
+                                      style={{ background: 'none', border: 'none', color: RED, cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}>✕</button>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                                  <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: done ? GREEN : TEXT }}>{acct ? fmt(current) : '—'}</span>
+                                  <span style={{ fontSize: 12, color: TEXT2 }}>of {fmt(goal.target)}</span>
+                                </div>
+                                <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: `${acct ? pct : 0}%`, background: barColor, borderRadius: 3, transition: 'width 0.4s ease' }} />
+                                </div>
+                                <div style={{ fontSize: 11, color: TEXT3, marginTop: 5 }}>
+                                  {acct ? `${pct.toFixed(0)}% · ${done ? 'Goal reached!' : fmt(goal.target - current) + ' to go'}` : 'Link an account to track'}
+                                </div>
+                              </div>
                             );
                           })}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* ── SUBSCRIPTIONS ────────────────────────── */}
-            {panel === 'subscriptions' && (() => {
-              // Group debits by normalized merchant name
-              const groups = {};
-              transactions
-                .filter(t => t.amount > 0)
-                .forEach(t => {
-                  const key = (t.merchant_name || t.name || '').toLowerCase().trim();
-                  if (!key) return;
-                  if (!groups[key]) groups[key] = { name: t.merchant_name || t.name, txns: [] };
-                  groups[key].txns.push(t);
-                });
-
-              const subs = [];
-              Object.values(groups).forEach(({ name, txns }) => {
-                if (txns.length < 2) return;
-                const sorted = [...txns].sort((a, b) => new Date(a.date) - new Date(b.date));
-                const amounts = sorted.map(t => t.amount);
-                const avgAmt  = amounts.reduce((s, a) => s + a, 0) / amounts.length;
-                // Reject if amounts vary more than 15%
-                if (amounts.some(a => Math.abs(a - avgAmt) / avgAmt > 0.15)) return;
-
-                // Calculate average gap in days between transactions
-                const gaps = [];
-                for (let i = 1; i < sorted.length; i++) {
-                  gaps.push((new Date(sorted[i].date) - new Date(sorted[i - 1].date)) / (1000 * 60 * 60 * 24));
-                }
-                const avgGap = gaps.reduce((s, g) => s + g, 0) / gaps.length;
-                // Reject if gaps vary wildly
-                if (gaps.some(g => Math.abs(g - avgGap) > avgGap * 0.5)) return;
-
-                let frequency, monthlyCost;
-                if (avgGap >= 5 && avgGap <= 9) {
-                  frequency = 'Weekly'; monthlyCost = avgAmt * 4.33;
-                } else if (avgGap >= 12 && avgGap <= 18) {
-                  frequency = 'Bi-weekly'; monthlyCost = avgAmt * 2.17;
-                } else if (avgGap >= 26 && avgGap <= 40) {
-                  frequency = 'Monthly'; monthlyCost = avgAmt;
-                } else if (avgGap >= 85 && avgGap <= 100) {
-                  frequency = 'Quarterly'; monthlyCost = avgAmt / 3;
-                } else if (avgGap >= 340 && avgGap <= 390) {
-                  frequency = 'Annual'; monthlyCost = avgAmt / 12;
-                } else {
-                  return;
-                }
-
-                const lastCharge = sorted[sorted.length - 1];
-                subs.push({ name, avgAmt, frequency, monthlyCost, lastDate: lastCharge.date, count: txns.length });
-              });
-
-              subs.sort((a, b) => b.monthlyCost - a.monthlyCost);
-              const totalMonthly = subs.reduce((s, sub) => s + sub.monthlyCost, 0);
-              const totalAnnual  = totalMonthly * 12;
-
-              return (
-                <div>
-                  <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 700 }}>Subscriptions</h1>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
-                    {[
-                      { label: 'Monthly Cost',     value: fmt(totalMonthly) },
-                      { label: 'Annual Cost',       value: fmt(totalAnnual) },
-                      { label: 'Detected',          value: subs.length },
-                    ].map(({ label, value }) => (
-                      <div key={label} className="lc" style={CARD}>
-                        <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-                        <div style={{ fontSize: 28, fontWeight: 700, marginTop: 8, letterSpacing: '-0.5px' }}>{value}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="lc" style={CARD}>
-                    <div style={{ fontWeight: 600, marginBottom: 20 }}>Recurring Charges</div>
-                    {subs.length === 0 ? (
-                      <div style={{ color: TEXT2, textAlign: 'center', padding: 32 }}>
-                        No recurring charges detected yet. Check back once you have 90 days of transactions.
-                      </div>
-                    ) : (
-                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                          <tr style={{ borderBottom: BORDER }}>
-                            {['Merchant', 'Frequency', 'Per Charge', 'Monthly Cost', 'Last Charge'].map(h => (
-                              <th key={h} style={{ padding: '8px 12px', textAlign: ['Per Charge', 'Monthly Cost'].includes(h) ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {subs.map((sub, i) => (
-                            <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                              <td style={{ padding: '11px 12px', fontWeight: 500 }}>{sub.name}</td>
-                              <td style={{ padding: '11px 12px' }}>
-                                <span style={{ background: MUTED, color: TEXT2, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600 }}>{sub.frequency}</span>
-                              </td>
-                              <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{fmt(sub.avgAmt)}</td>
-                              <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: RED }}>{fmt(sub.monthlyCost)}</td>
-                              <td style={{ padding: '11px 12px', color: TEXT2, fontSize: 13 }}>{fmtDate(sub.lastDate)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                    <div style={{ marginTop: 16, padding: '12px 16px', background: MUTED, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
-                      Detected by finding charges with consistent amounts recurring on a regular schedule over the last 90 days.
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
+              </div>
               );
             })()}
 
@@ -1474,7 +4872,7 @@ export default function Dashboard() {
 
                   {/* Summary cards */}
                   {goals.length > 0 && (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
                       {[
                         { label: 'Total Saved',   value: fmt(totalSaved) },
                         { label: 'Total Target',  value: fmt(totalTarget) },
@@ -1496,7 +4894,7 @@ export default function Dashboard() {
                       <div style={{ fontSize: 13 }}>Create a goal to track your progress toward a savings target.</div>
                     </div>
                   ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+                    <div data-tour="goals-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
                       {goals.map(goal => {
                         const acct    = accounts.find(a => a.account_id === goal.accountId);
                         const current = acct ? (acct.balances?.current || 0) : 0;
@@ -1543,12 +4941,863 @@ export default function Dashboard() {
                       })}
                     </div>
                   )}
+
                 </div>
               );
             })()}
 
-            {/* ── NEWS FEED ─────────────────────────────── */}
-            {panel === 'news' && (
+            {/* ── TAXES (under Cash Flow) ──────────────── */}
+            {panel === 'cashflow' && cashFlowTab === 'taxes' && (() => {
+              // 2025 Federal brackets (Single / MFJ / HOH)
+              const BRACKETS = {
+                single: [
+                  { rate: 0.10, up_to: 11925 },
+                  { rate: 0.12, up_to: 48475 },
+                  { rate: 0.22, up_to: 103350 },
+                  { rate: 0.24, up_to: 197300 },
+                  { rate: 0.32, up_to: 250525 },
+                  { rate: 0.35, up_to: 626350 },
+                  { rate: 0.37, up_to: Infinity },
+                ],
+                mfj: [
+                  { rate: 0.10, up_to: 23850 },
+                  { rate: 0.12, up_to: 96950 },
+                  { rate: 0.22, up_to: 206700 },
+                  { rate: 0.24, up_to: 394600 },
+                  { rate: 0.32, up_to: 501050 },
+                  { rate: 0.35, up_to: 751600 },
+                  { rate: 0.37, up_to: Infinity },
+                ],
+                hoh: [
+                  { rate: 0.10, up_to: 17000 },
+                  { rate: 0.12, up_to: 64850 },
+                  { rate: 0.22, up_to: 103350 },
+                  { rate: 0.24, up_to: 197300 },
+                  { rate: 0.32, up_to: 250500 },
+                  { rate: 0.35, up_to: 626350 },
+                  { rate: 0.37, up_to: Infinity },
+                ],
+              };
+              const STD_DED = { single: 15000, mfj: 30000, hoh: 22500 };
+              const brackets = BRACKETS[taxFiling];
+              const stdDed   = STD_DED[taxFiling];
+              const grossInc  = Math.max(0, parseFloat(taxIncome) || 0);
+              const pre401k   = Math.min(Math.max(0, parseFloat(tax401k) || 0), 23500);
+              const agi       = Math.max(0, grossInc - pre401k);
+              const itemized  = Math.max(0, parseFloat(taxItemized) || 0);
+              const deduction = Math.max(stdDed, itemized);
+              const taxable   = Math.max(0, agi - deduction);
+
+              let tax = 0;
+              let prev = 0;
+              const breakdown = brackets.map(b => {
+                const slice = Math.min(Math.max(0, taxable - prev), b.up_to - prev);
+                const amount = slice * b.rate;
+                tax += amount;
+                const entry = { rate: b.rate, from: prev, to: b.up_to, slice, amount, active: slice > 0 };
+                prev = b.up_to;
+                return entry;
+              });
+              const effectiveRate = grossInc > 0 ? (tax / grossInc) * 100 : 0;
+              const marginalRate  = breakdown.filter(b => b.active).slice(-1)[0]?.rate * 100 || 0;
+              const afterTax      = grossInc - tax;
+              const monthlyTakeHome = afterTax / 12;
+
+              const filingLabels = { single: 'Single', mfj: 'Married Filing Jointly', hoh: 'Head of Household' };
+              const inputStyle = { padding: '9px 12px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 14, outline: 'none', width: '100%', fontFamily: 'monospace' };
+
+              // Derive real figures from linked accounts — gated on real income detection
+              const INCOME_CATS_TAX = ['income','payroll','wages','salary','deposit','financial aid','dividends','interest'];
+              const hasRealIncomeTax = activeTxns.some(t => {
+                if (t.amount >= 0) return false;
+                const cat = (t.personal_finance_category?.primary || t.category?.[0] || '').toLowerCase().replace(/_/g, ' ');
+                return INCOME_CATS_TAX.some(k => cat.includes(k)) && Math.abs(t.amount) > 50;
+              });
+              const txnIncomeLast12 = (() => {
+                if (!hasRealIncomeTax) return 18500;
+                const cutoff = new Date(); cutoff.setFullYear(cutoff.getFullYear() - 1);
+                return activeTxns.filter(t => {
+                  if (t.amount >= 0) return false;
+                  const cat = (t.personal_finance_category?.primary || t.category?.[0] || '').toLowerCase().replace(/_/g, ' ');
+                  return new Date(t.date) >= cutoff && INCOME_CATS_TAX.some(k => cat.includes(k));
+                }).reduce((s, t) => s + Math.abs(t.amount), 0);
+              })();
+              const investmentValue = hasRealIncomeTax
+                ? activeAccounts.filter(a => a.type === 'investment' || ['brokerage','401k','ira','roth','403b'].includes(a.subtype)).reduce((s, a) => s + (a.balances?.current || 0), 0)
+                : 3600;
+              const savingsValue = hasRealIncomeTax
+                ? activeAccounts.filter(a => ['savings','money market','cd','hsa'].includes(a.subtype)).reduce((s, a) => s + (a.balances?.current || 0), 0)
+                : 4800;
+              const estInterest = savingsValue * 0.043;
+              const hasLinkedData = activeAccounts.length > 0;
+
+              return (
+                <div>
+                  <h1 data-tour="taxes-header" style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700 }}>Taxes</h1>
+                  <p style={{ margin: '0 0 20px', color: TEXT2, fontSize: 14 }}>2025 federal income tax estimator: brackets, effective rate, and the impact of pre-tax contributions.</p>
+
+                  {/* Pulled from linked accounts */}
+                  <div style={{ ...CARD, marginBottom: 24, background: 'rgba(77,163,255,0.03)', border: '1px solid rgba(77,163,255,0.18)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>From Your Accounts</div>
+                      {hasLinkedData && txnIncomeLast12 > 0 && (
+                        <button onClick={() => setTaxIncome(Math.round(txnIncomeLast12).toString())}
+                          style={{ padding: '5px 12px', background: 'rgba(77,163,255,0.12)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 6, color: BLUE, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                          Use as Gross Income
+                        </button>
+                      )}
+                    </div>
+                    {!hasLinkedData ? (
+                      <div style={{ fontSize: 13, color: TEXT3, textAlign: 'center', padding: '12px 0' }}>Connect accounts to pull real income and investment data.</div>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12 }}>
+                        {[
+                          { label: 'Income (Last 12 Mo)',     value: fmt(txnIncomeLast12), color: TEXT,  note: 'From transaction history' },
+                          { label: 'Investment Portfolio',     value: fmt(investmentValue), color: TEXT,  note: 'Brokerage, 401k, IRA' },
+                          { label: 'Est. Interest Income',     value: fmt(estInterest),     color: TEXT,  note: `${fmt(savingsValue)} savings × 4.3% APY` },
+                        ].map(({ label, value, color, note }) => (
+                          <div key={label} style={{ padding: '14px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
+                            <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                            <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'monospace', color, marginBottom: 3 }}>{value}</div>
+                            <div style={{ fontSize: 10, color: TEXT3 }}>{note}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Inputs */}
+                  <div data-tour="taxes-inputs" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 24 }}>
+                    <div style={{ ...CARD }}>
+                      <div style={{ fontWeight: 600, marginBottom: 16 }}>Your Information</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Gross Income</div>
+                          <input type="number" value={taxIncome} onChange={e => setTaxIncome(e.target.value)} placeholder="65000" style={inputStyle} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Filing Status</div>
+                          <select value={taxFiling} onChange={e => setTaxFiling(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+                            <option value="single">Single</option>
+                            <option value="mfj">Married Filing Jointly</option>
+                            <option value="hoh">Head of Household</option>
+                          </select>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Pre-Tax 401(k) / IRA Contributions</div>
+                          <input type="number" value={tax401k} onChange={e => setTax401k(e.target.value)} placeholder="0" style={inputStyle} />
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 4 }}>Max 2025: $23,500 (401k) + $7,000 (IRA)</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Itemized Deductions (leave 0 for standard)</div>
+                          <input type="number" value={taxItemized} onChange={e => setTaxItemized(e.target.value)} placeholder="0" style={inputStyle} />
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 4 }}>Standard deduction: {fmt(stdDed)} · {deduction > stdDed ? <span style={{ color: GREEN }}>Itemizing saves {fmt(deduction - stdDed)}</span> : 'Using standard'}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      {[
+                        { label: 'Estimated Federal Tax',   value: fmt(tax),             color: RED   },
+                        { label: 'Effective Tax Rate',       value: `${effectiveRate.toFixed(1)}%`,   color: TEXT2 },
+                        { label: 'Marginal Rate (Top Bracket)', value: `${marginalRate.toFixed(0)}%`, color: TEXT2 },
+                        { label: 'After-Tax Income',         value: fmt(afterTax),        color: GREEN },
+                        { label: 'Monthly Take-Home',        value: fmt(monthlyTakeHome), color: GREEN },
+                      ].map(({ label, value, color }) => (
+                        <div key={label} className="lc" style={{ ...CARD, padding: '16px 20px', flex: 1 }}>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                          <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'monospace', color }}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bracket breakdown */}
+                  <div data-tour="taxes-brackets" style={{ ...CARD, marginBottom: 24 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>2025 Tax Bracket Breakdown: {filingLabels[taxFiling]}</div>
+                    <div style={{ fontSize: 12, color: TEXT2, marginBottom: 20 }}>Taxable income: {fmt(taxable)} (after {deduction > stdDed ? 'itemized' : 'standard'} deduction of {fmt(deduction)}{pre401k > 0 ? ` + ${fmt(pre401k)} 401k` : ''})</div>
+                    {breakdown.map((b, i) => {
+                      const pct = tax > 0 ? (b.amount / tax) * 100 : 0;
+                      const label = b.to === Infinity ? `>${fmt(b.from)}` : `${fmt(b.from)} – ${fmt(b.to)}`;
+                      return (
+                        <div key={i} style={{ marginBottom: 14, opacity: b.active ? 1 : 0.35 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                            <span style={{ fontSize: 13, fontWeight: b.active ? 600 : 400, color: b.active ? TEXT : TEXT2 }}>
+                              {(b.rate * 100).toFixed(0)}% bracket
+                              <span style={{ fontSize: 11, color: TEXT3, fontWeight: 400, marginLeft: 8 }}>{label}</span>
+                            </span>
+                            <div style={{ textAlign: 'right' }}>
+                              <span style={{ fontSize: 13, fontFamily: 'monospace', fontWeight: 600, color: b.active ? RED : TEXT3 }}>{fmt(b.amount)}</span>
+                              {b.active && <span style={{ fontSize: 11, color: TEXT3, marginLeft: 6 }}>on {fmt(b.slice)}</span>}
+                            </div>
+                          </div>
+                          <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${pct}%`, background: b.active ? 'rgba(248,113,113,0.5)' : BORDER_C, borderRadius: 3 }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Pre-tax savings comparison */}
+                  {pre401k > 0 && (
+                    <div style={{ ...CARD, marginBottom: 24, background: 'rgba(74,222,128,0.04)', border: '1px solid rgba(74,222,128,0.2)' }}>
+                      <div style={{ fontWeight: 600, color: GREEN, marginBottom: 12 }}>Pre-Tax Contribution Savings</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12 }}>
+                        {(() => {
+                          const taxWithout = (() => {
+                            let t = 0; let p = 0;
+                            const taxableWithout = Math.max(0, grossInc - deduction);
+                            brackets.forEach(b => {
+                              const s = Math.min(Math.max(0, taxableWithout - p), b.up_to - p);
+                              t += s * b.rate; p = b.up_to;
+                            });
+                            return t;
+                          })();
+                          const saved = taxWithout - tax;
+                          return [
+                            { label: 'Tax Without 401k', value: fmt(taxWithout), color: RED },
+                            { label: 'Tax With 401k',    value: fmt(tax),        color: GREEN },
+                            { label: 'Tax Saved',        value: fmt(saved),      color: GREEN },
+                          ].map(({ label, value, color }) => (
+                            <div key={label} style={{ textAlign: 'center', padding: '14px 12px', background: DARK, borderRadius: 8 }}>
+                              <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                              <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'monospace', color }}>{value}</div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ ...CARD, marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, background: 'rgba(0,110,182,0.05)', border: '1px solid rgba(0,110,182,0.2)' }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Ready to file?</div>
+                      <div style={{ fontSize: 13, color: TEXT2 }}>TurboTax walks you through your federal and state return step by step.</div>
+                    </div>
+                    <a href="https://turbotax.intuit.com" target="_blank" rel="noopener noreferrer"
+                      style={{ flexShrink: 0, padding: '10px 20px', background: '#0077c5', color: '#fff', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                      Open TurboTax →
+                    </a>
+                  </div>
+
+                  <div style={{ marginTop: 16, fontSize: 12, color: TEXT3, padding: '0 2px' }}>This is an estimate for federal income tax only. State income tax varies by state and is not included. Consult a tax professional for full tax planning.</div>
+
+                </div>
+              );
+            })()}
+
+            {/* ── SCHOLARSHIP HEALTH ────────────────────── */}
+            {panel === 'cashflow' && cashFlowTab === 'scholarship' && (() => {
+              const GRADE_POINTS = { 'A':4.0,'A-':3.7,'B+':3.3,'B':3.0,'B-':2.7,'C+':2.3,'C':2.0,'C-':1.7,'D':1.0,'F':0.0,'W':null };
+              const GRADE_OPTIONS = ['A','A-','B+','B','B-','C+','C','C-','D','F','W'];
+              const TUITION       = 5000;
+              const HOPE_MIN      = 3.0;
+              const ZELL_MIN      = 3.3;
+              const CHECKPOINTS   = [30, 60, 90];
+
+              const hoursAttempted = Math.max(0, parseFloat(schHours) || 0);
+              const baseGPA        = Math.max(0, Math.min(4.0, parseFloat(schHopeGPA) || 0));
+              const semsDone       = Math.max(0, parseInt(schSemesters) || 0);
+
+              // Project GPA including current-semester courses
+              const baseQP = baseGPA * hoursAttempted;
+              let addQP = 0, addHrs = 0;
+              schCourses.forEach(c => {
+                const gp = GRADE_POINTS[c.grade];
+                if (gp === null || gp === undefined) return;
+                const cr = parseFloat(c.credits) || 0;
+                addQP  += gp * cr;
+                addHrs += cr;
+              });
+              const totalHrs  = hoursAttempted + addHrs;
+              const projGPA   = totalHrs > 0 ? (baseQP + addQP) / totalHrs : baseGPA;
+
+              const isZell    = projGPA >= ZELL_MIN;
+              const isHOPE    = projGPA >= HOPE_MIN;
+              const statusColor  = isZell ? GREEN : isHOPE ? YELLOW : RED;
+              const statusLabel  = isZell ? 'Zell Miller · Safe' : isHOPE ? 'HOPE · Caution Zone' : 'At Risk · Financial Cliff';
+              const statusBg     = isZell ? 'rgba(74,222,128,0.08)' : isHOPE ? 'rgba(251,191,36,0.08)' : 'rgba(248,113,113,0.08)';
+              const statusBorder = isZell ? 'rgba(74,222,128,0.25)' : isHOPE ? 'rgba(251,191,36,0.25)' : 'rgba(248,113,113,0.25)';
+
+              const pointsAboveCliff = projGPA - HOPE_MIN;
+              const pointsAboveZell  = projGPA - ZELL_MIN;
+              const lifetimeSaved    = semsDone * TUITION;
+              const semValue         = isHOPE ? TUITION : 0;
+              const annualRisk       = isHOPE ? 0 : TUITION * 2;
+
+              // Checkpoint progress
+              const nextCP   = CHECKPOINTS.find(c => totalHrs < c) || null;
+              const prevCP   = [...CHECKPOINTS].reverse().find(c => totalHrs >= c) || 0;
+              const cpPct    = nextCP ? Math.min(100, ((totalHrs - prevCP) / (nextCP - prevCP)) * 100) : 100;
+              const hoursToCP = nextCP ? nextCP - totalHrs : 0;
+
+              // Sensitivity: project GPA for each grade on the selected course
+              const sensIdx = Math.min(schSensIdx, schCourses.length - 1);
+              const sensCourse = schCourses[sensIdx] || null;
+              const sensitivityRows = GRADE_OPTIONS.map(g => {
+                const gp = GRADE_POINTS[g];
+                let aQP2 = 0, aHr2 = 0;
+                schCourses.forEach((c, i) => {
+                  const grade = i === sensIdx ? g : c.grade;
+                  const gp2   = GRADE_POINTS[grade];
+                  if (gp2 === null || gp2 === undefined) return;
+                  const cr = parseFloat(c.credits) || 0;
+                  aQP2 += gp2 * cr; aHr2 += cr;
+                });
+                const totalH = hoursAttempted + aHr2;
+                const sGPA   = totalH > 0 ? (baseQP + aQP2) / totalH : baseGPA;
+                const sZell  = sGPA >= ZELL_MIN;
+                const sHOPE  = sGPA >= HOPE_MIN;
+                return { grade: g, gpa: sGPA, zell: sZell, hope: sHOPE };
+              });
+
+              const inputStyle = {
+                padding: '8px 10px', background: MUTED, border: BORDER, borderRadius: 7,
+                color: TEXT, fontSize: 13, outline: 'none', width: '100%',
+              };
+              const selectStyle = { ...inputStyle, cursor: 'pointer' };
+
+              return (
+                <div>
+                  {/* ── Header ────────────────────────────────────── */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+                    <div>
+                      <h1 data-tour="scholarship-header" style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700 }}>Scholarship Health</h1>
+                      <div style={{ fontSize: 13, color: TEXT2 }}>Georgia HOPE / Zell Miller · University of Georgia · GSFC Rules</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 3 }}>Projected HOPE GPA</div>
+                      <div style={{ fontSize: 44, fontWeight: 800, fontFamily: 'monospace', color: statusColor, lineHeight: 1 }}>{projGPA.toFixed(2)}</div>
+                    </div>
+                  </div>
+
+                  {/* ── Status Banner ─────────────────────────────── */}
+                  <div style={{ background: statusBg, border: `1px solid ${statusBorder}`, borderRadius: 10, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: statusColor, flexShrink: 0 }} />
+                      <span style={{ fontWeight: 700, fontSize: 14, color: statusColor }}>{statusLabel}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2 }}>
+                      {isHOPE
+                        ? <>{pointsAboveCliff >= 0 ? '+' : ''}{pointsAboveCliff.toFixed(2)} pts above the 3.0 cliff · {pointsAboveZell >= 0 ? '+' : ''}{pointsAboveZell.toFixed(2)} pts {pointsAboveZell >= 0 ? 'above' : 'below'} Zell buffer</>
+                        : <>GPA must reach 3.0 to restore coverage — currently {Math.abs(pointsAboveCliff).toFixed(2)} pts below</>
+                      }
+                    </div>
+                  </div>
+
+                  {/* ── Financial Stats ───────────────────────────── */}
+                  <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 20 }}>
+                    {[
+                      {
+                        label: 'This Semester Coverage',
+                        value: isHOPE ? `+$${TUITION.toLocaleString()}` : '—',
+                        sub:   isHOPE ? '100% tuition covered' : 'Coverage lost',
+                        color: isHOPE ? GREEN : RED,
+                      },
+                      {
+                        label: 'Out-of-Pocket Risk',
+                        value: isHOPE ? '$0' : `-$${(TUITION).toLocaleString()}/sem`,
+                        sub:   isHOPE ? 'No exposure this semester' : `≈ -$${(TUITION * 2).toLocaleString()}/year risk`,
+                        color: isHOPE ? TEXT2 : RED,
+                      },
+                      {
+                        label: 'Lifetime Tuition Saved',
+                        value: `$${lifetimeSaved.toLocaleString()}`,
+                        sub:   `${semsDone} semester${semsDone !== 1 ? 's' : ''} × $${TUITION.toLocaleString()}`,
+                        color: GREEN,
+                      },
+                    ].map(({ label, value, sub, color }) => (
+                      <div key={label} className="lc" style={CARD}>
+                        <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>{label}</div>
+                        <div style={{ fontSize: 26, fontWeight: 700, fontFamily: 'monospace', color, letterSpacing: '-0.5px' }}>{value}</div>
+                        <div style={{ fontSize: 11, color: TEXT3, marginTop: 4 }}>{sub}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* ── Checkpoint Progress ───────────────────────── */}
+                  <div className="lc" style={{ ...CARD, marginBottom: 20 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                      <div style={{ fontWeight: 600 }}>GSFC Audit Checkpoints</div>
+                      <div style={{ fontSize: 12, color: TEXT2 }}>{totalHrs.toFixed(0)} attempted hrs · {nextCP ? `${hoursToCP.toFixed(0)} hrs until next audit` : 'All checkpoints cleared'}</div>
+                    </div>
+                    <div style={{ position: 'relative', height: 8, background: MUTED, borderRadius: 4, marginBottom: 52 }}>
+                      <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${Math.min(100, (totalHrs / 90) * 100)}%`, background: statusColor, borderRadius: 4, transition: 'width 0.4s ease' }} />
+                      {CHECKPOINTS.map(cp => (
+                        <div key={cp} style={{ position: 'absolute', top: -4, left: `${(cp / 90) * 100}%`, transform: 'translateX(-50%)' }}>
+                          <div style={{ width: 16, height: 16, borderRadius: '50%', background: totalHrs >= cp ? statusColor : MUTED, border: `2px solid ${BORDER_C}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {totalHrs >= cp && <div style={{ width: 6, height: 6, borderRadius: '50%', background: CARD_BG }} />}
+                          </div>
+                          <div style={{ position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', fontSize: 10, color: totalHrs >= cp ? TEXT : TEXT3, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                            {cp} hrs
+                          </div>
+                          <div style={{ position: 'absolute', top: 30, left: '50%', transform: 'translateX(-50%)', fontSize: 9, color: TEXT3, whiteSpace: 'nowrap' }}>
+                            {totalHrs >= cp ? '✓ Passed' : `${(cp - totalHrs).toFixed(0)} away`}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+                      {[
+                        { label: 'Current Scholarship', val: isZell ? 'Zell Miller (3.3+)' : isHOPE ? 'HOPE (3.0+)' : 'None — Below Cliff', color: statusColor },
+                        { label: 'HOPE Threshold', val: '3.0 GPA', color: YELLOW },
+                        { label: 'Zell Miller Buffer', val: '3.3 GPA', color: GREEN },
+                        { label: 'Both Tiers Cover', val: '100% Tuition', color: BLUE },
+                      ].map(({ label, val, color }) => (
+                        <div key={label} style={{ flex: 1 }}>
+                          <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 3 }}>{label}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color }}>{val}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── Input Panel ───────────────────────────────── */}
+                  <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
+                    {/* Left: base inputs */}
+                    <div className="lc" style={CARD}>
+                      <div style={{ fontWeight: 600, marginBottom: 16 }}>Your Academic Profile</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 6 }}>
+                        {[
+                          { label: 'Hours Attempted', val: schHours, set: setSchHours, placeholder: '45' },
+                          { label: 'Current HOPE GPA', val: schHopeGPA, set: setSchHopeGPA, placeholder: '3.20' },
+                          { label: 'Semesters w/ Coverage', val: schSemesters, set: setSchSemesters, placeholder: '3' },
+                        ].map(({ label, val, set, placeholder }) => (
+                          <div key={label}>
+                            <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>{label}</div>
+                            <input value={val} onChange={e => set(e.target.value)} placeholder={placeholder} style={inputStyle} />
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ marginTop: 12, padding: '10px 12px', background: DARK, borderRadius: 8, fontSize: 11, color: TEXT3, lineHeight: 1.6 }}>
+                        <strong style={{ color: TEXT2 }}>Note:</strong> HOPE GPA counts only degree-applicable coursework at eligible Georgia institutions. Withdrawals (W) do not affect GPA but count toward attempted hours.
+                      </div>
+                    </div>
+
+                    {/* Right: GPA thresholds reference */}
+                    <div className="lc" style={CARD}>
+                      <div style={{ fontWeight: 600, marginBottom: 16 }}>GSFC GPA Requirements</div>
+                      {[
+                        { tier: 'Zell Miller', gpa: '3.30', icon: '●', color: GREEN, desc: 'Safety buffer · $5,000/sem covered', active: isZell },
+                        { tier: 'HOPE Scholarship', gpa: '3.00', icon: '●', color: YELLOW, desc: '3.0 cliff · $5,000/sem covered', active: isHOPE && !isZell },
+                        { tier: 'Below Threshold', gpa: '< 3.00', icon: '●', color: RED, desc: 'Full tuition out-of-pocket', active: !isHOPE },
+                      ].map(({ tier, gpa, icon, color, desc, active }) => (
+                        <div key={tier} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 8, background: active ? `${color.replace(')',',0.08)')}` : 'transparent', border: active ? `1px solid ${color.replace(')',',0.25)')}` : `1px solid transparent`, marginBottom: 8, transition: 'all 0.2s' }}>
+                          <span style={{ fontSize: 10, color, flexShrink: 0 }}>{icon}</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: active ? color : TEXT2 }}>{tier}</div>
+                            <div style={{ fontSize: 11, color: TEXT3 }}>{desc}</div>
+                          </div>
+                          <span style={{ fontSize: 16, fontWeight: 800, fontFamily: 'monospace', color: active ? color : TEXT3 }}>{gpa}</span>
+                          {active && <span style={{ fontSize: 10, color, fontWeight: 700 }}>← YOU</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── What-If Course Builder ─────────────────────── */}
+                  <div className="lc" style={{ ...CARD, marginBottom: 20 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                      <div style={{ fontWeight: 600 }}>What-If: Current Semester Grade Forecast</div>
+                      <button
+                        onClick={() => { setSchCourses(p => [...p, { id: schNextId, name: '', credits: '3', grade: 'B' }]); setSchNextId(n => n + 1); }}
+                        style={{ padding: '5px 14px', background: 'rgba(77,163,255,0.1)', border: `1px solid rgba(77,163,255,0.3)`, borderRadius: 7, color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                        + Add Course
+                      </button>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px 32px', gap: 8, marginBottom: 8 }}>
+                      {['Course Name', 'Credits', 'Grade', ''].map(h => (
+                        <div key={h} style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</div>
+                      ))}
+                    </div>
+                    {schCourses.map((c, i) => (
+                      <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px 32px', gap: 8, marginBottom: 6, alignItems: 'center' }}>
+                        <input
+                          value={c.name}
+                          onChange={e => setSchCourses(p => p.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
+                          placeholder={`Course ${i + 1}`}
+                          style={inputStyle}
+                        />
+                        <select
+                          value={c.credits}
+                          onChange={e => setSchCourses(p => p.map((x, j) => j === i ? { ...x, credits: e.target.value } : x))}
+                          style={selectStyle}
+                        >
+                          {['1','2','3','4','5','6'].map(n => <option key={n} value={n}>{n} cr</option>)}
+                        </select>
+                        <select
+                          value={c.grade}
+                          onChange={e => setSchCourses(p => p.map((x, j) => j === i ? { ...x, grade: e.target.value } : x))}
+                          style={{ ...selectStyle, color: GRADE_POINTS[c.grade] === null ? TEXT3 : GRADE_POINTS[c.grade] >= 3.0 ? GREEN : GRADE_POINTS[c.grade] >= 2.0 ? YELLOW : RED }}
+                        >
+                          {GRADE_OPTIONS.map(g => <option key={g} value={g}>{g} {GRADE_POINTS[g] !== null ? `(${GRADE_POINTS[g].toFixed(1)})` : '(no pts)'}</option>)}
+                        </select>
+                        <button
+                          onClick={() => setSchCourses(p => p.filter((_, j) => j !== i))}
+                          style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>
+                      </div>
+                    ))}
+                    {schCourses.length === 0 && (
+                      <div style={{ textAlign: 'center', color: TEXT3, fontSize: 12, padding: '16px 0' }}>Add courses above to project your end-of-semester GPA.</div>
+                    )}
+                    <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${BORDER_C}`, display: 'grid', gridTemplateColumns: g3, gap: 12 }}>
+                      {[
+                        { label: 'Semester Hours', value: `${addHrs} cr` },
+                        { label: 'Projected GPA After Sem', value: projGPA.toFixed(3), color: statusColor },
+                        { label: 'GPA Δ from Current', value: (projGPA - baseGPA) >= 0 ? `+${(projGPA - baseGPA).toFixed(3)}` : (projGPA - baseGPA).toFixed(3), color: (projGPA - baseGPA) >= 0 ? GREEN : RED },
+                      ].map(({ label, value, color }) => (
+                        <div key={label} style={{ padding: '10px 14px', background: DARK, borderRadius: 8 }}>
+                          <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{label}</div>
+                          <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'monospace', color: color || TEXT }}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── Sensitivity Slider ────────────────────────── */}
+                  {schCourses.length > 0 && (
+                    <div className="lc" style={CARD}>
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>Grade Sensitivity Analysis</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>
+                        See how a single grade change swings your total GPA and scholarship status.
+                      </div>
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Analyzing Course</div>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {schCourses.map((c, i) => (
+                            <button key={c.id} onClick={() => setSchSensIdx(i)}
+                              style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                                background: schSensIdx === i ? 'rgba(77,163,255,0.12)' : MUTED,
+                                color: schSensIdx === i ? BLUE : TEXT2,
+                                border: schSensIdx === i ? `1px solid rgba(77,163,255,0.35)` : BORDER }}>
+                              {c.name || `Course ${i + 1}`} ({c.credits} cr)
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(11, 1fr)', gap: 6 }}>
+                        {sensitivityRows.map(({ grade, gpa, zell, hope }) => {
+                          const col = zell ? GREEN : hope ? YELLOW : RED;
+                          const isCurrent = grade === (schCourses[sensIdx]?.grade || 'B');
+                          return (
+                            <div key={grade}
+                              onClick={() => setSchCourses(p => p.map((x, j) => j === sensIdx ? { ...x, grade } : x))}
+                              style={{ textAlign: 'center', cursor: 'pointer', padding: '8px 4px', borderRadius: 7,
+                                background: isCurrent ? `${col.replace(')',',0.12)')}` : DARK,
+                                border: isCurrent ? `1px solid ${col.replace(')',',0.4)')}` : `1px solid ${BORDER_C}`,
+                                transition: 'all 0.12s' }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: isCurrent ? col : TEXT2 }}>{grade}</div>
+                              <div style={{ fontSize: 10, fontFamily: 'monospace', color: col, fontWeight: 600, margin: '3px 0' }}>{gpa.toFixed(2)}</div>
+                              <div style={{ fontSize: 8, color: col, fontWeight: 700, textTransform: 'uppercase' }}>
+                                {zell ? 'Zell' : hope ? 'HOPE' : 'RISK'}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div style={{ marginTop: 12, fontSize: 11, color: TEXT3 }}>
+                        Click a grade cell to apply it to the selected course and see the immediate GPA and financial impact.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* ── INVESTMENTS ───────────────────────────── */}
+            {panel === 'investments' && (
+              <div>
+                <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>Investments</h1>
+                {SandboxBanner}
+                <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24, marginTop: 24 }}>
+                  {[
+                    { label: 'Portfolio Value', value: fmt(activeTotalPortfolio) },
+                    { label: 'Positions',        value: activeHoldings.length },
+                    { label: 'Avg Position',     value: activeHoldings.length ? fmt(activeTotalPortfolio / activeHoldings.length) : '—' },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="lc" style={CARD}>
+                      <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
+                      <div style={{ fontSize: 30, fontWeight: 700, marginTop: 8, letterSpacing: '-0.5px' }}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div data-tour="investments-holdings" className="lc" style={CARD}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div style={{ fontWeight: 600 }}>Holdings</div>
+                    {activeHoldings.length > 4 && (
+                      <span style={{ fontSize: 12, color: TEXT2 }}>{holdingsExpanded ? activeHoldings.length : 4} of {activeHoldings.length} positions</span>
+                    )}
+                  </div>
+                  {activeHoldings.length === 0 ? (
+                    <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>No holdings found. Connect an investment account via Plaid.</div>
+                  ) : (
+                    <>
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {['Ticker', 'Name', 'Shares', 'Price', 'Value', 'P&L', '1D %', '1W %', '1M %'].map(h => (
+                              <th key={h} style={{ padding: '8px 12px', textAlign: ['Shares', 'Price', 'Value', 'P&L', '1D %', '1W %', '1M %'].includes(h) ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(holdingsExpanded ? activeHoldings : activeHoldings.slice(0, 4)).map((h, i) => {
+                            const ticker = h.security?.ticker_symbol || '—';
+                            const name   = h.security?.name || '—';
+                            const qty    = h.quantity || 0;
+                            const price  = h.institution_price || 0;
+                            const value  = qty * price;
+                            const cost   = h.cost_basis || 0;
+                            const pnl    = cost > 0 ? value - cost : null;
+                            const ext    = extendedTickerData[ticker] || {};
+                            const hPct   = (v) => {
+                              if (v == null) return <span style={{ color: TEXT3 }}>—</span>;
+                              const up = v >= 0;
+                              return <span style={{ color: up ? GREEN : RED, fontWeight: 700 }}>{up ? '▲' : '▼'} {Math.abs(v).toFixed(2)}%</span>;
+                            };
+                            const clickable = ticker !== '—';
+                            return (
+                              <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}`, cursor: clickable ? 'pointer' : 'default' }}
+                                onClick={() => {
+                                  if (!clickable) return;
+                                  setSelectedTicker({ symbol: ticker, name, price });
+                                  setTickerChartPeriod('3mo');
+                                  fetchTickerChart(ticker, '3mo');
+                                }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 700, color: BLUE, fontSize: 13 }}>{ticker}</td>
+                                <td style={{ padding: '10px 12px', fontSize: 13, color: TEXT2, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{qty.toFixed(4)}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{fmt(price)}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, fontFamily: 'monospace' }}>{fmt(value)}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: pnl === null ? TEXT3 : pnl >= 0 ? GREEN : RED }}>
+                                  {pnl === null ? '—' : `${pnl >= 0 ? '+' : ''}${fmt(pnl)}`}
+                                </td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{hPct(ext.changePct1d ?? null)}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{hPct(ext.changePct1w ?? null)}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{hPct(ext.changePct1m ?? null)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                      {activeHoldings.length > 4 && (
+                        <button
+                          onClick={() => setHoldingsExpanded(e => !e)}
+                          style={{ width: '100%', marginTop: 12, padding: '9px 0', background: 'none', border: `1px solid ${BORDER_C}`, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'border-color 0.15s' }}
+                        >
+                          {holdingsExpanded ? `Show less ↑` : `Show all ${activeHoldings.length} positions ↓`}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── INSIGHTS ──────────────────────────────── */}
+            {panel === 'insights' && (
+              <div style={{ position: 'relative' }}>
+              {!isAdmin && (
+                <div style={{ position: 'absolute', inset: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                  <div style={{ pointerEvents: 'auto', background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: '36px 40px', textAlign: 'center', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
+                    <div style={{ fontSize: 40, marginBottom: 14 }}>◬</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Market Insights</div>
+                    <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 28 }}>
+                      Live charts, Fear &amp; Greed index, yield curve, stock screeners, and a real-time news feed.
+                    </div>
+                    <button onClick={() => setShowUpgrade(true)}
+                      style={{ padding: '12px 32px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,102,245,0.35)', width: '100%' }}>
+                      Upgrade to Premium
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div style={!isAdmin ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+              <div style={{ display: 'flex', gap: 2, background: DARK, borderRadius: 9, padding: 3, width: 'fit-content' }}>
+                {(() => {
+                  const _IN_DEF = ['markets', 'news', 'signals', 'options'];
+                  const _inOrder = getOrder('insights-tabs', _IN_DEF);
+                  return _inOrder.filter(v => !isSubtabHidden('insights', v)).map(v => {
+                    const l = { markets: 'Markets', news: 'News', signals: 'Signal Engine', options: 'Options' }[v];
+                    if (!l) return null;
+                    return (
+                      <button key={v}
+                        draggable
+                        onDragStart={e => e.dataTransfer.setData('text/plain', `insights-tabs|||${v}`)}
+                        onDragOver={e => e.preventDefault()}
+                        onDrop={e => { e.preventDefault(); const [, srcId] = e.dataTransfer.getData('text/plain').split('|||'); if (srcId !== v) handleReorder('insights-tabs', _IN_DEF)(srcId, v); }}
+                        onClick={() => setInsightsTab(v)}
+                        style={{ padding: '6px 20px', borderRadius: 7, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: insightsTab === v ? CARD_BG : 'transparent', color: insightsTab === v ? TEXT : TEXT2, transition: 'all 0.15s' }}>
+                        {l}
+                      </button>
+                    );
+                  });
+                })()}
+              </div>
+              {layoutOrder['insights-tabs'] && <button onClick={() => resetLayout('insights-tabs')} style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 11, cursor: 'pointer', padding: 0 }}>Reset</button>}
+              </div>
+            {insightsTab === 'markets' && (
+              <div>
+                <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 700 }}>Markets</h1>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 24 }}>
+                  <div data-tour="markets-sp500" className="lc" style={CARD}>
+                    <div style={{ fontWeight: 600, marginBottom: 4, fontSize: 13, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px' }}>S&P 500</div>
+                    <SP500Chart candles={sp500Candles} period={sp500Period} onPeriodChange={fetchSP500} />
+                  </div>
+                  <div data-tour="markets-fg" className="lc" style={CARD}>
+                    <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Fear & Greed Index</div>
+                    {fearGreed ? (
+                      <FearGreedGauge score={fearGreed.score} rating={fearGreed.rating} />
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 110, color: TEXT2, fontSize: 12 }}>Loading…</div>
+                    )}
+                    <div style={{ fontSize: 11, color: TEXT3, marginTop: 8, textAlign: 'center' }}>CNN composite · 7 sentiment indicators</div>
+                  </div>
+                </div>
+
+                {/* Indices row */}
+                {marketTickers.indices.length > 0 && (
+                  <div className="lc" style={{ ...CARD, marginBottom: 16 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 14, fontSize: 13 }}>Indices</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                      {marketTickers.indices.map((t, i) => {
+                        const up = (t.changePct || 0) >= 0;
+                        return (
+                          <div key={i} style={{ padding: '12px 14px', background: DARK, borderRadius: 8, border: BORDER }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, marginBottom: 6 }}>{t.name}</div>
+                            <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 16, marginBottom: 4 }}>
+                              {(t.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: up ? GREEN : RED }}>
+                              {up ? '▲' : '▼'} {Math.abs(t.changePct || 0).toFixed(2)}%
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* View selector + table */}
+                <div className="lc" style={CARD}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <div style={{ fontWeight: 600 }}>
+                      {marketView === 'your_list' ? 'Your List' : marketView === 'day_gainers' ? 'Top Gainers' : marketView === 'day_losers' ? 'Top Losers' : 'Most Active'}
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <select value={marketView} onChange={e => setMarketView(e.target.value)}
+                        style={{ padding: '5px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
+                        <option value="most_actives">Most Active</option>
+                        <option value="day_gainers">Gainers</option>
+                        <option value="day_losers">Losers</option>
+                        <option value="your_list">Your List</option>
+                      </select>
+                      <button onClick={() => fetchMarketView(marketView, customTickers)}
+                        style={{ padding: '5px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, cursor: 'pointer' }}>↻</button>
+                    </div>
+                  </div>
+
+                  {marketView === 'your_list' && (
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+                      <input value={tickerInput} onChange={e => setTickerInput(e.target.value.toUpperCase())}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && tickerInput.trim()) {
+                            const sym = tickerInput.trim();
+                            if (!customTickers.includes(sym)) {
+                              const next = [...customTickers, sym];
+                              setCustomTickers(next);
+                              localStorage.setItem('basis_tickers', JSON.stringify(next));
+                              fetchMarketView('your_list', next);
+                            }
+                            setTickerInput('');
+                          }
+                        }}
+                        placeholder="Add ticker (e.g. AAPL)"
+                        style={{ flex: 1, padding: '7px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', textTransform: 'uppercase' }} />
+                      <button onClick={() => {
+                        const sym = tickerInput.trim();
+                        if (sym && !customTickers.includes(sym)) {
+                          const next = [...customTickers, sym];
+                          setCustomTickers(next);
+                          localStorage.setItem('basis_tickers', JSON.stringify(next));
+                          fetchMarketView('your_list', next);
+                        }
+                        setTickerInput('');
+                      }} style={{ padding: '7px 14px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Add</button>
+                    </div>
+                  )}
+
+                  {(() => {
+                    const rows = marketView === 'your_list'
+                      ? customTickerData
+                      : marketViewData.length ? marketViewData : marketTickers.active;
+                    if (loadingMarketView) return <div style={{ color: TEXT2, textAlign: 'center', padding: 24, fontSize: 13 }}>Loading…</div>;
+                    if (!rows.length && marketView === 'your_list') return (
+                      <div style={{ color: TEXT3, textAlign: 'center', padding: 24, fontSize: 13 }}>Add tickers above to track them here.</div>
+                    );
+                    if (!rows.length) return <div style={{ color: TEXT2, textAlign: 'center', padding: 24, fontSize: 13 }}>Loading market data…</div>;
+                    const pctCell = (val) => {
+                      if (val == null) return <span style={{ color: TEXT3, fontSize: 12 }}>—</span>;
+                      const up = val >= 0;
+                      return <span style={{ color: up ? GREEN : RED, fontWeight: 700 }}>{up ? '▲' : '▼'} {Math.abs(val).toFixed(2)}%</span>;
+                    };
+                    return (
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {['Symbol', 'Price', '1D %', '1W %', '1M %', ...(marketView === 'your_list' ? [''] : [])].map(h => (
+                              <th key={h} style={{ padding: '8px 14px', textAlign: h === 'Symbol' ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map((t, i) => {
+                            const ext = extendedTickerData[t.symbol] || {};
+                            const d1 = ext.changePct1d != null ? ext.changePct1d : (t.changePct || null);
+                            return (
+                              <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}`, cursor: 'pointer' }}
+                                onClick={(e) => {
+                                  if (e.target.closest('button')) return;
+                                  setSelectedTicker(t);
+                                  setTickerChartPeriod('3mo');
+                                  fetchTickerChart(t.symbol, '3mo');
+                                }}>
+                                <td style={{ padding: '11px 14px' }}>
+                                  <div style={{ fontWeight: 700, fontSize: 13, color: BLUE }}>{t.symbol || t.name}</div>
+                                  {t.symbol && t.name !== t.symbol && <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{t.name}</div>}
+                                </td>
+                                <td style={{ padding: '11px 14px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600, fontSize: 14 }}>
+                                  {(t.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </td>
+                                <td style={{ padding: '11px 14px', textAlign: 'right', fontSize: 13 }}>{pctCell(d1)}</td>
+                                <td style={{ padding: '11px 14px', textAlign: 'right', fontSize: 13 }}>{pctCell(ext.changePct1w ?? null)}</td>
+                                <td style={{ padding: '11px 14px', textAlign: 'right', fontSize: 13 }}>{pctCell(ext.changePct1m ?? null)}</td>
+                                {marketView === 'your_list' && (
+                                  <td style={{ padding: '11px 14px', textAlign: 'right' }}>
+                                    <button onClick={() => {
+                                      const next = customTickers.filter(s => s !== t.symbol);
+                                      setCustomTickers(next);
+                                      localStorage.setItem('basis_tickers', JSON.stringify(next));
+                                      setCustomTickerData(prev => prev.filter(q => q.symbol !== t.symbol));
+                                    }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 14, padding: 0 }}>✕</button>
+                                  </td>
+                                )}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+
+
+            {insightsTab === 'news' && (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>News Feed</h1>
@@ -1572,13 +5821,13 @@ export default function Dashboard() {
                 {articles.length === 0 ? (
                   <div style={{ ...CARD, textAlign: 'center', padding: 48, color: TEXT2 }}>No articles found</div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+                  <div data-tour="news-articles" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
                     {articles.map((a, i) => (
                       <div key={i} className="lc" style={CARD}>
                         {(a.symbols?.length > 0) && (
                           <div style={{ display: 'flex', gap: 5, marginBottom: 10, flexWrap: 'wrap' }}>
                             {a.symbols.slice(0, 5).map(s => (
-                              <span key={s} style={{ background: '#1a2744', color: BLUE, padding: '2px 7px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>{s}</span>
+                              <span key={s} style={{ background: EXAMPLE_BG, color: BLUE, padding: '2px 7px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>{s}</span>
                             ))}
                           </div>
                         )}
@@ -1598,6 +5847,256 @@ export default function Dashboard() {
               </div>
             )}
 
+            {insightsTab === 'signals' && (() => {
+              // ── Score all articles ─────────────────────────────────────────
+              const scored = articles.map(a => ({ ...a, ...scoreArticle(a) }));
+              const bySignal = [...scored].sort((a, b) => b.signal - a.signal);
+
+              // ── Build ticker heat map ──────────────────────────────────────
+              const tickerMap = {};
+              scored.forEach(a => {
+                a.tickers.forEach(t => {
+                  if (!tickerMap[t]) tickerMap[t] = { ticker: t, articles: [], maxSignal: 0, totalSignal: 0 };
+                  tickerMap[t].articles.push(a);
+                  if (a.signal > tickerMap[t].maxSignal) tickerMap[t].maxSignal = a.signal;
+                  tickerMap[t].totalSignal += a.signal;
+                });
+              });
+              const heatTickers = Object.values(tickerMap)
+                .map(t => ({ ...t, avgSignal: t.totalSignal / t.articles.length }))
+                .sort((a, b) => b.maxSignal - a.maxSignal)
+                .slice(0, 24);
+
+              // ── Contagion for selected ticker ──────────────────────────────
+              const contagion = signalFilter ? SECTOR_GRAPH[signalFilter] : null;
+              const selEntry  = signalFilter ? tickerMap[signalFilter] : null;
+              const selSignal = selEntry ? selEntry.maxSignal : 0;
+
+              // ── Color helpers ──────────────────────────────────────────────
+              const sigColor = s =>
+                s >= 0.65 ? '#f87171' : s >= 0.42 ? '#f97316' : s >= 0.22 ? '#fbbf24' : TEXT3;
+              const sigBg = s =>
+                s >= 0.65 ? 'rgba(248,113,113,0.12)' : s >= 0.42 ? 'rgba(249,115,22,0.10)' :
+                s >= 0.22 ? 'rgba(251,191,36,0.10)'  : 'rgba(255,255,255,0.03)';
+              const sigBorder = s =>
+                s >= 0.65 ? 'rgba(248,113,113,0.35)' : s >= 0.42 ? 'rgba(249,115,22,0.30)' :
+                s >= 0.22 ? 'rgba(251,191,36,0.28)'  : BORDER_C;
+              const sigPulseClass = s =>
+                s >= 0.65 ? 'sig-pulse-red' : s >= 0.40 ? 'sig-pulse-yellow' : '';
+
+              const MBar = ({ val, color }) => (
+                <div style={{ height: 3, background: MUTED, borderRadius: 2, width: '100%' }}>
+                  <div style={{ height: '100%', width: `${Math.round(val * 100)}%`, background: color, borderRadius: 2, transition: 'width 0.4s ease' }} />
+                </div>
+              );
+
+              return (
+                <div>
+                  {/* Header */}
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
+                    <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Signal Engine</h1>
+                    <span style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                      {scored.length} articles · {heatTickers.length} tickers · live scoring
+                    </span>
+                  </div>
+                  <p style={{ margin: '0 0 24px', fontSize: 13, color: TEXT2, lineHeight: 1.6 }}>
+                    Multi-vector scoring: <strong style={{ color: TEXT }}>M</strong> magnitude ×{' '}
+                    <strong style={{ color: TEXT }}>P</strong> probability ×{' '}
+                    <strong style={{ color: TEXT }}>I</strong> immediacy ×{' '}
+                    <strong style={{ color: TEXT }}>R</strong> moat-adjusted resilience.
+                    Click any ticker to see sector contagion.
+                  </p>
+
+                  {articles.length === 0 ? (
+                    <div style={{ ...CARD, textAlign: 'center', padding: 48, color: TEXT2 }}>
+                      No articles loaded — check the News tab for status.
+                    </div>
+                  ) : (
+                    <>
+                      {/* ── Ticker Heatmap ──────────────────────────────── */}
+                      <div style={{ ...CARD, marginBottom: 20 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 16, fontSize: 13 }}>Live Ticker Signal Heatmap</div>
+                        {heatTickers.length === 0 ? (
+                          <div style={{ fontSize: 12, color: TEXT3, textAlign: 'center', padding: 16 }}>
+                            No tickers extracted from current articles.
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            {heatTickers.map(t => {
+                              const isSelected = signalFilter === t.ticker;
+                              return (
+                                <button
+                                  key={t.ticker}
+                                  className={sigPulseClass(t.maxSignal)}
+                                  onClick={() => setSignalFilter(isSelected ? null : t.ticker)}
+                                  style={{
+                                    padding: '8px 14px', borderRadius: 8, cursor: 'pointer',
+                                    background: isSelected ? sigBg(t.maxSignal) : 'rgba(255,255,255,0.03)',
+                                    border: `1px solid ${isSelected ? sigBorder(t.maxSignal) : BORDER_C}`,
+                                    transition: 'all 0.15s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                                  }}
+                                >
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: sigColor(t.maxSignal) }}>{t.ticker}</span>
+                                  <span style={{ fontSize: 10, fontFamily: 'monospace', color: sigColor(t.maxSignal), fontWeight: 600 }}>
+                                    {t.maxSignal.toFixed(3)}
+                                  </span>
+                                  <span style={{ fontSize: 9, color: TEXT3 }}>{t.articles.length}x</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ── Chain Reaction Map ──────────────────────────── */}
+                      {contagion && selEntry && (
+                        <div style={{ ...CARD, marginBottom: 20, border: `1px solid ${sigBorder(selSignal)}`, background: sigBg(selSignal) }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                            <div>
+                              <span style={{ fontSize: 15, fontWeight: 700, color: sigColor(selSignal), marginRight: 10 }}>{signalFilter}</span>
+                              <span style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                {contagion.sector} · Sector Contagion
+                              </span>
+                            </div>
+                            <button onClick={() => setSignalFilter(null)}
+                              style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12 }}>
+                            {[
+                              { label: 'Suppliers', items: contagion.suppliers, mult: 0.62 },
+                              { label: 'Sector Peers', items: contagion.peers, mult: 0.38 },
+                              { label: 'Indices', items: contagion.indices, mult: 0.22 },
+                            ].map(({ label, items, mult }) => (
+                              items.length > 0 && (
+                                <div key={label}>
+                                  <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 8 }}>
+                                    {label}
+                                  </div>
+                                  {items.map(sym => {
+                                    const contagionScore = selSignal * mult;
+                                    const dir = selEntry.articles.some(a => a.isNeg) ? '▼' : '▲';
+                                    const col = selEntry.articles.some(a => a.isNeg) ? RED : GREEN;
+                                    return (
+                                      <div key={sym} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                                        <span style={{ fontSize: 12, fontWeight: 600, color: TEXT }}>{sym}</span>
+                                        <span style={{ fontSize: 11, fontFamily: 'monospace', color: col, fontWeight: 700 }}>
+                                          {dir} {contagionScore.toFixed(3)}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {signalFilter && !contagion && (
+                        <div style={{ ...CARD, marginBottom: 20, fontSize: 13, color: TEXT2 }}>
+                          No sector contagion data for <strong>{signalFilter}</strong>. Contagion maps are available for major-cap tickers.
+                        </div>
+                      )}
+
+                      {/* ── Scored Articles ──────────────────────────────── */}
+                      <div style={{ ...CARD }}>
+                        <div style={{ fontWeight: 600, marginBottom: 16, fontSize: 13 }}>
+                          Articles by Signal Strength
+                          {signalFilter && (
+                            <span style={{ marginLeft: 8, fontSize: 11, color: BLUE, fontWeight: 600 }}>
+                              · filtered: {signalFilter}
+                            </span>
+                          )}
+                        </div>
+                        {bySignal
+                          .filter(a => !signalFilter || a.tickers.includes(signalFilter))
+                          .slice(0, 20)
+                          .map((a, i) => (
+                            <div key={i} style={{ paddingBottom: 18, marginBottom: 18, borderBottom: i < 19 ? `1px solid ${BORDER_C}` : 'none' }}>
+                              {/* Score badge + headline */}
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+                                <span
+                                  className={sigPulseClass(a.signal)}
+                                  style={{
+                                    flexShrink: 0, padding: '3px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700,
+                                    fontFamily: 'monospace', background: sigBg(a.signal),
+                                    border: `1px solid ${sigBorder(a.signal)}`, color: sigColor(a.signal),
+                                  }}
+                                >
+                                  {a.signal.toFixed(3)}
+                                </span>
+                                <a href={a.url} target="_blank" rel="noreferrer"
+                                  style={{ color: TEXT, textDecoration: 'none', fontWeight: 600, fontSize: 14, lineHeight: 1.4, flex: 1 }}>
+                                  {a.headline}
+                                </a>
+                              </div>
+
+                              {/* Vector bars */}
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 8 }}>
+                                {[
+                                  { label: 'M · Magnitude', val: a.M, color: '#4da3ff' },
+                                  { label: 'P · Probability', val: a.P, color: '#4ade80' },
+                                  { label: 'I · Immediacy', val: a.I, color: '#fbbf24' },
+                                  { label: 'R · Resilience', val: Math.min(1, (a.R - 0.5) / 1), color: '#c084fc' },
+                                ].map(({ label, val, color }) => (
+                                  <div key={label}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                                      <span style={{ fontSize: 9, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{label}</span>
+                                      <span style={{ fontSize: 9, fontFamily: 'monospace', color: TEXT2 }}>{label.startsWith('R') ? a.R.toFixed(2) : val.toFixed(2)}</span>
+                                    </div>
+                                    <MBar val={Math.max(0, Math.min(1, val))} color={color} />
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Tickers */}
+                              {a.tickers.length > 0 && (
+                                <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 6 }}>
+                                  {a.tickers.slice(0, 6).map(t => (
+                                    <button key={t}
+                                      onClick={() => setSignalFilter(signalFilter === t ? null : t)}
+                                      style={{ padding: '2px 7px', borderRadius: 4, fontSize: 10, fontWeight: 700, cursor: 'pointer',
+                                        background: signalFilter === t ? 'rgba(77,163,255,0.15)' : MUTED,
+                                        color: signalFilter === t ? BLUE : TEXT3, border: signalFilter === t ? `1px solid ${BLUE}` : BORDER }}>
+                                      {t}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Analyst verdict */}
+                              <div style={{ fontSize: 11, color: TEXT2, lineHeight: 1.6, background: DARK, borderRadius: 7, padding: '8px 12px', borderLeft: `2px solid ${sigColor(a.signal)}` }}>
+                                {a.verdict}
+                              </div>
+
+                              <div style={{ marginTop: 6, fontSize: 10, color: TEXT3 }}>
+                                {a.source} · {fmtDate(a.created_at)}
+                              </div>
+                            </div>
+                          ))
+                        }
+                        {bySignal.filter(a => !signalFilter || a.tickers.includes(signalFilter)).length === 0 && (
+                          <div style={{ textAlign: 'center', color: TEXT2, padding: 24 }}>No articles match this filter.</div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
+            {insightsTab === 'options' && (
+              <div>
+                <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>Options</h1>
+                <OptionsChain />
+                <StraddleBuilder />
+              </div>
+            )}
+
+              </div>
+              </div>
+            )}
+
             {/* ── LEARN ────────────────────────────────── */}
             {panel === 'learn' && (() => {
               const section = LEARN_CONTENT.find(s => s.category === learnCategory);
@@ -1609,23 +6108,41 @@ export default function Dashboard() {
               return (
                 <div>
                   <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700 }}>Learn</h1>
-                  <p style={{ margin: '0 0 24px', color: TEXT2, fontSize: 14 }}>Financial concepts explained clearly — from market basics to options Greeks.</p>
+                  <p style={{ margin: '0 0 24px', color: TEXT2, fontSize: 14, lineHeight: 1.6, maxWidth: 720 }}>
+                    Two tracks, one library. <strong style={{ color: '#4ade80' }}>The Essentials</strong> covers everything you need to manage your own money: net worth, budgeting, credit, taxes, retirement accounts, insurance, renting vs. buying, and how markets work. <strong style={{ color: '#4da3ff' }}>The Analyst</strong> goes deeper into business valuation: DCF models, LBO mechanics, reading a 10-K, bonds, credit risk, and options. Each card includes the real formula and a worked example.
+                  </p>
 
                   {/* Category tabs */}
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 28, borderBottom: BORDER, paddingBottom: 16 }}>
-                    {LEARN_CONTENT.map(s => (
-                      <button key={s.category} onClick={() => { setLearnCategory(s.category); setLearnExpanded(new Set()); }}
-                        style={{ padding: '8px 20px', borderRadius: 8, border: learnCategory === s.category ? `1px solid ${s.color}` : BORDER,
-                          background: learnCategory === s.category ? `${s.color}18` : MUTED,
-                          color: learnCategory === s.category ? s.color : TEXT2,
-                          fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s' }}>
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
+                  {(() => {
+                    const _LN_DEF = LEARN_CONTENT.map(s => s.category);
+                    const _lnOrder = getOrder('learn-tabs', _LN_DEF);
+                    const _lnMap = Object.fromEntries(LEARN_CONTENT.map(s => [s.category, s]));
+                    return (
+                      <div data-tour="learn-tabs" style={{ display: 'flex', gap: 8, marginBottom: 28, borderBottom: BORDER, paddingBottom: 16, alignItems: 'center' }}>
+                        {_lnOrder.filter(cat => !isSubtabHidden('learn', cat)).map(cat => {
+                          const s = _lnMap[cat]; if (!s) return null;
+                          return (
+                            <button key={s.category}
+                              draggable
+                              onDragStart={e => e.dataTransfer.setData('text/plain', `learn-tabs|||${s.category}`)}
+                              onDragOver={e => e.preventDefault()}
+                              onDrop={e => { e.preventDefault(); const [, srcId] = e.dataTransfer.getData('text/plain').split('|||'); if (srcId !== s.category) handleReorder('learn-tabs', _LN_DEF)(srcId, s.category); }}
+                              onClick={() => { setLearnCategory(s.category); setLearnExpanded(new Set()); }}
+                              style={{ padding: '8px 20px', borderRadius: 8, border: learnCategory === s.category ? `1px solid ${s.color}` : BORDER, background: learnCategory === s.category ? `${s.color}18` : MUTED, color: learnCategory === s.category ? s.color : TEXT2, fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s' }}>
+                              {s.label}
+                            </button>
+                          );
+                        })}
+                        {layoutOrder['learn-tabs'] && <button onClick={() => resetLayout('learn-tabs')} style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 11, cursor: 'pointer', padding: '0 4px', marginLeft: 4 }}>Reset</button>}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Fixed Income yield curve */}
+                  {learnCategory === 'analyst' && <YieldCurveChart yieldCurve={yieldCurve} />}
 
                   {/* Cards */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, alignItems: 'stretch' }}>
                     {section?.items.map(item => {
                       const expanded = learnExpanded.has(item.id);
                       return (
@@ -1646,11 +6163,11 @@ export default function Dashboard() {
                             <div style={{ marginTop: 16, borderTop: BORDER, paddingTop: 16 }} onClick={e => e.stopPropagation()}>
                               <p style={{ margin: '0 0 14px', fontSize: 13, lineHeight: 1.7, color: TEXT }}>{item.body}</p>
                               {item.formula && (
-                                <div style={{ background: '#111', border: BORDER, borderRadius: 7, padding: '10px 14px', marginBottom: 14, fontFamily: 'monospace', fontSize: 13, color: section.color }}>
+                                <div style={{ background: DARK, border: BORDER, borderRadius: 7, padding: '11px 15px', marginBottom: 14, fontSize: 13, color: section.color, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, lineHeight: 2.2, fontFamily: 'Georgia, serif' }}>
                                   {item.formula}
                                 </div>
                               )}
-                              <div style={{ background: '#0a1628', border: `1px solid #1a3a6b`, borderRadius: 7, padding: '10px 14px', fontSize: 12, lineHeight: 1.6, color: TEXT2 }}>
+                              <div style={{ background: EXAMPLE_BG, border: `1px solid var(--example-border, #1a3a6b)`, borderRadius: 7, padding: '10px 14px', fontSize: 12, lineHeight: 1.6, color: TEXT2 }}>
                                 <span style={{ color: BLUE, fontWeight: 600 }}>Example: </span>{item.example}
                               </div>
                             </div>
@@ -1659,12 +6176,670 @@ export default function Dashboard() {
                       );
                     })}
                   </div>
+
+                  {/* Additional Resources */}
+                  <div style={{ marginTop: 32 }}>
+                    <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Additional Resources</div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Trusted external references for going deeper on any topic.</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12 }}>
+                      {[
+                        { name: 'Investopedia',          url: 'https://www.investopedia.com',                                          desc: 'The most comprehensive financial dictionary and concept explainer on the web. Look up any term, formula, or strategy.',       color: BLUE,   icon: '📚' },
+                        { name: 'NerdWallet',             url: 'https://www.nerdwallet.com',                                            desc: 'Personal finance comparisons, calculators, and actionable guides for budgeting, credit cards, mortgages, and more.',         color: GREEN,  icon: '🧮' },
+                        { name: 'Khan Academy Finance',   url: 'https://www.khanacademy.org/college-careers-more/personal-finance',     desc: 'Free video-based personal finance course covering taxes, interest, credit, insurance, and retirement from scratch.',              color: '#10b981', icon: '🎓' },
+                        { name: 'IRS.gov',                url: 'https://www.irs.gov',                                                   desc: 'Official IRS resources: current tax brackets, deduction limits, 401(k) contribution limits, and filing guides.',              color: RED,    icon: '🏛️' },
+                        { name: 'FRED — St. Louis Fed',   url: 'https://fred.stlouisfed.org',                                          desc: 'Federal Reserve economic data: interest rates, inflation, unemployment, GDP, and yield curves. The primary source for macro data.', color: YELLOW, icon: '📈' },
+                        { name: 'SEC Investor Education', url: 'https://www.investor.gov',                                              desc: 'Compound interest calculators, investment disclosures, broker check tools, and fraud alerts from the SEC.',                    color: '#a78bfa', icon: '⚖️' },
+                      ].map(({ name, url, desc, color, icon }) => (
+                        <a key={name} href={url} target="_blank" rel="noopener noreferrer"
+                          style={{ display: 'block', textDecoration: 'none', ...CARD, cursor: 'pointer', transition: 'border-color 0.15s', borderColor: BORDER_C }}
+                          onMouseEnter={e => e.currentTarget.style.borderColor = color}
+                          onMouseLeave={e => e.currentTarget.style.borderColor = BORDER_C}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                            <span style={{ fontSize: 20 }}>{icon}</span>
+                            <span style={{ fontWeight: 700, fontSize: 14, color }}>{name}</span>
+                            <span style={{ fontSize: 10, color: TEXT3, marginLeft: 'auto' }}>↗</span>
+                          </div>
+                          <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{desc}</div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── PROFESSOR HUB ─────────────────────────── */}
+            {panel === 'prof-dashboard' && effectiveProfessor && (() => {
+              const codeData = profStudents[selectedProfCode] || { students: [], submissions: [] };
+              const totalStudents = profCodes.reduce((s, c) => s + (c.student_count || 0), 0);
+              const totalSubmissions = profCodes.reduce((s, c) => s + (c.submission_count || 0), 0);
+
+              const createCode = async () => {
+                setNewCodeError('');
+                if (!newCodeForm.code || !newCodeForm.course_id || !newCodeForm.course_name) {
+                  setNewCodeError('Code, Course ID, and Course Name are required'); return;
+                }
+                try {
+                  await api.post('/professor/codes', newCodeForm);
+                  const r = await api.get('/professor/dashboard');
+                  setProfCodes(r.data.codes || []);
+                  setNewCodeForm({ code: '', course_id: '', course_name: '', semester: 'Spring 2026' });
+                  setShowNewCode(false);
+                } catch (err) {
+                  setNewCodeError(err.response?.data?.error || 'Failed to create code');
+                }
+              };
+
+              const toggleCode = async (code) => {
+                await api.patch(`/professor/codes/${code}/toggle`).catch(() => {});
+                const r = await api.get('/professor/dashboard');
+                setProfCodes(r.data.codes || []);
+              };
+
+              return (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 24 }}>
+                    <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Professor Hub</h1>
+                    <span style={{ fontSize: 11, color: TEXT2 }}>Instructor view · {user?.name}</span>
+                  </div>
+
+                  {/* Stats row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
+                    {[
+                      ['Course Codes', profCodes.length, 'total'],
+                      ['Students Enrolled', totalStudents, 'across all courses'],
+                      ['Submissions', totalSubmissions, 'received'],
+                    ].map(([label, value, sub]) => (
+                      <div key={label} style={{ ...CARD, padding: '16px 20px' }}>
+                        <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                        <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'monospace', color: TEXT }}>{value}</div>
+                        <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{sub}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* ── Tab switcher ── */}
+                  <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: `1px solid ${BORDER_C}` }}>
+                    {[
+                      { id: 'analytics',     label: 'Analytics' },
+                      { id: 'roster',        label: 'Roster' },
+                      { id: 'announcements', label: 'Announcements' },
+                    ].map(t => (
+                      <button key={t.id} onClick={() => setProfHubTab(t.id)} style={{
+                        padding: '9px 20px', background: 'none', border: 'none',
+                        borderBottom: profHubTab === t.id ? '2px solid var(--accent)' : '2px solid transparent',
+                        color: profHubTab === t.id ? 'var(--accent)' : TEXT2,
+                        fontSize: 13, fontWeight: profHubTab === t.id ? 700 : 500,
+                        cursor: 'pointer', marginBottom: -1,
+                      }}>{t.label}</button>
+                    ))}
+                  </div>
+
+                  {profLoadingCode === selectedProfCode && selectedProfCode && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER, marginBottom: 20, fontSize: 13, color: TEXT2 }}>
+                      <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block', fontSize: 16 }}>↻</span>
+                      Loading data for {selectedProfCode}...
+                    </div>
+                  )}
+
+                  {profHubTab === 'analytics' && <>
+                  {/* ── First-run onboarding ── */}
+                  {profCodes.length === 0 && (
+                    <div style={{ ...CARD, marginBottom: 24, border: '1px solid rgba(74,222,128,0.25)', background: 'rgba(74,222,128,0.03)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⊟</div>
+                        <div>
+                          <div style={{ fontSize: 17, fontWeight: 700, color: TEXT }}>Welcome to your Professor Hub</div>
+                          <div style={{ fontSize: 13, color: TEXT2, marginTop: 2 }}>Three steps to get your class running on Basis.</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 0, margin: '20px 0' }}>
+                        {[
+                          { num: 1, title: 'Create a course code', desc: 'Choose a short memorable code — like B-FIN-26. Students enter it when they register to enroll in your course.', done: false, color: GREEN },
+                          { num: 2, title: 'Share it with your class', desc: 'Post the code on your syllabus, LMS, or slides. Any student with a .edu email or the code can enroll in under a minute.', done: false, color: BLUE },
+                          { num: 3, title: 'Assign, grade, and track', desc: 'Create assignments, review submissions here in the Hub, return grades with written feedback, and export the class roster to CSV.', done: false, color: '#a78bfa' },
+                        ].map((step, i) => (
+                          <div key={step.num} style={{ display: 'flex', gap: 16, padding: '16px 0', borderTop: i > 0 ? `1px solid ${BORDER_C}` : 'none' }}>
+                            <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${step.color}18`, border: `1px solid ${step.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: step.color, flexShrink: 0 }}>{step.num}</div>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: TEXT, marginBottom: 3 }}>{step.title}</div>
+                              <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{step.desc}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <button onClick={() => { setShowNewCode(true); setProfHubTab('analytics'); }}
+                        style={{ padding: '10px 22px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.4)', borderRadius: 9, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                        + Create Your First Course Code →
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ── Analytics ── */}
+                  {profCodes.length > 0 && (() => {
+                    const getLetter = (score, maxPts) => {
+                      const pct = score / maxPts * 100;
+                      if (pct >= 90) return 'A';
+                      if (pct >= 80) return 'B';
+                      if (pct >= 70) return 'C';
+                      if (pct >= 60) return 'D';
+                      return 'F';
+                    };
+                    const letterColor = { A: GREEN, B: BLUE, C: YELLOW, D: '#f97316', F: RED };
+
+                    const gradedSubs = codeData.submissions.filter(s => s.grade != null);
+                    const pendingCount = codeData.submissions.filter(s => s.grade == null).length;
+
+                    const gradeDist = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+                    gradedSubs.forEach(s => {
+                      const maxPts = ALL_ASSIGNMENTS_MAP[s.assignment_id]?.points ?? 100;
+                      gradeDist[getLetter(s.grade, maxPts)]++;
+                    });
+
+                    const assignIds = [...new Set(codeData.submissions.map(s => s.assignment_id))].sort();
+                    const assignStats = assignIds.map(id => {
+                      const subs = codeData.submissions.filter(s => s.assignment_id === id);
+                      const gs = subs.filter(s => s.grade != null);
+                      const maxPts = ALL_ASSIGNMENTS_MAP[id]?.points ?? 100;
+                      const avgRaw = gs.length ? gs.reduce((a, s) => a + s.grade, 0) / gs.length : null;
+                      const avgPct = avgRaw != null ? Math.round(avgRaw / maxPts * 100) : null;
+                      return {
+                        id,
+                        title: ALL_ASSIGNMENTS_MAP[id]?.title || id,
+                        maxPts,
+                        submitted: subs.length,
+                        graded: gs.length,
+                        avgRaw: avgRaw != null ? Math.round(avgRaw) : null,
+                        avgPct,
+                        letter: avgRaw != null ? getLetter(avgRaw, maxPts) : null,
+                      };
+                    });
+
+                    const studentRows = codeData.students.map(stu => {
+                      const grades = {};
+                      codeData.submissions.filter(s => s.user_id === stu.id).forEach(s => { grades[s.assignment_id] = s; });
+                      const gradedArr = Object.values(grades).filter(s => s.grade != null);
+                      const overallPct = gradedArr.length
+                        ? Math.round(gradedArr.reduce((a, s) => a + (s.grade / (ALL_ASSIGNMENTS_MAP[s.assignment_id]?.points ?? 100) * 100), 0) / gradedArr.length)
+                        : null;
+                      return { ...stu, grades, overallPct };
+                    });
+
+                    return (
+                      <div style={{ ...CARD, marginBottom: 24 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                          <div style={{ fontWeight: 700, fontSize: 15 }}>Course Analytics</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <select value={selectedProfCode} onChange={e => setSelectedProfCode(e.target.value)}
+                              style={{ padding: '5px 10px', background: DARK, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, cursor: 'pointer' }}>
+                              {profCodes.map(c => <option key={c.code} value={c.code}>{c.code}: {c.course_name}</option>)}
+                            </select>
+                            <button onClick={() => {
+                              const headers = ['Student', 'Email', ...assignIds.map(id => ALL_ASSIGNMENTS_MAP[id]?.title?.split(':').pop()?.trim() || id), 'Overall %'];
+                              const rows = studentRows.map(stu => {
+                                const cells = assignIds.map(id => {
+                                  const sub = stu.grades[id];
+                                  if (!sub) return '';
+                                  if (sub.grade == null) return 'Pending';
+                                  const maxPts = ALL_ASSIGNMENTS_MAP[id]?.points ?? 100;
+                                  return `${sub.grade}/${maxPts}`;
+                                });
+                                return [stu.name, stu.email, ...cells, stu.overallPct != null ? `${stu.overallPct}%` : ''];
+                              });
+                              const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+                              const blob = new Blob([csv], { type: 'text/csv' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url; a.download = `${selectedProfCode}-grades.csv`; a.click();
+                              URL.revokeObjectURL(url);
+                            }}
+                              style={{ padding: '5px 12px', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 6, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                              ↓ Export CSV
+                            </button>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 24, marginBottom: 24 }}>
+                          {/* Grade Distribution */}
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 14 }}>Grade Distribution</div>
+                            {gradedSubs.length === 0 ? (
+                              <div style={{ fontSize: 13, color: TEXT3 }}>No graded submissions yet.</div>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                                {['A', 'B', 'C', 'D', 'F'].map(letter => {
+                                  const count = gradeDist[letter];
+                                  const pct = gradedSubs.length > 0 ? count / gradedSubs.length * 100 : 0;
+                                  return (
+                                    <div key={letter} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                      <div style={{ width: 16, fontSize: 12, fontWeight: 800, color: letterColor[letter], textAlign: 'center' }}>{letter}</div>
+                                      <div style={{ flex: 1, height: 7, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', width: `${pct}%`, background: letterColor[letter], borderRadius: 4 }} />
+                                      </div>
+                                      <div style={{ width: 22, fontSize: 12, color: count > 0 ? letterColor[letter] : TEXT3, fontWeight: 700, textAlign: 'right' }}>{count}</div>
+                                      <div style={{ width: 34, fontSize: 11, color: TEXT3, textAlign: 'right' }}>{Math.round(pct)}%</div>
+                                    </div>
+                                  );
+                                })}
+                                {pendingCount > 0 && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 8, borderTop: BORDER }}>
+                                    <div style={{ width: 16, fontSize: 11, color: YELLOW, textAlign: 'center' }}>?</div>
+                                    <div style={{ flex: 1, fontSize: 12, color: TEXT3 }}>Pending review</div>
+                                    <div style={{ fontSize: 12, color: YELLOW, fontWeight: 700 }}>{pendingCount}</div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Assignment Performance */}
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 14 }}>By Assignment</div>
+                            {assignStats.length === 0 ? (
+                              <div style={{ fontSize: 13, color: TEXT3 }}>No submissions yet.</div>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                                {assignStats.map(a => (
+                                  <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: DARK, borderRadius: 8 }}>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</div>
+                                      <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{a.submitted}/{codeData.students.length} submitted · {a.graded} graded</div>
+                                    </div>
+                                    {a.letter ? (
+                                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                        <div style={{ fontSize: 15, fontWeight: 800, color: letterColor[a.letter], lineHeight: 1 }}>{a.letter}</div>
+                                        <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{a.avgPct}% avg</div>
+                                      </div>
+                                    ) : <div style={{ fontSize: 12, color: TEXT3, flexShrink: 0 }}>—</div>}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Student Grade Matrix */}
+                        {studentRows.length > 0 && assignIds.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 14 }}>Student Grades</div>
+                            <div style={{ overflowX: 'auto' }}>
+                              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                                <thead>
+                                  <tr>
+                                    <th style={{ textAlign: 'left', padding: '7px 12px', color: TEXT3, fontWeight: 600, fontSize: 11, borderBottom: BORDER }}>Student</th>
+                                    {assignIds.map(id => (
+                                      <th key={id} style={{ textAlign: 'center', padding: '7px 12px', color: TEXT3, fontWeight: 600, fontSize: 11, borderBottom: BORDER, whiteSpace: 'nowrap' }}>
+                                        {ALL_ASSIGNMENTS_MAP[id]?.title?.split(':').pop()?.trim() || id}
+                                      </th>
+                                    ))}
+                                    <th style={{ textAlign: 'center', padding: '7px 12px', color: TEXT3, fontWeight: 600, fontSize: 11, borderBottom: BORDER }}>Overall</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {studentRows.map(stu => (
+                                    <tr key={stu.id}>
+                                      <td style={{ padding: '9px 12px', fontWeight: 600, color: TEXT, borderBottom: `1px solid ${BORDER_C}` }}>{stu.name}</td>
+                                      {assignIds.map(id => {
+                                        const sub = stu.grades[id];
+                                        const maxPts = ALL_ASSIGNMENTS_MAP[id]?.points ?? 100;
+                                        if (!sub) return <td key={id} style={{ textAlign: 'center', padding: '9px 12px', color: TEXT3, borderBottom: `1px solid ${BORDER_C}` }}>—</td>;
+                                        if (sub.grade == null) return (
+                                          <td key={id} style={{ textAlign: 'center', padding: '9px 12px', borderBottom: `1px solid ${BORDER_C}` }}>
+                                            <span style={{ fontSize: 10, color: YELLOW, fontWeight: 700 }}>Pending</span>
+                                          </td>
+                                        );
+                                        const letter = getLetter(sub.grade, maxPts);
+                                        return (
+                                          <td key={id} style={{ textAlign: 'center', padding: '9px 12px', borderBottom: `1px solid ${BORDER_C}` }}>
+                                            <span style={{ fontWeight: 800, color: letterColor[letter] }}>{letter}</span>
+                                            <span style={{ fontSize: 10, color: TEXT3, marginLeft: 4 }}>{sub.grade}/{maxPts}</span>
+                                          </td>
+                                        );
+                                      })}
+                                      <td style={{ textAlign: 'center', padding: '9px 12px', borderBottom: `1px solid ${BORDER_C}` }}>
+                                        {stu.overallPct != null
+                                          ? <span style={{ fontSize: 13, fontWeight: 800, color: letterColor[getLetter(stu.overallPct, 100)] }}>{stu.overallPct}%</span>
+                                          : <span style={{ color: TEXT3 }}>—</span>}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Submission Timeline */}
+                        {codeData.submissions.length > 0 && (() => {
+                          const dateCounts = {};
+                          codeData.submissions.forEach(s => {
+                            const d = s.submitted_at ? s.submitted_at.slice(0, 10) : null;
+                            if (d) dateCounts[d] = (dateCounts[d] || 0) + 1;
+                          });
+                          const days = Object.keys(dateCounts).sort();
+                          const maxCount = Math.max(...Object.values(dateCounts), 1);
+                          return (
+                            <div style={{ marginTop: 24 }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 14 }}>Submission Activity</div>
+                              <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+                                {days.map(d => {
+                                  const count = dateCounts[d];
+                                  const barH = Math.round((count / maxCount) * 48);
+                                  const dt = new Date(d + 'T12:00:00');
+                                  const mon = dt.toLocaleDateString('en-US', { month: 'short' });
+                                  const day = dt.getDate();
+                                  return (
+                                    <div key={d} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 32 }} title={`${mon} ${day}: ${count} submission${count > 1 ? 's' : ''}`}>
+                                      <div style={{ fontSize: 10, color: TEXT2, fontFamily: 'monospace', height: 16, lineHeight: '16px' }}>{count}</div>
+                                      <div style={{ height: 48, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                                        <div style={{ width: 24, height: Math.max(barH, 4), background: BLUE, borderRadius: '3px 3px 0 0', opacity: 0.8 }} />
+                                      </div>
+                                      <div style={{ marginTop: 5, textAlign: 'center', lineHeight: 1.3 }}>
+                                        <div style={{ fontSize: 9, color: TEXT2 }}>{mon}</div>
+                                        <div style={{ fontSize: 9, color: TEXT2 }}>{day}</div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div style={{ marginTop: 24, fontSize: 11, color: TEXT3 }}>
+                                {codeData.submissions.length} total submissions across {days.length} day{days.length !== 1 ? 's' : ''}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Course Codes */}
+                  <div style={{ ...CARD, marginBottom: 24 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>Course Codes</div>
+                      <button onClick={() => { setShowNewCode(v => !v); setNewCodeError(''); }}
+                        style={{ padding: '6px 14px', background: showNewCode ? MUTED : 'rgba(74,222,128,0.1)', border: showNewCode ? BORDER : '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: showNewCode ? TEXT2 : GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                        {showNewCode ? '✕ Cancel' : '+ New Code'}
+                      </button>
+                    </div>
+
+                    {showNewCode && (
+                      <div style={{ padding: 16, background: DARK, borderRadius: 10, border: BORDER, marginBottom: 16 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 12, marginBottom: 12 }}>
+                          {[
+                            { key: 'code', label: 'Code', placeholder: 'e.g. B-FIN-26' },
+                            { key: 'course_id', label: 'Course ID', placeholder: 'e.g. fina3010' },
+                            { key: 'course_name', label: 'Course Name', placeholder: 'e.g. Personal Finance' },
+                            { key: 'semester', label: 'Semester', placeholder: 'e.g. Fall 2026' },
+                          ].map(f => (
+                            <div key={f.key}>
+                              <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5 }}>{f.label}</div>
+                              <input type="text" placeholder={f.placeholder} value={newCodeForm[f.key]}
+                                onChange={e => setNewCodeForm(p => ({ ...p, [f.key]: e.target.value }))}
+                                style={{ width: '100%', padding: '8px 12px', background: BG, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box', textTransform: f.key === 'code' ? 'uppercase' : 'none' }} />
+                            </div>
+                          ))}
+                        </div>
+                        {newCodeError && <div style={{ fontSize: 12, color: RED, marginBottom: 10 }}>{newCodeError}</div>}
+                        <button onClick={createCode}
+                          style={{ padding: '8px 20px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 8, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                          Create Code →
+                        </button>
+                      </div>
+                    )}
+
+                    {profCodes.length === 0 ? (
+                      <div style={{ fontSize: 13, color: TEXT3, padding: '16px 0' }}>No course codes yet. Create one above.</div>
+                    ) : profCodes.map(c => (
+                      <div key={c.code} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14, color: GREEN, letterSpacing: '1px' }}>{c.code}</span>
+                            <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: c.active ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)', color: c.active ? GREEN : RED }}>{c.active ? 'Active' : 'Inactive'}</span>
+                          </div>
+                          <div style={{ fontSize: 12, color: TEXT2 }}>{c.course_name} · {c.instructor_name} · {c.semester}</div>
+                        </div>
+                        <div style={{ fontSize: 12, color: TEXT2, textAlign: 'right', marginRight: 12 }}>
+                          <div style={{ fontWeight: 700, color: TEXT }}>{c.student_count}</div>
+                          <div style={{ fontSize: 11 }}>students</div>
+                        </div>
+                        <div style={{ fontSize: 12, color: TEXT2, textAlign: 'right', marginRight: 12 }}>
+                          <div style={{ fontWeight: 700, color: TEXT }}>{c.submission_count}</div>
+                          <div style={{ fontSize: 11 }}>submissions</div>
+                        </div>
+                        <button onClick={() => toggleCode(c.code)}
+                          style={{ padding: '5px 12px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          {c.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  </>}
+
+                  {/* ── ROSTER TAB ── */}
+                  {profHubTab === 'roster' && profCodes.length > 0 && (() => {
+                    const getLetter = (score, maxPts) => { const pct = score / maxPts * 100; if (pct >= 90) return 'A'; if (pct >= 80) return 'B'; if (pct >= 70) return 'C'; if (pct >= 60) return 'D'; return 'F'; };
+                    const letterColor = { A: GREEN, B: BLUE, C: YELLOW, D: '#f97316', F: RED };
+                    const studentRows = codeData.students.map(stu => {
+                      const grades = {};
+                      codeData.submissions.filter(s => s.user_id === stu.id).forEach(s => { grades[s.assignment_id] = s; });
+                      const gradedArr = Object.values(grades).filter(s => s.grade != null);
+                      const overallPct = gradedArr.length ? Math.round(gradedArr.reduce((a, s) => a + (s.grade / (ALL_ASSIGNMENTS_MAP[s.assignment_id]?.points ?? 100) * 100), 0) / gradedArr.length) : null;
+                      return { ...stu, grades, overallPct, submCount: Object.keys(grades).length };
+                    });
+                    return (
+                      <div style={{ ...CARD }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                          <div style={{ fontWeight: 700, fontSize: 15, flex: 1 }}>Student Roster</div>
+                          <select value={selectedProfCode} onChange={e => setSelectedProfCode(e.target.value)}
+                            style={{ padding: '5px 10px', background: DARK, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, cursor: 'pointer' }}>
+                            {profCodes.map(c => <option key={c.code} value={c.code}>{c.code}: {c.course_name}</option>)}
+                          </select>
+                        </div>
+                        {codeData.students.length === 0 ? (
+                          <div style={{ fontSize: 13, color: TEXT3, padding: '12px 0' }}>
+                            No students enrolled. Share code <strong style={{ color: GREEN, fontFamily: 'monospace' }}>{selectedProfCode}</strong> to enroll students.
+                          </div>
+                        ) : (
+                          <div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 110px 24px', gap: 0, padding: '0 0 8px', borderBottom: `1px solid ${BORDER_C}`, marginBottom: 4 }}>
+                              {['Student', 'Submitted', 'Grade', 'Status', '', ''].map(h => (
+                                <div key={h} style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', textAlign: h === 'Student' ? 'left' : 'center' }}>{h}</div>
+                              ))}
+                            </div>
+                            {studentRows.map(stu => {
+                              const status = stu.overallPct == null ? 'No Data' : stu.overallPct >= 80 ? 'On Track' : stu.overallPct >= 60 ? 'Behind' : 'At Risk';
+                              const statusColor = stu.overallPct == null ? TEXT3 : stu.overallPct >= 80 ? GREEN : stu.overallPct >= 60 ? YELLOW : RED;
+                              const statusBg = stu.overallPct == null ? MUTED : stu.overallPct >= 80 ? 'rgba(74,222,128,0.1)' : stu.overallPct >= 60 ? 'rgba(251,191,36,0.1)' : 'rgba(248,113,113,0.1)';
+                              const isExpanded = expandedStudent === stu.id;
+                              const submissionsForStu = Object.values(stu.grades).sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+                              return (
+                                <div key={stu.id}>
+                                  <div onClick={() => setExpandedStudent(isExpanded ? null : stu.id)}
+                                    style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 110px 24px 64px', alignItems: 'center', gap: 0, padding: '11px 0', borderBottom: `1px solid ${BORDER_C}`, cursor: 'pointer' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                      <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(77,163,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: BLUE, flexShrink: 0 }}>
+                                        {stu.name[0].toUpperCase()}
+                                      </div>
+                                      <div>
+                                        <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{stu.name}</div>
+                                        <div style={{ fontSize: 11, color: TEXT2 }}>{stu.email}</div>
+                                      </div>
+                                    </div>
+                                    <div style={{ textAlign: 'center', fontSize: 13, color: TEXT2 }}>{stu.submCount}</div>
+                                    <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 700, color: stu.overallPct != null ? letterColor[getLetter(stu.overallPct, 100)] : TEXT3 }}>
+                                      {stu.overallPct != null ? `${stu.overallPct}%` : '—'}
+                                    </div>
+                                    <div style={{ textAlign: 'center' }}>
+                                      <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 10, background: statusBg, color: statusColor }}>{status}</span>
+                                    </div>
+                                    <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3 }}>{isExpanded ? '▴' : '▾'}</div>
+                                    <div style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                                      <button onClick={() => {
+                                        if (!window.confirm(`Remove ${stu.name} from this course?`)) return;
+                                        api.delete(`/professor/students/${selectedProfCode}/${stu.id}`)
+                                          .then(() => {
+                                            setProfStudents(prev => {
+                                              const cur = prev[selectedProfCode] || {};
+                                              return { ...prev, [selectedProfCode]: { ...cur, students: (cur.students || []).filter(s => s.id !== stu.id) } };
+                                            });
+                                          })
+                                          .catch(() => alert('Failed to remove student.'));
+                                      }} style={{ padding: '3px 10px', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 5, color: RED, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                                        Remove
+                                      </button>
+                                    </div>
+                                  </div>
+                                  {isExpanded && (
+                                    <div style={{ padding: '12px 0 12px 40px', background: DARK, borderBottom: `1px solid ${BORDER_C}` }}>
+                                      {submissionsForStu.length === 0 ? (
+                                        <div style={{ fontSize: 12, color: TEXT3 }}>No submissions yet.</div>
+                                      ) : (
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                                          <thead>
+                                            <tr>
+                                              {['Assignment', 'Submitted', 'Grade', 'Feedback', ''].map(h => (
+                                                <th key={h} style={{ textAlign: 'left', padding: '4px 10px 8px', color: TEXT3, fontWeight: 600, fontSize: 11 }}>{h}</th>
+                                              ))}
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {submissionsForStu.map(sub => {
+                                              const assign = ALL_ASSIGNMENTS_MAP[sub.assignment_id];
+                                              const maxPts = assign?.points ?? 100;
+                                              return (
+                                                <tr key={sub.id}>
+                                                  <td style={{ padding: '5px 10px', color: TEXT }}>{assign?.title || sub.assignment_id}</td>
+                                                  <td style={{ padding: '5px 10px', color: TEXT2, whiteSpace: 'nowrap' }}>{new Date(sub.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
+                                                  <td style={{ padding: '5px 10px', fontWeight: 700, color: sub.grade != null ? letterColor[getLetter(sub.grade, maxPts)] : YELLOW }}>
+                                                    {sub.grade != null ? `${sub.grade}/${maxPts}` : 'Pending'}
+                                                  </td>
+                                                  <td style={{ padding: '5px 10px', color: TEXT3, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub.feedback || '—'}</td>
+                                                  <td style={{ padding: '5px 10px' }}>
+                                                    <button onClick={e => { e.stopPropagation(); setShowGrade(sub); setGradeForm({ grade: sub.grade != null ? String(sub.grade) : '', feedback: sub.feedback || '' }); }}
+                                                      style={{ padding: '3px 10px', background: sub.grade != null ? MUTED : 'rgba(74,222,128,0.1)', border: sub.grade != null ? BORDER : '1px solid rgba(74,222,128,0.3)', borderRadius: 5, color: sub.grade != null ? TEXT2 : GREEN, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                                                      {sub.grade != null ? 'Revise' : 'Grade →'}
+                                                    </button>
+                                                  </td>
+                                                </tr>
+                                              );
+                                            })}
+                                          </tbody>
+                                        </table>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── ANNOUNCEMENTS TAB ── */}
+                  {profHubTab === 'announcements' && (
+                    <div>
+                      <div style={{ ...CARD, marginBottom: 20 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showAnnForm ? 20 : 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: 15 }}>New Announcement</div>
+                          <button onClick={() => setShowAnnForm(v => !v)}
+                            style={{ padding: '6px 14px', background: showAnnForm ? MUTED : 'rgba(77,163,255,0.1)', border: showAnnForm ? BORDER : '1px solid rgba(77,163,255,0.3)', borderRadius: 8, color: showAnnForm ? TEXT2 : BLUE, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                            {showAnnForm ? '✕ Cancel' : '+ Compose'}
+                          </button>
+                        </div>
+                        {showAnnForm && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 12 }}>
+                              <div>
+                                <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5 }}>Course</div>
+                                <select value={annForm.courseCode} onChange={e => setAnnForm(p => ({ ...p, courseCode: e.target.value }))}
+                                  style={{ width: '100%', padding: '8px 12px', background: BG, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}>
+                                  <option value="">Select course...</option>
+                                  {profCodes.map(c => <option key={c.code} value={c.code}>{c.code}: {c.course_name}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5 }}>Title</div>
+                                <input type="text" placeholder="Announcement title..." value={annForm.title} onChange={e => setAnnForm(p => ({ ...p, title: e.target.value }))}
+                                  style={{ width: '100%', padding: '8px 12px', background: BG, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                              </div>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5 }}>Message</div>
+                              <textarea rows={4} placeholder="Write your announcement..." value={annForm.body} onChange={e => setAnnForm(p => ({ ...p, body: e.target.value }))}
+                                style={{ width: '100%', padding: '8px 12px', background: BG, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                              <button onClick={async () => {
+                                if (!annForm.courseCode || !annForm.title || !annForm.body) return;
+                                const courseObj = profCodes.find(c => c.code === annForm.courseCode);
+                                const newAnn = {
+                                  id: Date.now(),
+                                  from: user?.name || 'Professor',
+                                  course: courseObj?.course_name || annForm.courseCode,
+                                  courseCode: annForm.courseCode,
+                                  date: new Date().toISOString().split('T')[0],
+                                  title: annForm.title,
+                                  body: annForm.body,
+                                };
+                                setProfAnnouncements(p => [newAnn, ...p]);
+                                // Push in-app notifications to enrolled students
+                                const enrolled = profStudents[annForm.courseCode]?.students || [];
+                                if (enrolled.length > 0) {
+                                  api.post('/notifications/inbox', {
+                                    user_ids: enrolled.map(s => s.id),
+                                    type: 'announcement',
+                                    title: annForm.title,
+                                    body: annForm.body,
+                                  }).catch(() => {});
+                                }
+                                setAnnForm({ courseCode: '', title: '', body: '' });
+                                setShowAnnForm(false);
+                              }}
+                                style={{ padding: '9px 24px', background: 'rgba(77,163,255,0.12)', border: '1px solid rgba(77,163,255,0.35)', borderRadius: 8, color: BLUE, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                                Post Announcement →
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ ...CARD, padding: 0, overflow: 'hidden' }}>
+                        <div style={{ padding: '14px 16px', borderBottom: `1px solid ${BORDER_C}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, flex: 1 }}>Posted Announcements</div>
+                          <div style={{ fontSize: 11, color: TEXT3 }}>{profAnnouncements.length} total</div>
+                        </div>
+                        {profAnnouncements.length === 0 ? (
+                          <div style={{ padding: '24px 16px', fontSize: 13, color: TEXT3, textAlign: 'center' }}>No announcements posted yet.</div>
+                        ) : profAnnouncements.map((ann, i) => (
+                          <div key={ann.id} style={{ padding: '14px 16px', borderBottom: i < profAnnouncements.length - 1 ? `1px solid ${BORDER_C}` : 'none', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 4 }}>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: TEXT, lineHeight: 1.35, flex: 1 }}>{ann.title}</div>
+                                <div style={{ fontSize: 10, color: TEXT3, flexShrink: 0, marginTop: 2 }}>{new Date(ann.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                              </div>
+                              <div style={{ fontSize: 11, color: TEXT3, marginBottom: 6 }}>
+                                {ann.course}{ann.courseCode ? ` (${ann.courseCode})` : ''} · {ann.from}
+                              </div>
+                              <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{ann.body}</div>
+                            </div>
+                            <button onClick={() => setProfAnnouncements(p => p.filter(a => a.id !== ann.id))}
+                              style={{ padding: '3px 8px', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 5, color: RED, fontSize: 11, fontWeight: 700, cursor: 'pointer', flexShrink: 0, marginTop: 2 }}>
+                              Delete
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })()}
 
             {/* ── AI ASSISTANT ──────────────────────────── */}
-            {panel === 'assistant' && (
+            {panel === 'assistant' && canSeeAI && (
               <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
                 <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>AI Assistant</h1>
                 <div style={{ ...CARD, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, padding: 0, overflow: 'hidden' }}>
@@ -1672,8 +6847,8 @@ export default function Dashboard() {
                     {chatMessages.length === 0 && (
                       <div style={{ textAlign: 'center', color: TEXT2, marginTop: 60 }}>
                         <div style={{ fontSize: 32, marginBottom: 12 }}>✦</div>
-                        <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, color: TEXT }}>Your AI Financial Advisor</div>
-                        <div style={{ fontSize: 13 }}>Ask me about your spending, investments, budget, or anything in your accounts.</div>
+                        <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, color: TEXT }}>Financial Assistant</div>
+                        <div style={{ fontSize: 13 }}>Ask about your spending, investments, budget, or anything in your accounts.</div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 20 }}>
                           {[
                             'How much did I spend on food this month?',
@@ -1712,7 +6887,7 @@ export default function Dashboard() {
                     )}
                     <div ref={chatBottomRef} />
                   </div>
-                  <div style={{ padding: '16px 24px', borderTop: BORDER, display: 'flex', gap: 10, flexShrink: 0 }}>
+                  <div data-tour="assistant-input" style={{ padding: '16px 24px', borderTop: BORDER, display: 'flex', gap: 10, flexShrink: 0 }}>
                     <input
                       value={chatInput}
                       onChange={e => setChatInput(e.target.value)}
@@ -1739,9 +6914,3276 @@ export default function Dashboard() {
               </div>
             )}
 
+            {/* ── SETTINGS ─────────────────────────────── */}
+            {panel === 'settings' && (
+              <div>
+                <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700 }}>Settings</h1>
+                <p style={{ margin: '0 0 28px', color: TEXT2, fontSize: 14 }}>Customize Basis to keep the sidebar focused on what you use.</p>
+
+                <div style={{ ...CARD, marginBottom: 16 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Visible Tabs</div>
+                  <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>Toggle off any section you don't use. Click a row to reveal its subtabs.</div>
+
+                  {[
+                    { section: 'finance',   filter: n => n.section === 'finance' && n.key !== 'overview', sectionLabel: 'Personal Finance', sectionColor: TEXT3, toggleColor: BLUE_BTN },
+                    { section: 'education', filter: n => n.section === 'education',                       sectionLabel: 'Education Mode',   sectionColor: GREEN,  toggleColor: 'rgba(74,222,128,0.7)' },
+                  ].map(({ filter, sectionLabel, sectionColor, toggleColor }) => (
+                    <div key={sectionLabel}>
+                      <div style={{ fontSize: 10, color: sectionColor, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>{sectionLabel}</div>
+                      {NAV.filter(filter).map(n => {
+                        const subtabs = PANEL_SUBTABS[n.key];
+                        const isExpanded = expandedTabRows.has(n.key);
+                        const hiddenCount = subtabs ? subtabs.filter(s => isSubtabHidden(n.key, s.key)).length : 0;
+                        return (
+                          <div key={n.key}>
+                            {/* Main tab row */}
+                            <div
+                              onClick={subtabs ? () => toggleExpandTabRow(n.key) : undefined}
+                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: isExpanded ? 'none' : `1px solid ${BORDER_C}`, cursor: subtabs ? 'pointer' : 'default' }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <span style={{ fontSize: 15, opacity: hiddenPanels.has(n.key) ? 0.35 : 1 }}>{n.icon}</span>
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <span style={{ fontSize: 13, fontWeight: 500, color: hiddenPanels.has(n.key) ? TEXT3 : (sectionColor === GREEN ? GREEN : TEXT) }}>{n.label}</span>
+                                    {subtabs && (
+                                      <span style={{ fontSize: 10, color: TEXT3, transition: 'transform 0.15s', display: 'inline-block', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>›</span>
+                                    )}
+                                    {hiddenCount > 0 && (
+                                      <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(251,191,36,0.15)', color: YELLOW, padding: '1px 4px', borderRadius: 3 }}>{hiddenCount} hidden</span>
+                                    )}
+                                  </div>
+                                  {n.premium && <div style={{ fontSize: 10, color: YELLOW }}>Premium feature</div>}
+                                </div>
+                              </div>
+                              <button
+                                onClick={e => { e.stopPropagation(); toggleHidden(n.key); }}
+                                style={{ width: 42, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', background: hiddenPanels.has(n.key) ? MUTED : toggleColor, position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
+                              >
+                                <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: hiddenPanels.has(n.key) ? 3 : 21, transition: 'left 0.18s' }} />
+                              </button>
+                            </div>
+
+                            {/* Subtab rows (expanded) */}
+                            {subtabs && isExpanded && (
+                              <div style={{ marginLeft: 24, marginBottom: 4, borderLeft: `2px solid ${BORDER_C}`, paddingLeft: 16 }}>
+                                {subtabs.map(s => {
+                                  const hidden = isSubtabHidden(n.key, s.key);
+                                  return (
+                                    <div key={s.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                                      <span style={{ fontSize: 12, color: hidden ? TEXT3 : TEXT2, fontWeight: 500 }}>{s.label}</span>
+                                      <button
+                                        onClick={() => toggleSubtabHidden(n.key, s.key)}
+                                        style={{ width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer', background: hidden ? MUTED : toggleColor, position: 'relative', transition: 'background 0.2s', flexShrink: 0, opacity: 0.85 }}
+                                      >
+                                        <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: hidden ? 3 : 19, transition: 'left 0.18s' }} />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      <div style={{ marginBottom: 20 }} />
+                    </div>
+                  ))}
+
+                  {(hiddenPanels.size > 0 || hiddenSubtabs.size > 0) && (
+                    <button onClick={() => {
+                      setHiddenPanels(new Set()); localStorage.removeItem('basis_hidden');
+                      setHiddenSubtabs(new Set()); localStorage.removeItem('basis_hidden_subtabs');
+                    }} style={{ marginTop: 4, padding: '8px 16px', background: 'transparent', border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, cursor: 'pointer' }}>
+                      Reset: show all tabs
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ ...CARD, marginBottom: 16 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Appearance</div>
+                  <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>Color scheme and accent color.</div>
+
+                  <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>Theme</div>
+                  <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+                    {[
+                      { value: 'light', label: 'Light', bg: '#f2f2f7', card: '#ffffff', text: '#111111' },
+                      { value: 'dark',  label: 'Dark',  bg: '#0f0f0f', card: '#1c1c1e', text: '#f0f0f0' },
+                    ].map(opt => (
+                      <button key={opt.value} onClick={() => setTheme(opt.value)} style={{ flex: 1, padding: '14px 12px', borderRadius: 10, border: theme === opt.value ? `2px solid ${BLUE}` : BORDER, cursor: 'pointer', background: opt.bg, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start', transition: 'border 0.15s' }}>
+                        <div style={{ display: 'flex', gap: 4, width: '100%' }}>
+                          <div style={{ flex: 1, height: 10, borderRadius: 3, background: opt.card, border: '1px solid rgba(128,128,128,0.2)' }} />
+                          <div style={{ width: 24, height: 10, borderRadius: 3, background: opt.card, border: '1px solid rgba(128,128,128,0.2)' }} />
+                        </div>
+                        <div style={{ display: 'flex', gap: 4, width: '100%' }}>
+                          <div style={{ width: '30%', height: 32, borderRadius: 4, background: theme === opt.value ? ACCENT_PRESETS[accent]?.accent + '44' : 'rgba(128,128,128,0.15)' }} />
+                          <div style={{ flex: 1, height: 32, borderRadius: 4, background: opt.card, border: '1px solid rgba(128,128,128,0.15)' }} />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: opt.text }}>{opt.label}</span>
+                          {theme === opt.value && <span style={{ fontSize: 10, color: BLUE, fontWeight: 700 }}>Active</span>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>Accent Color</div>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    {Object.entries(ACCENT_PRESETS).map(([key, p]) => (
+                      <button key={key} onClick={() => setAccent(key)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '10px 6px', borderRadius: 10, border: accent === key ? `2px solid ${p.accent}` : BORDER, background: accent === key ? p.accent + '14' : 'transparent', cursor: 'pointer', transition: 'all 0.15s' }}>
+                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: p.btn }} />
+                        <span style={{ fontSize: 10, fontWeight: 600, color: accent === key ? p.accent : TEXT3, textTransform: 'capitalize' }}>{key}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {isAdmin && (
+                  <div style={{ ...CARD, marginBottom: 16, border: `1px solid rgba(167,139,250,0.25)` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>Admin Tools</div>
+                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>Admin Only</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>Preview the app as different roles. Useful for demos and troubleshooting.</div>
+
+                    <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>View As</div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      {[
+                        { key: null,        label: 'Admin',     icon: '◈', desc: 'Your real role', color: '#a78bfa', activeBg: 'rgba(167,139,250,0.1)', activeBorder: 'rgba(167,139,250,0.4)' },
+                        { key: 'professor', label: 'Professor', icon: '◫', desc: 'Instructor controls on', color: GREEN, activeBg: 'rgba(74,222,128,0.08)', activeBorder: 'rgba(74,222,128,0.35)' },
+                        { key: 'student',   label: 'Student',   icon: '◩', desc: 'Student-only view', color: BLUE, activeBg: 'rgba(77,163,255,0.08)', activeBorder: 'rgba(77,163,255,0.35)' },
+                      ].map(({ key, label, icon, desc, color, activeBg, activeBorder }) => {
+                        const active = viewAs === key;
+                        return (
+                          <button key={String(key)} onClick={() => setViewAs(key)} style={{ flex: 1, padding: '12px 10px', borderRadius: 10, border: active ? `1px solid ${activeBorder}` : BORDER, background: active ? activeBg : 'transparent', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
+                            <div style={{ fontSize: 18, marginBottom: 4 }}>{icon}</div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: active ? color : TEXT, marginBottom: 2 }}>{label}</div>
+                            <div style={{ fontSize: 10, color: TEXT3 }}>{desc}</div>
+                            {active && <div style={{ fontSize: 9, fontWeight: 700, color, marginTop: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active</div>}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {viewAs && (
+                      <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 8, fontSize: 12, color: TEXT2 }}>
+                        Preview mode is active. A banner appears at the top of every panel. <button onClick={() => setViewAs(null)} style={{ background: 'none', border: 'none', color: YELLOW, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Exit preview →</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <EduEnrollCard user={user} onEnrolled={() => { switchEduMode(true); setPanel('edu-courses'); }} />
+
+                {/* Notifications */}
+                <div style={{ ...CARD, marginBottom: 16 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Notifications</div>
+                  <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>
+                    Email alerts for budget overruns, goals reached, and low balances.
+                    {!notifConfigured && <span style={{ color: YELLOW, marginLeft: 6 }}>· Add EMAIL_USER + EMAIL_PASS to backend .env to enable sending.</span>}
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Notification Email</div>
+                    <input value={notifPrefs.email || user?.email || ''} onChange={e => setNotifPrefs(p => ({ ...p, email: e.target.value }))}
+                      placeholder={user?.email || 'your@email.com'}
+                      style={{ width: '100%', padding: '9px 12px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+
+                  {[
+                    { key: 'budgetAlert',      label: 'Budget alerts',       desc: `Notify when a category hits ${notifPrefs.budgetThreshold}% of its limit` },
+                    { key: 'goalAlert',         label: 'Goal reached',        desc: 'Notify when a savings goal is complete' },
+                    { key: 'lowBalanceAlert',   label: 'Low balance',         desc: `Notify when any account drops below ${fmt(notifPrefs.lowBalanceAmt)}` },
+                  ].map(({ key, label, desc }) => (
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{label}</div>
+                        <div style={{ fontSize: 11, color: TEXT2 }}>{desc}</div>
+                      </div>
+                      <button onClick={() => setNotifPrefs(p => ({ ...p, [key]: !p[key] }))}
+                        style={{ width: 42, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', background: notifPrefs[key] ? BLUE_BTN : MUTED, position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: notifPrefs[key] ? 21 : 3, transition: 'left 0.18s' }} />
+                      </button>
+                    </div>
+                  ))}
+
+                  {notifPrefs.budgetAlert && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
+                      <span style={{ fontSize: 12, color: TEXT2, flexShrink: 0 }}>Alert threshold</span>
+                      <input type="range" min="50" max="100" value={notifPrefs.budgetThreshold}
+                        onChange={e => setNotifPrefs(p => ({ ...p, budgetThreshold: Number(e.target.value) }))}
+                        style={{ flex: 1, accentColor: BLUE_BTN }} />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: TEXT, width: 36 }}>{notifPrefs.budgetThreshold}%</span>
+                    </div>
+                  )}
+                  {notifPrefs.lowBalanceAlert && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
+                      <span style={{ fontSize: 12, color: TEXT2, flexShrink: 0 }}>Low balance below</span>
+                      <input type="number" value={notifPrefs.lowBalanceAmt} onChange={e => setNotifPrefs(p => ({ ...p, lowBalanceAmt: Number(e.target.value) }))}
+                        style={{ width: 90, padding: '6px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none' }} />
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                    <button onClick={async () => {
+                      setNotifSaving(true);
+                      try { await api.put('/notifications/prefs', notifPrefs); setNotifEmailStatus('saved'); }
+                      catch { setNotifEmailStatus('error'); }
+                      setNotifSaving(false);
+                      setTimeout(() => setNotifEmailStatus(null), 2500);
+                    }} style={{ padding: '8px 18px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontWeight: 600, opacity: notifSaving ? 0.6 : 1 }}>
+                      {notifSaving ? 'Saving…' : 'Save'}
+                    </button>
+                    <button onClick={async () => {
+                      try {
+                        await api.put('/notifications/prefs', notifPrefs);
+                        await api.post('/notifications/send', { type: 'test', subject: 'Basis: Test Notification' });
+                        setNotifEmailStatus('sent');
+                      } catch (e) { setNotifEmailStatus('error'); }
+                      setTimeout(() => setNotifEmailStatus(null), 3000);
+                    }} style={{ padding: '8px 16px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      Send Test Email
+                    </button>
+                    {notifEmailStatus === 'saved' && <span style={{ fontSize: 12, color: GREEN, alignSelf: 'center' }}>Saved ✓</span>}
+                    {notifEmailStatus === 'sent'  && <span style={{ fontSize: 12, color: GREEN, alignSelf: 'center' }}>Test email sent ✓</span>}
+                    {notifEmailStatus === 'error' && <span style={{ fontSize: 12, color: RED,   alignSelf: 'center' }}>Failed — check .env credentials</span>}
+                  </div>
+                </div>
+
+                {/* Feedback */}
+                <div style={{ ...CARD, marginBottom: 16 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Send Feedback</div>
+                  <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Suggestions, bugs, or anything on your mind.</div>
+
+                  {feedbackSent ? (
+                    <div style={{ padding: '16px', background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, fontSize: 13, color: GREEN, textAlign: 'center' }}>
+                      Thanks for the feedback! ✓
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                        {[1, 2, 3, 4, 5].map(n => (
+                          <button key={n} onClick={() => setFeedbackRating(r => r === n ? 0 : n)}
+                            style={{ fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', color: feedbackRating >= n ? '#f59e0b' : TEXT3, opacity: feedbackRating >= n ? 1 : 0.4, transition: 'color 0.1s, opacity 0.1s', padding: '0 2px' }}>
+                            ★
+                          </button>
+                        ))}
+                        {feedbackRating > 0 && <span style={{ fontSize: 11, color: TEXT3, alignSelf: 'center', marginLeft: 4 }}>{['','Needs work','Could be better','Good','Great','Love it!'][feedbackRating]}</span>}
+                      </div>
+                      <textarea rows={3} value={feedbackMsg} onChange={e => setFeedbackMsg(e.target.value)}
+                        placeholder="What's working? What's missing? What should we build next?"
+                        style={{ width: '100%', padding: '10px 12px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                      <button onClick={async () => {
+                        if (!feedbackMsg.trim()) return;
+                        try {
+                          await api.post('/feedback', { rating: feedbackRating || null, message: feedbackMsg.trim() });
+                          setFeedbackSent(true);
+                          setTimeout(() => { setFeedbackSent(false); setFeedbackMsg(''); setFeedbackRating(0); }, 4000);
+                        } catch {}
+                      }} disabled={!feedbackMsg.trim()} style={{ marginTop: 10, padding: '8px 18px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, cursor: feedbackMsg.trim() ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: 600, opacity: feedbackMsg.trim() ? 1 : 0.5 }}>
+                        Submit
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                <div style={{ ...CARD }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Account</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 500 }}>{user?.name}</div>
+                      <div style={{ fontSize: 12, color: TEXT2 }}>{user?.email}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '3px 7px', borderRadius: 4, background: isPremium ? 'rgba(74,222,128,0.12)' : 'rgba(142,142,147,0.12)', color: isPremium ? GREEN : TEXT2 }}>{user?.tier}</span>
+                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '3px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>{user?.role}</span>
+                    </div>
+                  </div>
+                  <div style={{ paddingTop: 14 }}>
+                    <button onClick={logout} style={{ padding: '8px 16px', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 7, color: RED, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Sign out</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── EDU: COURSES (eLC-style) ──────────────── */}
+            {panel === 'edu-courses' && (() => {
+              const activeCourse = selectedCourseId ? enrolledCourses.find(c => c.id === selectedCourseId) : null;
+              const now = new Date();
+              const allDueItems = enrolledCourses
+                .flatMap(c => c.assignments.map(a => ({ ...a, course: c })))
+                .filter(a => {
+                  if (!a.dueDate) return false;
+                  const due = new Date(a.dueDate);
+                  const submitted = submittedAssignments.has(a.id) || a.status === 'completed';
+                  return !submitted && due >= new Date(now.getFullYear(), now.getMonth(), now.getDate() - 14);
+                })
+                .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+              // Landing overview variables
+              const lHour = new Date().getHours();
+              const lGreet = lHour < 12 ? 'Good morning' : lHour < 17 ? 'Good afternoon' : 'Good evening';
+              const lFirst = user?.name?.split(' ')[0] || 'there';
+              const primaryCourse = enrolledCourses[0];
+              const primaryIdx = primaryCourse?.modules.findIndex(m => m.current) ?? 0;
+              const lProgressPct = primaryCourse ? Math.round(((primaryIdx + 1) / primaryCourse.modules.length) * 100) : 0;
+              const lSemStart = primaryCourse?.modules[0]?.week?.split('–')[0]?.trim() ?? '';
+              const lLastWeekParts = (primaryCourse?.modules[primaryCourse.modules.length - 1]?.week ?? '').split('–');
+              const lSemEnd = lLastWeekParts[lLastWeekParts.length - 1]?.trim() ?? '';
+              const allLandingAssign = enrolledCourses.flatMap(c => [...c.assignments, ...(customAssignments.filter(a => a.courseId === c.id))]);
+              const lActive   = allLandingAssign.filter(a => a.status === 'active'   && !submittedAssignments.has(a.id));
+              const lUpcoming = allLandingAssign.filter(a => a.status === 'upcoming' && !submittedAssignments.has(a.id));
+              const lCompleted = allLandingAssign.filter(a => a.status === 'completed' || submittedAssignments.has(a.id));
+              const lTotalPts = lCompleted.reduce((s, a) => s + (a.points || 0), 0);
+              const lDueSoon = [...lActive, ...lUpcoming].filter(a => {
+                if (!a.dueDate) return false;
+                const d = new Date(a.dueDate);
+                return d >= now && d <= new Date(now.getTime() + 7 * 86400000);
+              }).length;
+              const lFocus = lActive[0] || lUpcoming[0];
+              const lFocusCourse = lFocus ? enrolledCourses.find(c => [...c.assignments, ...(customAssignments.filter(a => a.courseId === c.id))].some(a => a.id === lFocus.id)) : null;
+              const lTotalEnrolled = profCodes.reduce((s, c) => s + (c.student_count || 0), 0);
+              const lTotalSubs     = profCodes.reduce((s, c) => s + (c.submission_count || 0), 0);
+              const lAllProfSubs   = Object.values(profStudents).flatMap(ps => ps.submissions || []);
+              const lPending       = lAllProfSubs.filter(s => s.grade == null).length;
+              const lGraded        = lAllProfSubs.filter(s => s.grade != null);
+              const lAvgScore      = lGraded.length ? Math.round(
+                lGraded.reduce((sum, s) => {
+                  const asgn = ALL_ASSIGNMENTS_MAP[s.assignment_id];
+                  return sum + (s.grade / (asgn?.points ?? 100)) * 100;
+                }, 0) / lGraded.length
+              ) : null;
+
+              return (
+                <div style={{ display: 'flex', margin: -32, minHeight: 'calc(100vh - 64px)' }}>
+
+                  {/* ── Left: Course list ── */}
+                  <div style={{ width: 240, flexShrink: 0, borderRight: `1px solid ${BORDER_C}`, background: 'var(--side-bg, #111115)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+                    {/* Rail header — always visible */}
+                    <div style={{ padding: '14px 16px 10px', borderBottom: `1px solid ${BORDER_C}`, flexShrink: 0 }}>
+                      <button onClick={() => setSelectedCourseId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', width: '100%' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: !selectedCourseId ? TEXT : TEXT2 }}>My Courses</div>
+                        <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>Spring 2026 · Education Mode</div>
+                      </button>
+                    </div>
+
+                    {!selectedCourseId ? (
+                      /* ── Overview mode: course list ── */
+                      <div style={{ flex: 1, overflow: 'auto', paddingTop: 6 }}>
+                        {enrolledCourses.map(c => {
+                          const overdueC = effectiveProfessor || isAdmin ? 0 : c.assignments.filter(a => {
+                            const due = a.dueDate ? new Date(a.dueDate) : null;
+                            return due && due < now && !submittedAssignments.has(a.id) && a.status !== 'completed';
+                          }).length;
+                          return (
+                            <button key={c.id} onClick={() => { setSelectedCourseId(c.id); setEduInnerTab('content'); setContentFolder('slides'); setOpenSlideIdx(null); }}
+                              style={{ width: '100%', textAlign: 'left', padding: '11px 16px', border: 'none', cursor: 'pointer', background: 'transparent', borderLeft: '3px solid transparent', transition: 'background 0.1s' }}
+                              className="lr">
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                                <span style={{ fontSize: 11, fontWeight: 700, color: c.color }}>{c.code}</span>
+                                {overdueC > 0 && <span style={{ fontSize: 9, fontWeight: 700, color: RED, background: 'rgba(248,113,113,0.12)', padding: '1px 6px', borderRadius: 8 }}>{overdueC}</span>}
+                              </div>
+                              <div style={{ fontSize: 12, fontWeight: 500, color: TEXT2, lineHeight: 1.3 }}>{c.name}</div>
+                              <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>{c.instructor}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      /* ── In-course mode: back + sub-nav + due dates ── */
+                      <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+                        <button onClick={() => setSelectedCourseId(null)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', border: 'none', cursor: 'pointer', background: 'transparent', borderBottom: `1px solid ${BORDER_C}`, width: '100%', flexShrink: 0 }}>
+                          <span style={{ color: TEXT3, fontSize: 16, lineHeight: 1 }}>‹</span>
+                          <span style={{ fontSize: 12, color: TEXT2, fontWeight: 500 }}>All Courses</span>
+                        </button>
+
+                        {/* Course identity in rail */}
+                        <div style={{ padding: '10px 16px 8px', borderBottom: `1px solid ${BORDER_C}`, flexShrink: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: activeCourse?.color, flexShrink: 0 }} />
+                            <span style={{ fontSize: 11, fontWeight: 700, color: activeCourse?.color }}>{activeCourse?.code}</span>
+                          </div>
+                          <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.3 }}>{activeCourse?.name}</div>
+                          <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>{activeCourse?.instructor}</div>
+                        </div>
+
+                        {/* Sub-nav */}
+                        <div style={{ flexShrink: 0 }}>
+                          {[
+                            ['syllabus',    '◧', 'Syllabus'],
+                            ['schedule',    '◷', 'Schedule'],
+                            ['content',     '◫', 'Content'],
+                            ['assignments', '◩', 'Assignments'],
+                            ...(!effectiveProfessor ? [['grades', '◈', 'Grades']] : []),
+                          ].map(([tab, icon, label]) => (
+                            <button key={tab} onClick={() => setEduInnerTab(tab)}
+                              style={{ width: '100%', textAlign: 'left', padding: '9px 16px 9px 14px', border: 'none', cursor: 'pointer', background: eduInnerTab === tab ? `${activeCourse?.color}10` : 'transparent', borderLeft: `3px solid ${eduInnerTab === tab ? activeCourse?.color : 'transparent'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 12, opacity: 0.7, color: eduInnerTab === tab ? activeCourse?.color : TEXT3, width: 16, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
+                              <span style={{ fontSize: 13, fontWeight: eduInnerTab === tab ? 600 : 400, color: eduInnerTab === tab ? TEXT : TEXT2 }}>{label}</span>
+                            </button>
+                          ))}
+                          {effectiveProfessor && !mirrorStudentView && (
+                            <button onClick={() => setEduInnerTab('admin')}
+                              style={{ width: '100%', textAlign: 'left', padding: '9px 16px 9px 14px', border: 'none', cursor: 'pointer', background: eduInnerTab === 'admin' ? `${activeCourse?.color}10` : 'transparent', borderLeft: `3px solid ${eduInnerTab === 'admin' ? activeCourse?.color : 'transparent'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 12, opacity: 0.7, color: eduInnerTab === 'admin' ? activeCourse?.color : TEXT3, width: 16, textAlign: 'center', flexShrink: 0 }}>⚙</span>
+                              <span style={{ fontSize: 13, fontWeight: eduInnerTab === 'admin' ? 600 : 400, color: eduInnerTab === 'admin' ? TEXT : TEXT2 }}>Course Admin</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Course-specific due dates — students only */}
+                        {!effectiveProfessor && allDueItems.filter(a => a.course.id === selectedCourseId).length > 0 && (
+                          <div style={{ marginTop: 'auto', borderTop: `1px solid ${BORDER_C}`, padding: '10px 14px', flexShrink: 0 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Due Dates</div>
+                            {allDueItems.filter(a => a.course.id === selectedCourseId).slice(0, 5).map(a => {
+                              const due = new Date(a.dueDate);
+                              const daysUntil = Math.ceil((due - now) / 86400000);
+                              const isOver = due < now;
+                              return (
+                                <div key={a.id} onClick={() => setEduInnerTab('assignments')}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', cursor: 'pointer', borderBottom: `1px solid ${BORDER_C}` }}>
+                                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: isOver ? RED : daysUntil <= 3 ? YELLOW : activeCourse?.color, flexShrink: 0 }} />
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: 11, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.title}</div>
+                                  </div>
+                                  <div style={{ fontSize: 10, fontWeight: 700, color: isOver ? RED : daysUntil <= 3 ? YELLOW : TEXT3, flexShrink: 0 }}>
+                                    {isOver ? `${Math.abs(daysUntil)}d late` : daysUntil === 0 ? 'Today' : `${daysUntil}d`}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Professor tools — pinned at bottom */}
+                        {effectiveProfessor && (
+                          <div style={{ borderTop: `1px solid ${BORDER_C}`, padding: '10px 14px', flexShrink: 0 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Prof Tools</div>
+                            <button onClick={() => { setMirrorStudentView(v => !v); if (eduInnerTab === 'admin') setEduInnerTab('content'); }}
+                              style={{ width: '100%', padding: '6px 10px', border: `1px solid ${mirrorStudentView ? 'rgba(251,191,36,0.4)' : BORDER_C}`, borderRadius: 6, background: mirrorStudentView ? 'rgba(251,191,36,0.08)' : 'transparent', color: mirrorStudentView ? YELLOW : TEXT2, fontSize: 11, fontWeight: 600, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span>👁</span>{mirrorStudentView ? 'Exit Student View' : 'Preview as Student'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Right: Content area ── */}
+                  <div style={{ flex: 1, overflow: 'auto' }}>
+
+                    {/* ── OVERVIEW (eLC homepage style) ── */}
+                    {!selectedCourseId && (
+                      <div style={{ padding: 28 }}>
+                        {/* Hero: greeting + semester progress + stats */}
+                        <div style={{ ...CARD, marginBottom: 20, padding: '22px 26px', border: '1px solid rgba(74,222,128,0.2)', background: 'rgba(74,222,128,0.025)' }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5 }}>
+                                <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>
+                                  {effectiveProfessor ? 'Instructor Overview' : `${lGreet}, ${lFirst}!`}
+                                </h1>
+                              </div>
+                              <div style={{ fontSize: 13, color: TEXT2 }}>Education Mode · {enrolledCourses.length} {enrolledCourses.length === 1 ? 'course' : 'courses'} enrolled</div>
+                            </div>
+                            {effectiveProfessor && (
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <button onClick={() => setShowCreateAssignment(true)} style={{ padding: '8px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ Assignment</button>
+                                <button onClick={() => setShowInvite(true)} style={{ padding: '8px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Invite Students</button>
+                                <button onClick={() => setPanel('prof-dashboard')} style={{ padding: '8px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Professor Hub →</button>
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ marginBottom: 16 }}>
+                            <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
+                              <div style={{ height: '100%', width: `${lProgressPct}%`, background: GREEN, borderRadius: 3, transition: 'width 0.4s ease' }} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3 }}>
+                              <span>{lSemStart}</span>
+                              <span style={{ color: GREEN, fontWeight: 700 }}>{lProgressPct}% of semester complete</span>
+                              <span>{lSemEnd}</span>
+                            </div>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, paddingTop: 14, borderTop: '1px solid rgba(74,222,128,0.15)' }}>
+                            {(effectiveProfessor ? [
+                              ['Enrolled',       lTotalEnrolled || 4,                           'students',       TEXT  ],
+                              ['Submissions',    lTotalSubs || 9,                               'received',       BLUE  ],
+                              ['Pending Review', lPending != null ? lPending : 4,              'awaiting grade', YELLOW],
+                              ['Avg Score',      lAvgScore != null ? `${lAvgScore}%` : '88%',  'class average',  GREEN ],
+                            ] : [
+                              ['Courses',   enrolledCourses.length,                                        'enrolled',                                                        GREEN ],
+                              ['Done',      `${lCompleted.length} / ${allLandingAssign.length}`,        'assignments',                                                     GREEN ],
+                              ['Due Soon',  lDueSoon,                                                   lDueSoon === 1 ? 'assignment' : 'assignments',                     lDueSoon ? YELLOW : TEXT2],
+                            ]).map(([label, value, sub, color]) => (
+                              <div key={label} style={{ paddingRight: 20 }}>
+                                <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 4 }}>{label}</div>
+                                <div style={{ fontSize: 22, fontWeight: 800, color, letterSpacing: '-0.5px', marginBottom: 2 }}>{value}</div>
+                                <div style={{ fontSize: 11, color: TEXT3 }}>{sub}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Student: focus card (active or next assignment) */}
+                        {!effectiveProfessor && lFocus && (() => {
+                          const dsMap = Object.fromEntries(PREBUILT_DATASETS.map(d => [d.id, d]));
+                          const fDs = lFocus.datasetId ? dsMap[lFocus.datasetId] : null;
+                          const submitted = submittedAssignments.has(lFocus.id);
+                          const detail = submissionDetails[lFocus.id];
+                          const isActive = lFocus.status === 'active';
+                          return (
+                            <div style={{ ...CARD, marginBottom: 20, padding: '18px 22px', border: `1px solid ${isActive ? 'rgba(77,163,255,0.35)' : 'rgba(74,222,128,0.25)'}`, background: isActive ? 'rgba(77,163,255,0.03)' : 'rgba(74,222,128,0.02)' }}>
+                              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20 }}>
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8, color: isActive ? BLUE : GREEN }}>
+                                    {isActive ? '● Active Now' : '↑ Up Next'}{lFocusCourse ? ` · ${lFocusCourse.code}` : ''}
+                                  </div>
+                                  <div style={{ fontSize: 17, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{lFocus.title}</div>
+                                  <div style={{ fontSize: 12, color: TEXT2, marginBottom: fDs ? 10 : 0 }}>{lFocus.chapter} · Due {lFocus.week} · {lFocus.points} pts</div>
+                                  {fDs && (
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: `${fDs.color}0e`, border: `1px solid ${fDs.color}30`, borderRadius: 8 }}>
+                                      <span style={{ fontSize: 10, fontWeight: 700, color: fDs.color, textTransform: 'uppercase' }}>Dataset</span>
+                                      <span style={{ fontSize: 12, fontWeight: 600, color: TEXT }}>{fDs.title}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0, minWidth: 150 }}>
+                                  {fDs && (
+                                    <button onClick={() => { setSandboxDataset(fDs.id); setPanel(DATASET_TARGET_PANEL[fDs.id]); }}
+                                      style={{ padding: '10px 18px', background: `${fDs.color}18`, border: `1px solid ${fDs.color}44`, borderRadius: 9, color: fDs.color, fontSize: 13, fontWeight: 700, cursor: 'pointer', textAlign: 'center' }}>
+                                      Open Dataset →
+                                    </button>
+                                  )}
+                                  {submitted ? (
+                                    <div style={{ padding: '10px 18px', background: 'rgba(74,222,128,0.07)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 9, textAlign: 'center' }}>
+                                      <div style={{ fontSize: 12, fontWeight: 700, color: GREEN }}>✓ Submitted</div>
+                                      {detail?.grade != null
+                                        ? <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>{detail.grade} / {lFocus.points} pts</div>
+                                        : <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>Awaiting grade</div>}
+                                    </div>
+                                  ) : (
+                                    <button onClick={() => { setShowSubmit(lFocus); setSubmitNote(''); }}
+                                      style={{ padding: '10px 18px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 9, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer', textAlign: 'center' }}>
+                                      Submit Work →
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Professor: pending grading queue */}
+                        {effectiveProfessor && lPending > 0 && (
+                          <div style={{ ...CARD, marginBottom: 20, border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.02)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                              <div style={{ fontSize: 10, color: YELLOW, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                                Needs Grading · {lPending} pending
+                              </div>
+                              <button onClick={() => setPanel('prof-dashboard')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Go to Hub →</button>
+                            </div>
+                            {lAllProfSubs.filter(s => s.grade == null).slice(0, 4).map(s => {
+                              const asgn = ALL_ASSIGNMENTS_MAP[s.assignment_id];
+                              return (
+                                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                                  <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(77,163,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: BLUE, flexShrink: 0 }}>
+                                    {(s.student_name || '?')[0]}
+                                  </div>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{s.student_name}</div>
+                                    <div style={{ fontSize: 11, color: TEXT2 }}>{asgn?.title || s.assignment_id} · submitted {new Date(s.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                                  </div>
+                                  <button onClick={() => { setShowGrade(s); setGradeForm({ grade: '', feedback: '' }); }}
+                                    style={{ padding: '5px 12px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 6, color: GREEN, fontSize: 11, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+                                    Grade →
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24, alignItems: 'start' }}>
+
+                          {/* LEFT: Course cards grid */}
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700 }}>My Courses</div>
+                              <div style={{ fontSize: 11, color: TEXT3 }}>{enrolledCourses.length} enrolled</div>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+                              {enrolledCourses.map(c => {
+                                const overdueCount = effectiveProfessor || isAdmin ? 0 : c.assignments.filter(a => {
+                                  const due = a.dueDate ? new Date(a.dueDate) : null;
+                                  return due && due < now && !submittedAssignments.has(a.id) && a.status !== 'completed';
+                                }).length;
+                                const activeAssign = c.assignments.find(a => a.status === 'active');
+                                return (
+                                  <div key={c.id} onClick={() => { setSelectedCourseId(c.id); setEduInnerTab('content'); setContentFolder('slides'); setOpenSlideIdx(null); }}
+                                    style={{ borderRadius: 10, border: BORDER, overflow: 'hidden', cursor: 'pointer', background: CARD_BG, transition: 'border-color 0.15s' }}
+                                    className="lc">
+                                    {/* Banner */}
+                                    <div style={{ height: 90, background: `linear-gradient(135deg, ${c.color}30 0%, ${c.color}10 60%, ${DARK} 100%)`, position: 'relative', borderBottom: `1px solid ${BORDER_C}`, display: 'flex', alignItems: 'flex-end', padding: '0 14px 10px' }}>
+                                      <div style={{ position: 'absolute', top: 10, right: 12, width: 28, height: 28, borderRadius: '50%', background: `${c.color}20`, border: `1px solid ${c.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: c.color }} />
+                                      </div>
+                                      {overdueCount > 0 && (
+                                        <div style={{ position: 'absolute', top: 10, left: 12, fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: 'rgba(248,113,113,0.15)', color: RED, border: '1px solid rgba(248,113,113,0.3)' }}>
+                                          {overdueCount} overdue
+                                        </div>
+                                      )}
+                                    </div>
+                                    {/* Card body */}
+                                    <div style={{ padding: '12px 14px 14px' }}>
+                                      <div style={{ fontSize: 11, fontWeight: 700, color: c.color, letterSpacing: '0.3px', marginBottom: 3 }}>{c.code}</div>
+                                      <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.35, marginBottom: 4 }}>{c.name}</div>
+                                      <div style={{ fontSize: 11, color: TEXT3 }}>{c.semester}</div>
+                                      {activeAssign && (
+                                        <div style={{ marginTop: 10, padding: '6px 10px', background: DARK, borderRadius: 6, border: BORDER, fontSize: 11, color: TEXT2 }}>
+                                          <span style={{ fontWeight: 600 }}>Active: </span>{activeAssign.title}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* RIGHT: Announcements + Due Date Tracker */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                            {/* Announcements */}
+                            <div style={{ ...CARD, padding: 0, overflow: 'hidden' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${BORDER_C}` }}>
+                                <div style={{ fontSize: 13, fontWeight: 700 }}>Announcements</div>
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                {(() => {
+                                  const activeCourse = enrolledCourses.find(c => c.id === selectedCourseId);
+                                  const visible = activeCourse
+                                    ? profAnnouncements.filter(a => a.course === activeCourse.code || a.courseCode === activeCourse.code)
+                                    : profAnnouncements;
+                                  if (visible.length === 0) return <div style={{ padding: '16px', fontSize: 13, color: TEXT3 }}>No announcements yet.</div>;
+                                  return visible.map((ann, i) => {
+                                    const course = enrolledCourses.find(c => c.code === ann.course || c.id === ann.courseCode);
+                                    return (
+                                      <div key={ann.id} style={{ padding: '12px 16px', borderBottom: i < visible.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                                          <div style={{ fontSize: 13, fontWeight: 600, color: BLUE, cursor: 'pointer', lineHeight: 1.35 }}>{ann.title}</div>
+                                          <div style={{ fontSize: 10, color: TEXT3, flexShrink: 0, marginLeft: 10, marginTop: 2 }}>
+                                            {new Date(ann.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                          </div>
+                                        </div>
+                                        <div style={{ fontSize: 11, color: TEXT3, marginBottom: 6 }}>Posted by {ann.from}</div>
+                                        <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.55 }}>{ann.body}</div>
+                                        {course && <div style={{ marginTop: 6 }}><span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: `${course.color}15`, color: course.color }}>{ann.course}</span></div>}
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            </div>
+
+                            {/* Due Date Tracker — students only */}
+                            {!effectiveProfessor && <div style={{ ...CARD, padding: 0, overflow: 'hidden' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${BORDER_C}` }}>
+                                <div style={{ fontSize: 13, fontWeight: 700 }}>Due Date Tracker</div>
+                                {allDueItems.filter(a => new Date(a.dueDate) < now).length > 0 && (
+                                  <div style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: 'rgba(248,113,113,0.12)', color: RED }}>
+                                    {allDueItems.filter(a => new Date(a.dueDate) < now).length} overdue
+                                  </div>
+                                )}
+                              </div>
+                              {allDueItems.length === 0 ? (
+                                <div style={{ padding: '20px 16px', fontSize: 13, color: TEXT3, textAlign: 'center' }}>All caught up</div>
+                              ) : (() => {
+                                const overdue = allDueItems.filter(a => new Date(a.dueDate) < now);
+                                const upcoming = allDueItems.filter(a => new Date(a.dueDate) >= now);
+                                const renderItem = (a) => {
+                                  const due = new Date(a.dueDate);
+                                  const daysUntil = Math.ceil((due - now) / 86400000);
+                                  const isOver = due < now;
+                                  return (
+                                    <div key={`${a.course.id}-${a.id}`}
+                                      onClick={() => { setSelectedCourseId(a.course.id); setEduInnerTab('assignments'); }}
+                                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', cursor: 'pointer', borderBottom: `1px solid ${BORDER_C}` }}>
+                                      <div style={{ width: 28, height: 28, borderRadius: 4, background: isOver ? 'rgba(248,113,113,0.1)' : `${a.course.color}10`, border: isOver ? '1px solid rgba(248,113,113,0.25)' : `1px solid ${a.course.color}30`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>◩</div>
+                                      <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.title}</div>
+                                        <div style={{ fontSize: 10, color: TEXT3, marginTop: 1 }}>Due {due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {a.course.code}</div>
+                                      </div>
+                                      <div style={{ fontSize: 10, fontWeight: 700, color: isOver ? RED : daysUntil <= 3 ? YELLOW : TEXT3, flexShrink: 0 }}>
+                                        {isOver ? `${Math.abs(daysUntil)}d late` : daysUntil === 0 ? 'Today' : `${daysUntil}d`}
+                                      </div>
+                                    </div>
+                                  );
+                                };
+                                return (
+                                  <div>
+                                    {overdue.length > 0 && (
+                                      <div>
+                                        <div style={{ padding: '7px 16px', background: 'rgba(248,113,113,0.05)', borderBottom: `1px solid ${BORDER_C}`, fontSize: 11, fontWeight: 700, color: RED, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                          Overdue
+                                          <span style={{ width: 18, height: 18, borderRadius: '50%', background: RED, color: '#fff', fontSize: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{overdue.length}</span>
+                                        </div>
+                                        {overdue.map(renderItem)}
+                                      </div>
+                                    )}
+                                    {upcoming.length > 0 && (
+                                      <div>
+                                        <div style={{ padding: '7px 16px', background: DARK, borderBottom: `1px solid ${BORDER_C}`, fontSize: 11, fontWeight: 700, color: TEXT2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                          Upcoming
+                                          <span style={{ width: 18, height: 18, borderRadius: '50%', background: MUTED, color: TEXT2, fontSize: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{upcoming.length}</span>
+                                        </div>
+                                        {upcoming.map(renderItem)}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </div>}
+
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── COURSE VIEW ── */}
+                    {activeCourse && (() => {
+                      const modules = activeCourse.modules;
+                      const currentIdx = modules.findIndex(m => m.current);
+                      const baseAssign = activeCourse.assignments;
+                      const extraAssign = customAssignments.filter(a => a.courseId === selectedCourseId);
+                      const dsMap = Object.fromEntries(PREBUILT_DATASETS.map(d => [d.id, d]));
+                      const DAY_ABBR = { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
+                      const inMirror = mirrorStudentView && effectiveProfessor;
+                      const profView = effectiveProfessor && !inMirror;
+                      const canManageContent = (profView || (isAdmin && !viewAs)) && !mirrorStudentView;
+                      return (
+                        <div>
+                          {/* Mirror mode banner */}
+                          {inMirror && (
+                            <div style={{ margin: '0 0 0', padding: '8px 24px', background: 'rgba(251,191,36,0.08)', borderBottom: '1px solid rgba(251,191,36,0.25)', fontSize: 12, color: YELLOW, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              👁 Previewing as student. Hidden items not shown.
+                              <button onClick={() => setMirrorStudentView(false)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: YELLOW, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Exit</button>
+                            </div>
+                          )}
+
+                          {/* Course header */}
+                          <div style={{ padding: '20px 28px 16px', borderBottom: `1px solid ${BORDER_C}`, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, position: 'sticky', top: 0, background: 'var(--side-bg, #111115)', zIndex: 10 }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                <div style={{ width: 10, height: 10, borderRadius: '50%', background: activeCourse.color, flexShrink: 0 }} />
+                                <span style={{ fontSize: 11, fontWeight: 700, color: activeCourse.color, letterSpacing: '0.3px' }}>{activeCourse.code}</span>
+                                <span style={{ fontSize: 11, color: TEXT3 }}>·</span>
+                                <span style={{ fontSize: 11, color: TEXT3 }}>{activeCourse.semester}</span>
+                              </div>
+                              <h2 style={{ margin: '0 0 3px', fontSize: 20, fontWeight: 700, lineHeight: 1.2 }}>{activeCourse.name}</h2>
+                              <div style={{ fontSize: 12, color: TEXT2 }}>{activeCourse.instructor}</div>
+                            </div>
+                            {effectiveProfessor && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, paddingTop: 2 }}>
+                                <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.4px', marginRight: 2 }}>Instructor</div>
+                                <button onClick={() => { setMirrorStudentView(v => !v); if (eduInnerTab === 'admin') setEduInnerTab('content'); }}
+                                  style={{ padding: '5px 12px', border: `1px solid ${mirrorStudentView ? 'rgba(251,191,36,0.5)' : BORDER_C}`, borderRadius: 6, background: mirrorStudentView ? 'rgba(251,191,36,0.1)' : 'transparent', color: mirrorStudentView ? YELLOW : TEXT2, fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
+                                  <span>👁</span>{mirrorStudentView ? 'Exit Student View' : 'Student View'}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{ padding: 28 }}>
+
+                            {/* ── CONTENT TAB ── */}
+                            {eduInnerTab === 'content' && (
+                              <div>
+                                <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+                                  {[['slides','Slides'],['datasets','Datasets'],['resources','Resources'],
+                                    ...(profCustomTabs[selectedCourseId] || []).map(t => [t.key, t.label]),
+                                  ].map(([key, label]) => (
+                                    <button key={key} onClick={() => setContentFolder(key)}
+                                      style={{ padding: '6px 18px', borderRadius: 20, border: contentFolder === key ? `1px solid ${activeCourse.color}` : BORDER, background: contentFolder === key ? `${activeCourse.color}12` : 'transparent', color: contentFolder === key ? activeCourse.color : TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                                      {label}
+                                    </button>
+                                  ))}
+                                </div>
+
+                                {/* SLIDES — collapsible rows */}
+                                {contentFolder === 'slides' && (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                    {modules.map((mod, i) => {
+                                      const slideItemId = `slide-${i}`;
+                                      const slideHidden = (hiddenItems[selectedCourseId] || new Set()).has(slideItemId);
+                                      if (!profView && slideHidden) return null;
+                                      const isOpen = openSlideIdx === i;
+                                      return (
+                                        <div key={i} style={{ opacity: slideHidden ? 0.55 : 1 }}>
+                                          <button onClick={() => setOpenSlideIdx(isOpen ? null : i)}
+                                            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', background: mod.current ? `${activeCourse.color}08` : isOpen ? DARK : 'transparent', border: slideHidden ? '1px solid rgba(248,113,113,0.2)' : mod.current ? `1px solid ${activeCourse.color}25` : isOpen ? BORDER : '1px solid transparent', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}>
+                                            <span style={{ fontSize: 10, color: TEXT3, width: 84, flexShrink: 0, fontFamily: 'monospace' }}>{mod.week}</span>
+                                            <span style={{ flex: 1, fontSize: 13, fontWeight: mod.current ? 700 : 400, color: mod.isBreak ? TEXT3 : TEXT }}>{mod.topic}</span>
+                                            <span style={{ fontSize: 10, color: TEXT3, marginRight: 4 }}>{mod.chapter}</span>
+                                            {mod.current && <span style={{ fontSize: 9, fontWeight: 700, color: activeCourse.color, background: `${activeCourse.color}15`, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', flexShrink: 0 }}>Current</span>}
+                                            {profView && slideHidden && <span style={{ fontSize: 9, fontWeight: 700, color: RED, background: 'rgba(248,113,113,0.1)', padding: '2px 7px', borderRadius: 4, flexShrink: 0 }}>Hidden</span>}
+                                            <span style={{ color: TEXT3, fontSize: 14, flexShrink: 0, display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+                                          </button>
+                                          {isOpen && (
+                                            <div style={{ margin: '2px 0 4px 8px', padding: '16px 18px', background: DARK, border: BORDER, borderRadius: 8 }}>
+                                              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{mod.topic} · {mod.chapter}</div>
+                                              <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 8, marginBottom: mod.assignments.length > 0 ? 12 : 0 }}>
+                                                {[['📄 Slides PDF', mod.isBreak ? 'No class' : `Week ${i + 1}`], ['📹 Lecture Recording', mod.isBreak ? 'No recording' : 'Posted after class']].map(([label, sub]) => (
+                                                  <div key={label} style={{ padding: '10px 14px', background: CARD_BG, border: BORDER, borderRadius: 8, cursor: 'not-allowed' }}>
+                                                    <div style={{ fontSize: 13, color: TEXT2 }}>{label}</div>
+                                                    <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{sub}</div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                              {mod.assignments.length > 0 && (
+                                                <div>
+                                                  <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.7px', marginBottom: 6 }}>Assignments this week</div>
+                                                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                                    {mod.assignments.map(a => (
+                                                      <span key={a} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 4, background: a.startsWith('Exam') ? 'rgba(248,113,113,0.1)' : a.startsWith('Quiz') ? DARK : 'rgba(251,191,36,0.1)', color: a.startsWith('Exam') ? RED : a.startsWith('Quiz') ? TEXT2 : YELLOW, border: `1px solid ${a.startsWith('Exam') ? 'rgba(248,113,113,0.25)' : a.startsWith('Quiz') ? BORDER_C : 'rgba(251,191,36,0.25)'}` }}>{a}</span>
+                                                    ))}
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+
+                                {/* DATASETS */}
+                                {contentFolder === 'datasets' && (
+                                  <div>
+                                    <div data-tour="edu-datasets-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, alignItems: 'start' }}>
+                                    {[...PREBUILT_DATASETS, ...(profCustomContent[`${selectedCourseId}_datasets`] || []).map(item => ({ id: item.id, title: item.title, subtitle: item.description || '', description: item.url || '', color: BLUE, category: 'Custom', difficulty: '', concepts: [], stats: [], _custom: true }))].map(ds => {
+                                      const expanded = expandedDataset === ds.id;
+                                      return (
+                                        <div key={ds.id} className="lc" style={{ ...CARD, cursor: 'pointer', border: expanded ? `1px solid ${ds.color}55` : BORDER, transition: 'all 0.2s' }}
+                                          onClick={() => setExpandedDataset(expanded ? null : ds.id)}>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                                            <div>
+                                              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+                                                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: `${ds.color}18`, color: ds.color }}>{ds.category}</span>
+                                                <span style={{ fontSize: 10, color: TEXT3 }}>{ds.difficulty}</span>
+                                              </div>
+                                              <div style={{ fontWeight: 700, fontSize: 15 }}>{ds.title}</div>
+                                              <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>{ds.subtitle}</div>
+                                            </div>
+                                            <span style={{ color: TEXT3, fontSize: 16, marginLeft: 8, flexShrink: 0 }}>{expanded ? '−' : '+'}</span>
+                                          </div>
+                                          <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.55, marginBottom: 12 }}>{ds.description}</div>
+                                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
+                                            {ds.concepts.map(c => <span key={c} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, background: DARK, border: BORDER, color: TEXT3 }}>{c}</span>)}
+                                          </div>
+                                          <div style={{ display: 'flex', gap: 8 }}>
+                                            {ds.stats.map(([k, v]) => (
+                                              <div key={k} style={{ flex: 1, background: DARK, borderRadius: 6, padding: '8px 10px', border: BORDER }}>
+                                                <div style={{ fontSize: 9, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{k}</div>
+                                                <div style={{ fontWeight: 700, fontSize: 13, color: ds.color, fontFamily: 'monospace', marginTop: 2 }}>{v}</div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                          {expanded && (
+                                            <div style={{ marginTop: 16, borderTop: BORDER, paddingTop: 16 }} onClick={e => e.stopPropagation()}>
+                                              <p style={{ margin: '0 0 16px', fontSize: 13, color: TEXT, lineHeight: 1.65 }}>{ds.overview}</p>
+                                              <div style={{ display: 'flex', gap: 8 }}>
+                                                <button onClick={() => { setSandboxDataset(ds.id); setPanel(DATASET_TARGET_PANEL[ds.id]); }} style={{ flex: 1, padding: '9px 0', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 8, color: ds.color, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Explore in Sandbox →</button>
+                                                {effectiveProfessor && <button onClick={() => { setCreateForm(f => ({ ...f, datasetId: ds.id })); setCreateAssignCourseId(selectedCourseId || COURSES[0]?.id); setShowCreateAssignment(true); }} style={{ flex: 1, padding: '9px 0', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Assign to Class</button>}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* RESOURCES */}
+                                {contentFolder === 'resources' && (
+                                  <div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+                                      {[
+                                        { title: 'Investopedia', subtitle: 'Financial dictionary & explainers for every concept in this course', tag: 'Reference' },
+                                        { title: 'Khan Academy · Finance', subtitle: 'Free video lessons on TVM, credit, investing, and taxes', tag: 'Video' },
+                                        { title: 'IRS.gov · Free File', subtitle: 'Federal tax filing resources, brackets, and guides', tag: 'Tax' },
+                                        { title: 'NerdWallet', subtitle: 'Credit card comparisons, budgeting calculators, and rate tools', tag: 'Tools' },
+                                        { title: 'FRED Economic Data', subtitle: 'Federal Reserve inflation, rate, and economic data charts', tag: 'Data' },
+                                        { title: 'r/personalfinance Wiki', subtitle: 'Community flowchart: the right order for financial decisions', tag: 'Community' },
+                                        ...(profCustomContent[`${selectedCourseId}_resources`] || []).map(item => ({ title: item.title, subtitle: item.description || item.url || '', tag: 'Custom', url: item.url, _custom: true, _id: item.id })),
+                                      ].map(r => (
+                                        <div key={r.title} style={{ ...CARD, cursor: r.url ? 'pointer' : 'default', position: 'relative' }} onClick={() => r.url && window.open(r.url, '_blank')}>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div>
+                                              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{r.title}</div>
+                                              <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>{r.subtitle}</div>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0, marginLeft: 12 }}>
+                                              <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: r._custom ? 'rgba(167,139,250,0.12)' : 'rgba(77,163,255,0.1)', color: r._custom ? '#a78bfa' : BLUE }}>{r.tag}</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* CUSTOM TAB CONTENT */}
+                                {!['slides','datasets','resources'].includes(contentFolder) && (() => {
+                                  const ck = `${selectedCourseId}_${contentFolder}`;
+                                  const items = profCustomContent[ck] || [];
+                                  return (
+                                    <div>
+                                      {items.length === 0 && (
+                                        <div style={{ textAlign: 'center', padding: '40px 20px', color: TEXT3 }}>
+                                          <div style={{ fontSize: 28, marginBottom: 10 }}>◫</div>
+                                          <div style={{ fontSize: 13 }}>No content yet.</div>
+                                          {canManageContent && <div style={{ fontSize: 12, marginTop: 4 }}>Add items via Course Admin → Custom Content.</div>}
+                                        </div>
+                                      )}
+                                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+                                        {items.map(item => (
+                                          <div key={item.id} style={{ ...CARD, cursor: item.url ? 'pointer' : 'default' }} onClick={() => item.url && window.open(item.url, '_blank')}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                              <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{item.title}</div>
+                                                {item.description && <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>{item.description}</div>}
+                                                {item.url && <div style={{ fontSize: 11, color: BLUE, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.url}</div>}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
+
+                            {/* ── ASSIGNMENTS TAB ── */}
+                            {eduInnerTab === 'assignments' && (
+                              <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                                  <div style={{ fontSize: 13, color: TEXT2 }}>{activeCourse.name} · {baseAssign.length + extraAssign.length} assignments</div>
+                                  {effectiveProfessor && selectedCourseId === 'fina3000' && (
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                      <label style={{ padding: '7px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <input type="file" style={{ display: 'none' }} accept=".pdf,.docx" onChange={e => setSyllabusFile(e.target.files[0]?.name || null)} />
+                                        ↑ Upload Assignment
+                                      </label>
+                                      <button onClick={() => setShowCreateAssignment(true)} style={{ padding: '7px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ New Assignment</button>
+                                    </div>
+                                  )}
+                                </div>
+                                <div data-tour="edu-assignments-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                  {[...baseAssign, ...extraAssign].map(a => {
+                                    const assignItemId = `assignment-${a.id}`;
+                                    const assignHidden = (hiddenItems[selectedCourseId] || new Set()).has(assignItemId);
+                                    if (!profView && assignHidden) return null;
+                                    const ds = a.datasetId ? dsMap[a.datasetId] : null;
+                                    const due = a.dueDate ? new Date(a.dueDate) : null;
+                                    const isOverdue = !profView && due && now > due && !submittedAssignments.has(a.id) && a.status !== 'completed';
+                                    const fmtDueStr = due ? due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;
+                                    const statusColor = isOverdue ? RED : a.status === 'completed' ? GREEN : a.status === 'upcoming' ? YELLOW : BLUE;
+                                    const statusBg = isOverdue ? 'rgba(248,113,113,0.08)' : a.status === 'completed' ? 'rgba(74,222,128,0.08)' : a.status === 'upcoming' ? 'rgba(251,191,36,0.08)' : 'rgba(77,163,255,0.08)';
+                                    const detail = submissionDetails[a.id];
+                                    const submittedLate = detail?.submitted_at && due && new Date(detail.submitted_at) > due;
+                                    return (
+                                      <div key={a.id} style={{ ...CARD, opacity: assignHidden ? 0.6 : 1, border: assignHidden ? '1px solid rgba(248,113,113,0.2)' : CARD.border }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                                          <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+                                              <span style={{ fontWeight: 700, fontSize: 15 }}>{a.title}</span>
+                                              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: statusBg, color: statusColor, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                                                {isOverdue ? '⚠ Overdue' : a.status === 'completed' ? '✓ Completed' : a.status === 'upcoming' ? 'Upcoming' : 'Active'}
+                                              </span>
+                                              {a.custom && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa', textTransform: 'uppercase' }}>Custom</span>}
+                                              {profView && assignHidden && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: 'rgba(248,113,113,0.1)', color: RED }}>Hidden</span>}
+                                            </div>
+                                            <div style={{ fontSize: 12, color: TEXT2, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                                              <span>{a.chapter}</span>
+                                              <span>Week of {a.week}</span>
+                                              <span>{a.points} pts</span>
+                                              {fmtDueStr && <span style={{ color: isOverdue ? RED : due > now ? TEXT2 : TEXT3 }}>Due {fmtDueStr}</span>}
+                                            </div>
+                                          </div>
+                                          {effectiveProfessor && a.status === 'completed' && (
+                                            <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 16 }}>
+                                              <div style={{ fontSize: 11, color: TEXT2, marginBottom: 2 }}>Submissions</div>
+                                              <div style={{ fontWeight: 700, color: GREEN }}>{Object.values(profStudents).flatMap(d => d.submissions || []).filter(s => s.assignment_id === a.id).length} / {profCodes.reduce((s, c) => s + (c.student_count || 0), 0)}</div>
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, marginBottom: 12 }}>{a.description}</div>
+                                        {ds && (
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: `${ds.color}0e`, border: `1px solid ${ds.color}30`, borderRadius: 8, marginBottom: 12 }}>
+                                            <span style={{ fontSize: 10, fontWeight: 700, color: ds.color }}>Dataset</span>
+                                            <span style={{ fontSize: 12, fontWeight: 600 }}>{ds.title}</span>
+                                            <span style={{ fontSize: 11, color: TEXT3 }}>·</span>
+                                            <span style={{ fontSize: 11, color: TEXT2 }}>{ds.subtitle}</span>
+                                            <button onClick={() => { setExpandedDataset(ds.id); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ marginLeft: 'auto', padding: '4px 10px', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 6, color: ds.color, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Open Dataset →</button>
+                                          </div>
+                                        )}
+                                        {!effectiveProfessor && (
+                                          <div style={{ paddingTop: 4 }}>
+                                            {submittedAssignments.has(a.id) || a.status === 'completed' ? (() => {
+                                              const graded = detail?.grade != null;
+                                              return (
+                                                <div>
+                                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                    <span style={{ fontSize: 12, fontWeight: 700, color: GREEN, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                      <span style={{ fontSize: 14 }}>✓</span> Submitted
+                                                      {submittedLate && <span style={{ fontSize: 10, fontWeight: 700, color: YELLOW, background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 4, padding: '1px 6px' }}>Late</span>}
+                                                    </span>
+                                                    {graded && <span style={{ fontSize: 13, fontWeight: 700, color: detail.grade / a.points >= 0.9 ? GREEN : detail.grade / a.points >= 0.7 ? YELLOW : RED }}>{detail.grade} / {a.points} pts · {Math.round((detail.grade / a.points) * 100)}%</span>}
+                                                  </div>
+                                                  {graded && detail.feedback && (
+                                                    <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(74,222,128,0.05)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 8 }}>
+                                                      <div style={{ fontSize: 10, fontWeight: 700, color: GREEN, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 5 }}>Instructor Feedback</div>
+                                                      <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6 }}>{detail.feedback}</div>
+                                                    </div>
+                                                  )}
+                                                  {graded && !detail.feedback && <div style={{ marginTop: 6, fontSize: 11, color: TEXT3 }}>No feedback provided.</div>}
+                                                  {!graded && <div style={{ marginTop: 4, fontSize: 11, color: TEXT3 }}>Awaiting grade from instructor.</div>}
+                                                </div>
+                                              );
+                                            })() : (
+                                              <button onClick={() => { setShowSubmit(a); setSubmitNote(''); }} style={{ padding: '7px 18px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Submit Assignment →</button>
+                                            )}
+                                          </div>
+                                        )}
+                                        {effectiveProfessor && (a.status === 'active' || a.status === 'upcoming') && (
+                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingTop: 4 }}>
+                                            <span style={{ fontSize: 12, color: TEXT2 }}>{Object.values(profStudents).flatMap(d => d.submissions || []).filter(s => s.assignment_id === a.id).length} / {profCodes.reduce((s, c) => s + (c.student_count || 0), 0)} submitted</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* ── GRADES TAB ── */}
+                            {eduInnerTab === 'grades' && (() => {
+                              const completedGrades = baseAssign.filter(a => submissionDetails[a.id]?.grade != null);
+                              const totalEarned = completedGrades.reduce((s, a) => s + submissionDetails[a.id].grade, 0);
+                              const totalPossible = completedGrades.reduce((s, a) => s + (a.points || 0), 0);
+                              const gradePct = totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : null;
+                              const gradeLetter = gradePct == null ? '—' : gradePct >= 90 ? 'A' : gradePct >= 80 ? 'B' : gradePct >= 70 ? 'C' : gradePct >= 60 ? 'D' : 'F';
+                              const gradeColor = gradePct == null ? TEXT3 : gradePct >= 90 ? GREEN : gradePct >= 80 ? BLUE : gradePct >= 70 ? YELLOW : RED;
+                              const allGradable = baseAssign.filter(a => a.status !== 'upcoming');
+                              const allPossible = allGradable.reduce((s, a) => s + (a.points || 0), 0);
+                              const progressPct = allPossible > 0 ? Math.round((totalPossible / allPossible) * 100) : 0;
+                              // trend: compare last 2 graded assignments
+                              const sortedGraded = completedGrades.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+                              const trend = sortedGraded.length >= 2
+                                ? (submissionDetails[sortedGraded.at(-1).id].grade / sortedGraded.at(-1).points) - (submissionDetails[sortedGraded.at(-2).id].grade / sortedGraded.at(-2).points)
+                                : null;
+                              return (
+                                <div>
+                                  <div style={{ ...CARD, marginBottom: 20 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+                                      <div style={{ fontWeight: 700, fontSize: 15 }}>Grade Summary</div>
+                                      {trend != null && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: trend >= 0 ? GREEN : RED, background: trend >= 0 ? 'rgba(74,222,128,0.08)' : 'rgba(248,113,113,0.08)', border: `1px solid ${trend >= 0 ? 'rgba(74,222,128,0.25)' : 'rgba(248,113,113,0.25)'}`, borderRadius: 6, padding: '4px 10px' }}>
+                                          <span style={{ fontSize: 14 }}>{trend >= 0 ? '↑' : '↓'}</span>
+                                          <span style={{ fontWeight: 600 }}>{trend >= 0 ? 'Trending up' : 'Trending down'}</span>
+                                          <span style={{ color: TEXT3 }}>last 2 assignments</span>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Hero grade display */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 24, padding: '20px 24px', background: DARK, borderRadius: 10, border: BORDER, marginBottom: 16 }}>
+                                      <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                                        <div style={{ fontSize: 56, fontWeight: 800, color: gradeColor, lineHeight: 1, letterSpacing: '-3px', fontFamily: 'monospace' }}>{gradeLetter}</div>
+                                        <div style={{ fontSize: 12, color: TEXT3, marginTop: 4 }}>Letter Grade</div>
+                                      </div>
+                                      <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                                          <span style={{ fontSize: 28, fontWeight: 800, fontFamily: 'monospace', color: gradeColor }}>{gradePct != null ? `${gradePct}%` : '—'}</span>
+                                          <span style={{ fontSize: 13, color: TEXT2 }}>{totalEarned} / {totalPossible} pts graded</span>
+                                        </div>
+                                        <div style={{ height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden', marginBottom: 6 }}>
+                                          <div style={{ height: '100%', width: `${gradePct || 0}%`, background: gradeColor, borderRadius: 4, transition: 'width 0.4s' }} />
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3 }}>
+                                          <span>{completedGrades.length} of {allGradable.length} assignments graded</span>
+                                          <span>{progressPct}% of gradable points returned</span>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12 }}>
+                                      {[
+                                        { label: 'Points Earned', value: totalEarned || '—', color: GREEN },
+                                        { label: 'Points Possible', value: totalPossible || '—', color: TEXT },
+                                        { label: 'Assignments Graded', value: `${completedGrades.length} / ${allGradable.length}`, color: BLUE },
+                                      ].map(({ label, value, color }) => (
+                                        <div key={label} style={{ background: DARK, borderRadius: 8, padding: '14px 16px', border: BORDER }}>
+                                          <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                                          <div style={{ fontSize: 24, fontWeight: 700, color }}>{value}</div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div style={CARD}>
+                                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Assignment Grades</div>
+                                    {baseAssign.map(a => {
+                                      const detail = submissionDetails[a.id];
+                                      const submitted = submittedAssignments.has(a.id) || a.status === 'completed';
+                                      const graded = detail?.grade != null;
+                                      const pct = graded ? Math.round((detail.grade / a.points) * 100) : null;
+                                      const due = a.dueDate ? new Date(a.dueDate) : null;
+                                      const isOverdue = due && now > due && !submitted && a.status !== 'completed';
+                                      return (
+                                        <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                                          <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: 13, fontWeight: 500 }}>{a.title}</div>
+                                            <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{a.chapter}</div>
+                                          </div>
+                                          <div style={{ fontSize: 12, color: TEXT3, width: 60, textAlign: 'right' }}>{a.points} pts</div>
+                                          <div style={{ width: 110, textAlign: 'right' }}>
+                                            {graded ? (
+                                              <span style={{ fontSize: 14, fontWeight: 700, color: pct >= 90 ? GREEN : pct >= 70 ? YELLOW : RED }}>{detail.grade} / {a.points}</span>
+                                            ) : submitted ? (
+                                              <span style={{ fontSize: 11, color: TEXT3 }}>Awaiting grade</span>
+                                            ) : isOverdue ? (
+                                              <span style={{ fontSize: 11, color: RED }}>Missing</span>
+                                            ) : (
+                                              <span style={{ fontSize: 11, color: TEXT3 }}>Not submitted</span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            {/* ── SYLLABUS TAB ── */}
+                            {eduInnerTab === 'syllabus' && (
+                              <div>
+                                {effectiveProfessor && (
+                                  <div style={{ ...CARD, marginBottom: 20 }}>
+                                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>Upload Syllabus</div>
+                                    <label style={{ display: 'block', padding: '18px 20px', background: DARK, border: `2px dashed ${BORDER_C}`, borderRadius: 10, cursor: 'pointer', textAlign: 'center' }}>
+                                      <input type="file" accept=".pdf,.docx,.doc" style={{ display: 'none' }} onChange={e => setSyllabusFile(e.target.files[0]?.name || null)} />
+                                      {syllabusFile ? (
+                                        <div>
+                                          <div style={{ fontSize: 13, fontWeight: 600, color: GREEN }}>✓ {syllabusFile}</div>
+                                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 4 }}>Click to replace</div>
+                                        </div>
+                                      ) : (
+                                        <div>
+                                          <div style={{ fontSize: 13, color: TEXT2 }}>Click to upload PDF or Word document</div>
+                                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 4 }}>Visible to enrolled students</div>
+                                        </div>
+                                      )}
+                                    </label>
+                                  </div>
+                                )}
+                                <div style={CARD}>
+                                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Course Information</div>
+                                  {[
+                                    ['Course', `${activeCourse.code}: ${activeCourse.name}`],
+                                    ['Instructor', activeCourse.instructor],
+                                    ['Semester', activeCourse.semester],
+                                    ['Class Times', activeCourse.classTimes || 'TBD'],
+                                    ['Location', activeCourse.location || 'TBD'],
+                                    ['Office Hours', activeCourse.officeHours || 'By appointment'],
+                                  ].map(([label, value]) => (
+                                    <div key={label} style={{ display: 'flex', gap: 20, padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                                      <div style={{ width: 120, fontSize: 12, fontWeight: 600, color: TEXT2, flexShrink: 0 }}>{label}</div>
+                                      <div style={{ fontSize: 13, color: TEXT }}>{value}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* ── SCHEDULE TAB ── */}
+                            {eduInnerTab === 'schedule' && (
+                              <div data-tour="edu-schedule" style={CARD}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                                  <div style={{ fontWeight: 600 }}>Course Schedule</div>
+                                  <div style={{ display: 'flex', background: DARK, borderRadius: 6, padding: 3, gap: 2 }}>
+                                    {['schedule','calendar'].map(v => (
+                                      <button key={v} onClick={() => setCourseView(v)} style={{ padding: '5px 14px', borderRadius: 4, border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: courseView === v ? CARD_BG : 'transparent', color: courseView === v ? TEXT : TEXT2, transition: 'all 0.15s' }}>
+                                        {v === 'schedule' ? 'Schedule' : 'Calendar'}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {courseView === 'schedule' && modules.map((mod, i) => (
+                                  <div key={i} style={{ display: 'flex', gap: 14, padding: mod.current ? '12px 10px' : '10px 0', marginLeft: mod.current ? -10 : 0, marginRight: mod.current ? -10 : 0, borderBottom: i < modules.length - 1 ? `1px solid ${BORDER_C}` : 'none', background: mod.current ? `${activeCourse.color}06` : 'transparent', borderRadius: mod.current ? 8 : 0 }}>
+                                    <div style={{ width: 100, flexShrink: 0, fontSize: 11, color: mod.current ? activeCourse.color : TEXT3, fontFamily: 'monospace', paddingTop: 2 }}>{mod.week}</div>
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: mod.current ? 700 : 400, color: TEXT, fontSize: 13 }}>
+                                        {mod.topic}
+                                        {mod.current && <span style={{ fontSize: 9, fontWeight: 700, color: activeCourse.color, background: `${activeCourse.color}12`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>Current</span>}
+                                      </div>
+                                      <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{mod.chapter}{activeCourse.classTimes ? ` · ${activeCourse.classTimes}` : ''}</div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'flex-start', maxWidth: 240, justifyContent: 'flex-end' }}>
+                                      {mod.assignments.map(a => (
+                                        <span key={a} style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, whiteSpace: 'nowrap', fontWeight: 600, background: a.startsWith('Exam') ? 'rgba(248,113,113,0.1)' : a.startsWith('Quiz') ? 'rgba(142,142,147,0.1)' : 'rgba(251,191,36,0.1)', color: a.startsWith('Exam') ? RED : a.startsWith('Quiz') ? TEXT2 : YELLOW }}>{a}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+
+                                {courseView === 'calendar' && (() => {
+                                  const yr = 2026;
+                                  const firstDay = new Date(yr, calMonth, 1).getDay();
+                                  const daysInMonth = new Date(yr, calMonth + 1, 0).getDate();
+                                  const cells = [];
+                                  for (let i = 0; i < firstDay; i++) cells.push(null);
+                                  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+                                  while (cells.length % 7 !== 0) cells.push(null);
+                                  const weeks = [];
+                                  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+                                  const MONTH_NAMES = ['January','February','March','April','May'];
+                                  const classDays = activeCourse.classDays || [];
+                                  const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                                  return (
+                                    <div>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                                        <button onClick={() => setCalMonth(m => Math.max(0, m - 1))} disabled={calMonth === 0} style={{ width: 28, height: 28, border: BORDER, borderRadius: 6, background: 'transparent', color: calMonth === 0 ? TEXT3 : TEXT, cursor: calMonth === 0 ? 'default' : 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
+                                        <span style={{ fontWeight: 700, fontSize: 15 }}>{MONTH_NAMES[calMonth]} {yr}</span>
+                                        <button onClick={() => setCalMonth(m => Math.min(4, m + 1))} disabled={calMonth === 4} style={{ width: 28, height: 28, border: BORDER, borderRadius: 6, background: 'transparent', color: calMonth === 4 ? TEXT3 : TEXT, cursor: calMonth === 4 ? 'default' : 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
+                                      </div>
+                                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3, marginBottom: 3 }}>
+                                        {DAY_LABELS.map(d => (
+                                          <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 600, padding: '4px 0', letterSpacing: '0.3px', color: classDays.includes(d) ? activeCourse.color : TEXT3 }}>{d}</div>
+                                        ))}
+                                      </div>
+                                      {weeks.map((week, wi) => (
+                                        <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3, marginBottom: 3 }}>
+                                          {week.map((day, di) => {
+                                            if (!day) return <div key={di} style={{ minHeight: 58 }} />;
+                                            const key = `${yr}-${calMonth + 1}-${day}`;
+                                            const events = COURSE_CALENDAR_EVENTS[key] || [];
+                                            const isCurrentWeek = CURRENT_WEEK_KEYS.has(key);
+                                            const isToday = calMonth === 3 && day === 26;
+                                            const isClassDay = classDays.includes(DAY_LABELS[di]);
+                                            return (
+                                              <div key={di} style={{ minHeight: 58, borderRadius: 6, background: isToday ? 'rgba(77,163,255,0.1)' : isCurrentWeek ? `${activeCourse.color}06` : isClassDay ? `${activeCourse.color}04` : DARK, border: isToday ? '1px solid rgba(77,163,255,0.5)' : isCurrentWeek ? `1px solid ${activeCourse.color}30` : isClassDay ? `1px solid ${activeCourse.color}15` : `1px solid ${BORDER_C}`, padding: '6px 5px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                                <div style={{ fontSize: 12, fontWeight: isToday ? 700 : 400, color: isToday ? BLUE : isCurrentWeek ? activeCourse.color : TEXT, marginBottom: 1 }}>{day}</div>
+                                                {isClassDay && !events.length && <div style={{ fontSize: 9, color: activeCourse.color, opacity: 0.7, fontWeight: 600 }}>Class</div>}
+                                                {events.map((ev, ei) => (
+                                                  <div key={ei} style={{ fontSize: 9, fontWeight: 700, color: ev.type === 'exam' ? RED : ev.type === 'assignment' ? YELLOW : ev.type === 'quiz' ? '#c084fc' : TEXT2, background: ev.type === 'exam' ? 'rgba(248,113,113,0.12)' : ev.type === 'assignment' ? 'rgba(251,191,36,0.12)' : 'rgba(142,142,147,0.1)', borderRadius: 3, padding: '2px 4px', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.label}</div>
+                                                ))}
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      ))}
+                                      <div style={{ marginTop: 14, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: activeCourse.color }}>
+                                          <div style={{ width: 10, height: 10, borderRadius: 2, background: `${activeCourse.color}20`, border: `1px solid ${activeCourse.color}40` }} /> Class Day
+                                        </div>
+                                        {[['Quiz','#c084fc','rgba(192,132,252,0.15)'],['Assignment',YELLOW,'rgba(251,191,36,0.15)'],['Exam',RED,'rgba(248,113,113,0.15)']].map(([label, color, bg]) => (
+                                          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color }}>
+                                            <div style={{ width: 10, height: 10, borderRadius: 2, background: bg, border: `1px solid ${color}33` }} /> {label}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
+
+                            {/* ── COURSE ADMIN (professor) ── */}
+                            {eduInnerTab === 'admin' && effectiveProfessor && (() => {
+                              const courseKey = selectedCourseId;
+                              const currentHidden = hiddenItems[courseKey] || new Set();
+                              const toggleItem = (itemId) => {
+                                setHiddenItems(prev => {
+                                  const next = new Set(prev[courseKey] || []);
+                                  next.has(itemId) ? next.delete(itemId) : next.add(itemId);
+                                  return { ...prev, [courseKey]: next };
+                                });
+                              };
+
+                              const allContent = [
+                                ...PREBUILT_DATASETS.map(d => ({ type: 'Dataset', label: d.title, sub: d.subtitle, color: d.color })),
+                                ...baseAssign.map(a => ({ type: 'Assignment', label: a.title, sub: `${a.chapter} · ${a.points} pts`, color: activeCourse.color })),
+                                ...modules.filter(m => !m.isBreak).map(m => ({ type: 'Slide', label: m.topic, sub: `${m.chapter} · ${m.week}`, color: TEXT2 })),
+                              ];
+                              const filtered = pushSearch.trim()
+                                ? allContent.filter(i => i.label.toLowerCase().includes(pushSearch.toLowerCase()) || i.sub.toLowerCase().includes(pushSearch.toLowerCase()))
+                                : [];
+
+                              return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                                  {/* Quick actions */}
+                                  <div style={CARD}>
+                                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Quick Actions</div>
+                                    <div style={{ display: 'flex', gap: 10 }}>
+                                      <button onClick={() => setShowCreateAssignment(true)} style={{ padding: '8px 16px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ Create Assignment</button>
+                                      <button onClick={() => setShowInvite(true)} style={{ padding: '8px 16px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Invite Students</button>
+                                    </div>
+                                  </div>
+
+                                  {/* ── Search & Push ── */}
+                                  <div style={CARD}>
+                                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Search & Push</div>
+                                    <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Find any assignment, dataset, or slide and push it to a course.</div>
+                                    <div style={{ position: 'relative', marginBottom: 12 }}>
+                                      <input
+                                        type="text"
+                                        placeholder="Search assignments, datasets, slides…"
+                                        value={pushSearch}
+                                        onChange={e => setPushSearch(e.target.value)}
+                                        style={{ width: '100%', padding: '9px 36px 9px 12px', background: DARK, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                                      />
+                                      {pushSearch && (
+                                        <button onClick={() => setPushSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
+                                      )}
+                                    </div>
+                                    {pushSearch.trim() && filtered.length === 0 && (
+                                      <div style={{ fontSize: 13, color: TEXT3, padding: '8px 0' }}>No results for "{pushSearch}"</div>
+                                    )}
+                                    {filtered.length > 0 && (
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                        {filtered.map((item, i) => {
+                                          const key = `${item.type}-${i}`;
+                                          const targetCode = pushTarget[key] || '';
+                                          const pushed = pushTarget[key] === '✓';
+                                          return (
+                                            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: DARK, border: BORDER, borderRadius: 8 }}>
+                                              <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                                                  <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: `${item.color}18`, color: item.color }}>{item.type}</span>
+                                                  <span style={{ fontSize: 13, fontWeight: 600 }}>{item.label}</span>
+                                                </div>
+                                                <div style={{ fontSize: 11, color: TEXT3 }}>{item.sub}</div>
+                                              </div>
+                                              {pushed ? (
+                                                <span style={{ fontSize: 11, fontWeight: 700, color: GREEN }}>✓ Pushed</span>
+                                              ) : (
+                                                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+                                                  <input
+                                                    type="text"
+                                                    placeholder="Course code"
+                                                    value={targetCode}
+                                                    onChange={e => setPushTarget(p => ({ ...p, [key]: e.target.value }))}
+                                                    style={{ width: 110, padding: '5px 9px', background: CARD_BG, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, outline: 'none' }}
+                                                  />
+                                                  <button
+                                                    disabled={!targetCode.trim()}
+                                                    onClick={() => setPushTarget(p => ({ ...p, [key]: '✓' }))}
+                                                    style={{ padding: '5px 12px', background: targetCode.trim() ? 'rgba(77,163,255,0.12)' : MUTED, border: `1px solid ${targetCode.trim() ? 'rgba(77,163,255,0.3)' : BORDER_C}`, borderRadius: 6, color: targetCode.trim() ? BLUE : TEXT3, fontSize: 12, fontWeight: 600, cursor: targetCode.trim() ? 'pointer' : 'not-allowed' }}>
+                                                    Push →
+                                                  </button>
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                    {!pushSearch.trim() && (
+                                      <div style={{ fontSize: 12, color: TEXT3, padding: '4px 0' }}>Start typing to search content across this course.</div>
+                                    )}
+                                  </div>
+
+                                  {/* ── Content Visibility ── */}
+                                  <div style={CARD}>
+                                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Content Visibility</div>
+                                    <div style={{ fontSize: 12, color: TEXT2, marginBottom: 20 }}>Control which items students see. Built-in items can be hidden/shown. Custom items you add can be deleted.</div>
+
+                                    {/* Slides */}
+                                    <div style={{ marginBottom: 24 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Slides</div>
+                                        <div style={{ display: 'flex', gap: 6 }}>
+                                          <button onClick={() => setHiddenItems(prev => { const next = new Set(prev[courseKey] || []); modules.forEach((_, i) => next.delete(`slide-${i}`)); return { ...prev, [courseKey]: next }; })} style={{ fontSize: 10, padding: '3px 9px', border: BORDER, borderRadius: 4, background: 'transparent', color: TEXT3, cursor: 'pointer' }}>Show all</button>
+                                          <button onClick={() => { const ci = modules.findIndex(m => m.current); if (ci < 0) return; setHiddenItems(prev => { const next = new Set(prev[courseKey] || []); modules.forEach((_, i) => { if (i > ci) next.add(`slide-${i}`); else next.delete(`slide-${i}`); }); return { ...prev, [courseKey]: next }; }); }} style={{ fontSize: 10, padding: '3px 9px', border: BORDER, borderRadius: 4, background: 'transparent', color: TEXT3, cursor: 'pointer' }}>Hide future</button>
+                                          <button onClick={() => { setAddContentForm({ title: '', url: '', description: '' }); setShowAddContentModal({ courseId: selectedCourseId, folder: 'slides' }); }} style={{ fontSize: 10, padding: '3px 9px', border: `1px solid rgba(74,222,128,0.35)`, borderRadius: 4, background: 'rgba(74,222,128,0.06)', color: GREEN, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
+                                        </div>
+                                      </div>
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                        {modules.map((mod, i) => {
+                                          const itemId = `slide-${i}`;
+                                          const hidden = currentHidden.has(itemId);
+                                          return (
+                                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: DARK, borderRadius: 7, border: hidden ? '1px solid rgba(248,113,113,0.2)' : BORDER }}>
+                                              <span style={{ fontSize: 10, color: TEXT3, width: 80, flexShrink: 0, fontFamily: 'monospace' }}>{mod.week}</span>
+                                              <span style={{ flex: 1, fontSize: 13, color: hidden ? TEXT3 : TEXT, fontWeight: mod.current ? 600 : 400 }}>{mod.topic}{mod.current && <span style={{ fontSize: 9, fontWeight: 700, color: activeCourse.color, background: `${activeCourse.color}15`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', marginLeft: 6 }}>Current</span>}</span>
+                                              <button onClick={() => toggleItem(itemId)} style={{ padding: '4px 12px', borderRadius: 5, border: `1px solid ${hidden ? 'rgba(248,113,113,0.35)' : 'rgba(74,222,128,0.35)'}`, background: hidden ? 'rgba(248,113,113,0.08)' : 'rgba(74,222,128,0.08)', color: hidden ? RED : GREEN, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>{hidden ? '🚫 Hidden' : '✓ Visible'}</button>
+                                            </div>
+                                          );
+                                        })}
+                                        {(profCustomContent[`${selectedCourseId}_slides`] || []).map(item => (
+                                          <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: DARK, borderRadius: 7, border: BORDER }}>
+                                            <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.12)', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>Custom</span>
+                                            <span style={{ flex: 1, fontSize: 13 }}>{item.title}{item.description && <span style={{ fontSize: 11, color: TEXT3, marginLeft: 8 }}>{item.description}</span>}</span>
+                                            <button onClick={() => { const ck = `${selectedCourseId}_slides`; const updated = { ...profCustomContent, [ck]: (profCustomContent[ck] || []).filter(i => i.id !== item.id) }; setProfCustomContent(updated); localStorage.setItem('basis_prof_content', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+
+                                    {/* Assignments */}
+                                    <div>
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Assignments</div>
+                                        <div style={{ display: 'flex', gap: 6 }}>
+                                          <button onClick={() => setHiddenItems(prev => { const next = new Set(prev[courseKey] || []); [...baseAssign, ...extraAssign].forEach(a => next.delete(`assignment-${a.id}`)); return { ...prev, [courseKey]: next }; })} style={{ fontSize: 10, padding: '3px 9px', border: BORDER, borderRadius: 4, background: 'transparent', color: TEXT3, cursor: 'pointer' }}>Show all</button>
+                                          <button onClick={() => setShowCreateAssignment(true)} style={{ fontSize: 10, padding: '3px 9px', border: `1px solid rgba(74,222,128,0.35)`, borderRadius: 4, background: 'rgba(74,222,128,0.06)', color: GREEN, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
+                                        </div>
+                                      </div>
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                        {baseAssign.map(a => {
+                                          const itemId = `assignment-${a.id}`;
+                                          const hidden = currentHidden.has(itemId);
+                                          return (
+                                            <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: DARK, borderRadius: 7, border: hidden ? '1px solid rgba(248,113,113,0.2)' : BORDER }}>
+                                              <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontSize: 13, color: hidden ? TEXT3 : TEXT, fontWeight: 500 }}>{a.title}</div>
+                                                <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{a.chapter} · {a.points} pts</div>
+                                              </div>
+                                              <button onClick={() => toggleItem(itemId)} style={{ padding: '4px 12px', borderRadius: 5, border: `1px solid ${hidden ? 'rgba(248,113,113,0.35)' : 'rgba(74,222,128,0.35)'}`, background: hidden ? 'rgba(248,113,113,0.08)' : 'rgba(74,222,128,0.08)', color: hidden ? RED : GREEN, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>{hidden ? '🚫 Hidden' : '✓ Visible'}</button>
+                                            </div>
+                                          );
+                                        })}
+                                        {extraAssign.map(a => (
+                                          <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: DARK, borderRadius: 7, border: BORDER }}>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                                                <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.12)', padding: '2px 6px', borderRadius: 4 }}>Custom</span>
+                                                <span style={{ fontSize: 13, fontWeight: 500 }}>{a.title}</span>
+                                              </div>
+                                              <div style={{ fontSize: 11, color: TEXT3 }}>{a.chapter} · {a.points} pts</div>
+                                            </div>
+                                            <button onClick={() => setCustomAssignments(prev => prev.filter(x => x.id !== a.id))} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* ── Content Tabs ── */}
+                                  <div style={CARD}>
+                                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Content Tabs</div>
+                                    <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Add custom tabs to the Content section. Students see all tabs.</div>
+                                    {(profCustomTabs[selectedCourseId] || []).length > 0 && (
+                                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+                                        {(profCustomTabs[selectedCourseId] || []).map(t => (
+                                          <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: DARK, border: BORDER, borderRadius: 8 }}>
+                                            <span style={{ fontSize: 13 }}>{t.label}</span>
+                                            <button onClick={() => { const updated = { ...profCustomTabs, [selectedCourseId]: (profCustomTabs[selectedCourseId] || []).filter(x => x.key !== t.key) }; setProfCustomTabs(updated); localStorage.setItem('basis_prof_tabs', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: 0 }}>×</button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {(profCustomTabs[selectedCourseId] || []).length === 0 && (
+                                      <div style={{ fontSize: 12, color: TEXT3, marginBottom: 14 }}>No custom tabs yet.</div>
+                                    )}
+                                    <button onClick={() => { setAddTabName(''); setShowAddTab(true); }} style={{ padding: '8px 16px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ Add Tab</button>
+                                  </div>
+
+                                  {/* ── Custom Content ── */}
+                                  <div style={CARD}>
+                                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Custom Content</div>
+                                    <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Add items (links, notes, files) to Resources, Datasets, or any custom tab.</div>
+                                    {[
+                                      { folder: 'resources', label: 'Resources' },
+                                      { folder: 'datasets',  label: 'Datasets'  },
+                                      ...(profCustomTabs[selectedCourseId] || []).map(t => ({ folder: t.key, label: t.label })),
+                                    ].map(({ folder, label }) => {
+                                      const ck = `${selectedCourseId}_${folder}`;
+                                      const items = profCustomContent[ck] || [];
+                                      return (
+                                        <div key={folder} style={{ marginBottom: 20 }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                                            <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
+                                            <button onClick={() => { setAddContentForm({ title: '', url: '', description: '' }); setShowAddContentModal({ courseId: selectedCourseId, folder }); }} style={{ fontSize: 11, padding: '3px 10px', background: MUTED, border: BORDER, borderRadius: 5, color: TEXT2, fontWeight: 600, cursor: 'pointer' }}>+ Add</button>
+                                          </div>
+                                          {items.length === 0 ? (
+                                            <div style={{ fontSize: 12, color: TEXT3, padding: '6px 0' }}>Nothing added yet.</div>
+                                          ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                              {items.map(item => (
+                                                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: DARK, borderRadius: 7, border: BORDER }}>
+                                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ fontSize: 13, fontWeight: 500 }}>{item.title}</div>
+                                                    {item.url && <div style={{ fontSize: 11, color: BLUE, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.url}</div>}
+                                                    {item.description && <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{item.description}</div>}
+                                                  </div>
+                                                  <button onClick={() => { const updated = { ...profCustomContent, [ck]: items.filter(i => i.id !== item.id) }; setProfCustomContent(updated); localStorage.setItem('basis_prof_content', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+
+                                </div>
+                              );
+                            })()}
+
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── EDU: DATASETS ─────────────────────────── */}
+            {panel === 'edu-datasets' && (
+              <div>
+                <div style={{ marginBottom: 28 }}>
+                  <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700 }}>Datasets</h1>
+                  <p style={{ margin: 0, color: TEXT2, fontSize: 14, lineHeight: 1.6, maxWidth: 680 }}>
+                    6 prebuilt personal finance datasets, each mapped to a course chapter and ready to assign to students or explore directly in Basis.
+                  </p>
+                </div>
+                <div data-tour="edu-datasets-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, alignItems: 'start' }}>
+                  {PREBUILT_DATASETS.map(ds => {
+                    const expanded = expandedDataset === ds.id;
+                    return (
+                      <div key={ds.id} className="lc" style={{ ...CARD, cursor: 'pointer', border: expanded ? `1px solid ${ds.color}55` : BORDER, transition: 'all 0.2s' }}
+                        onClick={() => setExpandedDataset(expanded ? null : ds.id)}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                          <div>
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+                              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: `${ds.color}18`, color: ds.color }}>{ds.category}</span>
+                              <span style={{ fontSize: 10, color: TEXT3 }}>{ds.difficulty}</span>
+                            </div>
+                            <div style={{ fontWeight: 700, fontSize: 15 }}>{ds.title}</div>
+                            <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>{ds.subtitle}</div>
+                          </div>
+                          <span style={{ color: TEXT3, fontSize: 16, marginLeft: 8, flexShrink: 0 }}>{expanded ? '−' : '+'}</span>
+                        </div>
+                        <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.55, marginBottom: 12 }}>{ds.description}</div>
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
+                          {ds.concepts.map(c => (
+                            <span key={c} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, background: DARK, border: BORDER, color: TEXT3 }}>{c}</span>
+                          ))}
+                        </div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {ds.stats.map(([k, v]) => (
+                            <div key={k} style={{ flex: 1, background: DARK, borderRadius: 6, padding: '8px 10px', border: BORDER }}>
+                              <div style={{ fontSize: 9, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{k}</div>
+                              <div style={{ fontWeight: 700, fontSize: 13, color: ds.color, fontFamily: 'monospace', marginTop: 2 }}>{v}</div>
+                            </div>
+                          ))}
+                        </div>
+                        {expanded && (
+                          <div style={{ marginTop: 16, borderTop: BORDER, paddingTop: 16 }} onClick={e => e.stopPropagation()}>
+                            <p style={{ margin: '0 0 16px', fontSize: 13, color: TEXT, lineHeight: 1.65 }}>{ds.overview}</p>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <button onClick={() => { setSandboxDataset(ds.id); setPanel(DATASET_TARGET_PANEL[ds.id]); }} style={{ flex: 1, padding: '9px 0', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 8, color: ds.color, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                Explore in Sandbox →
+                              </button>
+                              {effectiveProfessor && (
+                                <button onClick={() => { setCreateForm(f => ({ ...f, datasetId: ds.id })); setCreateAssignCourseId(selectedCourseId || COURSES[0]?.id); setShowCreateAssignment(true); }} style={{ flex: 1, padding: '9px 0', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                                  Assign to Class
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── EDU: ASSIGNMENTS ──────────────────────── */}
+            {panel === 'edu-sandbox' && (() => {
+              const ds = PREBUILT_DATASETS.find(d => d.id === sandboxDataset);
+              const sbD = SANDBOX_DATA[sandboxDataset] || {};
+
+              // ── TVM ───────────────────────────────────────────────────────
+              if (sandboxDataset === 'ds-tvm') {
+                const scenarios = sbD.scenarios || [];
+                const tvmRows = (principal, monthly, annualRate, years) => {
+                  const r = annualRate / 100 / 12;
+                  const rows = [];
+                  for (let y = 1; y <= years; y++) {
+                    const n = y * 12;
+                    const fvLump = principal * Math.pow(1 + r, n);
+                    const fvPmt  = r > 0 ? monthly * (Math.pow(1 + r, n) - 1) / r : monthly * n;
+                    const fv     = fvLump + fvPmt;
+                    const contributed = principal + monthly * n;
+                    rows.push({ year: y, fv, contributed, growth: fv - contributed });
+                  }
+                  return rows;
+                };
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Time Value of Money</h1>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(249,115,22,0.1)', color: '#f97316' }}>Sandbox · Ch. 7</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Compound growth scenarios: how money grows over time at different rates and contribution levels.
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+                      {scenarios.map((sc, idx) => {
+                        const rows = tvmRows(sc.principal, sc.monthly, sc.rate, sc.years);
+                        const final = rows[rows.length - 1];
+                        const highlights = [5, 10, 20, sc.years].filter((y, i, arr) => y <= sc.years && arr.indexOf(y) === i);
+                        const highlightRows = rows.filter(r => highlights.includes(r.year));
+                        const colors = ['#f97316', '#a855f7', '#22c55e'];
+                        const color  = colors[idx % colors.length];
+                        return (
+                          <div key={idx} style={{ ...CARD }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+                              <div>
+                                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{sc.label}</div>
+                                <div style={{ fontSize: 12, color: TEXT2, display: 'flex', gap: 14 }}>
+                                  {sc.principal > 0 && <span>Principal: {fmt(sc.principal)}</span>}
+                                  {sc.monthly > 0 && <span>Monthly: {fmt(sc.monthly)}/mo</span>}
+                                  <span>Rate: {sc.rate}% APY</span>
+                                  <span>Term: {sc.years} years</span>
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: 11, color: TEXT2, marginBottom: 2 }}>Future Value</div>
+                                <div style={{ fontSize: 26, fontWeight: 700, fontFamily: 'monospace', color }}>{fmt(final?.fv || 0)}</div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12, marginBottom: 20 }}>
+                              {[
+                                { label: 'Total Contributed', value: fmt(final?.contributed || 0) },
+                                { label: 'Interest Earned',   value: fmt(final?.growth || 0), color: GREEN },
+                                { label: 'Growth Multiple',   value: `${((final?.fv || 0) / Math.max(final?.contributed || 1, 1)).toFixed(2)}×` },
+                              ].map(({ label, value, color: c }) => (
+                                <div key={label} style={{ background: MUTED, borderRadius: 8, padding: '12px 14px' }}>
+                                  <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                                  <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'monospace', color: c || TEXT }}>{value}</div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div style={{ marginBottom: 12 }}>
+                              {rows.map(row => {
+                                const barPct = (row.fv / final.fv) * 100;
+                                const contribPct = (row.contributed / final.fv) * 100;
+                                const isHL = highlights.includes(row.year);
+                                if (!isHL && row.year % 5 !== 0) return null;
+                                return (
+                                  <div key={row.year} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+                                    <div style={{ fontSize: 11, color: TEXT2, width: 50, flexShrink: 0, textAlign: 'right' }}>Yr {row.year}</div>
+                                    <div style={{ flex: 1, height: 18, background: MUTED, borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
+                                      <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${contribPct}%`, background: `${color}44`, borderRadius: 4 }} />
+                                      <div style={{ position: 'absolute', left: `${contribPct}%`, top: 0, height: '100%', width: `${barPct - contribPct}%`, background: color, borderRadius: '0 4px 4px 0' }} />
+                                    </div>
+                                    <div style={{ fontSize: 12, fontWeight: 600, fontFamily: 'monospace', width: 80, flexShrink: 0, textAlign: 'right', color: isHL ? TEXT : TEXT2 }}>{fmt(row.fv)}</div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            <div style={{ fontSize: 11, color: TEXT3, paddingTop: 12, borderTop: `1px solid ${BORDER_C}` }}>
+                              <span style={{ marginRight: 18, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                <span style={{ width: 10, height: 10, borderRadius: 2, background: `${color}44`, display: 'inline-block' }} /> Contributions
+                              </span>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                <span style={{ width: 10, height: 10, borderRadius: 2, background: color, display: 'inline-block' }} /> Interest earned
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Interactive TVM Calculator */}
+                    {(() => {
+                      const pv   = parseFloat(tvmPV)   || 0;
+                      const pmt  = parseFloat(tvmPMT)  || 0;
+                      const rate = parseFloat(tvmRate) || 0;
+                      const yrs  = parseInt(tvmYears)  || 1;
+                      const r    = rate / 100 / 12;
+                      const n    = yrs * 12;
+                      const fv   = pv * Math.pow(1 + r, n) + (r > 0 ? pmt * (Math.pow(1 + r, n) - 1) / r : pmt * n);
+                      const contributed = pv + pmt * n;
+                      const growth = fv - contributed;
+                      const rule72 = rate > 0 ? (72 / rate).toFixed(1) : '—';
+                      const inputStyle = { width: '100%', padding: '9px 12px', background: DARK, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'monospace' };
+                      const labelStyle = { display: 'block', fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 };
+                      return (
+                        <div style={{ ...CARD, marginTop: 20, border: '1px solid rgba(168,85,247,0.25)', background: 'rgba(168,85,247,0.03)' }}>
+                          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Interactive Calculator</div>
+                          <div style={{ fontSize: 12, color: TEXT2, marginBottom: 20 }}>Adjust any input. The future value updates instantly.</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                            {[
+                              { label: 'Starting Amount (PV)', val: tvmPV, set: setTvmPV, prefix: '$' },
+                              { label: 'Monthly Contribution', val: tvmPMT, set: setTvmPMT, prefix: '$' },
+                              { label: 'Annual Rate (%)', val: tvmRate, set: setTvmRate, prefix: '%' },
+                              { label: 'Years', val: tvmYears, set: setTvmYears, prefix: 'yr' },
+                            ].map(({ label, val, set, prefix }) => (
+                              <div key={label}>
+                                <label style={labelStyle}>{label}</label>
+                                <input type="number" value={val} onChange={e => set(e.target.value)} min="0" style={inputStyle} />
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+                            {[
+                              { label: 'Future Value', value: fmt(fv), color: '#a855f7', big: true },
+                              { label: 'Total Contributed', value: fmt(contributed), color: TEXT },
+                              { label: 'Interest Earned', value: fmt(growth), color: GREEN },
+                              { label: 'Rule of 72', value: `≈ ${rule72} yrs`, color: YELLOW },
+                            ].map(({ label, value, color, big }) => (
+                              <div key={label} style={{ background: MUTED, borderRadius: 8, padding: '12px 14px' }}>
+                                <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                                <div style={{ fontSize: big ? 22 : 16, fontWeight: 700, fontFamily: 'monospace', color }}>{value}</div>
+                              </div>
+                            ))}
+                          </div>
+                          {/* Growth bar */}
+                          <div style={{ height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${Math.min((contributed / Math.max(fv, 1)) * 100, 100)}%`, background: 'rgba(168,85,247,0.4)', borderRadius: 4, display: 'inline-block' }} />
+                            <div style={{ height: '100%', width: `${Math.min((growth / Math.max(fv, 1)) * 100, 100)}%`, background: '#a855f7', borderRadius: 4, display: 'inline-block' }} />
+                          </div>
+                          <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 11, color: TEXT3 }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(168,85,247,0.4)', display: 'inline-block' }} />Contributions ({contributed > 0 ? ((contributed/Math.max(fv,1))*100).toFixed(0) : 0}%)</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 10, height: 10, borderRadius: 2, background: '#a855f7', display: 'inline-block' }} />Interest earned ({growth > 0 ? ((growth/Math.max(fv,1))*100).toFixed(0) : 0}%)</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <div style={{ ...CARD, marginTop: 20, fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>
+                      <div style={{ fontWeight: 700, color: TEXT, marginBottom: 8, fontSize: 13 }}>Key Formula</div>
+                      <div style={{ background: MUTED, padding: '14px 18px', borderRadius: 6, marginBottom: 10, fontSize: 14, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, fontFamily: 'Georgia, serif', color: TEXT, lineHeight: 2.2 }}>
+                        <strong style={{ color: '#a855f7' }}>FV</strong>
+                        <span style={{ color: TEXT2, margin: '0 4px' }}>=</span>
+                        <span>PV · (1 + <Frac n="r" d="12" />)<sup style={{ fontSize: 11 }}>12t</sup></span>
+                        <span style={{ color: TEXT2, margin: '0 6px' }}>+</span>
+                        <span>PMT ·</span>
+                        <Frac
+                          sz={13}
+                          n={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>(1 + <Frac n="r" d="12" sz={11} />)<sup style={{ fontSize: 10 }}>12t</sup><span style={{ margin: '0 3px' }}>− 1</span></span>}
+                          d={<Frac n="r" d="12" sz={11} />}
+                        />
+                      </div>
+                      <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.8 }}>
+                        where <strong style={{ color: TEXT }}>PV</strong> = present value &nbsp;·&nbsp; <strong style={{ color: TEXT }}>PMT</strong> = monthly contribution &nbsp;·&nbsp; <strong style={{ color: TEXT }}>r</strong> = annual rate &nbsp;·&nbsp; <strong style={{ color: TEXT }}>t</strong> = years
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── HOUSING ───────────────────────────────────────────────────
+              if (sandboxDataset === 'ds-housing') {
+                const { rent = 1200, homePrice = 285000, downPct = 0.05, rate = 7.1, termYears = 30, propertyTaxRate = 0.012, insurancePerYear = 1800, appreciationRate = 0.03 } = sbD;
+                const down      = homePrice * downPct;
+                const loan      = homePrice - down;
+                const r         = rate / 100 / 12;
+                const n         = termYears * 12;
+                const payment   = loan * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+                const propTaxMo = (homePrice * propertyTaxRate) / 12;
+                const insMo     = insurancePerYear / 12;
+                const totalOwn  = payment + propTaxMo + insMo;
+
+                const yearlyRows = [];
+                for (let y = 1; y <= Math.min(termYears, 10); y++) {
+                  const mStart = (y - 1) * 12;
+                  let balance = loan;
+                  let totalInterest = 0;
+                  for (let m = 0; m < mStart; m++) {
+                    const interest = balance * r;
+                    const principal = payment - interest;
+                    balance -= principal;
+                    totalInterest += interest;
+                  }
+                  const equity      = homePrice - balance + homePrice * (Math.pow(1 + appreciationRate, y) - 1);
+                  const appraised   = homePrice * Math.pow(1 + appreciationRate, y);
+                  const ownCost     = down + totalOwn * y * 12;
+                  const rentCost    = rent * y * 12;
+                  yearlyRows.push({ year: y, equity: appraised - balance, appraised, ownTotal: ownCost, rentTotal: rentCost, netOwn: ownCost - equity });
+                }
+                const breakEven = yearlyRows.find(r => r.ownTotal <= r.rentTotal + r.equity - homePrice * downPct);
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Mortgage vs. Rent</h1>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(234,179,8,0.1)', color: '#eab308' }}>Sandbox · Ch. 6</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Side-by-side cost analysis for buying vs. renting in Athens, GA.
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
+                      <div style={{ ...CARD }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: BLUE, marginBottom: 16 }}>Buy: Monthly Costs</div>
+                        {[
+                          { label: 'Mortgage Payment', value: fmt(payment) },
+                          { label: 'Property Tax',      value: fmt(propTaxMo) },
+                          { label: 'Homeowners Ins.',   value: fmt(insMo) },
+                        ].map(({ label, value }) => (
+                          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${BORDER_C}`, fontSize: 13 }}>
+                            <span style={{ color: TEXT2 }}>{label}</span>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{value}</span>
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 0', fontSize: 14, fontWeight: 700 }}>
+                          <span>Total / month</span>
+                          <span style={{ fontFamily: 'monospace', color: BLUE }}>{fmt(totalOwn)}</span>
+                        </div>
+                        <div style={{ marginTop: 12, fontSize: 11, color: TEXT3 }}>
+                          {fmt(homePrice)} home · {(downPct * 100).toFixed(0)}% down ({fmt(down)}) · {rate}% rate · {termYears}-yr fixed
+                        </div>
+                      </div>
+
+                      <div style={{ ...CARD }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: GREEN, marginBottom: 16 }}>Rent: Monthly Costs</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${BORDER_C}`, fontSize: 13 }}>
+                          <span style={{ color: TEXT2 }}>Monthly Rent</span>
+                          <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{fmt(rent)}</span>
+                        </div>
+                        <div style={{ padding: '8px 0', borderBottom: `1px solid ${BORDER_C}`, fontSize: 13, color: TEXT3 }}>No down payment, no maintenance</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 0', fontSize: 14, fontWeight: 700 }}>
+                          <span>Total / month</span>
+                          <span style={{ fontFamily: 'monospace', color: GREEN }}>{fmt(rent)}</span>
+                        </div>
+                        <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 8, fontSize: 12, color: TEXT2 }}>
+                          <strong style={{ color: GREEN }}>+{fmt(totalOwn - rent)}/mo savings</strong> vs. buying, but no equity built.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>10-Year Cumulative Cost Comparison</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 20 }}>Total money out of pocket (including down payment) vs. equity built</div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Year', 'Own: Total Out', 'Own: Equity', 'Rent: Total Out', 'Better Deal'].map((h, i) => (
+                                <th key={h} style={{ padding: '8px 12px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {yearlyRows.map(row => {
+                              const netOwn = row.ownTotal - row.equity;
+                              const netRent = row.rentTotal;
+                              const buyWins = netOwn < netRent;
+                              return (
+                                <tr key={row.year} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                  <td style={{ padding: '10px 12px', fontWeight: 600 }}>Yr {row.year}</td>
+                                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: BLUE }}>{fmt(row.ownTotal)}</td>
+                                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>{fmt(row.equity)}</td>
+                                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>{fmt(row.rentTotal)}</td>
+                                  <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: buyWins ? BLUE : GREEN }}>{buyWins ? 'Buy' : 'Rent'}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Amortization schedule */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <div style={{ fontWeight: 600 }}>Amortization Schedule</div>
+                        <button onClick={() => setHousingAmort(v => !v)} style={{ padding: '5px 12px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 12, cursor: 'pointer' }}>
+                          {housingAmort ? 'Show less' : 'Show all 30 years'}
+                        </button>
+                      </div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Year-by-year principal vs. interest breakdown for a {fmt(loan)} loan at {rate}% over {termYears} years.</div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Year', 'Annual Payment', 'Principal Paid', 'Interest Paid', 'Remaining Balance', 'Equity %'].map((h, i) => (
+                                <th key={h} style={{ padding: '8px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Array.from({ length: housingAmort ? termYears : 10 }, (_, yi) => {
+                              const yr = yi + 1;
+                              let bal = loan, yearPrincipal = 0, yearInterest = 0;
+                              for (let m = 0; m < (yr - 1) * 12; m++) {
+                                const interest = bal * r;
+                                bal -= (payment - interest);
+                              }
+                              for (let m = 0; m < 12; m++) {
+                                const interest = bal * r;
+                                const principal = payment - interest;
+                                yearInterest += interest;
+                                yearPrincipal += principal;
+                                bal = Math.max(0, bal - principal);
+                              }
+                              const appraised = homePrice * Math.pow(1 + appreciationRate, yr);
+                              const equityPct = ((appraised - bal) / appraised) * 100;
+                              const isMilestone = [5, 10, 15, 20, 30].includes(yr);
+                              return (
+                                <tr key={yr} style={{ borderBottom: `1px solid ${BORDER_C}`, background: isMilestone ? 'rgba(77,163,255,0.03)' : 'transparent' }}>
+                                  <td style={{ padding: '9px 10px', fontWeight: isMilestone ? 700 : 400, color: isMilestone ? BLUE : TEXT }}>Yr {yr}</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace' }}>{fmt(payment * 12)}</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>{fmt(yearPrincipal)}</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: RED }}>{fmt(yearInterest)}</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>{fmt(Math.max(0, bal))}</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+                                      <div style={{ width: 48, height: 5, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', width: `${equityPct}%`, background: GREEN, borderRadius: 3 }} />
+                                      </div>
+                                      <span style={{ fontSize: 11, fontFamily: 'monospace', color: GREEN }}>{equityPct.toFixed(0)}%</span>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div style={{ ...CARD, fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>
+                      <div style={{ fontWeight: 700, color: TEXT, marginBottom: 12, fontSize: 13 }}>Key Formula</div>
+                      <div style={{ background: MUTED, padding: '14px 18px', borderRadius: 6, marginBottom: 10, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Georgia, serif', color: TEXT, lineHeight: 2.2 }}>
+                        <strong style={{ color: YELLOW }}>M</strong>
+                        <span style={{ color: TEXT2, margin: '0 4px' }}>=</span>
+                        <span>P ·</span>
+                        <Frac
+                          sz={13}
+                          n={<span>r · (1 + r)<sup style={{ fontSize: 11 }}>n</sup></span>}
+                          d={<span>(1 + r)<sup style={{ fontSize: 11 }}>n</sup> − 1</span>}
+                        />
+                      </div>
+                      <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.8 }}>
+                        where <strong style={{ color: TEXT }}>M</strong> = monthly payment &nbsp;·&nbsp; <strong style={{ color: TEXT }}>P</strong> = loan principal &nbsp;·&nbsp; <strong style={{ color: TEXT }}>r</strong> = monthly rate &nbsp;·&nbsp; <strong style={{ color: TEXT }}>n</strong> = number of payments
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── CREDIT ────────────────────────────────────────────────────
+              if (sandboxDataset === 'ds-credit') {
+                const { creditScore = 672, creditScoreChange = -8, scoreLabel = 'Fair', scoreFactors = [], paymentHistory = [], accounts: ccAccounts = [] } = sbD;
+                const creditCards = ccAccounts.filter(a => a.subtype === 'credit card');
+                const totalBalance = creditCards.reduce((s, a) => s + Math.abs(a.balances?.current || 0), 0);
+                const totalLimit   = creditCards.reduce((s, a) => s + (a.balances?.limit || 0), 0);
+                const utilPct = totalLimit > 0 ? (totalBalance / totalLimit) * 100 : 0;
+
+                // Score gauge helpers
+                const SCORE_MIN = 300, SCORE_MAX = 850, SCORE_RANGE = 550;
+                const scoreRanges = [
+                  { label: 'Poor',      min: 300, max: 579, color: '#f87171' },
+                  { label: 'Fair',      min: 580, max: 669, color: '#f97316' },
+                  { label: 'Good',      min: 670, max: 739, color: '#fbbf24' },
+                  { label: 'Very Good', min: 740, max: 799, color: '#4ade80' },
+                  { label: 'Exceptional', min: 800, max: 850, color: '#4da3ff' },
+                ];
+                const activeRange = scoreRanges.find(r => creditScore >= r.min && creditScore <= r.max) || scoreRanges[1];
+
+                // SVG arc gauge
+                const CX = 120, CY = 78, R = 70;
+                const angleDeg = (score) => (1 - (score - SCORE_MIN) / SCORE_RANGE) * 180;
+                const toXY = (deg, radius) => {
+                  const rad = deg * Math.PI / 180;
+                  return [CX + radius * Math.cos(rad), CY - radius * Math.sin(rad)];
+                };
+                const arcPath = (fromScore, toScore, radius) => {
+                  const [px1, py1] = toXY(angleDeg(fromScore), radius);
+                  const [px2, py2] = toXY(angleDeg(toScore), radius);
+                  return `M ${px1},${py1} A ${radius},${radius} 0 0,1 ${px2},${py2}`;
+                };
+                const [needleX, needleY] = toXY(angleDeg(creditScore), R - 12);
+
+                // Paydown simulation
+                const utilScenarios = [
+                  { label: 'Current (43%)', util: 0.43, scoreDelta: 0 },
+                  { label: 'Pay to 30%',    util: 0.30, scoreDelta: +22 },
+                  { label: 'Pay to 20%',    util: 0.20, scoreDelta: +38 },
+                  { label: 'Pay to 9%',     util: 0.09, scoreDelta: +55 },
+                ];
+
+                // Min payment interest calc (Chase Freedom, 26.99% APR)
+                const apr = 0.2699, monthlyRate = apr / 12;
+                const balanceForCalc = 1850;
+                const minPmt = Math.max(25, balanceForCalc * 0.02);
+                let minMonths = 0, minInterest = 0, bal = balanceForCalc;
+                while (bal > 0.01 && minMonths < 600) {
+                  const interest = bal * monthlyRate;
+                  const principal = Math.max(0, minPmt - interest);
+                  minInterest += interest;
+                  bal = Math.max(0, bal - principal);
+                  minMonths++;
+                }
+                const fullInterest = balanceForCalc * monthlyRate;
+                const fullMonths = 1;
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Credit Score & Card Profile</h1>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>Sandbox · Ch. 5</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>Credit health analysis: FICO score breakdown, utilization, and paydown impact.</div>
+
+                    {/* Score + factors */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 16, marginBottom: 20 }}>
+                      {/* Gauge */}
+                      <div style={{ ...CARD, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px 16px' }}>
+                        <svg viewBox="0 0 240 150" style={{ width: '100%', display: 'block' }}>
+                          {/* Gray track */}
+                          <path d={`M ${CX - R},${CY} A ${R},${R} 0 0,1 ${CX + R},${CY}`} fill="none" stroke="#2a2a2a" strokeWidth={14} strokeLinecap="round" />
+                          {/* Colored zones */}
+                          {scoreRanges.map(z => (
+                            <path key={z.label} d={arcPath(z.min, z.max, R)} fill="none" stroke={z.color} strokeWidth={11} strokeLinecap="butt" />
+                          ))}
+                          {/* Needle */}
+                          <line x1={CX} y1={CY} x2={needleX} y2={needleY} stroke="#f0f0f0" strokeWidth={2.5} strokeLinecap="round" />
+                          <circle cx={CX} cy={CY} r={5} fill="#f0f0f0" />
+                          {/* 300/850 endpoint labels */}
+                          <text x={CX - R + 2} y={CY + 16} textAnchor="middle" fontSize={9} fill={TEXT3}>300</text>
+                          <text x={CX + R - 2} y={CY + 16} textAnchor="middle" fontSize={9} fill={TEXT3}>850</text>
+                          {/* Score number and label — well below the arc */}
+                          <text x={CX} y={CY + 44} textAnchor="middle" fontSize={36} fontWeight="700" fill={TEXT}>{creditScore}</text>
+                          <text x={CX} y={CY + 62} textAnchor="middle" fontSize={12} fontWeight="700" fill={activeRange.color}>{scoreLabel.toUpperCase()}</text>
+                        </svg>
+                        <div style={{ fontSize: 12, color: creditScoreChange < 0 ? RED : GREEN, fontWeight: 600, marginTop: 8 }}>
+                          {creditScoreChange > 0 ? '▲' : '▼'} {Math.abs(creditScoreChange)} pts from last month
+                        </div>
+                        <div style={{ marginTop: 12, display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+                          {scoreRanges.map(r => (
+                            <span key={r.label} style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 3, background: `${r.color}20`, color: r.color, border: creditScore >= r.min && creditScore <= r.max ? `1px solid ${r.color}` : 'none' }}>{r.label}</span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Score factors */}
+                      <div style={{ ...CARD }}>
+                        <div style={{ fontWeight: 600, marginBottom: 16 }}>FICO Score Factors</div>
+                        {scoreFactors.map(f => (
+                          <div key={f.factor} style={{ marginBottom: 14 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                              <span style={{ fontSize: 13, fontWeight: 500 }}>{f.factor}</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ fontSize: 10, fontWeight: 700, color: TEXT3 }}>{f.weight}%</span>
+                                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: `${f.color}18`, color: f.color }}>{f.rating}</span>
+                              </div>
+                            </div>
+                            <div style={{ height: 5, background: MUTED, borderRadius: 3, overflow: 'hidden', marginBottom: 4 }}>
+                              <div style={{ height: '100%', width: `${f.weight * 3.33}%`, background: f.color, borderRadius: 3 }} />
+                            </div>
+                            <div style={{ fontSize: 11, color: TEXT3 }}>{f.detail}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Cards + utilization */}
+                    <div style={{ ...CARD, marginBottom: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <div style={{ fontWeight: 600 }}>Credit Card Utilization</div>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: utilPct > 30 ? RED : GREEN }}>
+                          Total: {utilPct.toFixed(1)}% {utilPct > 30 ? '⚠ Above 30% threshold' : '✓ Below 30%'}
+                        </span>
+                      </div>
+                      {creditCards.map(a => {
+                        const bal  = Math.abs(a.balances?.current || 0);
+                        const lim  = a.balances?.limit || 0;
+                        const pct  = lim > 0 ? (bal / lim) * 100 : 0;
+                        const col  = pct > 30 ? RED : GREEN;
+                        return (
+                          <div key={a.account_id} style={{ marginBottom: 16 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                              <span style={{ fontSize: 13, fontWeight: 500 }}>{a.name} <span style={{ color: TEXT3, fontSize: 11 }}>· {a.institution_name}</span></span>
+                              <span style={{ fontSize: 13, fontFamily: 'monospace', fontWeight: 600, color: col }}>{fmt(bal)} / {fmt(lim)} ({pct.toFixed(1)}%)</span>
+                            </div>
+                            <div style={{ height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: col, borderRadius: 4 }} />
+                            </div>
+                            <div style={{ fontSize: 11, color: TEXT3, marginTop: 3 }}>
+                              Pay {fmt(bal - lim * 0.30)} to reach 30% utilization on this card
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div style={{ padding: '12px 14px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 12, color: TEXT2, marginTop: 4 }}>
+                        <strong style={{ color: RED }}>Rule:</strong> Keep each card below 30% utilization (ideally below 10%) for the biggest score boost. Utilization is reported to bureaus monthly when your statement closes.
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 16 }}>
+                      {/* Paydown simulator */}
+                      <div style={{ ...CARD }}>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Score Impact: Pay Down Balances</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Estimated FICO change if you reduce utilization to:</div>
+                        {utilScenarios.map(sc => (
+                          <div key={sc.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                            <span style={{ fontSize: 13 }}>{sc.label}</span>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: sc.scoreDelta > 0 ? GREEN : TEXT }}>
+                                {sc.scoreDelta === 0 ? '672' : `~${672 + sc.scoreDelta}`}
+                              </div>
+                              {sc.scoreDelta > 0 && <div style={{ fontSize: 10, color: GREEN }}>+{sc.scoreDelta} pts</div>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Min payment danger */}
+                      <div style={{ ...CARD }}>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Min Payment vs. Full Payment</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Chase Freedom · $1,850 balance · 26.99% APR</div>
+                        {[
+                          { label: 'Minimum payment only', months: minMonths, interest: minInterest, color: RED },
+                          { label: 'Pay in full this month', months: 1, interest: fullInterest, color: GREEN },
+                        ].map(sc => (
+                          <div key={sc.label} style={{ marginBottom: 14, padding: '12px 14px', background: `${sc.color}08`, border: `1px solid ${sc.color}25`, borderRadius: 8 }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: sc.color, marginBottom: 8 }}>{sc.label}</div>
+                            <div style={{ display: 'flex', gap: 16 }}>
+                              <div>
+                                <div style={{ fontSize: 10, color: TEXT3, marginBottom: 2 }}>Time to pay off</div>
+                                <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'monospace' }}>
+                                  {sc.months === 1 ? '1 month' : `${Math.floor(sc.months / 12)}y ${sc.months % 12}m`}
+                                </div>
+                              </div>
+                              <div>
+                                <div style={{ fontSize: 10, color: TEXT3, marginBottom: 2 }}>Total interest paid</div>
+                                <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'monospace', color: sc.color }}>{fmt(sc.interest)}</div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        <div style={{ fontSize: 11, color: TEXT3 }}>
+                          Paying only minimums costs {fmt(minInterest - fullInterest)} extra in interest over {Math.floor(minMonths / 12)} years.
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment history */}
+                    <div style={{ ...CARD }}>
+                      <div style={{ fontWeight: 600, marginBottom: 12 }}>Payment History: Last 6 Months</div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {paymentHistory.map((h, i) => (
+                          <div key={i} style={{ flex: 1, textAlign: 'center' }}>
+                            <div style={{ width: 32, height: 32, borderRadius: '50%', background: h.paid === null ? MUTED : h.paid ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.15)', border: `2px solid ${h.paid === null ? BORDER_C : h.paid ? GREEN : RED}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px', fontSize: 14 }}>
+                              {h.paid === null ? '·' : h.paid ? '✓' : '✗'}
+                            </div>
+                            <div style={{ fontSize: 10, color: TEXT3 }}>{h.month.split(' ')[0]}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ marginTop: 12, fontSize: 12, color: TEXT2 }}>
+                        Payment history is the <strong style={{ color: TEXT }}>single most important factor (35%)</strong> in your FICO score. One missed payment can drop your score by 60–110 points and stays on your report for 7 years.
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── HOUSING ───────────────────────────────────────────────────
+              if (sandboxDataset === 'ds-housing') {
+                const { rent, homePrice, downPct, rate, termYears, propertyTaxRate, insurancePerYear, appreciationRate } = sbD;
+                const downPayment    = homePrice * downPct;
+                const loanAmount     = homePrice - downPayment;
+                const monthlyRate    = rate / 100 / 12;
+                const n              = termYears * 12;
+                const monthlyPI      = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, n)) / (Math.pow(1 + monthlyRate, n) - 1);
+                const monthlyTax     = (homePrice * propertyTaxRate) / 12;
+                const monthlyIns     = insurancePerYear / 12;
+                const monthlyBuy     = monthlyPI + monthlyTax + monthlyIns;
+
+                // Full amortization by year
+                const amor = [];
+                let bal = loanAmount;
+                let cumInterest = 0;
+                for (let y = 1; y <= termYears; y++) {
+                  let yInt = 0, yPrin = 0;
+                  for (let m = 0; m < 12; m++) {
+                    const intPmt  = bal * monthlyRate;
+                    const prinPmt = monthlyPI - intPmt;
+                    yInt  += intPmt;
+                    yPrin += prinPmt;
+                    bal   -= prinPmt;
+                    if (bal < 0) bal = 0;
+                  }
+                  cumInterest += yInt;
+                  const homeVal = homePrice * Math.pow(1 + appreciationRate, y);
+                  const equity  = homeVal - bal;
+                  amor.push({ year: y, interest: yInt, principal: yPrin, balance: bal, equity, homeVal, cumInterest });
+                }
+
+                // Break-even: cumulative net cost of buying vs renting year-by-year
+                // Buyer net cost = total out-of-pocket (down + PITI) minus equity gained
+                const cmp = amor.map(row => ({
+                  year:         row.year,
+                  buyerNet:     downPayment + monthlyBuy * row.year * 12 - row.equity,
+                  renterTotal:  rent * row.year * 12,
+                  equity:       row.equity,
+                }));
+                const breakEvenRow = cmp.find(r => r.buyerNet <= r.renterTotal);
+
+                const totalInterest = amor[amor.length - 1].cumInterest;
+                const year5  = amor[4];
+                const year10 = amor[9];
+                const year30 = amor[29];
+
+                const housingInpStyle = { width: '100%', padding: '9px 12px', background: DARK, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'monospace' };
+                const YELLOW_HOUSING = '#eab308';
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Mortgage vs. Rent</h1>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${YELLOW_HOUSING}18`, color: YELLOW_HOUSING }}>Sandbox · Ch. 6</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Rent vs. buy decision analysis: amortization schedule, equity build, and break-even horizon.
+                    </div>
+
+                    {/* Top stats */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'Home Price',    value: fmt(homePrice),    sub: `${downPct * 100}% down · ${fmt(downPayment)}` },
+                        { label: 'Monthly PITI',  value: fmt(monthlyBuy),   sub: `vs ${fmt(rent)}/mo rent`, color: monthlyBuy > rent ? RED : GREEN },
+                        { label: 'Loan Amount',   value: fmt(loanAmount),   sub: `${rate}% APR · ${termYears}-yr fixed` },
+                        { label: 'Total Interest',value: fmt(totalInterest),sub: 'paid over 30 years', color: RED },
+                      ].map(({ label, value, sub, color }) => (
+                        <div key={label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                          <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'monospace', color: color || TEXT, letterSpacing: '-0.5px' }}>{value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{sub}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Rent vs Buy side-by-side + break-even */}
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
+                      {/* Monthly cost breakdown */}
+                      <div style={{ ...CARD }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16 }}>Monthly Cost Breakdown</div>
+                        <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+                          {[
+                            { label: 'Rent', total: rent, items: [{ label: 'Monthly Rent', amount: rent, color: BLUE }], color: BLUE },
+                            { label: 'Buy',  total: monthlyBuy, items: [
+                                { label: 'Principal & Interest', amount: monthlyPI, color: YELLOW_HOUSING },
+                                { label: 'Property Tax',         amount: monthlyTax, color: '#f97316' },
+                                { label: 'Insurance',            amount: monthlyIns, color: TEXT3 },
+                              ], color: YELLOW_HOUSING },
+                          ].map(side => (
+                            <div key={side.label} style={{ flex: 1, padding: '14px', background: DARK, borderRadius: 8, border: BORDER }}>
+                              <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 8 }}>{side.label}</div>
+                              <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'monospace', color: side.color, marginBottom: 12 }}>{fmt(side.total)}</div>
+                              {side.items.map(item => (
+                                <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT2, marginBottom: 4 }}>
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: item.color, display: 'inline-block', flexShrink: 0 }} />
+                                    {item.label}
+                                  </span>
+                                  <span style={{ fontFamily: 'monospace', color: TEXT }}>{fmt(item.amount)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ padding: '10px 14px', background: monthlyBuy > rent ? 'rgba(248,113,113,0.06)' : 'rgba(74,222,128,0.06)', border: `1px solid ${monthlyBuy > rent ? 'rgba(248,113,113,0.25)' : 'rgba(74,222,128,0.25)'}`, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
+                          Buying costs <strong style={{ color: monthlyBuy > rent ? RED : GREEN }}>{fmt(Math.abs(monthlyBuy - rent))}/mo {monthlyBuy > rent ? 'more' : 'less'}</strong> than renting upfront, but builds equity over time.
+                        </div>
+                      </div>
+
+                      {/* Break-even */}
+                      <div style={{ ...CARD }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Break-Even Horizon</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>
+                          When cumulative buy cost (net of equity) falls below total rent paid.
+                        </div>
+                        {breakEvenRow ? (
+                          <div style={{ textAlign: 'center', padding: '20px 0', marginBottom: 16 }}>
+                            <div style={{ fontSize: 48, fontWeight: 800, color: GREEN, letterSpacing: '-2px', lineHeight: 1 }}>Year {breakEvenRow.year}</div>
+                            <div style={{ fontSize: 13, color: TEXT2, marginTop: 8 }}>Buying pays off after <strong style={{ color: TEXT }}>{breakEvenRow.year} years</strong></div>
+                          </div>
+                        ) : (
+                          <div style={{ textAlign: 'center', padding: '20px 0', color: TEXT3, fontSize: 13, marginBottom: 16 }}>Buying never breaks even in this scenario</div>
+                        )}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {[5, 10, 15].map(y => {
+                            const row = cmp[y - 1];
+                            const ahead = row.renterTotal - row.buyerNet;
+                            return (
+                              <div key={y} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: DARK, borderRadius: 7, border: BORDER }}>
+                                <span style={{ fontSize: 12, color: TEXT2 }}>Year {y}</span>
+                                <span style={{ fontSize: 12, fontWeight: 700, fontFamily: 'monospace', color: ahead > 0 ? GREEN : RED }}>
+                                  Buyer {ahead > 0 ? 'ahead' : 'behind'} {fmt(Math.abs(ahead))}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div style={{ marginTop: 14, fontSize: 11, color: TEXT3, lineHeight: 1.5 }}>
+                          Includes ${fmt(downPayment)} down payment as upfront buyer cost. Does not include maintenance (~1% of home value/yr) or tax deductions.
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Amortization visual */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700 }}>Amortization Schedule</div>
+                        <div style={{ fontSize: 11, color: TEXT2 }}>Year-by-year principal vs. interest</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 16, marginBottom: 16, fontSize: 11 }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: TEXT2 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: 2, background: YELLOW_HOUSING, display: 'inline-block' }} /> Principal
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: TEXT2 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(234,179,8,0.3)', display: 'inline-block' }} /> Interest
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: TEXT2 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: 2, background: GREEN, display: 'inline-block' }} /> Equity
+                        </span>
+                      </div>
+                      {amor.filter((_, i) => [0,4,9,14,19,24,29].includes(i)).map(row => {
+                        const prinFrac = (row.principal / (monthlyPI * 12)) * 100;
+                        const intFrac  = (row.interest  / (monthlyPI * 12)) * 100;
+                        const eqFrac   = Math.min((row.equity / homePrice) * 100, 100);
+                        return (
+                          <div key={row.year} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                            <div style={{ fontSize: 11, color: TEXT2, width: 48, flexShrink: 0, textAlign: 'right' }}>Yr {row.year}</div>
+                            <div style={{ flex: 1, height: 16, background: MUTED, borderRadius: 4, overflow: 'hidden', position: 'relative', display: 'flex' }}>
+                              <div style={{ width: `${intFrac}%`, height: '100%', background: 'rgba(234,179,8,0.3)' }} />
+                              <div style={{ width: `${prinFrac}%`, height: '100%', background: YELLOW_HOUSING }} />
+                            </div>
+                            <div style={{ width: 72, height: 16, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
+                              <div style={{ width: `${eqFrac}%`, height: '100%', background: 'rgba(74,222,128,0.6)', borderRadius: 4 }} />
+                            </div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: GREEN, width: 72, flexShrink: 0, textAlign: 'right' }}>{fmt(row.equity)}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* 5 / 10 / 30 year snapshot + interactive rate adjuster */}
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                      {/* Milestone equity snapshots */}
+                      <div style={{ ...CARD }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16 }}>Equity Milestones</div>
+                        {[year5, year10, year30].map(row => {
+                          const eqPct = Math.round((row.equity / row.homeVal) * 100);
+                          return (
+                            <div key={row.year} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: row.year < 30 ? `1px solid ${BORDER_C}` : 'none' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: TEXT2 }}>Year {row.year}</span>
+                                <span style={{ fontSize: 18, fontWeight: 700, fontFamily: 'monospace', color: GREEN }}>{fmt(row.equity)}</span>
+                              </div>
+                              <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
+                                <div style={{ height: '100%', width: `${eqPct}%`, background: GREEN, borderRadius: 3 }} />
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3 }}>
+                                <span>Home value {fmt(row.homeVal)}</span>
+                                <span>{eqPct}% equity</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Interactive: adjust down payment & rate */}
+                      {(() => {
+                        const adjRate    = parseFloat(housingRate)    || rate;
+                        const adjDownPct = (parseFloat(housingDown)   || downPct * 100) / 100;
+                        const adjDown    = homePrice * adjDownPct;
+                        const adjLoan    = homePrice - adjDown;
+                        const adjMR      = adjRate / 100 / 12;
+                        const adjPI      = adjLoan * (adjMR * Math.pow(1 + adjMR, n)) / (Math.pow(1 + adjMR, n) - 1);
+                        const adjMonthly = adjPI + monthlyTax + monthlyIns;
+                        const dtiIncome  = parseFloat(housingIncome) || 75000;
+                        const dti        = (adjMonthly / (dtiIncome / 12)) * 100;
+                        const dtiColor   = dti < 28 ? GREEN : dti < 36 ? YELLOW_HOUSING : RED;
+                        return (
+                          <div style={{ ...CARD, border: `1px solid ${YELLOW_HOUSING}33`, background: `${YELLOW_HOUSING}04` }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Scenario Adjuster</div>
+                            <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Change assumptions to see how the payment shifts.</div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 16 }}>
+                              {[
+                                { label: 'Interest Rate (%)',  val: housingRate,   set: setHousingRate,   placeholder: `${rate}` },
+                                { label: 'Down Payment (%)',   val: housingDown,   set: setHousingDown,   placeholder: `${downPct * 100}` },
+                                { label: 'Annual Income ($)',  val: housingIncome, set: setHousingIncome, placeholder: '75000' },
+                              ].map(({ label, val, set, placeholder }) => (
+                                <div key={label}>
+                                  <label style={{ display: 'block', fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>{label}</label>
+                                  <input type="number" value={val} onChange={e => set(e.target.value)} placeholder={placeholder} style={housingInpStyle} />
+                                </div>
+                              ))}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 10 }}>
+                              {[
+                                { label: 'Monthly PITI',    value: fmt(adjMonthly), color: adjMonthly > rent ? RED : GREEN },
+                                { label: 'Down Payment',    value: fmt(adjDown),    color: TEXT },
+                                { label: 'Loan Amount',     value: fmt(adjLoan),    color: TEXT },
+                                { label: `DTI Ratio`,       value: `${dti.toFixed(1)}%`, color: dtiColor },
+                              ].map(({ label, value, color }) => (
+                                <div key={label} style={{ background: DARK, borderRadius: 7, padding: '10px 12px', border: BORDER }}>
+                                  <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{label}</div>
+                                  <div style={{ fontSize: 17, fontWeight: 700, fontFamily: 'monospace', color }}>{value}</div>
+                                </div>
+                              ))}
+                            </div>
+                            <div style={{ marginTop: 12, fontSize: 11, color: TEXT3, lineHeight: 1.5 }}>
+                              Lenders typically require front-end DTI &lt; 28%. A ratio above 36% makes qualifying difficult regardless of credit score.
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── NET WORTH SNAPSHOT ───────────────────────────────────────
+              if (sandboxDataset === 'ds-net-worth') {
+                const accts = sbD.accounts || [];
+                const assets      = accts.filter(a => a.balances?.current > 0);
+                const liabilities = accts.filter(a => a.balances?.current < 0);
+                const totalAssets = assets.reduce((s, a) => s + (a.balances?.current || 0), 0);
+                const totalLiab   = liabilities.reduce((s, a) => s + Math.abs(a.balances?.current || 0), 0);
+                const netWorth    = totalAssets - totalLiab;
+                const assetPct    = totalAssets > 0 ? Math.round((totalAssets / (totalAssets + totalLiab)) * 100) : 0;
+
+                const typeLabel = { checking: 'Checking', savings: 'Savings', auto: 'Auto Loan', student: 'Student Loan', credit: 'Credit Card', mortgage: 'Mortgage' };
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Net Worth Snapshot</h1>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(77,163,255,0.12)', color: BLUE }}>Sandbox · Ch. 1</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Balance sheet for a 22-year-old college senior. Calculate net worth, classify assets and liabilities, and build a paydown plan.
+                    </div>
+
+                    {/* Hero stats */}
+                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12, marginBottom: 24 }}>
+                      {[
+                        { label: 'Total Assets',      value: fmt(totalAssets), color: GREEN, sub: `${assets.length} account${assets.length !== 1 ? 's' : ''}` },
+                        { label: 'Total Liabilities', value: fmt(totalLiab),   color: RED,   sub: `${liabilities.length} account${liabilities.length !== 1 ? 's' : ''}` },
+                        { label: 'Net Worth',         value: fmt(netWorth),    color: netWorth >= 0 ? GREEN : RED, sub: netWorth >= 0 ? 'Positive — building wealth' : 'Negative — dig out first' },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '20px 22px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 30, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-1px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 3 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Asset vs Liability bar */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Balance Sheet Composition</div>
+                      <div style={{ display: 'flex', height: 20, borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}>
+                        <div style={{ width: `${assetPct}%`, background: GREEN, transition: 'width 0.4s' }} />
+                        <div style={{ flex: 1, background: RED, opacity: 0.7 }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: TEXT2 }}>
+                        <span style={{ color: GREEN, fontWeight: 600 }}>Assets {assetPct}%</span>
+                        <span style={{ color: RED, fontWeight: 600 }}>Liabilities {100 - assetPct}%</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
+                      {/* Assets */}
+                      <div style={CARD}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: GREEN, marginBottom: 14 }}>Assets</div>
+                        {assets.map(a => (
+                          <div key={a.account_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{a.name}</div>
+                              <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{typeLabel[a.subtype] || a.subtype} · {a.institution_name}</div>
+                            </div>
+                            <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: GREEN }}>{fmt(a.balances.current)}</div>
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, fontSize: 13, fontWeight: 700 }}>
+                          <span>Total Assets</span>
+                          <span style={{ fontFamily: 'monospace', color: GREEN }}>{fmt(totalAssets)}</span>
+                        </div>
+                      </div>
+
+                      {/* Liabilities */}
+                      <div style={CARD}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: RED, marginBottom: 14 }}>Liabilities</div>
+                        {liabilities.map(a => (
+                          <div key={a.account_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{a.name}</div>
+                              <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{typeLabel[a.subtype] || a.subtype} · {a.institution_name}</div>
+                            </div>
+                            <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: RED }}>{fmt(Math.abs(a.balances.current))}</div>
+                          </div>
+                        ))}
+                        {liabilities.length === 0 && <div style={{ fontSize: 13, color: TEXT3, padding: '10px 0' }}>No liabilities — debt free!</div>}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, fontSize: 13, fontWeight: 700 }}>
+                          <span>Total Liabilities</span>
+                          <span style={{ fontFamily: 'monospace', color: RED }}>{fmt(totalLiab)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 12-month improvement plan */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>12-Month Improvement Plan</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 18 }}>Saving $100/month while making minimum debt payments. How does net worth change?</div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Month', 'Savings Balance', 'Debt Remaining', 'Net Worth', 'Change'].map((h, i) => (
+                                <th key={h} style={{ padding: '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[0, 3, 6, 9, 12].map(mo => {
+                              const savingsBase = totalAssets;
+                              const debtBase = totalLiab;
+                              const minPayment = 75;
+                              const monthlySave = 100;
+                              const debtRate = 0.06 / 12;
+                              let debt = debtBase;
+                              for (let m = 0; m < mo; m++) debt = Math.max(0, debt * (1 + debtRate) - minPayment);
+                              const savings = savingsBase + monthlySave * mo;
+                              const nw = savings - debt;
+                              const prev = mo === 0 ? netWorth : (() => {
+                                let d2 = debtBase; for (let m = 0; m < mo - 1; m++) d2 = Math.max(0, d2 * (1 + debtRate) - minPayment);
+                                return (savingsBase + monthlySave * (mo - 1)) - d2;
+                              })();
+                              const delta = nw - prev;
+                              return (
+                                <tr key={mo} style={{ borderBottom: `1px solid ${BORDER_C}`, background: mo === 0 ? `${BLUE}04` : 'transparent' }}>
+                                  <td style={{ padding: '9px 10px', fontWeight: 600, color: mo === 0 ? BLUE : TEXT }}>{mo === 0 ? 'Today' : `Month ${mo}`}</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>{fmt(savings)}</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: RED }}>{fmt(debt)}</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: nw >= 0 ? GREEN : RED }}>{fmt(nw)}</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: delta >= 0 ? GREEN : RED }}>{mo === 0 ? '—' : `+${fmt(delta)}`}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Key formula */}
+                    <div style={{ ...CARD, background: `${BLUE}06`, border: `1px solid ${BLUE}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: BLUE, marginBottom: 10 }}>The Formula</div>
+                      <div style={{ fontSize: 16, fontFamily: 'monospace', color: TEXT, marginBottom: 12, padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
+                        Net Worth = Total Assets − Total Liabilities
+                      </div>
+                      <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>
+                        Assets include anything you own with monetary value: cash, savings, investments, real estate, vehicles.
+                        Liabilities include everything you owe: credit cards, student loans, auto loans, mortgages.
+                        Growing net worth means either increasing assets, reducing liabilities, or both.
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── BUDGET SANDBOX ────────────────────────────────────────────
+              if (sandboxDataset === 'ds-budget') {
+                const _now = new Date();
+                const _CM = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}`;
+                const txns = (sbD.transactions || []).filter(t => t.date?.startsWith(_CM));
+                const INCOME = 1800;
+                const CAT_META = {
+                  RENT_AND_UTILITIES:  { label: 'Rent & Utilities',  color: BLUE,      rule50: true  },
+                  FOOD_AND_DRINK:      { label: 'Food & Dining',     color: '#f97316', rule50: false },
+                  TRANSPORTATION:      { label: 'Transportation',     color: '#a78bfa', rule50: true  },
+                  ENTERTAINMENT:       { label: 'Entertainment',      color: '#ec4899', rule50: false },
+                  PERSONAL_CARE:       { label: 'Personal Care',      color: '#14b8a6', rule50: false },
+                  GENERAL_MERCHANDISE: { label: 'Shopping',           color: YELLOW,    rule50: false },
+                  EDUCATION:           { label: 'Education',          color: GREEN,     rule50: true  },
+                };
+                const catTotals = {};
+                txns.forEach(t => {
+                  const cat = t.personal_finance_category?.primary || 'OTHER';
+                  catTotals[cat] = (catTotals[cat] || 0) + Math.abs(t.amount);
+                });
+                const totalSpending = Object.values(catTotals).reduce((s, v) => s + v, 0);
+                const deficit = INCOME - totalSpending;
+                const cats = Object.entries(catTotals)
+                  .map(([cat, amt]) => ({ cat, amt, meta: CAT_META[cat] || { label: cat, color: TEXT3, rule50: false } }))
+                  .sort((a, b) => b.amt - a.amt);
+
+                // 50/30/20 analysis
+                const needs = cats.filter(c => c.meta.rule50).reduce((s, c) => s + c.amt, 0);
+                const wants = cats.filter(c => !c.meta.rule50).reduce((s, c) => s + c.amt, 0);
+                const needsPct  = Math.round(needs / INCOME * 100);
+                const wantsPct  = Math.round(wants / INCOME * 100);
+                const savingsPct = Math.max(0, Math.round((deficit > 0 ? deficit : 0) / INCOME * 100));
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>College Student Monthly Budget</h1>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(34,197,94,0.12)', color: '#22c55e' }}>Sandbox · Ch. 2</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Monthly income $1,800 · {txns.length} transactions across {cats.length} categories. Identify the deficit and propose a fix.
+                    </div>
+
+                    {/* Hero stats */}
+                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12, marginBottom: 24 }}>
+                      {[
+                        { label: 'Monthly Income',  value: fmt(INCOME),         color: GREEN, sub: 'Part-time wages + financial aid' },
+                        { label: 'Monthly Spending', value: fmt(totalSpending),  color: totalSpending > INCOME ? RED : TEXT, sub: `${txns.length} transactions this month` },
+                        { label: 'Surplus / Deficit', value: (deficit >= 0 ? '+' : '') + fmt(deficit), color: deficit >= 0 ? GREEN : RED, sub: deficit < 0 ? 'Spending exceeds income' : 'Good — save the difference' },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '20px 22px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 30, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-1px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 3 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                      {/* Spending breakdown */}
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Spending by Category</div>
+                        {cats.map(({ cat, amt, meta }) => {
+                          const pct = Math.round(amt / INCOME * 100);
+                          const barW = Math.round(amt / totalSpending * 100);
+                          return (
+                            <div key={cat} style={{ marginBottom: 12 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: 12 }}>
+                                <span style={{ color: TEXT, fontWeight: 500 }}>{meta.label}</span>
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                  <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{fmt(amt)}</span>
+                                  <span style={{ color: TEXT3, minWidth: 28, textAlign: 'right' }}>{pct}%</span>
+                                </div>
+                              </div>
+                              <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${barW}%`, background: meta.color, borderRadius: 3 }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: `1px solid ${BORDER_C}`, fontSize: 13, fontWeight: 700 }}>
+                          <span>Total Spending</span>
+                          <span style={{ fontFamily: 'monospace', color: totalSpending > INCOME ? RED : TEXT }}>{fmt(totalSpending)}</span>
+                        </div>
+                      </div>
+
+                      {/* 50/30/20 analysis */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div style={CARD}>
+                          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>50/30/20 Rule Analysis</div>
+                          <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>50% needs · 30% wants · 20% savings</div>
+                          {[
+                            { label: 'Needs (50%)', actual: needsPct, target: 50, amt: needs, color: BLUE },
+                            { label: 'Wants (30%)', actual: wantsPct, target: 30, amt: wants, color: '#f97316' },
+                            { label: 'Savings (20%)', actual: savingsPct, target: 20, amt: Math.max(0, deficit), color: GREEN },
+                          ].map(row => {
+                            const over = row.actual > row.target;
+                            return (
+                              <div key={row.label} style={{ marginBottom: 14 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: 12 }}>
+                                  <span style={{ color: TEXT, fontWeight: 500 }}>{row.label}</span>
+                                  <span style={{ fontFamily: 'monospace', fontWeight: 700, color: over && row.label !== 'Savings (20%)' ? RED : row.color }}>
+                                    {row.actual}% {over && row.label !== 'Savings (20%)' ? '↑' : row.actual < row.target && row.label === 'Savings (20%)' ? '↓' : '✓'}
+                                  </span>
+                                </div>
+                                <div style={{ height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
+                                  <div style={{ height: '100%', width: `${Math.min(row.actual, 100)}%`, background: over && row.label !== 'Savings (20%)' ? RED : row.color, borderRadius: 4 }} />
+                                  <div style={{ position: 'absolute', top: 0, left: `${row.target}%`, height: '100%', width: 2, background: TEXT3, opacity: 0.6 }} />
+                                </div>
+                                <div style={{ fontSize: 11, color: TEXT3, marginTop: 3 }}>{fmt(row.amt)} of {fmt(row.target / 100 * INCOME)} target</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Fix suggestions */}
+                        <div style={{ ...CARD, background: deficit < 0 ? 'rgba(248,113,113,0.04)' : 'rgba(74,222,128,0.04)', border: `1px solid ${deficit < 0 ? 'rgba(248,113,113,0.2)' : 'rgba(74,222,128,0.2)'}` }}>
+                          <div style={{ fontWeight: 700, fontSize: 13, color: deficit < 0 ? RED : GREEN, marginBottom: 10 }}>
+                            {deficit < 0 ? '⚠ Deficit Analysis' : '✓ Budget is Balanced'}
+                          </div>
+                          {deficit < 0 ? (
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>
+                              Spending exceeds income by <strong style={{ color: RED }}>{fmt(Math.abs(deficit))}/mo</strong>.
+                              Largest opportunities: dining out ({fmt(cats.find(c => c.cat === 'FOOD_AND_DRINK')?.amt || 0)}),
+                              shopping ({fmt(cats.find(c => c.cat === 'GENERAL_MERCHANDISE')?.amt || 0)}),
+                              and entertainment ({fmt(cats.find(c => c.cat === 'ENTERTAINMENT')?.amt || 0)}).
+                              Cutting discretionary spend by 15% would close the gap.
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>
+                              Surplus of <strong style={{ color: GREEN }}>{fmt(deficit)}/mo</strong>. Move this to a high-yield savings account immediately — don't leave it in checking.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Transaction list */}
+                    <div style={CARD}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>All Transactions This Month</div>
+                      <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+                        {txns.sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, i) => {
+                          const meta = CAT_META[t.personal_finance_category?.primary] || { label: 'Other', color: TEXT3 };
+                          return (
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.merchant_name || t.name}</div>
+                                <div style={{ fontSize: 11, color: meta.color, marginTop: 1 }}>{meta.label} · {t.date}</div>
+                              </div>
+                              <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: RED, marginLeft: 12 }}>{fmt(Math.abs(t.amount))}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── PORTFOLIO SIMULATOR ───────────────────────────────────────
+              if (sandboxDataset === 'ds-portfolio') {
+                const SIM_ASSETS = [
+                  { ticker: 'VTI',  name: 'Vanguard Total Stock Market ETF', type: 'US Equity',   ret: 0.12, vol: 0.15, color: BLUE,      desc: 'Broad exposure to the entire US equity market — ~4,000 stocks.' },
+                  { ticker: 'BND',  name: 'Vanguard Total Bond Market ETF',  type: 'Bonds',        ret: 0.04, vol: 0.04, color: GREEN,     desc: 'Investment-grade US bonds. Lower return, lower risk, negative correlation to equities.' },
+                  { ticker: 'VXUS', name: 'Vanguard Total Intl Stock ETF',   type: 'Intl Equity',  ret: 0.08, vol: 0.17, color: '#a78bfa', desc: 'All world ex-US stocks. Adds geographic diversification.' },
+                  { ticker: 'SCHD', name: 'Schwab US Dividend Equity ETF',   type: 'Dividend',     ret: 0.10, vol: 0.12, color: YELLOW,    desc: 'High-quality dividend payers. Defensive tilt, lower volatility than pure growth.' },
+                ];
+                const CORR = {
+                  VTI:  { VTI: 1.00, BND:  0.00, VXUS: 0.75, SCHD: 0.85 },
+                  BND:  { VTI: 0.00, BND:  1.00, VXUS: -0.10, SCHD: 0.10 },
+                  VXUS: { VTI: 0.75, BND: -0.10, VXUS: 1.00, SCHD: 0.70 },
+                  SCHD: { VTI: 0.85, BND:  0.10, VXUS: 0.70, SCHD: 1.00 },
+                };
+                const allocTotal = SIM_ASSETS.reduce((s, a) => s + (simAlloc[a.ticker] || 0), 0);
+                const w = Object.fromEntries(SIM_ASSETS.map(a => [a.ticker, allocTotal > 0 ? (simAlloc[a.ticker] || 0) / allocTotal : 0]));
+                const expRet = SIM_ASSETS.reduce((s, a) => s + w[a.ticker] * a.ret, 0);
+                let portVar = 0;
+                for (const a of SIM_ASSETS) for (const b of SIM_ASSETS) portVar += w[a.ticker] * w[b.ticker] * a.vol * b.vol * CORR[a.ticker][b.ticker];
+                const portVol = Math.sqrt(Math.max(0, portVar));
+                const rf = 0.05;
+                const sharpeRatio = portVol > 0.001 ? (expRet - rf) / portVol : 0;
+                const weightedVol = SIM_ASSETS.reduce((s, a) => s + w[a.ticker] * a.vol, 0);
+                const divScore = weightedVol > 0 ? Math.round((1 - portVol / weightedVol) * 100) : 0;
+                const BUDGET = 10000;
+                const getLetter = (pct) => pct >= 90 ? 'A' : pct >= 80 ? 'B' : pct >= 70 ? 'C' : pct >= 60 ? 'D' : 'F';
+                const metricColor = (v, low, mid, high) => v >= high ? GREEN : v >= mid ? YELLOW : v >= low ? '#f97316' : RED;
+
+                const setAlloc = (ticker, val) => setSimAlloc(prev => ({ ...prev, [ticker]: Math.max(0, Math.min(100, parseInt(val) || 0)) }));
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Portfolio Simulator</h1>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${BLUE}18`, color: BLUE }}>Sandbox · Ch. 7 & 8</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Allocate $10,000 across four assets. See how expected return, volatility, and Sharpe ratio change as you adjust the mix.
+                    </div>
+
+                    {/* Metric cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+                      {[
+                        { label: 'Expected Return', value: `${(expRet * 100).toFixed(1)}%`, sub: 'annualized', color: metricColor(expRet * 100, 4, 7, 10) },
+                        { label: 'Portfolio Volatility', value: `${(portVol * 100).toFixed(1)}%`, sub: 'annualized std dev', color: portVol * 100 < 8 ? GREEN : portVol * 100 < 13 ? YELLOW : RED },
+                        { label: 'Sharpe Ratio', value: sharpeRatio.toFixed(2), sub: 'risk-adjusted return', color: metricColor(sharpeRatio, 0.3, 0.5, 0.7) },
+                        { label: 'Diversification', value: `${divScore}%`, sub: 'correlation benefit', color: metricColor(divScore, 10, 20, 35) },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-1px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                      {/* Allocation sliders */}
+                      <div style={CARD}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                          <div style={{ fontWeight: 700, fontSize: 14 }}>Allocation Sliders</div>
+                          <div style={{ fontSize: 12, color: allocTotal === 100 ? GREEN : YELLOW, fontWeight: 700, fontFamily: 'monospace' }}>
+                            {allocTotal}% {allocTotal !== 100 ? `(need ${100 - allocTotal > 0 ? '+' : ''}${100 - allocTotal}%)` : '✓'}
+                          </div>
+                        </div>
+                        {SIM_ASSETS.map(a => {
+                          const pct = simAlloc[a.ticker] || 0;
+                          const dollars = Math.round(w[a.ticker] * BUDGET);
+                          return (
+                            <div key={a.ticker} style={{ marginBottom: 18 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <span style={{ fontSize: 13, fontWeight: 700, color: a.color, fontFamily: 'monospace', minWidth: 36 }}>{a.ticker}</span>
+                                  <span style={{ fontSize: 11, color: TEXT2 }}>{a.type}</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <span style={{ fontSize: 12, color: TEXT2, fontFamily: 'monospace' }}>{fmt(dollars)}</span>
+                                  <input
+                                    type="number" min="0" max="100" value={pct}
+                                    onChange={e => setAlloc(a.ticker, e.target.value)}
+                                    style={{ width: 52, padding: '3px 6px', background: DARK, border: BORDER, borderRadius: 5, color: a.color, fontSize: 12, fontWeight: 700, fontFamily: 'monospace', textAlign: 'right', outline: 'none' }}
+                                  />
+                                  <span style={{ fontSize: 12, color: TEXT3 }}>%</span>
+                                </div>
+                              </div>
+                              <input
+                                type="range" min="0" max="100" value={pct}
+                                onChange={e => setAlloc(a.ticker, e.target.value)}
+                                style={{ width: '100%', accentColor: a.color, cursor: 'pointer' }}
+                              />
+                              <div style={{ fontSize: 11, color: TEXT3, marginTop: 2, lineHeight: 1.4 }}>{a.desc}</div>
+                            </div>
+                          );
+                        })}
+                        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                          <button onClick={() => setSimAlloc({ VTI: 60, BND: 0, VXUS: 30, SCHD: 10 })}
+                            style={{ flex: 1, padding: '6px 0', background: `${BLUE}10`, border: `1px solid ${BLUE}30`, borderRadius: 7, color: BLUE, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Aggressive</button>
+                          <button onClick={() => setSimAlloc({ VTI: 40, BND: 20, VXUS: 25, SCHD: 15 })}
+                            style={{ flex: 1, padding: '6px 0', background: `${GREEN}10`, border: `1px solid ${GREEN}30`, borderRadius: 7, color: GREEN, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Balanced</button>
+                          <button onClick={() => setSimAlloc({ VTI: 20, BND: 50, VXUS: 15, SCHD: 15 })}
+                            style={{ flex: 1, padding: '6px 0', background: `${YELLOW}10`, border: `1px solid ${YELLOW}30`, borderRadius: 7, color: YELLOW, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Conservative</button>
+                        </div>
+                      </div>
+
+                      {/* Allocation breakdown + return attribution */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div style={CARD}>
+                          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Allocation Breakdown</div>
+                          {SIM_ASSETS.map(a => {
+                            const pct = w[a.ticker] * 100;
+                            return (
+                              <div key={a.ticker} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 9 }}>
+                                <div style={{ width: 34, fontSize: 11, fontWeight: 700, color: a.color, fontFamily: 'monospace' }}>{a.ticker}</div>
+                                <div style={{ flex: 1, height: 7, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: `${pct}%`, background: a.color, borderRadius: 4, transition: 'width 0.2s' }} />
+                                </div>
+                                <div style={{ width: 40, textAlign: 'right', fontSize: 12, fontFamily: 'monospace', fontWeight: 600, color: pct > 0 ? a.color : TEXT3 }}>{pct.toFixed(0)}%</div>
+                                <div style={{ width: 58, textAlign: 'right', fontSize: 12, fontFamily: 'monospace', color: TEXT2 }}>{fmt(w[a.ticker] * BUDGET)}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div style={CARD}>
+                          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Return Attribution</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginBottom: 12 }}>Each asset's contribution to portfolio expected return</div>
+                          {SIM_ASSETS.map(a => {
+                            const contrib = w[a.ticker] * a.ret * 100;
+                            const pct = expRet > 0 ? (contrib / (expRet * 100)) * 100 : 0;
+                            return (
+                              <div key={a.ticker} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 9 }}>
+                                <div style={{ width: 34, fontSize: 11, fontWeight: 700, color: a.color, fontFamily: 'monospace' }}>{a.ticker}</div>
+                                <div style={{ flex: 1, height: 7, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: `${Math.max(0, pct)}%`, background: a.color, borderRadius: 4, transition: 'width 0.2s' }} />
+                                </div>
+                                <div style={{ width: 52, textAlign: 'right', fontSize: 12, fontFamily: 'monospace', color: contrib > 0 ? a.color : TEXT3 }}>{contrib.toFixed(2)}%</div>
+                              </div>
+                            );
+                          })}
+                          <div style={{ borderTop: `1px solid ${BORDER_C}`, marginTop: 10, paddingTop: 10, display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700 }}>
+                            <span>Total Expected Return</span>
+                            <span style={{ fontFamily: 'monospace', color: metricColor(expRet * 100, 4, 7, 10) }}>{(expRet * 100).toFixed(2)}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 10-year projection */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>10-Year Projection · $10,000 Starting Balance</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 18 }}>
+                        Bear = base −5pp &nbsp;·&nbsp; Base = {(expRet * 100).toFixed(1)}% &nbsp;·&nbsp; Bull = base +3pp. No annual contributions assumed.
+                      </div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Year', 'Bear', 'Base', 'Bull', 'Base vs. S&P 500*'].map((h, i) => (
+                                <th key={h} style={{ padding: '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[1, 3, 5, 7, 10].map(yr => {
+                              const bearR = Math.max(0, expRet - 0.05), baseR = expRet, bullR = expRet + 0.03;
+                              const bearV = BUDGET * Math.pow(1 + bearR, yr);
+                              const baseV = BUDGET * Math.pow(1 + baseR, yr);
+                              const bullV = BUDGET * Math.pow(1 + bullR, yr);
+                              const sp500 = BUDGET * Math.pow(1.105, yr);
+                              const diff = baseV - sp500;
+                              return (
+                                <tr key={yr} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                  <td style={{ padding: '10px 10px', fontWeight: 600 }}>Year {yr}</td>
+                                  <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: RED }}>{fmt(bearV)}</td>
+                                  <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: BLUE, fontWeight: 700 }}>{fmt(baseV)}</td>
+                                  <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>{fmt(bullV)}</td>
+                                  <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: diff >= 0 ? GREEN : RED, fontWeight: 600 }}>
+                                    {diff >= 0 ? '+' : ''}{fmt(Math.abs(diff))} {diff >= 0 ? 'ahead' : 'behind'}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div style={{ marginTop: 10, fontSize: 11, color: TEXT3 }}>* S&P 500 benchmark uses 10.5% historical annualized return. Projections are illustrative; past performance does not guarantee future results.</div>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: `${BLUE}06`, border: `1px solid ${BLUE}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: BLUE }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
+                        {[
+                          { term: 'Sharpe Ratio', formula: '(E[R] − Rf) / σ', body: 'Measures return per unit of risk. > 1.0 is excellent, 0.5–1.0 is good, < 0.5 is below average. The risk-free rate here is 5% (current T-bill).' },
+                          { term: 'Diversification Benefit', formula: 'σ_weighted − σ_portfolio', body: 'When assets are imperfectly correlated, portfolio volatility is lower than the weighted average of individual volatilities. This is the free lunch of investing.' },
+                          { term: 'Portfolio Variance', formula: 'Σᵢ Σⱼ wᵢwⱼσᵢσⱼρᵢⱼ', body: 'Variance depends not just on individual volatilities but on how assets co-move. Low or negative ρ (BND vs equities) sharply reduces overall risk.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: BLUE, marginBottom: 6, background: `${BLUE}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // fallback
+              return (
+                <div style={{ textAlign: 'center', padding: 60, color: TEXT2 }}>
+                  <div style={{ fontSize: 36, marginBottom: 16 }}>◫</div>
+                  <div style={{ fontWeight: 600 }}>No sandbox dataset loaded</div>
+                  <button onClick={() => { setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ marginTop: 16, padding: '8px 20px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, cursor: 'pointer', fontSize: 13 }}>Browse Datasets</button>
+                </div>
+              );
+            })()}
+
+            {panel === 'edu-assignments' && (() => {
+              const activeCourse = enrolledCourses.find(c => c.id === selectedCourseId) || enrolledCourses[0];
+              const baseAssign   = activeCourse.assignments;
+              const extraAssign  = customAssignments.filter(a => a.courseId === selectedCourseId);
+              const dsMap = Object.fromEntries(PREBUILT_DATASETS.map(d => [d.id, d]));
+              return (
+                <div>
+                  {/* Course selector */}
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                    {enrolledCourses.map(c => (
+                      <button key={c.id} onClick={() => setSelectedCourseId(c.id)}
+                        style={{ padding: '7px 14px', borderRadius: 8, border: selectedCourseId === c.id ? `1px solid ${c.color}` : BORDER, background: selectedCourseId === c.id ? `${c.color}12` : 'transparent', color: selectedCourseId === c.id ? c.color : TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>
+                        {c.code}: {c.name}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+                    <div>
+                      <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700 }}>Assignments</h1>
+                      <div style={{ fontSize: 13, color: TEXT2 }}>{activeCourse.name} · {activeCourse.semester} · {baseAssign.length + extraAssign.length} assignments</div>
+                    </div>
+                    {effectiveProfessor && selectedCourseId === 'fina3000' && (
+                      <button onClick={() => setShowCreateAssignment(true)} style={{ padding: '9px 16px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ New Assignment</button>
+                    )}
+                  </div>
+                  <div data-tour="edu-assignments-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {[...baseAssign, ...extraAssign].map(a => {
+                      const ds = a.datasetId ? dsMap[a.datasetId] : null;
+                      const now = new Date();
+                      const due = a.dueDate ? new Date(a.dueDate) : null;
+                      const isOverdue = !effectiveProfessor && due && now > due && !submittedAssignments.has(a.id) && a.status !== 'completed';
+                      const fmtDue = due ? due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;
+                      const statusColor = isOverdue ? RED : a.status === 'completed' ? GREEN : a.status === 'upcoming' ? YELLOW : BLUE;
+                      const statusBg = isOverdue ? 'rgba(248,113,113,0.08)' : a.status === 'completed' ? 'rgba(74,222,128,0.08)' : a.status === 'upcoming' ? 'rgba(251,191,36,0.08)' : 'rgba(77,163,255,0.08)';
+                      const detail = submissionDetails[a.id];
+                      const submittedLate = detail?.submitted_at && due && new Date(detail.submitted_at) > due;
+                      return (
+                        <div key={a.id} style={{ ...CARD }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+                                <span style={{ fontWeight: 700, fontSize: 15 }}>{a.title}</span>
+                                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: statusBg, color: statusColor, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                                  {isOverdue ? '⚠ Overdue' : a.status === 'completed' ? '✓ Completed' : a.status === 'upcoming' ? 'Upcoming' : 'Active'}
+                                </span>
+                                {a.custom && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Custom</span>}
+                              </div>
+                              <div style={{ fontSize: 12, color: TEXT2, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                                <span>{a.chapter}</span>
+                                <span>Week of {a.week}</span>
+                                <span>{a.points} pts</span>
+                                {fmtDue && <span style={{ color: isOverdue ? RED : due > now ? TEXT2 : TEXT3 }}>Due {fmtDue}</span>}
+                              </div>
+                            </div>
+                            {effectiveProfessor && a.status === 'completed' && (
+                              <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 16 }}>
+                                <div style={{ fontSize: 11, color: TEXT2, marginBottom: 2 }}>Submissions</div>
+                                <div style={{ fontWeight: 700, color: GREEN }}>{Object.values(profStudents).flatMap(d => d.submissions || []).filter(s => s.assignment_id === a.id).length} / {profCodes.reduce((s, c) => s + (c.student_count || 0), 0)}</div>
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, marginBottom: 12 }}>{a.description}</div>
+                          {ds && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: `${ds.color}0e`, border: `1px solid ${ds.color}30`, borderRadius: 8, marginBottom: 12 }}>
+                              <span style={{ fontSize: 10, fontWeight: 700, color: ds.color }}>Dataset</span>
+                              <span style={{ fontSize: 12, fontWeight: 600, color: TEXT }}>{ds.title}</span>
+                              <span style={{ fontSize: 11, color: TEXT3 }}>·</span>
+                              <span style={{ fontSize: 11, color: TEXT2 }}>{ds.subtitle}</span>
+                              <button onClick={() => { setExpandedDataset(ds.id); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ marginLeft: 'auto', padding: '4px 10px', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 6, color: ds.color, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                                Open Dataset →
+                              </button>
+                            </div>
+                          )}
+                          {/* Student submit row */}
+                          {!effectiveProfessor && (
+                            <div style={{ paddingTop: 4 }}>
+                              {submittedAssignments.has(a.id) || a.status === 'completed' ? (() => {
+                                const graded = detail?.grade != null;
+                                return (
+                                  <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                      <span style={{ fontSize: 12, fontWeight: 700, color: GREEN, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <span style={{ fontSize: 14 }}>✓</span> Submitted
+                                        {submittedLate && <span style={{ fontSize: 10, fontWeight: 700, color: YELLOW, background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 4, padding: '1px 6px' }}>Late</span>}
+                                      </span>
+                                      {graded && (
+                                        <span style={{ fontSize: 13, fontWeight: 700, color: detail.grade / a.points >= 0.9 ? GREEN : detail.grade / a.points >= 0.7 ? YELLOW : RED }}>
+                                          {detail.grade} / {a.points} pts · {Math.round((detail.grade / a.points) * 100)}%
+                                        </span>
+                                      )}
+                                    </div>
+                                    {graded && detail.feedback && (
+                                      <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(74,222,128,0.05)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 8 }}>
+                                        <div style={{ fontSize: 10, fontWeight: 700, color: GREEN, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 5 }}>Instructor Feedback</div>
+                                        <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6 }}>{detail.feedback}</div>
+                                      </div>
+                                    )}
+                                    {graded && !detail.feedback && (
+                                      <div style={{ marginTop: 6, fontSize: 11, color: TEXT3 }}>No feedback provided.</div>
+                                    )}
+                                    {!graded && (
+                                      <div style={{ marginTop: 4, fontSize: 11, color: TEXT3 }}>Awaiting grade from instructor.</div>
+                                    )}
+                                  </div>
+                                );
+                              })() : (
+                                <button onClick={() => { setShowSubmit(a); setSubmitNote(''); }}
+                                  style={{ padding: '7px 18px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                  Submit Assignment →
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          {/* Professor submission count */}
+                          {effectiveProfessor && (a.status === 'active' || a.status === 'upcoming') && (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingTop: 4 }}>
+                              <span style={{ fontSize: 12, color: TEXT2 }}>{Object.values(profStudents).flatMap(d => d.submissions || []).filter(s => s.assignment_id === a.id).length} / {profCodes.reduce((s, c) => s + (c.student_count || 0), 0)} submitted</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
           </>
         )}
         </div>
+
+        {/* ── AI ASSISTANT FLOATING BUBBLE ── */}
+        {canSeeAI && panel !== 'assistant' && (
+          <button
+            onClick={() => { setPanel('assistant'); switchEduMode(false); }}
+            title="AI Assistant (⌘K)"
+            style={{ position: 'fixed', bottom: 28, right: 28, width: 46, height: 46, borderRadius: '50%', background: BLUE_BTN, color: '#fff', border: 'none', fontSize: 18, cursor: 'pointer', zIndex: 90, boxShadow: '0 4px 20px rgba(0,102,245,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.15s, box-shadow 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,102,245,0.6)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,102,245,0.45)'; }}
+          >
+            ✦
+          </button>
+        )}
+      {/* ── ADD TAB MODAL ── */}
+      {showAddTab && (
+        <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowAddTab(false); }}>
+          <div style={{ background: CARD_BG, borderRadius: 16, padding: 28, width: 360, border: BORDER }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 18 }}>Add Content Tab</div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Tab Name</label>
+            <input autoFocus value={addTabName} onChange={e => setAddTabName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && addTabName.trim()) { const key = addTabName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''); const updated = { ...profCustomTabs, [selectedCourseId]: [...(profCustomTabs[selectedCourseId] || []), { key, label: addTabName.trim() }] }; setProfCustomTabs(updated); localStorage.setItem('basis_prof_tabs', JSON.stringify(updated)); setContentFolder(key); setShowAddTab(false); } }} placeholder="e.g. Videos, Links, Notes" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: BORDER, background: DARK, color: TEXT, fontSize: 13, marginBottom: 20, boxSizing: 'border-box' }} />
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowAddTab(false)} style={{ flex: 1, padding: '9px 0', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button disabled={!addTabName.trim()} onClick={() => { const key = addTabName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''); const updated = { ...profCustomTabs, [selectedCourseId]: [...(profCustomTabs[selectedCourseId] || []), { key, label: addTabName.trim() }] }; setProfCustomTabs(updated); localStorage.setItem('basis_prof_tabs', JSON.stringify(updated)); setContentFolder(key); setShowAddTab(false); }} style={{ flex: 1, padding: '9px 0', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 13, fontWeight: 700, cursor: addTabName.trim() ? 'pointer' : 'not-allowed', opacity: addTabName.trim() ? 1 : 0.5 }}>Add Tab</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TICKER CHART MODAL ── */}
+      {selectedTicker && (
+        <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setSelectedTicker(null); }}>
+          <div style={{ background: CARD_BG, borderRadius: 16, padding: 28, width: '90%', maxWidth: 680, border: BORDER }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: TEXT }}>{selectedTicker.symbol}</div>
+                {selectedTicker.name !== selectedTicker.symbol && (
+                  <div style={{ fontSize: 13, color: TEXT2, marginTop: 2 }}>{selectedTicker.name}</div>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {[['1wk','1W'],['1mo','1M'],['3mo','3M'],['6mo','6M'],['1y','1Y']].map(([key, label]) => (
+                  <button key={key} onClick={() => { setTickerChartPeriod(key); fetchTickerChart(selectedTicker.symbol, key); }}
+                    style={{ padding: '5px 13px', borderRadius: 7, border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                      background: tickerChartPeriod === key ? BLUE_BTN : MUTED,
+                      color: tickerChartPeriod === key ? '#fff' : TEXT2 }}>
+                    {label}
+                  </button>
+                ))}
+                <button onClick={() => setSelectedTicker(null)}
+                  style={{ marginLeft: 8, background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, width: 32, height: 32, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+              </div>
+            </div>
+            <SP500Chart candles={tickerChartCandles} period={tickerChartPeriod} onPeriodChange={() => {}} hidePeriods />
+            {(() => {
+              const ext = extendedTickerData[selectedTicker.symbol] || {};
+              const d1 = ext.changePct1d != null ? ext.changePct1d : (selectedTicker.changePct || null);
+              const pct = (v, label) => {
+                if (v == null) return null;
+                const up = v >= 0;
+                return (
+                  <div key={label} style={{ flex: 1, padding: '12px 16px', background: DARK, borderRadius: 10, textAlign: 'center', border: BORDER }}>
+                    <div style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: up ? GREEN : RED }}>{up ? '+' : ''}{v.toFixed(2)}%</div>
+                  </div>
+                );
+              };
+              return (
+                <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+                  {pct(d1, '1 Day')}
+                  {pct(ext.changePct1w ?? null, '1 Week')}
+                  {pct(ext.changePct1m ?? null, '1 Month')}
+                  <div style={{ flex: 1, padding: '12px 16px', background: DARK, borderRadius: 10, textAlign: 'center', border: BORDER }}>
+                    <div style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Price</div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: TEXT, fontFamily: 'monospace' }}>
+                      ${(selectedTicker.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* ── ADD CONTENT ITEM MODAL ── */}
+      {showAddContentModal && (
+        <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowAddContentModal(null); }}>
+          <div style={{ background: CARD_BG, borderRadius: 16, padding: 28, width: 420, border: BORDER }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 18 }}>Add Content Item</div>
+            {[['Title', 'title', 'text', 'Article title, video name, etc.'], ['URL (optional)', 'url', 'url', 'https://...'], ['Description (optional)', 'description', 'text', 'Brief description']].map(([label, field, type, placeholder]) => (
+              <div key={field} style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>{label}</label>
+                <input type={type} value={addContentForm[field]} onChange={e => setAddContentForm(p => ({ ...p, [field]: e.target.value }))} placeholder={placeholder} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: BORDER, background: DARK, color: TEXT, fontSize: 13, boxSizing: 'border-box' }} />
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
+              <button onClick={() => setShowAddContentModal(null)} style={{ flex: 1, padding: '9px 0', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button disabled={!addContentForm.title.trim()} onClick={() => { const ck = `${showAddContentModal.courseId}_${showAddContentModal.folder}`; const item = { id: Date.now().toString(), title: addContentForm.title.trim(), url: addContentForm.url.trim(), description: addContentForm.description.trim() }; const updated = { ...profCustomContent, [ck]: [...(profCustomContent[ck] || []), item] }; setProfCustomContent(updated); localStorage.setItem('basis_prof_content', JSON.stringify(updated)); setShowAddContentModal(null); }} style={{ flex: 1, padding: '9px 0', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 13, fontWeight: 700, cursor: addContentForm.title.trim() ? 'pointer' : 'not-allowed', opacity: addContentForm.title.trim() ? 1 : 0.5 }}>Add Item</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MOBILE BOTTOM NAV ──────────────────────────── */}
+      {isMobile && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: SIDE_BG, borderTop: BORDER, zIndex: 200, display: 'flex', paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: 4 }}>
+          {!eduMode ? (
+            <>
+              {NAV.filter(n => n.section === 'finance' && !hiddenPanels.has(n.key)).map(({ key, label, icon }) => (
+                <button key={key} onClick={() => { setPanel(key); switchEduMode(false); }}
+                  style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: (panel === key && !eduMode) ? BLUE : TEXT3, fontSize: 10, fontWeight: (panel === key && !eduMode) ? 700 : 400, transition: 'color 0.15s', minWidth: 0 }}>
+                  <span style={{ fontSize: 19, lineHeight: 1 }}>{icon}</span>
+                  <span style={{ fontSize: 9, letterSpacing: '0.2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{label}</span>
+                </button>
+              ))}
+              {!isUser && (
+                <button onClick={() => { switchEduMode(true); setPanel('edu-courses'); }}
+                  style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: TEXT3, fontSize: 10, fontWeight: 400, transition: 'color 0.15s', borderLeft: `1px solid ${BORDER_C}`, minWidth: 0 }}>
+                  <span style={{ fontSize: 19, lineHeight: 1 }}>◫</span>
+                  <span style={{ fontSize: 9, letterSpacing: '0.2px' }}>Education</span>
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              {NAV.filter(n => n.section === 'education' && !hiddenPanels.has(n.key)).map(({ key, label, icon }) => (
+                <button key={key} onClick={() => { setPanel(key); switchEduMode(true); }}
+                  style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: panel === key ? GREEN : TEXT3, fontSize: 10, fontWeight: panel === key ? 700 : 400, transition: 'color 0.15s', minWidth: 0 }}>
+                  <span style={{ fontSize: 19, lineHeight: 1 }}>{icon}</span>
+                  <span style={{ fontSize: 9, letterSpacing: '0.2px' }}>{label}</span>
+                </button>
+              ))}
+              {effectiveProfessor && (
+                <button onClick={() => { setPanel('prof-dashboard'); switchEduMode(true); }}
+                  style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: panel === 'prof-dashboard' ? GREEN : TEXT3, fontSize: 10, fontWeight: panel === 'prof-dashboard' ? 700 : 400, transition: 'color 0.15s', minWidth: 0 }}>
+                  <span style={{ fontSize: 19, lineHeight: 1 }}>⊟</span>
+                  <span style={{ fontSize: 9, letterSpacing: '0.2px' }}>Prof Hub</span>
+                </button>
+              )}
+              <button onClick={() => { switchEduMode(false); setPanel('overview'); }}
+                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: TEXT3, fontSize: 10, fontWeight: 400, transition: 'color 0.15s', borderLeft: `1px solid ${BORDER_C}`, minWidth: 0 }}>
+                <span style={{ fontSize: 19, lineHeight: 1 }}>⊞</span>
+                <span style={{ fontSize: 9, letterSpacing: '0.2px' }}>Finance</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       </main>
     </div>
   );

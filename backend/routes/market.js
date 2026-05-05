@@ -4,17 +4,23 @@ const axios = require('axios');
 
 let yahooFinance = null;
 try {
-  const mod = require('yahoo-finance2');
-  // v3 exports the class as the module itself or as .YahooFinance
-  const Ctor = mod.YahooFinance || (typeof mod.default === 'function' ? mod.default : null) || (typeof mod === 'function' ? mod : null);
-  if (Ctor) yahooFinance = new Ctor({ suppressNotices: ['yahooSurvey', 'ripHistorical'] });
-  else console.warn('yahoo-finance2: unexpected export shape', Object.keys(mod));
+  const YahooFinance = require('yahoo-finance2').default;
+  yahooFinance = new YahooFinance({
+    suppressNotices: ['yahooSurvey', 'ripHistorical'],
+    validation: { logErrors: false },
+  });
 } catch (e) { console.warn('yahoo-finance2 init failed:', e.message); }
 
-const CACHE = { FG: 15 * 60 * 1000, TICKERS: 2 * 60 * 1000, CHART: 10 * 60 * 1000 };
-let fgCache      = { data: null, ts: 0 };
-let tickersCache = { data: null, ts: 0 };
-const chartCache = {};
+const CACHE = { FG: 15 * 60 * 1000, TICKERS: 2 * 60 * 1000, CHART: 10 * 60 * 1000, YIELD: 60 * 60 * 1000 };
+let fgCache         = { data: null, ts: 0 };
+let tickersCache    = { data: null, ts: 0 };
+let yieldCurveCache = { data: null, ts: 0 };
+const chartCache    = {};
+const screenerCache = {};
+const quotesCache   = {};
+
+const YIELD_SYMBOLS = ['^IRX', '^FVX', '^TNX', '^TYX'];
+const YIELD_META    = { '^IRX': { label: '3M', years: 0.25 }, '^FVX': { label: '5Y', years: 5 }, '^TNX': { label: '10Y', years: 10 }, '^TYX': { label: '30Y', years: 30 } };
 
 const INDEX_NAMES = { '^GSPC': 'S&P 500', '^DJI': 'Dow 30', '^IXIC': 'Nasdaq', '^RUT': 'Russell 2K' };
 
@@ -75,6 +81,121 @@ router.get('/tickers', async (req, res) => {
   }
 });
 
+// ── Screener: most active / gainers / losers ──────────────────────────────────
+router.get('/screener', async (req, res) => {
+  const VALID = ['most_actives', 'day_gainers', 'day_losers'];
+  const type  = VALID.includes(req.query.type) ? req.query.type : 'most_actives';
+  if (screenerCache[type] && Date.now() - screenerCache[type].ts < CACHE.TICKERS) return res.json(screenerCache[type].data);
+  if (!yahooFinance) return res.json({ quotes: [] });
+  try {
+    const mapQ = q => ({
+      symbol: q.symbol,
+      name: q.shortName || q.symbol,
+      price: q.regularMarketPrice,
+      change: q.regularMarketChange,
+      changePct: q.regularMarketChangePercent,
+    });
+    const result = await yahooFinance.screener({ scrIds: type, count: 12, region: 'US', lang: 'en-US' });
+    const quotes = (result?.quotes || []).filter(q => q.symbol && !q.symbol.startsWith('^')).slice(0, 12).map(mapQ);
+    screenerCache[type] = { data: { quotes }, ts: Date.now() };
+    res.json({ quotes });
+  } catch (err) {
+    console.error(`Screener (${type}) error:`, err.message);
+    if (screenerCache[type]) return res.json(screenerCache[type].data);
+    res.json({ quotes: [] });
+  }
+});
+
+// ── Quotes: arbitrary symbols (Your List) ─────────────────────────────────────
+router.get('/quotes', async (req, res) => {
+  const symbols = (req.query.symbols || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean).slice(0, 20);
+  if (!symbols.length) return res.json({ quotes: [] });
+  const key = symbols.slice().sort().join(',');
+  if (quotesCache[key] && Date.now() - quotesCache[key].ts < CACHE.TICKERS) return res.json(quotesCache[key].data);
+  if (!yahooFinance) return res.json({ quotes: [] });
+  try {
+    const results = await Promise.allSettled(symbols.map(s => yahooFinance.quote(s)));
+    const quotes = results.map((r, i) => {
+      if (r.status !== 'fulfilled' || !r.value) return null;
+      const q = r.value;
+      return { symbol: q.symbol || symbols[i], name: q.shortName || q.symbol || symbols[i], price: q.regularMarketPrice, change: q.regularMarketChange, changePct: q.regularMarketChangePercent };
+    }).filter(Boolean);
+    quotesCache[key] = { data: { quotes }, ts: Date.now() };
+    res.json({ quotes });
+  } catch (err) {
+    console.error('Quotes error:', err.message);
+    if (quotesCache[key]) return res.json(quotesCache[key].data);
+    res.json({ quotes: [] });
+  }
+});
+
+// ── Quotes extended: 1D / 1W / 1M % changes ──────────────────────────────────
+const extendedCache = {};
+router.get('/quotes-extended', async (req, res) => {
+  const symbols = (req.query.symbols || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean).slice(0, 20);
+  if (!symbols.length) return res.json({ quotes: [] });
+  const key = symbols.slice().sort().join(',');
+  if (extendedCache[key] && Date.now() - extendedCache[key].ts < CACHE.TICKERS) return res.json(extendedCache[key].data);
+  if (!yahooFinance) return res.json({ quotes: [] });
+  try {
+    const period1 = new Date(Date.now() - 35 * 24 * 60 * 60 * 1000);
+    const period2 = new Date();
+    const results = await Promise.allSettled(
+      symbols.map(s => yahooFinance.chart(s, { period1, period2, interval: '1d' }))
+    );
+    const quotes = results.map((r, i) => {
+      if (r.status !== 'fulfilled') return { symbol: symbols[i], changePct1d: null, changePct1w: null, changePct1m: null };
+      const candles = (r.value.quotes || []).filter(c => c.close != null);
+      if (candles.length < 2) return { symbol: symbols[i], changePct1d: null, changePct1w: null, changePct1m: null };
+      const last   = candles[candles.length - 1].close;
+      const prev1d = candles[candles.length - 2].close;
+      const prev1w = (candles.length >= 6 ? candles[candles.length - 6] : candles[0]).close;
+      const prev1m = candles[0].close;
+      return {
+        symbol: symbols[i],
+        changePct1d: ((last - prev1d) / prev1d) * 100,
+        changePct1w: ((last - prev1w) / prev1w) * 100,
+        changePct1m: ((last - prev1m) / prev1m) * 100,
+      };
+    });
+    const data = { quotes };
+    extendedCache[key] = { data, ts: Date.now() };
+    res.json(data);
+  } catch (err) {
+    console.error('Quotes-extended error:', err.message);
+    if (extendedCache[key]) return res.json(extendedCache[key].data);
+    res.json({ quotes: [] });
+  }
+});
+
+// ── Chart for any symbol ───────────────────────────────────────────────────────
+router.get('/chart/:symbol', async (req, res) => {
+  const symbol = req.params.symbol.toUpperCase();
+  const period = req.query.period || '3mo';
+  const cacheKey = `sym-${symbol}-${period}`;
+  if (chartCache[cacheKey] && Date.now() - chartCache[cacheKey].ts < CACHE.CHART) return res.json(chartCache[cacheKey].data);
+  if (!yahooFinance) return res.json({ candles: [] });
+  try {
+    const daysMap = { '1wk': 9, '1mo': 35, '3mo': 92, '6mo': 183, '1y': 366 };
+    const days = daysMap[period] || 92;
+    const period1 = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const period2 = new Date();
+    const result = await yahooFinance.chart(symbol, { period1, period2, interval: '1d' });
+    const candles = (result.quotes || [])
+      .filter(c => c.close != null)
+      .map(c => ({
+        date: c.date instanceof Date ? c.date.toISOString().slice(0, 10) : String(c.date).slice(0, 10),
+        close: c.close, open: c.open, high: c.high, low: c.low,
+      }));
+    chartCache[cacheKey] = { data: { candles }, ts: Date.now() };
+    res.json({ candles });
+  } catch (err) {
+    console.error(`Chart (${symbol}) error:`, err.message);
+    if (chartCache[cacheKey]) return res.json(chartCache[cacheKey].data);
+    res.json({ candles: [] });
+  }
+});
+
 // ── S&P 500 historical chart ───────────────────────────────────────────────────
 router.get('/sp500', async (req, res) => {
   const period = req.query.period || '3mo';
@@ -105,6 +226,29 @@ router.get('/sp500', async (req, res) => {
     console.error('SP500 chart error:', err.message);
     if (chartCache[cacheKey]) return res.json(chartCache[cacheKey].data);
     res.json({ candles: [] });
+  }
+});
+
+// ── US Treasury Yield Curve ───────────────────────────────────────────────────
+router.get('/yield-curve', async (req, res) => {
+  if (yieldCurveCache.data && Date.now() - yieldCurveCache.ts < CACHE.YIELD) return res.json(yieldCurveCache.data);
+  if (!yahooFinance) return res.json({ tenors: [], date: null });
+  try {
+    const results = await Promise.allSettled(YIELD_SYMBOLS.map(s => yahooFinance.quote(s)));
+    const tenors = results.map((r, i) => {
+      if (r.status !== 'fulfilled') return null;
+      const sym = YIELD_SYMBOLS[i];
+      const rate = r.value.regularMarketPrice;
+      return { label: YIELD_META[sym].label, years: YIELD_META[sym].years, rate: +rate.toFixed(3) };
+    }).filter(Boolean);
+    const result = { date: new Date().toISOString().slice(0, 10), tenors };
+    yieldCurveCache = { data: result, ts: Date.now() };
+    console.log(`Yield curve: ${tenors.map(t => `${t.label}=${t.rate}%`).join(', ')}`);
+    res.json(result);
+  } catch (err) {
+    console.error('Yield curve error:', err.message);
+    if (yieldCurveCache.data) return res.json(yieldCurveCache.data);
+    res.json({ tenors: [], date: null });
   }
 });
 

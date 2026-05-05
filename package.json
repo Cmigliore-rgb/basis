@@ -1,16 +1,49 @@
 {
-  "name": "ledger",
+  "name": "basis",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Basis personal finance platform",
+  "main": "electron/main.js",
+  "type": "commonjs",
   "scripts": {
-    "dev": "concurrently --names \"backend,frontend,ngrok\" --prefix-colors \"blue,green,yellow\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\" \"ngrok http --domain=appendix-irritant-headsman.ngrok-free.dev 3001\""
+    "dev": "concurrently --names \"backend,frontend\" --prefix-colors \"blue,green\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "electron:dev": "electron .",
+    "electron:build": "npm run build:frontend && npx @electron/rebuild --module-dir backend && electron-builder build --win",
+    "build:frontend": "cd frontend && npm run build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "build": {
+    "appId": "com.basis.app",
+    "productName": "Basis",
+    "electronVersion": "30.5.1",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "backend",
+        "to": "backend",
+        "filter": ["**/*", "!ledger.db", "!data.json", "!server.log", "!*.pem", "!*.zip"]
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "@electron/rebuild": "^3.6.0",
+    "concurrently": "^9.2.1",
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.0"
   }
 }

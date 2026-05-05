@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 
-export default function PlaidLink({ onSuccess }) {
+export default function PlaidLink({ onSuccess, locked, onLocked }) {
   const [linkToken, setLinkToken] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (locked) return;
     api.post('/plaid/create_link_token')
       .then(r => setLinkToken(r.data.link_token))
       .catch(err => console.error('Plaid link token error:', err));
-  }, []);
+  }, [locked]);
 
   useEffect(() => {
     if (!linkToken) return;
@@ -46,6 +47,31 @@ export default function PlaidLink({ onSuccess }) {
     return () => { if (document.body.contains(script)) document.body.removeChild(script); };
   }, [linkToken, onSuccess]);
 
+  if (locked) {
+    return (
+      <button
+        onClick={onLocked}
+        style={{
+          width: '100%',
+          padding: '9px 0',
+          background: 'rgba(77,163,255,0.08)',
+          color: '#4da3ff',
+          border: '1px solid rgba(77,163,255,0.25)',
+          borderRadius: 6,
+          cursor: 'pointer',
+          fontSize: 13,
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+        }}
+      >
+        + Connect Account
+      </button>
+    );
+  }
+
   return (
     <button
       onClick={() => window._plaidLinkHandler?.open()}
@@ -62,7 +88,7 @@ export default function PlaidLink({ onSuccess }) {
         fontWeight: 600,
       }}
     >
-      {loading ? 'Connecting...' : '+ Connect via Plaid'}
+      {loading ? 'Connecting...' : '+ Connect Account'}
     </button>
   );
 }

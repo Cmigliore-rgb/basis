@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { PlaidApi, PlaidEnvironments, Configuration, Products, CountryCode } = require('plaid');
 const store = require('../store');
+const requireAuth = require('../middleware/requireAuth');
 
 const config = new Configuration({
   basePath: PlaidEnvironments[process.env.PLAID_ENV || 'production'],
@@ -20,8 +21,8 @@ router.post('/create_link_token', async (req, res) => {
   try {
     const params = {
       user: { client_user_id: 'ledger-user' },
-      client_name: 'Ledger',
-      products: [Products.Transactions, Products.Investments],
+      client_name: 'Basis',
+      products: [Products.Transactions],
       country_codes: [CountryCode.Us],
       language: 'en',
     };
@@ -53,17 +54,10 @@ router.post('/exchange_token', async (req, res) => {
 });
 
 // FETCH ALL ACCOUNTS
-router.get('/accounts', async (req, res) => {
-  const tokens = req.app.locals.accessTokens || [];
-  if (!tokens.length) return res.json({ accounts: [] });
+router.get('/accounts', requireAuth, async (req, res) => {
   try {
-    const allAccounts = await Promise.all(
-      tokens.map(async ({ access_token, institution_name }) => {
-        const r = await plaidClient.accountsGet({ access_token });
-        return r.data.accounts.map(a => ({ ...a, institution_name }));
-      })
-    );
-    res.json({ accounts: allAccounts.flat() });
+    const { getAccounts } = require('../data_controller');
+    res.json(await getAccounts(req));
   } catch (err) {
     console.error('accounts error:', err.response?.data || err.message);
     res.status(500).json({ error: err.message });

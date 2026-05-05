@@ -2,11 +2,16 @@ node_modules/
 .env
 backend/.env
 backend/data.json
+backend/ledger.db
 frontend/.env
 frontend/dist/
 dist/
 .DS_Store
 *.log
+
+# Build output
+release/
+backend/public/
 
 # Zip archives / downloaded SDKs
 *.zip

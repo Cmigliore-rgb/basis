@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx --no react-scripts build)",
+      "Bash(node_modules/.bin/react-scripts build *)",
+      "Bash(awk 'NR>=722 && NR<=877' c:/Users/conno/ledger/frontend/src/pages/Dashboard.jsx)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \"LISTENING\")",
+      "Bash(findstr \":5173\\\\|:3001\")"
+    ]
+  }
+}

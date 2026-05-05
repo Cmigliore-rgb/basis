@@ -12,9 +12,9 @@ try {
 
 const parser = new Parser({ timeout: 8000 });
 
-const WSJ_FEEDS = [
-  'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
-  'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
+const REUTERS_FEEDS = [
+  'https://feeds.reuters.com/reuters/businessNews',
+  'https://feeds.reuters.com/reuters/topNews',
 ];
 
 const BLOOMBERG_FEEDS = [
@@ -94,8 +94,8 @@ function interleave(arrays) {
 router.get('/', async (req, res) => {
   const { tickers } = req.query;
   try {
-    const [wsjRes, bloombergRes, yahooRes] = await Promise.allSettled([
-      fetchRSSFeed(WSJ_FEEDS, 'WSJ'),
+    const [reutersRes, bloombergRes, yahooRes] = await Promise.allSettled([
+      fetchRSSFeed(REUTERS_FEEDS, 'Reuters'),
       fetchRSSFeed(BLOOMBERG_FEEDS, 'Bloomberg'),
       fetchYahooNews(),
     ]);
@@ -106,14 +106,14 @@ router.get('/', async (req, res) => {
     };
 
     // Sort each source independently newest-first, cap at 20 each
-    const wsj       = dedup(wsjRes.status       === 'fulfilled' ? wsjRes.value       : []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
+    const reuters   = dedup(reutersRes.status   === 'fulfilled' ? reutersRes.value   : []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
     const bloomberg = dedup(bloombergRes.status === 'fulfilled' ? bloombergRes.value : []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
     const yahoo     = dedup(yahooRes.status     === 'fulfilled' ? yahooRes.value     : []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
 
-    console.log(`News sources — WSJ: ${wsj.length}, Bloomberg: ${bloomberg.length}, Yahoo: ${yahoo.length}`);
+    console.log(`News sources: Reuters: ${reuters.length}, Bloomberg: ${bloomberg.length}, Yahoo: ${yahoo.length}`);
 
     // Round-robin so no single source dominates
-    let articles = interleave([wsj, bloomberg, yahoo]).slice(0, 60);
+    let articles = interleave([reuters, bloomberg, yahoo]).slice(0, 60);
 
     if (tickers) {
       const terms = tickers.toUpperCase().split(',').map(t => t.trim());
