@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "concurrently --names \"backend,frontend\" --prefix-colors \"blue,green\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
     "electron:dev": "electron .",
-    "electron:build": "npm run build:frontend && npx @electron/rebuild --module-dir backend && electron-builder build --win",
+    "electron:build": "electron-builder build --win",
     "build:frontend": "cd frontend && npm run build"
   },
   "keywords": [],
@@ -22,13 +22,6 @@
     },
     "files": [
       "electron/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "backend",
-        "to": "backend",
-        "filter": ["**/*", "!ledger.db", "!data.json", "!server.log", "!*.pem", "!*.zip"]
-      }
     ],
     "win": {
       "target": "nsis"
