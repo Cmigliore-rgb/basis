@@ -53,7 +53,7 @@ async function getTransactions(req, start, end) {
 
 async function getHoldings(req) {
   const tokens = getUserTokens(req.user.id);
-  if (!tokens.length) return { holdings: getDummyData().holdings };
+  if (!tokens.length) return { holdings: getDummyData().holdings, demo: true };
 
   const results = await Promise.all(
     tokens.map(({ access_token }) =>
@@ -68,11 +68,14 @@ async function getHoldings(req) {
     securities.forEach(s => { securitiesMap[s.security_id] = s; });
   });
 
-  return {
-    holdings: results
-      .flatMap(({ holdings }) => holdings)
-      .map(h => ({ ...h, security: securitiesMap[h.security_id] || {} })),
-  };
+  const holdings = results
+    .flatMap(({ holdings }) => holdings)
+    .map(h => ({ ...h, security: securitiesMap[h.security_id] || {} }));
+
+  // User has bank accounts connected but no brokerage — don't show demo investments
+  if (!holdings.length) return { holdings: [], noBrokerage: true };
+
+  return { holdings };
 }
 
 module.exports = { getAccounts, getTransactions, getHoldings };

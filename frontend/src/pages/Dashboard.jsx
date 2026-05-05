@@ -1629,6 +1629,7 @@ export default function Dashboard() {
   const [isDemoData, setIsDemoData] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [holdings, setHoldings] = useState([]);
+  const [noBrokerage, setNoBrokerage] = useState(false);
   const [budget, setBudget] = useState([]);
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1979,8 +1980,10 @@ export default function Dashboard() {
         .sort((a, b) => b.total - a.total);
       setBudget(budgetData);
 
-      const allHoldings = hold.status === 'fulfilled' ? hold.value.data.holdings || [] : [];
+      const holdData    = hold.status === 'fulfilled' ? hold.value.data : {};
+      const allHoldings = holdData.holdings || [];
       setHoldings(allHoldings);
+      setNoBrokerage(!!holdData.noBrokerage);
       if (news.status  === 'fulfilled') setArticles(news.value.data.articles || []);
       if (snaps.status === 'fulfilled') setSnapshots(snaps.value.data.snapshots || []);
       if (limits.status   === 'fulfilled') setBudgetLimits(limits.value.data.limits   || {});
@@ -5530,7 +5533,21 @@ export default function Dashboard() {
                     )}
                   </div>
                   {activeHoldings.length === 0 ? (
-                    <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>No holdings found. Connect an investment account via Plaid.</div>
+                    <div style={{ textAlign: 'center', padding: '32px 24px' }}>
+                      <div style={{ fontSize: 28, marginBottom: 12 }}>📈</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 8 }}>No brokerage account connected</div>
+                      <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, maxWidth: 340, margin: '0 auto 20px' }}>
+                        {noBrokerage
+                          ? 'Your bank account is connected but you have no brokerage linked. Connect a Fidelity, Schwab, or other investment account to see your real portfolio here.'
+                          : 'Connect an investment account to track your portfolio, holdings, and performance in real time.'}
+                      </div>
+                      {isAdmin && !viewAs && (
+                        <button onClick={() => window._plaidLinkHandler?.open()}
+                          style={{ padding: '10px 24px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                          + Connect Brokerage
+                        </button>
+                      )}
+                    </div>
                   ) : (
                     <>
                       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
