@@ -2,18 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const BG      = '#0f0f0f';
-const BG2     = '#141414';
-const CARD    = '#1c1c1e';
-const BORDER  = '#2a2a2a';
-const TEXT    = '#f0f0f0';
-const TEXT2   = '#8e8e93';
-const TEXT3   = '#444';
-const BLUE    = '#4da3ff';
+const BG       = '#0f0f0f';
+const CARD     = '#1c1c1e';
+const BORDER   = '#2a2a2a';
+const TEXT     = '#f0f0f0';
+const TEXT2    = '#8e8e93';
+const TEXT3    = '#444';
+const BLUE     = '#4da3ff';
 const BLUE_BTN = '#0066f5';
-const GREEN   = '#4ade80';
-const PURPLE  = '#a78bfa';
-const YELLOW  = '#fbbf24';
+const GREEN    = '#4ade80';
+const PURPLE   = '#a78bfa';
+const YELLOW   = '#fbbf24';
 
 const DOWNLOAD_URL = 'https://github.com/Cmigliore-rgb/basis/releases/download/untagged-a510778e091885ecca62/Basis.Setup.1.0.0.exe';
 
@@ -26,17 +25,17 @@ const FEATURES = [
   {
     icon: '◫', color: GREEN,
     title: 'Personal Finance Education',
-    desc: 'Work through real assignments — budgeting, tax analysis, investment modeling — tied to actual course curriculum.',
+    desc: 'Work through real assignments on budgeting, tax analysis, and investment modeling tied to actual course curriculum.',
   },
   {
     icon: '⊞', color: PURPLE,
     title: 'Professor Hub',
-    desc: 'Instructors get a live view of class progress: submissions, grades, engagement metrics, and one-click feedback.',
+    desc: 'Instructors get a live view of class progress with submissions, grades, engagement metrics, and one-click feedback.',
   },
   {
     icon: '◈', color: YELLOW,
     title: 'Live Market Data',
-    desc: 'S&P 500, sector performance, the fear & greed index, yield curve, and macro indicators — all in one panel.',
+    desc: 'S&P 500, sector performance, the fear and greed index, yield curve, and macro indicators all in one panel.',
   },
   {
     icon: '◉', color: '#f87171',
@@ -45,13 +44,13 @@ const FEATURES = [
   },
   {
     icon: '⬡', color: '#34d399',
-    title: 'Goals & Net Worth Tracking',
+    title: 'Goals and Net Worth Tracking',
     desc: 'Set savings targets, track monthly snapshots, and watch your net worth grow over time with visual progress charts.',
   },
 ];
 
 const STEPS = [
-  { n: '01', title: 'Create your account', desc: 'Sign up free in under a minute — no credit card required.' },
+  { n: '01', title: 'Create your account', desc: 'Sign up free in under a minute. No credit card required.' },
   { n: '02', title: 'Connect your finances', desc: 'Link bank accounts and investment portfolios securely via Plaid.' },
   { n: '03', title: 'Learn and track', desc: 'Work through assignments, explore your data, and build real financial literacy.' },
 ];
@@ -74,7 +73,7 @@ export default function Landing() {
   return (
     <div style={{ background: BG, color: TEXT, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', minHeight: '100vh' }}>
 
-      {/* ── Navbar ─────────────────────────────────────────────────── */}
+      {/* Navbar */}
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
         padding: '0 40px', height: 60,
@@ -97,14 +96,9 @@ export default function Landing() {
         </div>
       </nav>
 
-      {/* ── Hero ───────────────────────────────────────────────────── */}
+      {/* Hero */}
       <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '120px 24px 80px', position: 'relative', overflow: 'hidden' }}>
-        {/* background glow */}
         <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, height: 600, background: `radial-gradient(circle, ${BLUE}0f 0%, transparent 70%)`, pointerEvents: 'none' }} />
-
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: `${BLUE}14`, border: `1px solid ${BLUE}30`, borderRadius: 100, fontSize: 12, fontWeight: 600, color: BLUE, marginBottom: 28, letterSpacing: '0.3px' }}>
-          Built for UGA · FINA 3000 Personal Finance
-        </div>
 
         <h1 style={{ fontSize: 'clamp(40px, 7vw, 80px)', fontWeight: 800, letterSpacing: '-3px', lineHeight: 1.05, margin: '0 0 24px', maxWidth: 800 }}>
           Your finances,<br />
@@ -112,7 +106,7 @@ export default function Landing() {
         </h1>
 
         <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: TEXT2, maxWidth: 520, lineHeight: 1.65, margin: '0 0 40px' }}>
-          Basis combines a live personal finance dashboard with curriculum-aligned education — built for students, instructors, and anyone serious about their money.
+          Basis brings together a live personal finance dashboard and hands-on education tools for students, instructors, and anyone who wants to get serious about their money.
         </p>
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -126,10 +120,10 @@ export default function Landing() {
           </a>
         </div>
 
-        <p style={{ marginTop: 16, fontSize: 12, color: TEXT3 }}>Free to use · No credit card required · Windows desktop app available</p>
+        <p style={{ marginTop: 16, fontSize: 12, color: TEXT3 }}>Free to use. No credit card required. Windows desktop app available.</p>
       </section>
 
-      {/* ── Features ───────────────────────────────────────────────── */}
+      {/* Features */}
       <section style={{ padding: '80px 40px', maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 56 }}>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, letterSpacing: '-1.5px', margin: '0 0 12px' }}>Everything in one place</h2>
@@ -149,11 +143,11 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── How it works ───────────────────────────────────────────── */}
+      {/* How it works */}
       <section style={{ padding: '80px 40px', borderTop: `1px solid ${BORDER}` }}>
         <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, letterSpacing: '-1.5px', margin: '0 0 12px' }}>Up and running in minutes</h2>
-          <p style={{ fontSize: 17, color: TEXT2, marginBottom: 56 }}>Use Basis in your browser or download the desktop app — your data stays in sync either way.</p>
+          <p style={{ fontSize: 17, color: TEXT2, marginBottom: 56 }}>Use Basis in your browser or download the desktop app. Your data stays in sync either way.</p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {STEPS.map((s, i) => (
@@ -169,28 +163,28 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Download CTA ───────────────────────────────────────────── */}
+      {/* Download CTA */}
       <section style={{ padding: '80px 40px', borderTop: `1px solid ${BORDER}` }}>
         <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center', background: CARD, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '56px 48px' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: BLUE, letterSpacing: '1px', marginBottom: 16 }}>DESKTOP APP</div>
           <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 36px)', fontWeight: 800, letterSpacing: '-1px', margin: '0 0 14px' }}>Take Basis offline</h2>
           <p style={{ fontSize: 16, color: TEXT2, lineHeight: 1.65, marginBottom: 36 }}>
-            The Windows desktop app runs everything locally — no browser needed. Your data, your machine.
+            The Windows desktop app runs everything locally with no browser needed. Your data, your machine.
           </p>
           <a href={DOWNLOAD_URL} download
             style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '14px 32px', background: BLUE_BTN, color: '#fff', borderRadius: 10, fontSize: 16, fontWeight: 700, textDecoration: 'none' }}>
             <span style={{ fontSize: 20 }}>↓</span> Download for Windows
           </a>
           <p style={{ marginTop: 16, fontSize: 12, color: TEXT3 }}>
-            Windows 10 / 11 · If prompted by Windows, click "More info" then "Run anyway"
+            Windows 10 and 11. If Windows shows a security prompt, click "More info" then "Run anyway".
           </p>
         </div>
       </section>
 
-      {/* ── Footer ─────────────────────────────────────────────────── */}
+      {/* Footer */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, padding: '32px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.5px', color: TEXT }}>Basis</div>
-        <div style={{ fontSize: 13, color: TEXT3 }}>Built for UGA · FINA 3000 Personal Finance</div>
+        <div style={{ fontSize: 13, color: TEXT3 }}>Personal finance, built for real life.</div>
         <div style={{ display: 'flex', gap: 20 }}>
           <button onClick={() => navigate('/login')} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 13, cursor: 'pointer' }}>Sign In</button>
           <button onClick={() => navigate('/register')} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 13, cursor: 'pointer' }}>Register</button>
