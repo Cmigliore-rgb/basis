@@ -6155,11 +6155,33 @@ export default function Dashboard() {
                     );
                   })()}
 
-                  {/* Fixed Income yield curve */}
-                  {learnCategory === 'analyst' && <YieldCurveChart yieldCurve={yieldCurve} />}
+                  {/* Analyst premium gate */}
+                  {learnCategory === 'analyst' && !isPremium && (
+                    <div style={{ position: 'relative', marginBottom: 24 }}>
+                      <div style={{ position: 'absolute', inset: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                        <div style={{ pointerEvents: 'auto', background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: '36px 40px', textAlign: 'center', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
+                          <div style={{ fontSize: 40, marginBottom: 14 }}>◈</div>
+                          <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>The Analyst</div>
+                          <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 28 }}>
+                            DCF models, LBO mechanics, bond pricing, credit risk, and options — advanced content for serious learners.
+                          </div>
+                          <button onClick={() => setShowUpgrade(true)}
+                            style={{ padding: '12px 32px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,102,245,0.35)', width: '100%' }}>
+                            Upgrade to Premium
+                          </button>
+                        </div>
+                      </div>
+                      <div style={{ filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' }}>
+                        <YieldCurveChart yieldCurve={yieldCurve} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fixed Income yield curve (premium only) */}
+                  {learnCategory === 'analyst' && isPremium && <YieldCurveChart yieldCurve={yieldCurve} />}
 
                   {/* Cards */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, alignItems: 'stretch' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, alignItems: 'stretch', ...(learnCategory === 'analyst' && !isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}) }}>
                     {section?.items.map(item => {
                       const expanded = learnExpanded.has(item.id);
                       return (
