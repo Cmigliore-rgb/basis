@@ -14,7 +14,7 @@ const GREEN    = '#4ade80';
 const PURPLE   = '#a78bfa';
 const YELLOW   = '#fbbf24';
 
-const DOWNLOAD_URL = 'https://github.com/Cmigliore-rgb/basis/releases/download/untagged-a510778e091885ecca62/Basis.Setup.1.0.0.exe';
+const DOWNLOAD_URL = 'https://github.com/Cmigliore-rgb/basis/releases/download/v1.0.0/Basis.Setup.1.0.0.exe';
 
 const FEATURES = [
   {
