@@ -3,13 +3,19 @@ import api from '../../services/api';
 
 export default function PlaidLink({ onSuccess, locked, onLocked }) {
   const [linkToken, setLinkToken] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState('');
+  const [ready, setReady]         = useState(false);
 
   useEffect(() => {
     if (locked) return;
+    setError('');
     api.post('/plaid/create_link_token')
       .then(r => setLinkToken(r.data.link_token))
-      .catch(err => console.error('Plaid link token error:', err));
+      .catch(err => {
+        console.error('Plaid link token error:', err);
+        setError(err.response?.data?.error || 'Could not initialize Plaid. Check your credentials.');
+      });
   }, [locked]);
 
   useEffect(() => {
@@ -29,6 +35,7 @@ export default function PlaidLink({ onSuccess, locked, onLocked }) {
             if (onSuccess) onSuccess();
           } catch (err) {
             console.error('Token exchange error:', err);
+            setError('Failed to connect account. Please try again.');
           } finally {
             setLoading(false);
           }
@@ -39,56 +46,47 @@ export default function PlaidLink({ onSuccess, locked, onLocked }) {
         config.receivedRedirectUri = window.location.href;
       }
       window._plaidLinkHandler = window.Plaid.create(config);
+      setReady(true);
       if (window.location.href.includes('oauth_state_id')) {
         window._plaidLinkHandler.open();
       }
     };
+    script.onerror = () => setError('Failed to load Plaid. Check your connection.');
     document.body.appendChild(script);
     return () => { if (document.body.contains(script)) document.body.removeChild(script); };
   }, [linkToken, onSuccess]);
 
   if (locked) {
     return (
-      <button
-        onClick={onLocked}
-        style={{
-          width: '100%',
-          padding: '9px 0',
-          background: 'rgba(77,163,255,0.08)',
-          color: '#4da3ff',
-          border: '1px solid rgba(77,163,255,0.25)',
-          borderRadius: 6,
-          cursor: 'pointer',
-          fontSize: 13,
-          fontWeight: 600,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-        }}
-      >
+      <button onClick={onLocked} style={btnStyle('#4da3ff', 'rgba(77,163,255,0.08)', '1px solid rgba(77,163,255,0.25)', 'pointer')}>
         + Connect Account
       </button>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ fontSize: 12, color: '#f87171', padding: '8px 4px', lineHeight: 1.4 }}>
+        {error}
+      </div>
     );
   }
 
   return (
     <button
       onClick={() => window._plaidLinkHandler?.open()}
-      disabled={!linkToken || loading}
-      style={{
-        width: '100%',
-        padding: '9px 0',
-        background: loading ? '#ccc' : '#0066f5',
-        color: '#fff',
-        border: 'none',
-        borderRadius: 6,
-        cursor: loading ? 'not-allowed' : 'pointer',
-        fontSize: 13,
-        fontWeight: 600,
-      }}
+      disabled={!ready || loading}
+      style={btnStyle('#fff', loading ? '#555' : '#0066f5', 'none', (!ready || loading) ? 'not-allowed' : 'pointer', (!ready || loading) ? 0.6 : 1)}
     >
-      {loading ? 'Connecting...' : '+ Connect Account'}
+      {loading ? 'Connecting...' : !ready ? 'Loading...' : '+ Connect Account'}
     </button>
   );
+}
+
+function btnStyle(color, bg, border, cursor, opacity = 1) {
+  return {
+    width: '100%', padding: '9px 0', background: bg, color, border,
+    borderRadius: 6, cursor, fontSize: 13, fontWeight: 600, opacity,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+  };
 }
