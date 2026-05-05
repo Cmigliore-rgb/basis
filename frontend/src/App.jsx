@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
+import Landing from './pages/Landing.jsx';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -14,7 +15,7 @@ function ProtectedRoute({ children }) {
 function GuestRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div style={{ minHeight: '100vh', background: '#0f0f0f' }} />;
-  return user ? <Navigate to="/" replace /> : children;
+  return user ? <Navigate to="/app" replace /> : children;
 }
 
 export default function App() {
@@ -22,9 +23,11 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login"    element={<GuestRoute><Login /></GuestRoute>} />
-          <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
-          <Route path="/*"        element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/"          element={<Landing />} />
+          <Route path="/login"     element={<GuestRoute><Login /></GuestRoute>} />
+          <Route path="/register"  element={<GuestRoute><Register /></GuestRoute>} />
+          <Route path="/app/*"     element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="*"          element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

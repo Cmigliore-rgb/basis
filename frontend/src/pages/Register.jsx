@@ -70,7 +70,7 @@ export default function Register() {
         role: form.role, courseCode: form.courseCode.trim().toUpperCase() || undefined,
       });
       login(data.token, data.user);
-      navigate('/');
+      navigate('/app');
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed');
     } finally { setLoading(false); }

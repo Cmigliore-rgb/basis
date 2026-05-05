@@ -34,7 +34,7 @@ export default function Login() {
     try {
       const { data } = await api.post('/auth/login', form);
       login(data.token, data.user);
-      navigate('/');
+      navigate('/app');
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');
     } finally { setLoading(false); }
