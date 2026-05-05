@@ -147,7 +147,7 @@ export default function Landing() {
       <section style={{ padding: '80px 40px', borderTop: `1px solid ${BORDER}` }}>
         <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, letterSpacing: '-1.5px', margin: '0 0 12px' }}>Up and running in minutes</h2>
-          <p style={{ fontSize: 17, color: TEXT2, marginBottom: 56 }}>Use PeakLedger in your browser or download the desktop app. Your data stays in sync either way.</p>
+          <p style={{ fontSize: 17, color: TEXT2, marginBottom: 56 }}>Use PeakLedger in your browser or download the desktop app. Your account works the same either way.</p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {STEPS.map((s, i) => (
@@ -167,9 +167,9 @@ export default function Landing() {
       <section style={{ padding: '80px 40px', borderTop: `1px solid ${BORDER}` }}>
         <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center', background: CARD, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '56px 48px' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: BLUE, letterSpacing: '1px', marginBottom: 16 }}>DESKTOP APP</div>
-          <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 36px)', fontWeight: 800, letterSpacing: '-1px', margin: '0 0 14px' }}>Take PeakLedger offline</h2>
+          <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 36px)', fontWeight: 800, letterSpacing: '-1px', margin: '0 0 14px' }}>Get the desktop app</h2>
           <p style={{ fontSize: 16, color: TEXT2, lineHeight: 1.65, marginBottom: 36 }}>
-            The Windows desktop app runs everything locally with no browser needed. Your data, your machine.
+            The Windows desktop app gives you a dedicated window for PeakLedger. Your account stays in sync across the app and the web.
           </p>
           <a href={DOWNLOAD_URL} download
             style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '14px 32px', background: BLUE_BTN, color: '#fff', borderRadius: 10, fontSize: 16, fontWeight: 700, textDecoration: 'none' }}>
