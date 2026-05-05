@@ -2448,10 +2448,12 @@ export default function Dashboard() {
           ))}
           {/* Connect Account + Tour + Settings — anchored under Education section */}
           <div style={{ padding: '10px 14px 4px', display: 'flex', flexDirection: 'column', gap: 7 }}>
-            <div data-tour="connect">
-              <PlaidLink onSuccess={fetchAll} locked={false} onLocked={() => {}} />
-            </div>
-            {false && (
+            {isAdmin && !viewAs && (
+              <div data-tour="connect">
+                <PlaidLink onSuccess={fetchAll} locked={false} onLocked={() => {}} />
+              </div>
+            )}
+            {!(isAdmin && !viewAs) && (
               <button
                 onClick={() => { switchEduMode(false); setPanel('overview'); setTourStep(0); setShowTour(true); }}
                 style={{ width: '100%', padding: '8px 0', background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.25)', borderRadius: 8, color: BLUE, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
@@ -3457,7 +3459,7 @@ export default function Dashboard() {
                   {_ovCustom && <button onClick={() => resetLayout('overview')} style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 11, cursor: 'pointer', padding: 0 }}>Reset layout</button>}
                 </div>
 
-                {isDemoData && !connectBannerDismissed && (
+                {isAdmin && !viewAs && isDemoData && !connectBannerDismissed && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)', borderLeft: '3px solid #4ade80', borderRadius: 10, marginBottom: 24 }}>
                     <span style={{ fontSize: 20 }}>🔗</span>
                     <div style={{ flex: 1 }}>
