@@ -8,7 +8,6 @@ const plaidRoutes = require('./routes/plaid');
 const transactionRoutes = require('./routes/transactions');
 const investmentRoutes = require('./routes/investments');
 const newsRoutes = require('./routes/news');
-const tellerRoutes = require('./routes/teller');
 const chatRoutes = require('./routes/chat');
 const snapshotRoutes = require('./routes/snapshots');
 const budgetRoutes = require('./routes/budget');
@@ -25,7 +24,7 @@ const app = express();
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || origin.includes('localhost') || origin.includes('172.20.142.211')||origin.includes('ngrok-free') || origin.includes('ngrok.io')) {
+    if (!origin || origin.includes('localhost') || origin.includes('172.20.142.211') || origin.includes('ngrok-free') || origin.includes('ngrok.io') || origin.includes('railway.app')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -52,7 +51,6 @@ app.use('/api/plaid', plaidRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/investments', investmentRoutes);
 app.use('/api/news', newsRoutes);
-app.use('/api/teller', tellerRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/snapshots', snapshotRoutes);
 app.use('/api/budget', budgetRoutes);

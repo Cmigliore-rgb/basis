@@ -7,7 +7,7 @@ function load() {
   try {
     return JSON.parse(fs.readFileSync(FILE, 'utf8'));
   } catch {
-    return { accessTokens: [], tellerTokens: [], snapshots: [], budgetLimits: {}, goals: [], notificationPrefs: {}, feedback: [] };
+    return { accessTokens: [], snapshots: [], budgetLimits: {}, goals: [], notificationPrefs: {}, feedback: [] };
   }
 }
 
@@ -15,7 +15,6 @@ function save(app) {
   const existing = load();
   fs.writeFileSync(FILE, JSON.stringify({
     accessTokens:      app.locals.accessTokens      || [],
-    tellerTokens:      app.locals.tellerTokens      || [],
     snapshots:         app.locals.snapshots         || existing.snapshots         || [],
     budgetLimits:      app.locals.budgetLimits      || existing.budgetLimits      || {},
     goals:             app.locals.goals             || existing.goals             || [],
