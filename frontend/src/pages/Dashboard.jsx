@@ -741,21 +741,16 @@ const LEARN_CONTENT = [
         body: 'An emergency fund prevents you from going into debt when unexpected expenses arise: job loss, medical bills, car repairs. Keep it in a high-yield savings account (HYSA) earning 4–5% APY, not invested in stocks. Once funded, don\'t touch it except for true emergencies. Salaried employees need 3 months; freelancers/variable income need 6+.',
         formula: 'Target = Monthly Expenses × 3 to 6',
         example: 'Monthly expenses of $3,500 → Emergency fund target: $10,500 to $21,000.' },
-      { id: 'compound', title: 'Compound Interest', icon: '🔁',
-        summary: 'Earning returns on your returns, the most powerful force in personal finance.',
-        body: 'Einstein allegedly called compound interest the "eighth wonder of the world." Starting early matters enormously: $10,000 invested at 25 grows to ~$217,000 by 65 at 8% annual return. The same $10,000 invested at 35 grows to only ~$100,000. Time in the market beats timing the market.',
-        formula: <span style={{display:'inline-flex',alignItems:'center',gap:3}}>A = P(1 + <Frac n="r" d="n" />)<sup style={{fontSize:11}}>nt</sup></span>,
-        example: '$500/month from age 25 at 8% → $1.74M at 65. Starting at 35 → only $745K. The 10-year delay costs ~$1M.' },
       { id: 'credit-score', title: 'Credit Score', icon: '🏅',
         summary: 'A 300–850 score that determines your borrowing rate on everything from apartments to car loans.',
         body: 'Your FICO score has five components: Payment History (35%), so never miss a payment; Amounts Owed (30%), so keep credit utilization below 30%; Length of Credit History (15%), where older accounts help; Credit Mix (10%), where having both revolving and installment credit helps; and New Credit (10%), where hard inquiries temporarily lower your score. A score above 740 unlocks the best rates; below 670 is subprime.',
         formula: 'FICO = f(Payment History 35%, Utilization 30%, Length 15%, Mix 10%, New Credit 10%)',
         example: 'Your card limit is $5,000 and your balance is $2,200 → utilization = 44%. Paying it to $1,500 drops utilization to 30% and can raise your score 20–40 points in one cycle.' },
-      { id: 'retirement-accounts', title: 'Roth IRA & 401(k)', icon: '🏦',
-        summary: 'Tax-advantaged accounts that are the single most powerful tools for building long-term wealth.',
-        body: '401(k): Pre-tax contributions reduce your taxable income today; you pay taxes on withdrawal in retirement. Always contribute at least enough to get the full employer match, since that\'s a 50–100% instant return. Roth IRA: Post-tax contributions; all growth is tax-free forever. 2025 limits: 401(k) = $23,500, IRA = $7,000. The optimal order: 401(k) to match → Roth IRA to max → 401(k) to max.',
-        formula: 'After-tax value: Traditional 401k = Balance × (1 − tax rate at withdrawal)  |  Roth IRA = Balance × 1',
-        example: '$6,000/yr in a Roth IRA at 22, growing at 8%, is worth $1.68M tax-free at 65. Same money in a taxable account at 22% cap gains tax → ~$1.31M.' },
+      { id: 'debt-payoff', title: 'Debt Payoff: Avalanche vs. Snowball', icon: '❄️',
+        summary: 'Two proven strategies for eliminating debt: one saves more money, the other builds momentum.',
+        body: 'Avalanche method: pay minimums on all debts, put every extra dollar toward the highest-interest debt first. Mathematically optimal, it saves the most in interest. Snowball method: pay minimums on all debts, put every extra dollar toward the smallest balance first. Psychologically powerful, quick wins keep you motivated. Both beat paying randomly. Credit card debt (18–29% APR) is almost always the highest priority regardless of method.',
+        formula: 'Avalanche: sort by APR descending   |   Snowball: sort by balance ascending',
+        example: 'Debts: $500 credit card at 24%, $3,000 car loan at 6%, $8,000 student loan at 4.5%. Avalanche: attack the credit card first. Snowball: same answer here since the smallest balance is also the highest rate. Avalanche wins when the orders diverge.' },
       { id: 'taxes-101', title: 'Taxes 101', icon: '🧾',
         summary: 'How income taxes actually work: marginal vs. effective rate, deductions, and W-2 basics.',
         body: 'The US uses a progressive tax system: you pay each bracket\'s rate only on the income within that bracket, not your entire income. The standard deduction ($14,600 single in 2024) reduces your taxable income before brackets apply. Effective rate = total tax ÷ gross income, always lower than your marginal (top) bracket. W-2 employees have taxes withheld automatically; freelancers pay quarterly estimated taxes.',
@@ -766,21 +761,11 @@ const LEARN_CONTENT = [
         body: 'The Consumer Price Index (CPI) measures average price changes across a basket of goods. The Fed targets 2% annual inflation. At 3% inflation, $1,000 today buys what $744 buys in 10 years. This is why holding cash is a losing proposition long-term; it loses purchasing power each year. Real return = nominal return minus inflation. A savings account at 1% when inflation is 3% = −2% real return.',
         formula: 'Real Return ≈ Nominal Return − Inflation Rate   |   Future Purchasing Power = PV ÷ (1 + i)ⁿ',
         example: 'Your HYSA earns 5% APY and inflation is 3.1% → real return ≈ 1.9%. S&P 500 historical nominal return ≈ 10%/yr, real return ≈ 7%/yr after inflation.' },
-      { id: 'rent-vs-buy', title: 'Renting vs. Buying', icon: '🏠',
-        summary: 'Buying isn\'t always better. The 5-year rule and price-to-rent ratio tell you when it makes sense.',
-        body: 'Buying costs: down payment (3–20%), closing costs (2–5%), property taxes (~1%/yr), maintenance (~1%/yr), insurance. Renting costs: monthly rent + renters insurance (~$15/mo). The Price-to-Rent ratio = home price ÷ annual rent. Below 15: buying likely wins. 15–20: depends on your situation. Above 20: renting is usually cheaper. The 5-year rule: if you\'re not staying 5+ years, transaction costs likely outweigh equity gains.',
-        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Price-to-Rent = <Frac n="Home Price" d="Annual Rent" /> &nbsp;|&nbsp; Break-even ≈ 5 years</span>,
-        example: 'Home: $400,000. Comparable rent: $2,000/mo ($24,000/yr). P/R ratio = 16.7, which is borderline. If you\'re staying 7+ years in a low-inventory market, buying likely wins. If you\'ll move in 3 years, rent.' },
-      { id: 'debt-payoff', title: 'Debt Payoff: Avalanche vs. Snowball', icon: '❄️',
-        summary: 'Two proven strategies for eliminating debt: one saves more money, the other builds momentum.',
-        body: 'Avalanche method: pay minimums on all debts, put every extra dollar toward the highest-interest debt first. Mathematically optimal, it saves the most in interest. Snowball method: pay minimums on all debts, put every extra dollar toward the smallest balance first. Psychologically powerful, quick wins keep you motivated. Both beat paying randomly. Credit card debt (18–29% APR) is almost always the highest priority regardless of method.',
-        formula: 'Avalanche: sort by APR descending   |   Snowball: sort by balance ascending',
-        example: 'Debts: $500 credit card at 24%, $3,000 car loan at 6%, $8,000 student loan at 4.5%. Avalanche: attack the credit card first. Snowball: same answer here since the smallest balance is also the highest rate. Avalanche wins when the orders diverge.' },
-      { id: 'insurance', title: 'Insurance Basics', icon: '☂️',
-        summary: 'Insurance trades a small certain cost (premium) for protection against a large uncertain loss.',
-        body: 'Health insurance is critical: one ER visit without coverage can cost $10,000+. Understand your deductible (what you pay before insurance kicks in), copay, and out-of-pocket maximum. Renters insurance covers your belongings if your apartment is robbed or burns, costs about $15/mo, and covers $20,000+ in stuff. Auto insurance: liability is legally required in most states; comprehensive/collision protects your car. Life insurance is only needed if someone depends on your income. Term life (10–30yr fixed premium) is almost always better than whole life for young earners.',
-        formula: 'Expected Value of Insurance = (Probability of Loss × Loss Amount) − Premium',
-        example: '30% chance of a $5,000 claim. EV of the loss = $1,500. If the premium is $500/yr, insurance is a good deal. Insurers profit by pooling thousands of policies; you buy peace of mind and catastrophic coverage.' },
+      { id: 'compound', title: 'Compound Interest', icon: '🔁',
+        summary: 'Earning returns on your returns, the most powerful force in personal finance.',
+        body: 'Einstein allegedly called compound interest the "eighth wonder of the world." Starting early matters enormously: $10,000 invested at 25 grows to ~$217,000 by 65 at 8% annual return. The same $10,000 invested at 35 grows to only ~$100,000. Time in the market beats timing the market.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',gap:3}}>A = P(1 + <Frac n="r" d="n" />)<sup style={{fontSize:11}}>nt</sup></span>,
+        example: '$500/month from age 25 at 8% → $1.74M at 65. Starting at 35 → only $745K. The 10-year delay costs ~$1M.' },
       { id: 'dca', title: 'Dollar-Cost Averaging', icon: '📅',
         summary: 'Invest a fixed amount on a regular schedule to remove emotion and timing risk from investing.',
         body: 'Dollar-cost averaging (DCA) means investing the same dollar amount at regular intervals (weekly, monthly) regardless of market conditions. When prices are low, your fixed amount buys more shares. When prices are high, it buys fewer. Over time, your average cost per share is lower than if you had tried to time the market. The biggest benefit is behavioral: you can\'t panic-sell if you\'re on autopilot.',
@@ -811,6 +796,21 @@ const LEARN_CONTENT = [
         body: 'The index combines 7 indicators: stock price momentum, stock price strength, stock price breadth, put/call ratio, junk bond demand, market volatility (VIX), and safe-haven demand. Extreme Fear (0–25) often signals a buying opportunity; Extreme Greed (75–100) may signal overvaluation.',
         formula: 'Score = equal-weight avg of 7 signals   |   0–24: Extreme Fear · 25–49: Fear · 50–74: Greed · 75–100: Extreme Greed',
         example: 'A score of 18 means "Extreme Fear," historically a period where patient investors buy at a discount.' },
+      { id: 'retirement-accounts', title: 'Roth IRA & 401(k)', icon: '🏦',
+        summary: 'Tax-advantaged accounts that are the single most powerful tools for building long-term wealth.',
+        body: '401(k): Pre-tax contributions reduce your taxable income today; you pay taxes on withdrawal in retirement. Always contribute at least enough to get the full employer match, since that\'s a 50–100% instant return. Roth IRA: Post-tax contributions; all growth is tax-free forever. 2025 limits: 401(k) = $23,500, IRA = $7,000. The optimal order: 401(k) to match → Roth IRA to max → 401(k) to max.',
+        formula: 'After-tax value: Traditional 401k = Balance × (1 − tax rate at withdrawal)  |  Roth IRA = Balance × 1',
+        example: '$6,000/yr in a Roth IRA at 22, growing at 8%, is worth $1.68M tax-free at 65. Same money in a taxable account at 22% cap gains tax → ~$1.31M.' },
+      { id: 'insurance', title: 'Insurance Basics', icon: '☂️',
+        summary: 'Insurance trades a small certain cost (premium) for protection against a large uncertain loss.',
+        body: 'Health insurance is critical: one ER visit without coverage can cost $10,000+. Understand your deductible (what you pay before insurance kicks in), copay, and out-of-pocket maximum. Renters insurance covers your belongings if your apartment is robbed or burns, costs about $15/mo, and covers $20,000+ in stuff. Auto insurance: liability is legally required in most states; comprehensive/collision protects your car. Life insurance is only needed if someone depends on your income. Term life (10–30yr fixed premium) is almost always better than whole life for young earners.',
+        formula: 'Expected Value of Insurance = (Probability of Loss × Loss Amount) − Premium',
+        example: '30% chance of a $5,000 claim. EV of the loss = $1,500. If the premium is $500/yr, insurance is a good deal. Insurers profit by pooling thousands of policies; you buy peace of mind and catastrophic coverage.' },
+      { id: 'rent-vs-buy', title: 'Renting vs. Buying', icon: '🏠',
+        summary: 'Buying isn\'t always better. The 5-year rule and price-to-rent ratio tell you when it makes sense.',
+        body: 'Buying costs: down payment (3–20%), closing costs (2–5%), property taxes (~1%/yr), maintenance (~1%/yr), insurance. Renting costs: monthly rent + renters insurance (~$15/mo). The Price-to-Rent ratio = home price ÷ annual rent. Below 15: buying likely wins. 15–20: depends on your situation. Above 20: renting is usually cheaper. The 5-year rule: if you\'re not staying 5+ years, transaction costs likely outweigh equity gains.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Price-to-Rent = <Frac n="Home Price" d="Annual Rent" /> &nbsp;|&nbsp; Break-even ≈ 5 years</span>,
+        example: 'Home: $400,000. Comparable rent: $2,000/mo ($24,000/yr). P/R ratio = 16.7, which is borderline. If you\'re staying 7+ years in a low-inventory market, buying likely wins. If you\'ll move in 3 years, rent.' },
     ],
   },
   {
@@ -1675,6 +1675,7 @@ export default function Dashboard() {
     } catch { return 'essentials'; }
   });
   const [learnExpanded, setLearnExpanded] = useState(new Set());
+  const [learnVideos, setLearnVideos] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_learn_videos') || '{}'); } catch { return {}; } });
   const [yieldCurve, setYieldCurve] = useState({ tenors: [], date: null });
   const [budgetTab, setBudgetTab] = useState('income');
   const [showTour, setShowTour] = useState(false);
@@ -6209,6 +6210,56 @@ export default function Dashboard() {
                               <div style={{ background: EXAMPLE_BG, border: `1px solid var(--example-border, #1a3a6b)`, borderRadius: 7, padding: '10px 14px', fontSize: 12, lineHeight: 1.6, color: TEXT2 }}>
                                 <span style={{ color: BLUE, fontWeight: 600 }}>Example: </span>{item.example}
                               </div>
+
+                              {/* Video section */}
+                              {(() => {
+                                const rawUrl = learnVideos[item.id] || '';
+                                const embedUrl = rawUrl.includes('youtube.com/watch')
+                                  ? rawUrl.replace('watch?v=', 'embed/')
+                                  : rawUrl.includes('youtu.be/')
+                                  ? rawUrl.replace('youtu.be/', 'www.youtube.com/embed/')
+                                  : rawUrl.includes('loom.com/share')
+                                  ? rawUrl.replace('loom.com/share', 'loom.com/embed')
+                                  : rawUrl;
+                                return (
+                                  <div style={{ marginTop: 14 }}>
+                                    {embedUrl && (
+                                      <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, borderRadius: 8, overflow: 'hidden', marginBottom: isAdmin ? 10 : 0 }}>
+                                        <iframe
+                                          src={embedUrl}
+                                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                          allowFullScreen
+                                        />
+                                      </div>
+                                    )}
+                                    {isAdmin && (
+                                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6 }}>
+                                        <input
+                                          type="text"
+                                          placeholder="Paste YouTube or Loom URL to add video..."
+                                          value={rawUrl}
+                                          onChange={e => {
+                                            const next = { ...learnVideos, [item.id]: e.target.value };
+                                            setLearnVideos(next);
+                                            localStorage.setItem('pl_learn_videos', JSON.stringify(next));
+                                          }}
+                                          style={{ flex: 1, padding: '7px 10px', background: DARK, border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 12, outline: 'none' }}
+                                        />
+                                        {rawUrl && (
+                                          <button onClick={() => {
+                                            const next = { ...learnVideos, [item.id]: '' };
+                                            setLearnVideos(next);
+                                            localStorage.setItem('pl_learn_videos', JSON.stringify(next));
+                                          }} style={{ padding: '6px 10px', background: 'none', border: BORDER, borderRadius: 6, color: TEXT3, fontSize: 12, cursor: 'pointer' }}>
+                                            Remove
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           )}
                         </div>
