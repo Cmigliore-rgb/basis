@@ -4,6 +4,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon --ignore data.json server.js",
+    "build": "cd ../frontend && npm install && npm run build",
     "start": "node server.js"
   },
   "dependencies": {
