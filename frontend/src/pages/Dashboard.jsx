@@ -24,12 +24,12 @@ const YELLOW   = '#fbbf24';
 const CARD = { background: CARD_BG, border: BORDER, borderRadius: 10, padding: 24 };
 
 const NAV = [
-  { key: 'overview',       label: 'Overview',     icon: 'âŠž', premium: false, section: 'finance'   },
-  { key: 'cashflow',       label: 'Cash Flow',    icon: 'â¬¡', premium: false, section: 'finance'   },
-  { key: 'investments',    label: 'Investments',  icon: 'â—ˆ', premium: false, section: 'finance'   },
-  { key: 'insights',       label: 'Market Insights', icon: 'â—¬', premium: true,  section: 'finance'   },
-  { key: 'learn',          label: 'Learn',        icon: 'âœ¦', premium: false, section: 'finance'   },
-  { key: 'edu-courses',    label: 'My Courses',   icon: 'â—«', premium: false, section: 'education' },
+  { key: 'overview',       label: 'Overview',     icon: '⊞', premium: false, section: 'finance'   },
+  { key: 'cashflow',       label: 'Cash Flow',    icon: '⬡', premium: false, section: 'finance'   },
+  { key: 'investments',    label: 'Investments',  icon: '◈', premium: false, section: 'finance'   },
+  { key: 'insights',       label: 'Market Insights', icon: '◬', premium: true,  section: 'finance'   },
+  { key: 'learn',          label: 'Learn',        icon: '✦', premium: false, section: 'finance'   },
+  { key: 'edu-courses',    label: 'My Courses',   icon: '◫', premium: false, section: 'education' },
 ];
 
 const PANEL_SUBTABS = {
@@ -54,7 +54,7 @@ const PANEL_SUBTABS = {
 const fmt = (n) =>
   typeof n === 'number'
     ? '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : 'â€”';
+    : '—';
 
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
@@ -115,7 +115,7 @@ function EduEnrollCard({ user, onEnrolled }) {
             <div key={e.code} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: `1px solid ${BORDER_C}` }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{e.course_name}</div>
-                <div style={{ fontSize: 11, color: TEXT2 }}>{e.instructor_name} Â· {e.semester}</div>
+                <div style={{ fontSize: 11, color: TEXT2 }}>{e.instructor_name} · {e.semester}</div>
               </div>
               <span style={{ fontSize: 10, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.1)', padding: '2px 8px', borderRadius: 4, letterSpacing: '0.5px', textTransform: 'uppercase' }}>{e.code}</span>
             </div>
@@ -137,10 +137,10 @@ function EduEnrollCard({ user, onEnrolled }) {
           Enroll
         </button>
       </div>
-      {status?.validating && <div style={{ marginTop: 6, fontSize: 12, color: TEXT3 }}>Checkingâ€¦</div>}
-      {status?.course && <div style={{ marginTop: 6, fontSize: 12, color: GREEN }}>âœ“ {status.course.course_name} Â· {status.course.instructor_name}</div>}
+      {status?.validating && <div style={{ marginTop: 6, fontSize: 12, color: TEXT3 }}>Checking…</div>}
+      {status?.course && <div style={{ marginTop: 6, fontSize: 12, color: GREEN }}>✓ {status.course.course_name} · {status.course.instructor_name}</div>}
       {status?.error && <div style={{ marginTop: 6, fontSize: 12, color: RED }}>{status.error}</div>}
-      {status?.enrolled && <div style={{ marginTop: 6, fontSize: 12, color: GREEN }}>âœ“ Enrolled! Switching to Education Modeâ€¦</div>}
+      {status?.enrolled && <div style={{ marginTop: 6, fontSize: 12, color: GREEN }}>✓ Enrolled! Switching to Education Mode…</div>}
     </div>
   );
 }
@@ -244,9 +244,9 @@ function TickerBar({ indices, active }) {
         {(t.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </span>
       <span style={{ fontSize: 11, fontWeight: 600, color: (t.changePct || 0) >= 0 ? GREEN : RED }}>
-        {(t.changePct || 0) >= 0 ? 'â–²' : 'â–¼'} {Math.abs(t.changePct || 0).toFixed(2)}%
+        {(t.changePct || 0) >= 0 ? '▲' : '▼'} {Math.abs(t.changePct || 0).toFixed(2)}%
       </span>
-      <span style={{ color: BORDER_C, fontSize: 11 }}>â”‚</span>
+      <span style={{ color: BORDER_C, fontSize: 11 }}>│</span>
     </span>
   );
 
@@ -264,7 +264,7 @@ function SP500Chart({ candles, period, onPeriodChange, hidePeriods }) {
   if (!candles || candles.length < 2) {
     return (
       <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT2, fontSize: 13 }}>
-        {!candles || candles.length === 0 ? 'Chart unavailable' : 'Loading chartâ€¦'}
+        {!candles || candles.length === 0 ? 'Chart unavailable' : 'Loading chart…'}
       </div>
     );
   }
@@ -426,8 +426,8 @@ function AdviceBox({ onGetAdvice, loading, text }) {
           display: 'inline-flex', alignItems: 'center', gap: 6, opacity: loading ? 0.75 : 1,
         }}
       >
-        <span style={{ fontSize: 15 }}>âœ¦</span>
-        {loading ? 'Analyzingâ€¦' : 'Get Recommendation'}
+        <span style={{ fontSize: 15 }}>✦</span>
+        {loading ? 'Analyzing…' : 'Get Recommendation'}
       </button>
       <div style={{ marginTop: 6, fontSize: 11, color: TEXT3, maxWidth: 560 }}>
         AI-generated recommendations are for informational purposes only and do not constitute financial, investment, tax, or legal advice. Merit and its developers are not liable for any decisions made based on these suggestions. Always consult a qualified professional before acting on financial information.
@@ -467,7 +467,7 @@ function OptionsChain() {
   const contracts = data ? (mode === 'calls' ? data.calls : data.puts) : [];
   const ATM_RANGE = data ? data.price * 0.10 : 0;
 
-  const gFmt = (v, dec = 4) => v == null ? 'â€”' : v.toFixed(dec);
+  const gFmt = (v, dec = 4) => v == null ? '—' : v.toFixed(dec);
   const BTN = (active) => ({
     padding: '5px 14px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600,
     cursor: 'pointer', background: active ? BLUE_BTN : MUTED, color: active ? '#fff' : TEXT2,
@@ -476,7 +476,7 @@ function OptionsChain() {
   return (
     <div data-tour="options-chain" className="lc" style={{ ...CARD, marginTop: 24 }}>
       <div style={{ fontWeight: 600, marginBottom: 16, fontSize: 15 }}>Options Chain
-        <span style={{ fontSize: 11, color: TEXT2, fontWeight: 400, marginLeft: 8 }}>Black-Scholes Greeks Â· live data</span>
+        <span style={{ fontSize: 11, color: TEXT2, fontWeight: 400, marginLeft: 8 }}>Black-Scholes Greeks · live data</span>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -485,12 +485,12 @@ function OptionsChain() {
             value={input}
             onChange={e => setInput(e.target.value.toUpperCase())}
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            placeholder="AAPL, TSLA, SPYâ€¦"
+            placeholder="AAPL, TSLA, SPY…"
             style={{ background: 'none', border: 'none', outline: 'none', color: TEXT, fontSize: 13, fontFamily: 'monospace', width: 130 }}
           />
         </div>
         <button onClick={handleSearch} disabled={loading || !input.trim()} style={{ ...BTN(true), opacity: loading || !input.trim() ? 0.6 : 1 }}>
-          {loading ? 'Loadingâ€¦' : 'Load'}
+          {loading ? 'Loading…' : 'Load'}
         </button>
         {data && (
           <>
@@ -513,7 +513,7 @@ function OptionsChain() {
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
             <thead>
               <tr style={{ borderBottom: BORDER }}>
-                {['Strike','Last','Bid','Ask','Volume','OI','IV %','Î” Delta','Î“ Gamma','Î˜ Theta','V Vega'].map(h => (
+                {['Strike','Last','Bid','Ask','Volume','OI','IV %','Δ Delta','Γ Gamma','Θ Theta','V Vega'].map(h => (
                   <th key={h} style={{ padding: '6px 10px', textAlign: h === 'Strike' ? 'left' : 'right', fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -528,12 +528,12 @@ function OptionsChain() {
                       {c.inTheMoney && <span style={{ fontSize: 9, color: GREEN, marginRight: 4 }}>ITM</span>}
                       {fmt(c.strike)}
                     </td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12 }}>{c.lastPrice != null ? fmt(c.lastPrice) : 'â€”'}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12, color: TEXT2 }}>{c.bid != null ? fmt(c.bid) : 'â€”'}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12, color: TEXT2 }}>{c.ask != null ? fmt(c.ask) : 'â€”'}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12, color: TEXT2 }}>{c.volume?.toLocaleString() || 'â€”'}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12, color: TEXT2 }}>{c.openInterest?.toLocaleString() || 'â€”'}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12 }}>{c.iv != null ? `${c.iv}%` : 'â€”'}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12 }}>{c.lastPrice != null ? fmt(c.lastPrice) : '—'}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12, color: TEXT2 }}>{c.bid != null ? fmt(c.bid) : '—'}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12, color: TEXT2 }}>{c.ask != null ? fmt(c.ask) : '—'}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12, color: TEXT2 }}>{c.volume?.toLocaleString() || '—'}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12, color: TEXT2 }}>{c.openInterest?.toLocaleString() || '—'}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12 }}>{c.iv != null ? `${c.iv}%` : '—'}</td>
                     <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12, color: BLUE }}>{gFmt(c.delta)}</td>
                     <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12, color: TEXT2 }}>{gFmt(c.gamma)}</td>
                     <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', fontSize: 12, color: RED }}>{gFmt(c.theta)}</td>
@@ -616,10 +616,10 @@ function StraddleBuilder() {
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', background: MUTED, border: BORDER, borderRadius: 7, padding: '6px 10px', gap: 4 }}>
           <input value={ticker} onChange={e => setTicker(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && ticker.trim() && load(ticker.trim(), '')}
-            placeholder="AAPL, SPYâ€¦" style={{ background: 'none', border: 'none', outline: 'none', color: TEXT, fontSize: 13, fontFamily: 'monospace', width: 110 }} />
+            placeholder="AAPL, SPY…" style={{ background: 'none', border: 'none', outline: 'none', color: TEXT, fontSize: 13, fontFamily: 'monospace', width: 110 }} />
         </div>
         <button onClick={() => ticker.trim() && load(ticker.trim(), '')} disabled={loading || !ticker.trim()} style={{ ...BTN(true), opacity: loading || !ticker.trim() ? 0.6 : 1 }}>
-          {loading ? 'Loadingâ€¦' : 'Load'}
+          {loading ? 'Loading…' : 'Load'}
         </button>
         {data && (
           <>
@@ -629,7 +629,7 @@ function StraddleBuilder() {
             </select>
             <select value={strikeIdx ?? ''} onChange={e => setStrikeIdx(Number(e.target.value))}
               style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, padding: '5px 10px', cursor: 'pointer' }}>
-              {strikes.map((s, i) => <option key={s} value={i}>{fmt(s)}{Math.abs(s - data.price) < data.price * 0.006 ? ' â˜… ATM' : ''}</option>)}
+              {strikes.map((s, i) => <option key={s} value={i}>{fmt(s)}{Math.abs(s - data.price) < data.price * 0.006 ? ' ★ ATM' : ''}</option>)}
             </select>
             <span style={{ fontSize: 13, color: TEXT2 }}>{data.ticker} @ <span style={{ fontWeight: 700, fontFamily: 'monospace', color: TEXT }}>{fmt(data.price)}</span></span>
           </>
@@ -644,12 +644,12 @@ function StraddleBuilder() {
           <div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 14 }}>
               {[
-                { label: 'Call Premium', value: callPrem != null ? `$${callPrem.toFixed(2)}` : 'â€”', color: GREEN },
-                { label: 'Put Premium',  value: putPrem  != null ? `$${putPrem.toFixed(2)}`  : 'â€”', color: RED },
-                { label: 'Total Debit',  value: totalDebit != null ? `$${(totalDebit * 100).toFixed(2)}` : 'â€”', color: TEXT, sub: 'per contract' },
-                { label: 'Upper B/E',    value: upperBE != null ? fmt(upperBE) : 'â€”', color: GREEN, sub: 'call profits above' },
-                { label: 'Lower B/E',    value: lowerBE != null ? fmt(lowerBE) : 'â€”', color: RED,   sub: 'put profits below' },
-                { label: 'Max Loss',     value: totalDebit != null ? `$${(totalDebit * 100).toFixed(2)}` : 'â€”', color: RED, sub: 'stock stays at strike' },
+                { label: 'Call Premium', value: callPrem != null ? `$${callPrem.toFixed(2)}` : '—', color: GREEN },
+                { label: 'Put Premium',  value: putPrem  != null ? `$${putPrem.toFixed(2)}`  : '—', color: RED },
+                { label: 'Total Debit',  value: totalDebit != null ? `$${(totalDebit * 100).toFixed(2)}` : '—', color: TEXT, sub: 'per contract' },
+                { label: 'Upper B/E',    value: upperBE != null ? fmt(upperBE) : '—', color: GREEN, sub: 'call profits above' },
+                { label: 'Lower B/E',    value: lowerBE != null ? fmt(lowerBE) : '—', color: RED,   sub: 'put profits below' },
+                { label: 'Max Loss',     value: totalDebit != null ? `$${(totalDebit * 100).toFixed(2)}` : '—', color: RED, sub: 'stock stays at strike' },
               ].map(({ label, value, color, sub }) => (
                 <div key={label} style={{ background: DARK, borderRadius: 8, padding: '11px 13px' }}>
                   <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 3 }}>{label}</div>
@@ -663,9 +663,9 @@ function StraddleBuilder() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                 {[
                   { g: 'Delta', v: callC?.delta != null && putC?.delta != null ? (callC.delta + putC.delta).toFixed(3) : '~0', color: BLUE, note: 'near neutral' },
-                  { g: 'Gamma', v: callC?.gamma != null && putC?.gamma != null ? (callC.gamma + putC.gamma).toFixed(4) : 'â€”', color: GREEN, note: 'long Î³' },
-                  { g: 'Theta', v: callC?.theta != null && putC?.theta != null ? (callC.theta + putC.theta).toFixed(4) : 'â€”', color: RED,   note: 'time decay' },
-                  { g: 'Vega',  v: callC?.vega  != null && putC?.vega  != null ? (callC.vega  + putC.vega ).toFixed(4) : 'â€”', color: GREEN, note: 'long vol' },
+                  { g: 'Gamma', v: callC?.gamma != null && putC?.gamma != null ? (callC.gamma + putC.gamma).toFixed(4) : '—', color: GREEN, note: 'long γ' },
+                  { g: 'Theta', v: callC?.theta != null && putC?.theta != null ? (callC.theta + putC.theta).toFixed(4) : '—', color: RED,   note: 'time decay' },
+                  { g: 'Vega',  v: callC?.vega  != null && putC?.vega  != null ? (callC.vega  + putC.vega ).toFixed(4) : '—', color: GREEN, note: 'long vol' },
                 ].map(({ g, v, color, note }) => (
                   <div key={g} style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 10, color: TEXT3, marginBottom: 3 }}>{g}</div>
@@ -680,7 +680,7 @@ function StraddleBuilder() {
           {/* P&L table */}
           <div>
             <div style={{ fontSize: 12, color: TEXT2, fontWeight: 600, marginBottom: 10 }}>
-              P&L at Expiry <span style={{ fontWeight: 400, color: TEXT3 }}>(per share Â· Ã—100 per contract)</span>
+              P&L at Expiry <span style={{ fontWeight: 400, color: TEXT3 }}>(per share · ×100 per contract)</span>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
@@ -696,7 +696,7 @@ function StraddleBuilder() {
                   return (
                     <tr key={i} style={{ borderBottom: `1px solid ${BORDER_C}`, background: isStrike ? 'rgba(251,191,36,0.06)' : 'transparent' }}>
                       <td style={{ padding: '6px 10px', fontFamily: 'monospace', color: isStrike ? YELLOW : TEXT, fontWeight: isStrike ? 700 : 400 }}>
-                        {fmt(price)}{isStrike ? ' â† strike' : ''}
+                        {fmt(price)}{isStrike ? ' ← strike' : ''}
                       </td>
                       <td style={{ padding: '6px 10px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600, color: pnl >= 0 ? GREEN : RED }}>
                         {pnl >= 0 ? '+' : ''}{pnl.toFixed(2)}
@@ -726,90 +726,90 @@ const LEARN_CONTENT = [
     label: 'The Essentials',
     color: '#4ade80',
     items: [
-      { id: 'networth', title: 'Net Worth', icon: 'ðŸ’°',
+      { id: 'networth', title: 'Net Worth', icon: '💰',
         summary: 'The total value of what you own minus what you owe.',
         body: 'Net worth is the single most important number in personal finance. Assets include cash, investments, real estate, and vehicles. Liabilities include mortgages, student loans, credit card debt, and car loans. Growing your net worth over time, through earning more, saving more, investing, and reducing debt, is the foundation of financial health.',
-        formula: 'Net Worth = Total Assets âˆ’ Total Liabilities',
-        example: 'You have $15,000 in savings, $30,000 in investments, and $8,000 in credit card debt â†’ Net Worth = $37,000.' },
-      { id: '503020', title: '50/30/20 Rule', icon: 'ðŸ“Š',
+        formula: 'Net Worth = Total Assets − Total Liabilities',
+        example: 'You have $15,000 in savings, $30,000 in investments, and $8,000 in credit card debt → Net Worth = $37,000.' },
+      { id: '503020', title: '50/30/20 Rule', icon: '📊',
         summary: 'A simple budgeting framework: 50% needs, 30% wants, 20% savings.',
         body: 'Needs (50%): rent, utilities, groceries, minimum debt payments. Wants (30%): dining out, subscriptions, entertainment, travel. Savings/Debt (20%): emergency fund, retirement (401k/IRA), investments, extra debt payoff. The framework is a starting point. High cost-of-living cities may require 60%+ on needs.',
-        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Savings Rate = <Frac n="Income âˆ’ Expenses" d="Income" /> Ã— 100</span>,
-        example: 'Income: $5,000/month â†’ $2,500 needs, $1,500 wants, $1,000 savings/investing.' },
-      { id: 'emergency', title: 'Emergency Fund', icon: 'ðŸ›¡ï¸',
-        summary: '3â€“6 months of expenses in liquid savings as a financial safety net.',
-        body: 'An emergency fund prevents you from going into debt when unexpected expenses arise: job loss, medical bills, car repairs. Keep it in a high-yield savings account (HYSA) earning 4â€“5% APY, not invested in stocks. Once funded, don\'t touch it except for true emergencies. Salaried employees need 3 months; freelancers/variable income need 6+.',
-        formula: 'Target = Monthly Expenses Ã— 3 to 6',
-        example: 'Monthly expenses of $3,500 â†’ Emergency fund target: $10,500 to $21,000.' },
-      { id: 'compound', title: 'Compound Interest', icon: 'ðŸ”',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Savings Rate = <Frac n="Income − Expenses" d="Income" /> × 100</span>,
+        example: 'Income: $5,000/month → $2,500 needs, $1,500 wants, $1,000 savings/investing.' },
+      { id: 'emergency', title: 'Emergency Fund', icon: '🛡️',
+        summary: '3–6 months of expenses in liquid savings as a financial safety net.',
+        body: 'An emergency fund prevents you from going into debt when unexpected expenses arise: job loss, medical bills, car repairs. Keep it in a high-yield savings account (HYSA) earning 4–5% APY, not invested in stocks. Once funded, don\'t touch it except for true emergencies. Salaried employees need 3 months; freelancers/variable income need 6+.',
+        formula: 'Target = Monthly Expenses × 3 to 6',
+        example: 'Monthly expenses of $3,500 → Emergency fund target: $10,500 to $21,000.' },
+      { id: 'compound', title: 'Compound Interest', icon: '🔁',
         summary: 'Earning returns on your returns, the most powerful force in personal finance.',
         body: 'Einstein allegedly called compound interest the "eighth wonder of the world." Starting early matters enormously: $10,000 invested at 25 grows to ~$217,000 by 65 at 8% annual return. The same $10,000 invested at 35 grows to only ~$100,000. Time in the market beats timing the market.',
         formula: <span style={{display:'inline-flex',alignItems:'center',gap:3}}>A = P(1 + <Frac n="r" d="n" />)<sup style={{fontSize:11}}>nt</sup></span>,
-        example: '$500/month from age 25 at 8% â†’ $1.74M at 65. Starting at 35 â†’ only $745K. The 10-year delay costs ~$1M.' },
-      { id: 'credit-score', title: 'Credit Score', icon: 'ðŸ…',
-        summary: 'A 300â€“850 score that determines your borrowing rate on everything from apartments to car loans.',
+        example: '$500/month from age 25 at 8% → $1.74M at 65. Starting at 35 → only $745K. The 10-year delay costs ~$1M.' },
+      { id: 'credit-score', title: 'Credit Score', icon: '🏅',
+        summary: 'A 300–850 score that determines your borrowing rate on everything from apartments to car loans.',
         body: 'Your FICO score has five components: Payment History (35%), so never miss a payment; Amounts Owed (30%), so keep credit utilization below 30%; Length of Credit History (15%), where older accounts help; Credit Mix (10%), where having both revolving and installment credit helps; and New Credit (10%), where hard inquiries temporarily lower your score. A score above 740 unlocks the best rates; below 670 is subprime.',
         formula: 'FICO = f(Payment History 35%, Utilization 30%, Length 15%, Mix 10%, New Credit 10%)',
-        example: 'Your card limit is $5,000 and your balance is $2,200 â†’ utilization = 44%. Paying it to $1,500 drops utilization to 30% and can raise your score 20â€“40 points in one cycle.' },
-      { id: 'retirement-accounts', title: 'Roth IRA & 401(k)', icon: 'ðŸ¦',
+        example: 'Your card limit is $5,000 and your balance is $2,200 → utilization = 44%. Paying it to $1,500 drops utilization to 30% and can raise your score 20–40 points in one cycle.' },
+      { id: 'retirement-accounts', title: 'Roth IRA & 401(k)', icon: '🏦',
         summary: 'Tax-advantaged accounts that are the single most powerful tools for building long-term wealth.',
-        body: '401(k): Pre-tax contributions reduce your taxable income today; you pay taxes on withdrawal in retirement. Always contribute at least enough to get the full employer match, since that\'s a 50â€“100% instant return. Roth IRA: Post-tax contributions; all growth is tax-free forever. 2025 limits: 401(k) = $23,500, IRA = $7,000. The optimal order: 401(k) to match â†’ Roth IRA to max â†’ 401(k) to max.',
-        formula: 'After-tax value: Traditional 401k = Balance Ã— (1 âˆ’ tax rate at withdrawal)  |  Roth IRA = Balance Ã— 1',
-        example: '$6,000/yr in a Roth IRA at 22, growing at 8%, is worth $1.68M tax-free at 65. Same money in a taxable account at 22% cap gains tax â†’ ~$1.31M.' },
-      { id: 'taxes-101', title: 'Taxes 101', icon: 'ðŸ§¾',
+        body: '401(k): Pre-tax contributions reduce your taxable income today; you pay taxes on withdrawal in retirement. Always contribute at least enough to get the full employer match, since that\'s a 50–100% instant return. Roth IRA: Post-tax contributions; all growth is tax-free forever. 2025 limits: 401(k) = $23,500, IRA = $7,000. The optimal order: 401(k) to match → Roth IRA to max → 401(k) to max.',
+        formula: 'After-tax value: Traditional 401k = Balance × (1 − tax rate at withdrawal)  |  Roth IRA = Balance × 1',
+        example: '$6,000/yr in a Roth IRA at 22, growing at 8%, is worth $1.68M tax-free at 65. Same money in a taxable account at 22% cap gains tax → ~$1.31M.' },
+      { id: 'taxes-101', title: 'Taxes 101', icon: '🧾',
         summary: 'How income taxes actually work: marginal vs. effective rate, deductions, and W-2 basics.',
-        body: 'The US uses a progressive tax system: you pay each bracket\'s rate only on the income within that bracket, not your entire income. The standard deduction ($14,600 single in 2024) reduces your taxable income before brackets apply. Effective rate = total tax Ã· gross income, always lower than your marginal (top) bracket. W-2 employees have taxes withheld automatically; freelancers pay quarterly estimated taxes.',
-        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Effective Rate = <Frac n="Total Tax Owed" d="Gross Income" /> Ã— 100</span>,
-        example: 'Single filer, $65,000 income: subtract $14,600 standard deduction â†’ $50,400 taxable. Tax = $1,160 (10% on first $11,600) + $4,266 (12% on next $35,550) + $739 (22% on last $3,250) = ~$6,165. Effective rate: 9.5%, not 22%.' },
-      { id: 'inflation', title: 'Inflation & Purchasing Power', icon: 'ðŸ“‰',
+        body: 'The US uses a progressive tax system: you pay each bracket\'s rate only on the income within that bracket, not your entire income. The standard deduction ($14,600 single in 2024) reduces your taxable income before brackets apply. Effective rate = total tax ÷ gross income, always lower than your marginal (top) bracket. W-2 employees have taxes withheld automatically; freelancers pay quarterly estimated taxes.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Effective Rate = <Frac n="Total Tax Owed" d="Gross Income" /> × 100</span>,
+        example: 'Single filer, $65,000 income: subtract $14,600 standard deduction → $50,400 taxable. Tax = $1,160 (10% on first $11,600) + $4,266 (12% on next $35,550) + $739 (22% on last $3,250) = ~$6,165. Effective rate: 9.5%, not 22%.' },
+      { id: 'inflation', title: 'Inflation & Purchasing Power', icon: '📉',
         summary: 'Inflation erodes the value of cash over time. Your real return is what\'s left after subtracting inflation.',
-        body: 'The Consumer Price Index (CPI) measures average price changes across a basket of goods. The Fed targets 2% annual inflation. At 3% inflation, $1,000 today buys what $744 buys in 10 years. This is why holding cash is a losing proposition long-term; it loses purchasing power each year. Real return = nominal return minus inflation. A savings account at 1% when inflation is 3% = âˆ’2% real return.',
-        formula: 'Real Return â‰ˆ Nominal Return âˆ’ Inflation Rate   |   Future Purchasing Power = PV Ã· (1 + i)â¿',
-        example: 'Your HYSA earns 5% APY and inflation is 3.1% â†’ real return â‰ˆ 1.9%. S&P 500 historical nominal return â‰ˆ 10%/yr, real return â‰ˆ 7%/yr after inflation.' },
-      { id: 'rent-vs-buy', title: 'Renting vs. Buying', icon: 'ðŸ ',
+        body: 'The Consumer Price Index (CPI) measures average price changes across a basket of goods. The Fed targets 2% annual inflation. At 3% inflation, $1,000 today buys what $744 buys in 10 years. This is why holding cash is a losing proposition long-term; it loses purchasing power each year. Real return = nominal return minus inflation. A savings account at 1% when inflation is 3% = −2% real return.',
+        formula: 'Real Return ≈ Nominal Return − Inflation Rate   |   Future Purchasing Power = PV ÷ (1 + i)ⁿ',
+        example: 'Your HYSA earns 5% APY and inflation is 3.1% → real return ≈ 1.9%. S&P 500 historical nominal return ≈ 10%/yr, real return ≈ 7%/yr after inflation.' },
+      { id: 'rent-vs-buy', title: 'Renting vs. Buying', icon: '🏠',
         summary: 'Buying isn\'t always better. The 5-year rule and price-to-rent ratio tell you when it makes sense.',
-        body: 'Buying costs: down payment (3â€“20%), closing costs (2â€“5%), property taxes (~1%/yr), maintenance (~1%/yr), insurance. Renting costs: monthly rent + renters insurance (~$15/mo). The Price-to-Rent ratio = home price Ã· annual rent. Below 15: buying likely wins. 15â€“20: depends on your situation. Above 20: renting is usually cheaper. The 5-year rule: if you\'re not staying 5+ years, transaction costs likely outweigh equity gains.',
-        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Price-to-Rent = <Frac n="Home Price" d="Annual Rent" /> &nbsp;|&nbsp; Break-even â‰ˆ 5 years</span>,
+        body: 'Buying costs: down payment (3–20%), closing costs (2–5%), property taxes (~1%/yr), maintenance (~1%/yr), insurance. Renting costs: monthly rent + renters insurance (~$15/mo). The Price-to-Rent ratio = home price ÷ annual rent. Below 15: buying likely wins. 15–20: depends on your situation. Above 20: renting is usually cheaper. The 5-year rule: if you\'re not staying 5+ years, transaction costs likely outweigh equity gains.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Price-to-Rent = <Frac n="Home Price" d="Annual Rent" /> &nbsp;|&nbsp; Break-even ≈ 5 years</span>,
         example: 'Home: $400,000. Comparable rent: $2,000/mo ($24,000/yr). P/R ratio = 16.7, which is borderline. If you\'re staying 7+ years in a low-inventory market, buying likely wins. If you\'ll move in 3 years, rent.' },
-      { id: 'debt-payoff', title: 'Debt Payoff: Avalanche vs. Snowball', icon: 'â„ï¸',
+      { id: 'debt-payoff', title: 'Debt Payoff: Avalanche vs. Snowball', icon: '❄️',
         summary: 'Two proven strategies for eliminating debt: one saves more money, the other builds momentum.',
-        body: 'Avalanche method: pay minimums on all debts, put every extra dollar toward the highest-interest debt first. Mathematically optimal, it saves the most in interest. Snowball method: pay minimums on all debts, put every extra dollar toward the smallest balance first. Psychologically powerful, quick wins keep you motivated. Both beat paying randomly. Credit card debt (18â€“29% APR) is almost always the highest priority regardless of method.',
+        body: 'Avalanche method: pay minimums on all debts, put every extra dollar toward the highest-interest debt first. Mathematically optimal, it saves the most in interest. Snowball method: pay minimums on all debts, put every extra dollar toward the smallest balance first. Psychologically powerful, quick wins keep you motivated. Both beat paying randomly. Credit card debt (18–29% APR) is almost always the highest priority regardless of method.',
         formula: 'Avalanche: sort by APR descending   |   Snowball: sort by balance ascending',
         example: 'Debts: $500 credit card at 24%, $3,000 car loan at 6%, $8,000 student loan at 4.5%. Avalanche: attack the credit card first. Snowball: same answer here since the smallest balance is also the highest rate. Avalanche wins when the orders diverge.' },
-      { id: 'insurance', title: 'Insurance Basics', icon: 'â˜‚ï¸',
+      { id: 'insurance', title: 'Insurance Basics', icon: '☂️',
         summary: 'Insurance trades a small certain cost (premium) for protection against a large uncertain loss.',
-        body: 'Health insurance is critical: one ER visit without coverage can cost $10,000+. Understand your deductible (what you pay before insurance kicks in), copay, and out-of-pocket maximum. Renters insurance covers your belongings if your apartment is robbed or burns, costs about $15/mo, and covers $20,000+ in stuff. Auto insurance: liability is legally required in most states; comprehensive/collision protects your car. Life insurance is only needed if someone depends on your income. Term life (10â€“30yr fixed premium) is almost always better than whole life for young earners.',
-        formula: 'Expected Value of Insurance = (Probability of Loss Ã— Loss Amount) âˆ’ Premium',
+        body: 'Health insurance is critical: one ER visit without coverage can cost $10,000+. Understand your deductible (what you pay before insurance kicks in), copay, and out-of-pocket maximum. Renters insurance covers your belongings if your apartment is robbed or burns, costs about $15/mo, and covers $20,000+ in stuff. Auto insurance: liability is legally required in most states; comprehensive/collision protects your car. Life insurance is only needed if someone depends on your income. Term life (10–30yr fixed premium) is almost always better than whole life for young earners.',
+        formula: 'Expected Value of Insurance = (Probability of Loss × Loss Amount) − Premium',
         example: '30% chance of a $5,000 claim. EV of the loss = $1,500. If the premium is $500/yr, insurance is a good deal. Insurers profit by pooling thousands of policies; you buy peace of mind and catastrophic coverage.' },
-      { id: 'dca', title: 'Dollar-Cost Averaging', icon: 'ðŸ“…',
+      { id: 'dca', title: 'Dollar-Cost Averaging', icon: '📅',
         summary: 'Invest a fixed amount on a regular schedule to remove emotion and timing risk from investing.',
         body: 'Dollar-cost averaging (DCA) means investing the same dollar amount at regular intervals (weekly, monthly) regardless of market conditions. When prices are low, your fixed amount buys more shares. When prices are high, it buys fewer. Over time, your average cost per share is lower than if you had tried to time the market. The biggest benefit is behavioral: you can\'t panic-sell if you\'re on autopilot.',
-        formula: 'Avg Cost per Share = Total Amount Invested Ã· Total Shares Purchased',
+        formula: 'Avg Cost per Share = Total Amount Invested ÷ Total Shares Purchased',
         example: 'Invest $500/mo in an S&P 500 index fund for 12 months. Month 3 crashes 15%, so you buy 15% more shares that month. Average purchase price ends up lower than the year\'s average price, even with the crash.' },
-      { id: 'allocation', title: 'Asset Allocation', icon: 'ðŸ¥§',
+      { id: 'allocation', title: 'Asset Allocation', icon: '🥧',
         summary: 'How your money is split across different asset classes to balance risk and return.',
         body: 'The classic guideline: subtract your age from 110 to get your stock percentage (the rest in bonds). At 25: 85% stocks, 15% bonds. At 60: 50% stocks, 50% bonds. Stocks offer higher long-term returns but more volatility. Bonds are more stable but lower return. Cash provides safety but loses to inflation over time.',
-        formula: 'Stock % â‰ˆ 110 âˆ’ Age (traditional rule of thumb)',
+        formula: 'Stock % ≈ 110 − Age (traditional rule of thumb)',
         example: 'A 30-year-old might hold 80% stocks (S&P 500 index fund), 15% bonds, 5% cash.' },
-      { id: 'diversification', title: 'Diversification', icon: 'ðŸŽ²',
+      { id: 'diversification', title: 'Diversification', icon: '🎲',
         summary: 'Spreading investments across assets so one loss doesn\'t sink your portfolio.',
-        body: 'Diversification reduces unsystematic risk, the kind specific to one company or sector. A portfolio of 20â€“30 uncorrelated stocks eliminates most company-specific risk. Index funds provide instant diversification across hundreds or thousands of companies. Geographic diversification (international stocks) reduces country-specific risk.',
-        formula: 'Ïƒ_portfolio < average(Ïƒ_individual) when correlations < 1',
+        body: 'Diversification reduces unsystematic risk, the kind specific to one company or sector. A portfolio of 20–30 uncorrelated stocks eliminates most company-specific risk. Index funds provide instant diversification across hundreds or thousands of companies. Geographic diversification (international stocks) reduces country-specific risk.',
+        formula: 'σ_portfolio < average(σ_individual) when correlations < 1',
         example: 'Holding only one tech stock is high risk. Holding an S&P 500 index fund means one company\'s bankruptcy barely moves your portfolio.' },
-      { id: 'indices', title: 'Market Indices', icon: 'ðŸ“ˆ',
+      { id: 'indices', title: 'Market Indices', icon: '📈',
         summary: 'Benchmarks that track a basket of stocks to measure overall market performance.',
         body: 'The S&P 500 tracks the 500 largest U.S. companies and is the most widely used measure of stock market health. The Dow Jones Industrial Average (DJIA) tracks just 30 large blue-chip companies. The Nasdaq Composite is tech-heavy and includes over 3,000 companies listed on the Nasdaq exchange.',
-        formula: 'Index Level = Î£(Price_i Ã— Shares_i) / Divisor   (market-cap weighted)',
+        formula: 'Index Level = Σ(Price_i × Shares_i) / Divisor   (market-cap weighted)',
         example: 'If the S&P 500 is up 1.2% today, the average large-cap U.S. stock gained roughly 1.2%.' },
-      { id: 'bull-bear', title: 'Bull vs. Bear Markets', icon: 'ðŸ‚',
+      { id: 'bull-bear', title: 'Bull vs. Bear Markets', icon: '🐂',
         summary: 'A bull market rises 20%+ from a recent low; a bear market falls 20%+ from a recent high.',
         body: 'Bull markets are periods of rising prices and investor optimism, typically driven by strong economic growth. Bear markets are prolonged downturns of 20% or more, often linked to recessions. The average bull market lasts ~5 years; the average bear market lasts ~9 months.',
-        formula: 'Bull: Price â‰¥ +20% from recent low   |   Bear: Price â‰¤ âˆ’20% from recent high',
-        example: 'The 2020 COVID crash was a bear market (âˆ’34% in 33 days), followed by one of history\'s fastest bull recoveries.' },
-      { id: 'feargreed', title: 'Fear & Greed Index', icon: 'ðŸŒ¡ï¸',
-        summary: 'A CNN composite score (0â€“100) measuring whether investors are fearful or greedy.',
-        body: 'The index combines 7 indicators: stock price momentum, stock price strength, stock price breadth, put/call ratio, junk bond demand, market volatility (VIX), and safe-haven demand. Extreme Fear (0â€“25) often signals a buying opportunity; Extreme Greed (75â€“100) may signal overvaluation.',
-        formula: 'Score = equal-weight avg of 7 signals   |   0â€“24: Extreme Fear Â· 25â€“49: Fear Â· 50â€“74: Greed Â· 75â€“100: Extreme Greed',
+        formula: 'Bull: Price ≥ +20% from recent low   |   Bear: Price ≤ −20% from recent high',
+        example: 'The 2020 COVID crash was a bear market (−34% in 33 days), followed by one of history\'s fastest bull recoveries.' },
+      { id: 'feargreed', title: 'Fear & Greed Index', icon: '🌡️',
+        summary: 'A CNN composite score (0–100) measuring whether investors are fearful or greedy.',
+        body: 'The index combines 7 indicators: stock price momentum, stock price strength, stock price breadth, put/call ratio, junk bond demand, market volatility (VIX), and safe-haven demand. Extreme Fear (0–25) often signals a buying opportunity; Extreme Greed (75–100) may signal overvaluation.',
+        formula: 'Score = equal-weight avg of 7 signals   |   0–24: Extreme Fear · 25–49: Fear · 50–74: Greed · 75–100: Extreme Greed',
         example: 'A score of 18 means "Extreme Fear," historically a period where patient investors buy at a discount.' },
     ],
   },
@@ -818,61 +818,61 @@ const LEARN_CONTENT = [
     label: 'The Analyst',
     color: '#4da3ff',
     items: [
-      { id: 'dcf', title: 'DCF Valuation', icon: 'ðŸ”­',
+      { id: 'dcf', title: 'DCF Valuation', icon: '🔭',
         summary: 'A company\'s intrinsic value equals the present value of all its future free cash flows.',
-        body: 'Discounted Cash Flow (DCF) is the foundation of fundamental investing. You forecast a company\'s free cash flow (FCF) for 5â€“10 years, then estimate a terminal value for everything after that. Both are discounted back to today using a discount rate (WACC, the weighted average cost of capital). If the DCF value exceeds the current share price, the stock may be undervalued.',
-        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>V = <span style={{fontSize:11}}>Î£</span><Frac n="FCFâ‚œ" d={<span>(1+r)<sup style={{fontSize:11}}>t</sup></span>} /> + <Frac n="TV" d={<span>(1+r)<sup style={{fontSize:11}}>n</sup></span>} /></span>,
-        example: 'A company with $100M FCF growing 8%/yr, WACC=10%, terminal growth=3%: TV = $100MÃ—1.08âµÃ—(1.03)/(0.10âˆ’0.03). Discount back â†’ total intrinsic value ~$1.8B.' },
-      { id: 'lbo', title: 'LBO Basics', icon: 'ðŸ—ï¸',
+        body: 'Discounted Cash Flow (DCF) is the foundation of fundamental investing. You forecast a company\'s free cash flow (FCF) for 5–10 years, then estimate a terminal value for everything after that. Both are discounted back to today using a discount rate (WACC, the weighted average cost of capital). If the DCF value exceeds the current share price, the stock may be undervalued.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>V = <span style={{fontSize:11}}>Σ</span><Frac n="FCFₜ" d={<span>(1+r)<sup style={{fontSize:11}}>t</sup></span>} /> + <Frac n="TV" d={<span>(1+r)<sup style={{fontSize:11}}>n</sup></span>} /></span>,
+        example: 'A company with $100M FCF growing 8%/yr, WACC=10%, terminal growth=3%: TV = $100M×1.08⁵×(1.03)/(0.10−0.03). Discount back → total intrinsic value ~$1.8B.' },
+      { id: 'lbo', title: 'LBO Basics', icon: '🏗️',
         summary: 'Acquire a company using mostly debt, then repay it with the target\'s own cash flows.',
-        body: 'In a leveraged buyout, a private equity firm acquires a company with 60â€“80% debt and 20â€“40% equity. The target\'s operating cash flows service and pay down the debt over 3â€“7 years. At exit (IPO or sale), the remaining equity, now a larger share of a less-leveraged company, generates the return. LBOs work best on stable, cash-generative businesses with predictable revenues.',
+        body: 'In a leveraged buyout, a private equity firm acquires a company with 60–80% debt and 20–40% equity. The target\'s operating cash flows service and pay down the debt over 3–7 years. At exit (IPO or sale), the remaining equity, now a larger share of a less-leveraged company, generates the return. LBOs work best on stable, cash-generative businesses with predictable revenues.',
         formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>MOIC = <Frac n="Exit Equity Value" d="Equity Invested" /> <span style={{margin:'0 6px',opacity:0.4}}>|</span> IRR = rate where NPV = 0</span>,
-        example: 'PE firm buys a company for $500M (80% debt, $100M equity). Sells it 5yrs later for $900M with $300M debt remaining â†’ exit equity = $600M. MOIC = 6Ã—, IRR â‰ˆ 43%.' },
-      { id: 'tenk', title: 'Reading a 10-K', icon: 'ðŸ“‘',
+        example: 'PE firm buys a company for $500M (80% debt, $100M equity). Sells it 5yrs later for $900M with $300M debt remaining → exit equity = $600M. MOIC = 6×, IRR ≈ 43%.' },
+      { id: 'tenk', title: 'Reading a 10-K', icon: '📑',
         summary: 'The SEC annual report and the most information-dense document a public company produces.',
         body: 'A 10-K has four critical sections: (1) Business, covering what the company does and how it makes money; (2) Risk Factors, management\'s own list of what could go wrong (read these seriously); (3) MD&A (Management Discussion & Analysis), management\'s narrative on results, often more useful than the numbers alone; (4) Financial Statements: income statement, balance sheet, cash flow statement, and footnotes. The footnotes reveal revenue recognition policies, debt covenants, and off-balance-sheet items.',
-        formula: 'Net Income = Revenue âˆ’ COGS âˆ’ OpEx âˆ’ Interest âˆ’ Taxes   |   FCF = Operating Cash Flow âˆ’ CapEx',
+        formula: 'Net Income = Revenue − COGS − OpEx − Interest − Taxes   |   FCF = Operating Cash Flow − CapEx',
         example: 'Apple\'s 10-K risk factors note "dependence on a single supplier for components" and "foreign exchange exposure." These aren\'t boilerplate; analysts model around them.' },
-      { id: 'marketcap', title: 'Market Cap & Enterprise Value', icon: 'ðŸ¢',
+      { id: 'marketcap', title: 'Market Cap & Enterprise Value', icon: '🏢',
         summary: 'Market cap is what equity costs to buy; enterprise value is what the whole business costs.',
-        body: 'Market Cap = Share Price Ã— Shares Outstanding. Enterprise Value (EV) = Market Cap + Total Debt âˆ’ Cash. EV represents the theoretical takeover price, what you\'d pay for the entire business net of cash you\'d receive. EV/EBITDA is the most common valuation multiple because it\'s capital-structure neutral (unlike P/E).',
-        formula: 'EV = Market Cap + Debt âˆ’ Cash   |   EV/EBITDA = comparable valuation multiple',
-        example: 'Apple: $3T market cap, ~$100B debt, ~$60B cash â†’ EV â‰ˆ $3.04T. If EBITDA = $135B â†’ EV/EBITDA â‰ˆ 22.5Ã—.' },
-      { id: 'fi-pricing', title: 'Bond Pricing & YTM', icon: 'ðŸ’²',
+        body: 'Market Cap = Share Price × Shares Outstanding. Enterprise Value (EV) = Market Cap + Total Debt − Cash. EV represents the theoretical takeover price, what you\'d pay for the entire business net of cash you\'d receive. EV/EBITDA is the most common valuation multiple because it\'s capital-structure neutral (unlike P/E).',
+        formula: 'EV = Market Cap + Debt − Cash   |   EV/EBITDA = comparable valuation multiple',
+        example: 'Apple: $3T market cap, ~$100B debt, ~$60B cash → EV ≈ $3.04T. If EBITDA = $135B → EV/EBITDA ≈ 22.5×.' },
+      { id: 'fi-pricing', title: 'Bond Pricing & YTM', icon: '💲',
         summary: 'Bond price = present value of all cash flows. YTM is the single rate that explains the price.',
-        body: 'A bond\'s price equals the sum of all discounted coupon payments plus the discounted par value. YTM (yield to maturity) is the internal rate of return, the single discount rate that makes the PV of cash flows equal to the price. Price and yield move inversely. When YTM > coupon rate â†’ discount bond (price < par). When YTM < coupon rate â†’ premium bond (price > par).',
-        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>P = <span style={{fontSize:11}}>Î£</span><Frac n="C" d={<span>(1+y)<sup style={{fontSize:11}}>t</sup></span>} /> + <Frac n="F" d={<span>(1+y)<sup style={{fontSize:11}}>T</sup></span>} /></span>,
-        example: '$1,000 par, 5% coupon, 10yr, YTM=6%: P = Î£$25/(1.03)áµ— + $1,000/(1.03)Â²â° = $925.61 (semi-annual, discount bond).' },
-      { id: 'fi-termstructure', title: 'Yield Curve & Term Structure', icon: 'ðŸ“‰',
+        body: 'A bond\'s price equals the sum of all discounted coupon payments plus the discounted par value. YTM (yield to maturity) is the internal rate of return, the single discount rate that makes the PV of cash flows equal to the price. Price and yield move inversely. When YTM > coupon rate → discount bond (price < par). When YTM < coupon rate → premium bond (price > par).',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>P = <span style={{fontSize:11}}>Σ</span><Frac n="C" d={<span>(1+y)<sup style={{fontSize:11}}>t</sup></span>} /> + <Frac n="F" d={<span>(1+y)<sup style={{fontSize:11}}>T</sup></span>} /></span>,
+        example: '$1,000 par, 5% coupon, 10yr, YTM=6%: P = Σ$25/(1.03)ᵗ + $1,000/(1.03)²⁰ = $925.61 (semi-annual, discount bond).' },
+      { id: 'fi-termstructure', title: 'Yield Curve & Term Structure', icon: '📉',
         summary: 'The yield curve plots interest rates across maturities, forming the backbone of fixed income and macro.',
         body: 'Spot rate s(t): the YTM on a zero-coupon bond maturing at time t. Forward rate: the implied rate for a future period, extracted from spot rates via no-arbitrage. The yield curve shape signals economic expectations: normal (upward sloping) = growth expected; inverted = recession signal; flat = uncertainty. Every inversion since 1955 has preceded a recession, making it the most watched macro indicator.',
-        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:3}}>f(tâ‚,tâ‚‚) = [<Frac n={<span>(1+sâ‚‚)<sup style={{fontSize:10}}>tâ‚‚</sup></span>} d={<span>(1+sâ‚)<sup style={{fontSize:10}}>tâ‚</sup></span>} />]<sup style={{fontSize:10,verticalAlign:'super'}}><Frac n="1" d="tâ‚‚âˆ’tâ‚" sz={9}/></sup> âˆ’ 1</span>,
-        example: '2yr spot=4%, 3yr spot=4.5% â†’ implied 1yr forward rate starting in year 2 â‰ˆ 5.5%. The market is pricing in rate increases.' },
-      { id: 'fi-duration', title: 'Duration & DV01', icon: 'âš–ï¸',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:3}}>f(t₁,t₂) = [<Frac n={<span>(1+s₂)<sup style={{fontSize:10}}>t₂</sup></span>} d={<span>(1+s₁)<sup style={{fontSize:10}}>t₁</sup></span>} />]<sup style={{fontSize:10,verticalAlign:'super'}}><Frac n="1" d="t₂−t₁" sz={9}/></sup> − 1</span>,
+        example: '2yr spot=4%, 3yr spot=4.5% → implied 1yr forward rate starting in year 2 ≈ 5.5%. The market is pricing in rate increases.' },
+      { id: 'fi-duration', title: 'Duration & DV01', icon: '⚖️',
         summary: 'How sensitive is a bond\'s price to interest rate changes?',
         body: 'Macaulay Duration D_mac: weighted average time to receive cash flows (in years). Modified Duration D_mod: % price change per 1% (100bp) parallel shift in yields. DV01 (Dollar Value of 01): dollar price change per 1bp move, the standard trader risk measure. Convexity accounts for the curvature of the price-yield relationship; long bonds have positive convexity, meaning they gain more when rates fall than they lose when rates rise.',
-        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4,rowGap:6}}>D<sub>mod</sub> = <Frac n="D_mac" d="1+y" /> <span style={{margin:'0 6px',opacity:0.4}}>|</span> DV01 = D<sub>mod</sub> Ã— P Ã— 0.0001</span>,
-        example: 'Bond with D_mod=7, price=$950, DV01=$0.665. If yields rise 50bps â†’ Î”P â‰ˆ âˆ’7Ã—0.005Ã—$950 = âˆ’$33.25.' },
-      { id: 'fi-credit', title: 'Credit Risk & Spreads', icon: 'âš ï¸',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4,rowGap:6}}>D<sub>mod</sub> = <Frac n="D_mac" d="1+y" /> <span style={{margin:'0 6px',opacity:0.4}}>|</span> DV01 = D<sub>mod</sub> × P × 0.0001</span>,
+        example: 'Bond with D_mod=7, price=$950, DV01=$0.665. If yields rise 50bps → ΔP ≈ −7×0.005×$950 = −$33.25.' },
+      { id: 'fi-credit', title: 'Credit Risk & Spreads', icon: '⚠️',
         summary: 'The yield premium a bond pays above Treasuries as compensation for default risk.',
-        body: 'Credit spread: the yield premium over a risk-free Treasury of the same maturity. Credit ratings (AAAâ†’D) assess default probability; investment grade is BBB- and above. Probability of Default (PD) and Loss Given Default (LGD = 1 âˆ’ recovery rate R) drive spread. CDS (Credit Default Swaps): insurance-like contracts where the protection buyer pays a periodic spread and receives par if the issuer defaults.',
-        formula: 'Credit Spread â‰ˆ PD Ã— LGD = PD Ã— (1 âˆ’ R)',
-        example: 'BBB bond: PD=1.5%/yr, recovery=40% â†’ spread â‰ˆ 1.5%Ã—60% = 90bps. If Treasuries yield 4.5%, the bond yields â‰ˆ 5.4%.' },
-      { id: 'calls-puts', title: 'Options: Calls & Puts', icon: 'âš–ï¸',
+        body: 'Credit spread: the yield premium over a risk-free Treasury of the same maturity. Credit ratings (AAA→D) assess default probability; investment grade is BBB- and above. Probability of Default (PD) and Loss Given Default (LGD = 1 − recovery rate R) drive spread. CDS (Credit Default Swaps): insurance-like contracts where the protection buyer pays a periodic spread and receives par if the issuer defaults.',
+        formula: 'Credit Spread ≈ PD × LGD = PD × (1 − R)',
+        example: 'BBB bond: PD=1.5%/yr, recovery=40% → spread ≈ 1.5%×60% = 90bps. If Treasuries yield 4.5%, the bond yields ≈ 5.4%.' },
+      { id: 'calls-puts', title: 'Options: Calls & Puts', icon: '⚖️',
         summary: 'A call gives the right to buy; a put gives the right to sell.',
         body: 'A call option gives you the right (but not obligation) to buy 100 shares of a stock at the strike price before expiration. You buy calls when you expect the stock to rise. A put option gives you the right to sell 100 shares at the strike price; buy puts when you expect a decline or want downside protection. Options are used by portfolio managers to hedge positions and by analysts to imply market expectations.',
-        formula: 'Call Payoff = max(S âˆ’ K, 0)   |   Put Payoff = max(K âˆ’ S, 0)   |   Profit = Payoff âˆ’ Premium',
+        formula: 'Call Payoff = max(S − K, 0)   |   Put Payoff = max(K − S, 0)   |   Profit = Payoff − Premium',
         example: 'You buy an AAPL $200 call expiring in 30 days for $3.50 ($350 total). If AAPL hits $215, your call is worth ~$15, a 4x gain.' },
-      { id: 'iv', title: 'Implied Volatility', icon: 'ã€°ï¸',
+      { id: 'iv', title: 'Implied Volatility', icon: '〰️',
         summary: 'The market\'s forecast of future price movement, derived from option prices.',
         body: 'IV is derived from the market price of an option using the Black-Scholes model, specifically what\'s implied by what people are willing to pay. High IV means the market expects big moves; options are expensive. Low IV means calm expectations; options are cheap. IV spikes before earnings announcements and major events. The VIX tracks implied volatility on the S&P 500 and is widely known as the market\'s fear gauge.',
-        formula: 'IV is extracted from option price by solving Black-Scholes for Ïƒ',
-        example: 'AAPL IV of 28% means the market expects AAPL to move Â±28% over the next year, or roughly Â±1.8% per week.' },
-      { id: 'delta', title: 'Option Greeks: Delta & Gamma', icon: 'Î”',
+        formula: 'IV is extracted from option price by solving Black-Scholes for σ',
+        example: 'AAPL IV of 28% means the market expects AAPL to move ±28% over the next year, or roughly ±1.8% per week.' },
+      { id: 'delta', title: 'Option Greeks: Delta & Gamma', icon: 'Δ',
         summary: 'Delta measures directional exposure; gamma measures how fast delta changes.',
-        body: 'Delta (Î”): how much the option price moves per $1 move in the stock. Ranges 0â€“1 for calls, 0 to âˆ’1 for puts. A 0.50 delta call approximates a 50% chance of expiring in the money. Gamma (Î“): rate of change of delta per $1 stock move. It peaks near ATM and near expiration, where options positions become most volatile.',
-        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Î” = N(dâ‚) &nbsp;|&nbsp; Î“ = <Frac n="Nâ€²(dâ‚)" d="S Â· Ïƒ Â· âˆšT" /></span>,
-        example: 'AAPL call: Î”=0.45, Î“=0.05. Stock rises $5 â†’ option gains ~$2.25 and delta moves to ~0.70. Now you\'re more exposed.' },
+        body: 'Delta (Δ): how much the option price moves per $1 move in the stock. Ranges 0–1 for calls, 0 to −1 for puts. A 0.50 delta call approximates a 50% chance of expiring in the money. Gamma (Γ): rate of change of delta per $1 stock move. It peaks near ATM and near expiration, where options positions become most volatile.',
+        formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Δ = N(d₁) &nbsp;|&nbsp; Γ = <Frac n="N′(d₁)" d="S · σ · √T" /></span>,
+        example: 'AAPL call: Δ=0.45, Γ=0.05. Stock rises $5 → option gains ~$2.25 and delta moves to ~0.70. Now you\'re more exposed.' },
     ],
   },
 ];
@@ -881,7 +881,7 @@ function YieldCurveChart({ yieldCurve }) {
   const { tenors, date } = yieldCurve;
   if (!tenors || tenors.length < 2) return (
     <div style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT2, fontSize: 13 }}>
-      Loading yield curve dataâ€¦
+      Loading yield curve data…
     </div>
   );
 
@@ -909,7 +909,7 @@ function YieldCurveChart({ yieldCurve }) {
         <div style={{ fontWeight: 600, fontSize: 14 }}>
           US Treasury Yield Curve
           <span style={{ fontSize: 11, color: isInverted ? RED : GREEN, fontWeight: 600, marginLeft: 8 }}>
-            {isInverted ? 'â–¼ Inverted' : 'â–² Normal'}
+            {isInverted ? '▼ Inverted' : '▲ Normal'}
           </span>
         </div>
         <div style={{ fontSize: 11, color: TEXT3 }}>as of {date}</div>
@@ -1130,7 +1130,7 @@ function Tour({ steps, step, onNext, onPrev, onClose, containerRef }) {
       return { ...base, top, left: tipLeft };
     }
 
-    // 'bottom' or 'top' â€” pick whichever side has more room, always stay in viewport
+    // 'bottom' or 'top' — pick whichever side has more room, always stay in viewport
     const spaceBelow = window.innerHeight - rect.bottom - GAP;
     const spaceAbove = rect.top - GAP;
     const preferAbove = side === 'top' && spaceAbove >= TH;
@@ -1154,10 +1154,10 @@ function Tour({ steps, step, onNext, onPrev, onClose, containerRef }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 12, cursor: 'pointer', padding: 0 }}>Skip</button>
           <div style={{ display: 'flex', gap: 8 }}>
-            {step > 0 && <button onClick={onPrev} style={{ padding: '7px 16px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>â† Back</button>}
+            {step > 0 && <button onClick={onPrev} style={{ padding: '7px 16px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>← Back</button>}
             {step < steps.length - 1
-              ? <button onClick={onNext} style={{ padding: '7px 16px', background: BLUE_BTN, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>Next â†’</button>
-              : <button onClick={onClose} style={{ padding: '7px 16px', background: GREEN, border: 'none', borderRadius: 8, color: '#000', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>Done âœ“</button>
+              ? <button onClick={onNext} style={{ padding: '7px 16px', background: BLUE_BTN, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>Next →</button>
+              : <button onClick={onClose} style={{ padding: '7px 16px', background: GREEN, border: 'none', borderRadius: 8, color: '#000', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>Done ✓</button>
             }
           </div>
         </div>
@@ -1177,7 +1177,7 @@ const COURSE_CALENDAR_EVENTS = {
   '2026-1-25': [{ type: 'quiz',       label: 'Quiz 1' }],
   '2026-2-1':  [{ type: 'quiz',       label: 'Quiz 2' }],
   '2026-2-8':  [{ type: 'quiz',       label: 'Quiz 3' }, { type: 'assignment', label: 'Social Capital' }],
-  '2026-2-15': [{ type: 'exam',       label: 'Exam 1 (Ch. 1â€“3)' }, { type: 'assignment', label: 'TVM Assignment' }],
+  '2026-2-15': [{ type: 'exam',       label: 'Exam 1 (Ch. 1–3)' }, { type: 'assignment', label: 'TVM Assignment' }],
   '2026-2-22': [{ type: 'quiz',       label: 'Quiz 4' }],
   '2026-3-1':  [{ type: 'quiz',       label: 'Quiz 5' }],
   '2026-3-8':  [{ type: 'quiz',       label: 'Quiz 6' }, { type: 'assignment', label: 'PF Project 1' }],
@@ -1189,39 +1189,39 @@ const COURSE_CALENDAR_EVENTS = {
   '2026-3-14': [{ type: 'break',      label: 'Spring Break' }],
   '2026-3-15': [{ type: 'break',      label: 'Spring Break' }],
   '2026-3-22': [{ type: 'quiz',       label: 'Quiz 7' }, { type: 'assignment', label: 'Tax Assignment' }],
-  '2026-3-29': [{ type: 'exam',       label: 'Exam 2 (Ch. 4â€“6)' }],
+  '2026-3-29': [{ type: 'exam',       label: 'Exam 2 (Ch. 4–6)' }],
   '2026-4-5':  [{ type: 'quiz',       label: 'Quiz 8' }, { type: 'assignment', label: 'PF Project 2' }],
   '2026-4-12': [{ type: 'quiz',       label: 'Quiz 9' }],
   '2026-4-19': [{ type: 'quiz',       label: 'Quiz 10' }],
   '2026-4-25': [{ type: 'today',      label: 'Today' }],
-  '2026-4-26': [{ type: 'exam',       label: 'Exam 3 (Ch. 7â€“9)' }],
+  '2026-4-26': [{ type: 'exam',       label: 'Exam 3 (Ch. 7–9)' }],
   '2026-5-4':  [{ type: 'assignment', label: 'Future Forecasting' }, { type: 'assignment', label: 'Honors' }],
 };
-// Apr 20â€“26 is current week
+// Apr 20–26 is current week
 const CURRENT_WEEK_KEYS = new Set(['2026-4-20','2026-4-21','2026-4-22','2026-4-23','2026-4-24','2026-4-25','2026-4-26']);
 
 const COURSE_MODULES = [
-  { week: 'Jan 12â€“18',   topic: 'Class Overview Â· Interior Finance',           chapter: 'Ch. 1',     assignments: [],                                          datasetId: 'ds-net-worth',  current: false },
-  { week: 'Jan 19â€“25',   topic: 'Interior and Exterior Finance',                chapter: 'Ch. 1 & 2', assignments: ['Quiz 1'],                                   datasetId: 'ds-net-worth',  current: false },
-  { week: 'Jan 26â€“Feb 1',topic: 'Exterior Finance',                             chapter: 'Ch. 2',     assignments: ['Quiz 2'],                                   datasetId: 'ds-budget',     current: false },
-  { week: 'Feb 2â€“8',     topic: 'Exterior Finance Â· Earnings and Income',       chapter: 'Ch. 2 & 3', assignments: ['Quiz 3', 'Social Capital Assignment'],      datasetId: 'ds-budget',     current: false },
-  { week: 'Feb 9â€“15',    topic: 'Earnings and Income',                          chapter: 'Ch. 3',     assignments: ['Exam 1 (Ch. 1â€“3)', 'TVM Assignment'],       datasetId: 'ds-tvm',        current: false },
-  { week: 'Feb 16â€“22',   topic: 'Personal Taxation â€“ The Basics',               chapter: 'Ch. 4',     assignments: ['Quiz 4'],                                   datasetId: null,            current: false },
-  { week: 'Feb 23â€“Mar 1',topic: 'Personal Taxation â€“ The Basics',               chapter: 'Ch. 4',     assignments: ['Quiz 5'],                                   datasetId: null,            current: false },
-  { week: 'Mar 2â€“8',     topic: 'Checking Accounts, Credit Scores & Cards',     chapter: 'Ch. 5',     assignments: ['Quiz 6', 'Personal Finance Project 1'],     datasetId: 'ds-credit',     current: false },
-  { week: 'Mar 9â€“15',    topic: 'Spring Break',                                 chapter: 'â€”',         assignments: [],                                          datasetId: null,            current: false, isBreak: true },
-  { week: 'Mar 16â€“22',   topic: 'Loans and Housing Decisions',                  chapter: 'Ch. 6',     assignments: ['Quiz 7', 'Tax Assignment'],                 datasetId: 'ds-housing',    current: false },
-  { week: 'Mar 23â€“29',   topic: 'Savings',                                      chapter: 'Ch. 7',     assignments: ['Exam 2 (Ch. 4â€“6)'],                        datasetId: 'ds-tvm',        current: false },
-  { week: 'Mar 30â€“Apr 5',topic: 'Investments',                                  chapter: 'Ch. 7 & 8', assignments: ['Quiz 8', 'Personal Finance Project 2'],     datasetId: 'ds-portfolio',  current: false },
-  { week: 'Apr 6â€“12',    topic: 'Investments â€“ cont\'d',                        chapter: 'Ch. 8',     assignments: ['Quiz 9'],                                   datasetId: 'ds-portfolio',  current: false },
-  { week: 'Apr 13â€“19',   topic: 'Risk Management and Insurance',                chapter: 'Ch. 9',     assignments: ['Quiz 10'],                                  datasetId: null,            current: false },
-  { week: 'Apr 20â€“26',   topic: 'Risk Management and Insurance',                chapter: 'Ch. 9',     assignments: ['Exam 3 (Ch. 7â€“9)'],                        datasetId: null,            current: true  },
-  { week: 'Apr 27â€“May 4',topic: 'No Class',                                     chapter: 'â€”',         assignments: ['Future Forecasting Assignment', 'Honors'],  datasetId: 'ds-tvm',        current: false },
+  { week: 'Jan 12–18',   topic: 'Class Overview · Interior Finance',           chapter: 'Ch. 1',     assignments: [],                                          datasetId: 'ds-net-worth',  current: false },
+  { week: 'Jan 19–25',   topic: 'Interior and Exterior Finance',                chapter: 'Ch. 1 & 2', assignments: ['Quiz 1'],                                   datasetId: 'ds-net-worth',  current: false },
+  { week: 'Jan 26–Feb 1',topic: 'Exterior Finance',                             chapter: 'Ch. 2',     assignments: ['Quiz 2'],                                   datasetId: 'ds-budget',     current: false },
+  { week: 'Feb 2–8',     topic: 'Exterior Finance · Earnings and Income',       chapter: 'Ch. 2 & 3', assignments: ['Quiz 3', 'Social Capital Assignment'],      datasetId: 'ds-budget',     current: false },
+  { week: 'Feb 9–15',    topic: 'Earnings and Income',                          chapter: 'Ch. 3',     assignments: ['Exam 1 (Ch. 1–3)', 'TVM Assignment'],       datasetId: 'ds-tvm',        current: false },
+  { week: 'Feb 16–22',   topic: 'Personal Taxation – The Basics',               chapter: 'Ch. 4',     assignments: ['Quiz 4'],                                   datasetId: null,            current: false },
+  { week: 'Feb 23–Mar 1',topic: 'Personal Taxation – The Basics',               chapter: 'Ch. 4',     assignments: ['Quiz 5'],                                   datasetId: null,            current: false },
+  { week: 'Mar 2–8',     topic: 'Checking Accounts, Credit Scores & Cards',     chapter: 'Ch. 5',     assignments: ['Quiz 6', 'Personal Finance Project 1'],     datasetId: 'ds-credit',     current: false },
+  { week: 'Mar 9–15',    topic: 'Spring Break',                                 chapter: '—',         assignments: [],                                          datasetId: null,            current: false, isBreak: true },
+  { week: 'Mar 16–22',   topic: 'Loans and Housing Decisions',                  chapter: 'Ch. 6',     assignments: ['Quiz 7', 'Tax Assignment'],                 datasetId: 'ds-housing',    current: false },
+  { week: 'Mar 23–29',   topic: 'Savings',                                      chapter: 'Ch. 7',     assignments: ['Exam 2 (Ch. 4–6)'],                        datasetId: 'ds-tvm',        current: false },
+  { week: 'Mar 30–Apr 5',topic: 'Investments',                                  chapter: 'Ch. 7 & 8', assignments: ['Quiz 8', 'Personal Finance Project 2'],     datasetId: 'ds-portfolio',  current: false },
+  { week: 'Apr 6–12',    topic: 'Investments – cont\'d',                        chapter: 'Ch. 8',     assignments: ['Quiz 9'],                                   datasetId: 'ds-portfolio',  current: false },
+  { week: 'Apr 13–19',   topic: 'Risk Management and Insurance',                chapter: 'Ch. 9',     assignments: ['Quiz 10'],                                  datasetId: null,            current: false },
+  { week: 'Apr 20–26',   topic: 'Risk Management and Insurance',                chapter: 'Ch. 9',     assignments: ['Exam 3 (Ch. 7–9)'],                        datasetId: null,            current: true  },
+  { week: 'Apr 27–May 4',topic: 'No Class',                                     chapter: '—',         assignments: ['Future Forecasting Assignment', 'Honors'],  datasetId: 'ds-tvm',        current: false },
 ];
 
 const PREBUILT_DATASETS = [
   {
-    id: 'ds-net-worth',  title: 'Net Worth Snapshot',             subtitle: 'Interior Finance Â· Ch. 1',
+    id: 'ds-net-worth',  title: 'Net Worth Snapshot',             subtitle: 'Interior Finance · Ch. 1',
     description: 'Complete balance sheet for a 22-year-old college senior: checking, savings, student loans, and auto loan.',
     category: 'Net Worth',  color: '#4da3ff',  difficulty: 'Beginner',
     concepts: ['Assets vs Liabilities', 'Net Worth Formula', 'Personal Balance Sheet'],
@@ -1229,23 +1229,23 @@ const PREBUILT_DATASETS = [
     overview: 'Students calculate net worth from raw account data, classify assets and liabilities, and build a 12-month improvement plan targeting positive net worth.',
   },
   {
-    id: 'ds-budget',     title: 'College Student Monthly Budget', subtitle: 'Exterior Finance Â· Ch. 2',
+    id: 'ds-budget',     title: 'College Student Monthly Budget', subtitle: 'Exterior Finance · Ch. 2',
     description: 'Monthly income ($1,800) and spending across 9 categories for a part-time working student. Includes a budget deficit to diagnose.',
     category: 'Budgeting',  color: '#22c55e',  difficulty: 'Beginner',
     concepts: ['Fixed vs Variable Expenses', '50/30/20 Rule', 'Budget Surplus/Deficit'],
-    stats: [['Income', '$1,800/mo'], ['Spending', '$1,924/mo'], ['Deficit', 'âˆ’$124/mo']],
+    stats: [['Income', '$1,800/mo'], ['Spending', '$1,924/mo'], ['Deficit', '−$124/mo']],
     overview: 'Students identify spending categories causing a deficit, apply the 50/30/20 rule, and propose a revised budget. Links to Merit Budgeting tools for live visualization.',
   },
   {
-    id: 'ds-tvm',        title: 'Time Value of Money Scenarios',  subtitle: 'Savings Â· Ch. 7',
+    id: 'ds-tvm',        title: 'Time Value of Money Scenarios',  subtitle: 'Savings · Ch. 7',
     description: 'Three compound interest scenarios: $1,000 lump sum at 6%, $200/month contributions at 7%, and emergency fund build-out.',
     category: 'Savings',    color: '#f97316',  difficulty: 'Intermediate',
     concepts: ['Compound Interest', 'Present / Future Value', 'Rule of 72', 'Emergency Fund'],
-    stats: [['Scenarios', '3'], ['Time Horizon', '5â€“30 yr'], ['Rate Range', '4â€“8%']],
+    stats: [['Scenarios', '3'], ['Time Horizon', '5–30 yr'], ['Rate Range', '4–8%']],
     overview: 'Students work through FV and PV calculations, compare lump-sum vs. monthly contribution strategies, and verify results using the Rule of 72.',
   },
   {
-    id: 'ds-portfolio',  title: 'Beginner Investment Portfolio',  subtitle: 'Investments Â· Ch. 7 & 8',
+    id: 'ds-portfolio',  title: 'Beginner Investment Portfolio',  subtitle: 'Investments · Ch. 7 & 8',
     description: 'A $5,000 starter portfolio across 4 diversified ETFs showing asset allocation, sector weights, and YTD returns.',
     category: 'Investments', color: '#a855f7', difficulty: 'Intermediate',
     concepts: ['Diversification', 'Asset Allocation', 'Index Funds', 'Risk vs Return'],
@@ -1253,7 +1253,7 @@ const PREBUILT_DATASETS = [
     overview: 'Students analyze allocation, compute weighted portfolio return, identify concentration risk, and propose a rebalancing strategy. Maps directly to the Merit Investments panel.',
   },
   {
-    id: 'ds-credit',     title: 'Credit Card & Score Profile',    subtitle: 'Credit Â· Ch. 5',
+    id: 'ds-credit',     title: 'Credit Card & Score Profile',    subtitle: 'Credit · Ch. 5',
     description: 'Two credit cards with balances, a 680 credit score, and 18 months of payment history showing utilization and on-time payment impact.',
     category: 'Credit',     color: '#ef4444',  difficulty: 'Intermediate',
     concepts: ['Credit Utilization', 'Payment History', 'Score Factors', 'Min vs Full Payment'],
@@ -1261,7 +1261,7 @@ const PREBUILT_DATASETS = [
     overview: 'Students calculate utilization rate, simulate score changes from paying down balances, and compare total interest paid under minimum vs. accelerated payment plans.',
   },
   {
-    id: 'ds-housing',    title: 'Mortgage vs. Rent Decision',     subtitle: 'Housing Â· Ch. 6',
+    id: 'ds-housing',    title: 'Mortgage vs. Rent Decision',     subtitle: 'Housing · Ch. 6',
     description: 'Side-by-side analysis: renting ($1,200/mo) vs. buying ($285,000, 5% down, 30-yr fixed at 7.1%) with full amortization schedule.',
     category: 'Housing',    color: '#eab308',  difficulty: 'Advanced',
     concepts: ['Mortgage Amortization', 'Down Payment', 'DTI Ratio', 'Break-Even Horizon'],
@@ -1271,19 +1271,19 @@ const PREBUILT_DATASETS = [
 ];
 
 const MAJOR_ASSIGNMENTS = [
-  { id: 'a1', title: 'Social Capital Assignment',    week: 'Feb 2â€“8',      chapter: 'Ch. 2 & 3', datasetId: 'ds-budget',    status: 'completed', points: 50,  dueDate: '2026-02-08',
+  { id: 'a1', title: 'Social Capital Assignment',    week: 'Feb 2–8',      chapter: 'Ch. 2 & 3', datasetId: 'ds-budget',    status: 'completed', points: 50,  dueDate: '2026-02-08',
     description: 'Analyze how financial networks influence personal wealth-building. Use the College Student Budget to identify where social capital could improve financial outcomes.' },
-  { id: 'a2', title: 'TVM Assignment',               week: 'Feb 9â€“15',     chapter: 'Ch. 3',     datasetId: 'ds-tvm',       status: 'completed', points: 100, dueDate: '2026-02-15',
+  { id: 'a2', title: 'TVM Assignment',               week: 'Feb 9–15',     chapter: 'Ch. 3',     datasetId: 'ds-tvm',       status: 'completed', points: 100, dueDate: '2026-02-15',
     description: 'Apply TVM principles using the compound interest scenarios. Calculate PV, FV, and demonstrate the Rule of 72 for each of the three scenarios.' },
-  { id: 'a3', title: 'Personal Finance Project 1',   week: 'Mar 2â€“8',      chapter: 'Ch. 1â€“5',   datasetId: 'ds-budget',    status: 'completed', points: 150, dueDate: '2026-03-08',
+  { id: 'a3', title: 'Personal Finance Project 1',   week: 'Mar 2–8',      chapter: 'Ch. 1–5',   datasetId: 'ds-budget',    status: 'completed', points: 150, dueDate: '2026-03-08',
     description: 'Comprehensive analysis using the Budget and Credit datasets. Calculate net worth, propose a balanced budget, evaluate credit health, and build a 6-month plan.' },
-  { id: 'a4', title: 'Tax Assignment',               week: 'Mar 16â€“22',    chapter: 'Ch. 4',     datasetId: null,           status: 'completed', points: 75,  dueDate: '2026-03-22',
+  { id: 'a4', title: 'Tax Assignment',               week: 'Mar 16–22',    chapter: 'Ch. 4',     datasetId: null,           status: 'completed', points: 75,  dueDate: '2026-03-22',
     description: 'Calculate effective and marginal tax rates for three income scenarios. Compare standard vs. itemized deductions and model the impact of pre-tax retirement contributions.' },
-  { id: 'a5', title: 'Personal Finance Project 2',   week: 'Mar 30â€“Apr 5', chapter: 'Ch. 6â€“8',   datasetId: 'ds-portfolio', status: 'active',    points: 150, dueDate: '2026-04-05',
+  { id: 'a5', title: 'Personal Finance Project 2',   week: 'Mar 30–Apr 5', chapter: 'Ch. 6–8',   datasetId: 'ds-portfolio', status: 'active',    points: 150, dueDate: '2026-04-05',
     description: 'Deep-dive into the Investment Portfolio and Mortgage vs. Rent datasets. Build an amortization schedule, analyze diversification, and model a 10-year wealth projection.' },
-  { id: 'a6', title: 'Future Forecasting Assignment', week: 'Apr 13â€“20',    chapter: 'Ch. 7â€“9',   datasetId: 'ds-tvm',       status: 'active',    points: 150, dueDate: '2026-04-20',
+  { id: 'a6', title: 'Future Forecasting Assignment', week: 'Apr 13–20',    chapter: 'Ch. 7–9',   datasetId: 'ds-tvm',       status: 'active',    points: 150, dueDate: '2026-04-20',
     description: 'Build a 30-year financial forecast: retirement projections, insurance needs analysis, and net worth trajectory using multiple savings rate scenarios.' },
-  { id: 'a7', title: 'Honors Supplemental',           week: 'Apr 27â€“May 4', chapter: 'Ch. 1â€“9',   datasetId: null,           status: 'upcoming',  points: 100, dueDate: '2026-05-04',
+  { id: 'a7', title: 'Honors Supplemental',           week: 'Apr 27–May 4', chapter: 'Ch. 1–9',   datasetId: null,           status: 'upcoming',  points: 100, dueDate: '2026-05-04',
     description: 'Synthesize all course concepts into a complete personal financial plan covering budget, credit, debt payoff, investment strategy, insurance, and 30-year projections.' },
 ];
 
@@ -1295,10 +1295,10 @@ const COURSES = [
     instructor: 'Prof. Thomas',
     semester: 'Spring 2026',
     color: '#4ade80',
-    classTimes: 'MWF 11:15â€“12:05 AM',
+    classTimes: 'MWF 11:15–12:05 AM',
     classDays: ['Mon', 'Wed', 'Fri'],
     location: 'Brooks Hall 101',
-    officeHours: 'Tue/Thu 2:00â€“4:00 PM',
+    officeHours: 'Tue/Thu 2:00–4:00 PM',
     modules: COURSE_MODULES,
     assignments: MAJOR_ASSIGNMENTS,
   },
@@ -1309,36 +1309,36 @@ const COURSES = [
     instructor: 'Prof. Thomas',
     semester: 'Spring 2026',
     color: '#4da3ff',
-    classTimes: 'TTh 12:30â€“1:45 PM',
+    classTimes: 'TTh 12:30–1:45 PM',
     classDays: ['Tue', 'Thu'],
     location: 'Terry College 302',
-    officeHours: 'Mon/Wed 3:00â€“5:00 PM',
+    officeHours: 'Mon/Wed 3:00–5:00 PM',
     modules: [
-      { week: 'Jan 12â€“18',     topic: 'Financial Markets Overview',   chapter: 'Ch. 1',   assignments: ['Quiz 1'],                         datasetId: 'ds-portfolio', current: false },
-      { week: 'Jan 19â€“25',     topic: 'Equity Securities',            chapter: 'Ch. 2',   assignments: ['Quiz 2'],                         datasetId: 'ds-portfolio', current: false },
-      { week: 'Jan 26â€“Feb 1',  topic: 'Debt Securities',              chapter: 'Ch. 2',   assignments: [],                                 datasetId: null,           current: false },
-      { week: 'Feb 2â€“8',       topic: 'Risk & Return',                chapter: 'Ch. 3',   assignments: ['Quiz 3'],                         datasetId: 'ds-portfolio', current: false },
-      { week: 'Feb 9â€“15',      topic: 'Portfolio Theory',             chapter: 'Ch. 4',   assignments: ['Stock Analysis Report'],          datasetId: 'ds-portfolio', current: false },
-      { week: 'Feb 16â€“22',     topic: 'CAPM',                         chapter: 'Ch. 4',   assignments: ['Quiz 4'],                         datasetId: null,           current: false },
-      { week: 'Feb 23â€“Mar 1',  topic: 'Market Efficiency',            chapter: 'Ch. 5',   assignments: ['Quiz 5'],                         datasetId: null,           current: false },
-      { week: 'Mar 2â€“8',       topic: 'Equity Valuation',             chapter: 'Ch. 6',   assignments: ['Portfolio Construction Project'], datasetId: 'ds-portfolio', current: false },
-      { week: 'Mar 9â€“15',      topic: 'Spring Break',                 chapter: 'â€”',       assignments: [],                                 datasetId: null,           current: false, isBreak: true },
-      { week: 'Mar 16â€“22',     topic: 'Fixed Income',                 chapter: 'Ch. 7',   assignments: ['Quiz 6'],                         datasetId: null,           current: false },
-      { week: 'Mar 23â€“29',     topic: 'Derivatives: Options',         chapter: 'Ch. 8',   assignments: ['Options Pricing Assignment'],     datasetId: null,           current: true  },
-      { week: 'Mar 30â€“Apr 5',  topic: 'Derivatives: Futures',         chapter: 'Ch. 8',   assignments: ['Quiz 7'],                         datasetId: null,           current: false },
-      { week: 'Apr 6â€“12',      topic: 'Alternative Investments',      chapter: 'Ch. 9',   assignments: ['Quiz 8'],                         datasetId: null,           current: false },
-      { week: 'Apr 13â€“19',     topic: 'Portfolio Management',         chapter: 'Ch. 10',  assignments: ['Quiz 9'],                         datasetId: 'ds-portfolio', current: false },
-      { week: 'Apr 20â€“26',     topic: 'Performance Evaluation',       chapter: 'Ch. 10',  assignments: [],                                 datasetId: null,           current: false },
-      { week: 'Apr 27â€“May 4',  topic: 'Final Review',                 chapter: 'â€”',       assignments: ['Final Portfolio Report'],         datasetId: 'ds-portfolio', current: false },
+      { week: 'Jan 12–18',     topic: 'Financial Markets Overview',   chapter: 'Ch. 1',   assignments: ['Quiz 1'],                         datasetId: 'ds-portfolio', current: false },
+      { week: 'Jan 19–25',     topic: 'Equity Securities',            chapter: 'Ch. 2',   assignments: ['Quiz 2'],                         datasetId: 'ds-portfolio', current: false },
+      { week: 'Jan 26–Feb 1',  topic: 'Debt Securities',              chapter: 'Ch. 2',   assignments: [],                                 datasetId: null,           current: false },
+      { week: 'Feb 2–8',       topic: 'Risk & Return',                chapter: 'Ch. 3',   assignments: ['Quiz 3'],                         datasetId: 'ds-portfolio', current: false },
+      { week: 'Feb 9–15',      topic: 'Portfolio Theory',             chapter: 'Ch. 4',   assignments: ['Stock Analysis Report'],          datasetId: 'ds-portfolio', current: false },
+      { week: 'Feb 16–22',     topic: 'CAPM',                         chapter: 'Ch. 4',   assignments: ['Quiz 4'],                         datasetId: null,           current: false },
+      { week: 'Feb 23–Mar 1',  topic: 'Market Efficiency',            chapter: 'Ch. 5',   assignments: ['Quiz 5'],                         datasetId: null,           current: false },
+      { week: 'Mar 2–8',       topic: 'Equity Valuation',             chapter: 'Ch. 6',   assignments: ['Portfolio Construction Project'], datasetId: 'ds-portfolio', current: false },
+      { week: 'Mar 9–15',      topic: 'Spring Break',                 chapter: '—',       assignments: [],                                 datasetId: null,           current: false, isBreak: true },
+      { week: 'Mar 16–22',     topic: 'Fixed Income',                 chapter: 'Ch. 7',   assignments: ['Quiz 6'],                         datasetId: null,           current: false },
+      { week: 'Mar 23–29',     topic: 'Derivatives: Options',         chapter: 'Ch. 8',   assignments: ['Options Pricing Assignment'],     datasetId: null,           current: true  },
+      { week: 'Mar 30–Apr 5',  topic: 'Derivatives: Futures',         chapter: 'Ch. 8',   assignments: ['Quiz 7'],                         datasetId: null,           current: false },
+      { week: 'Apr 6–12',      topic: 'Alternative Investments',      chapter: 'Ch. 9',   assignments: ['Quiz 8'],                         datasetId: null,           current: false },
+      { week: 'Apr 13–19',     topic: 'Portfolio Management',         chapter: 'Ch. 10',  assignments: ['Quiz 9'],                         datasetId: 'ds-portfolio', current: false },
+      { week: 'Apr 20–26',     topic: 'Performance Evaluation',       chapter: 'Ch. 10',  assignments: [],                                 datasetId: null,           current: false },
+      { week: 'Apr 27–May 4',  topic: 'Final Review',                 chapter: '—',       assignments: ['Final Portfolio Report'],         datasetId: 'ds-portfolio', current: false },
     ],
     assignments: [
-      { id: 'i1', title: 'Stock Analysis Report',          week: 'Feb 9â€“15',     chapter: 'Ch. 3â€“4', datasetId: 'ds-portfolio', status: 'completed', points: 100,
+      { id: 'i1', title: 'Stock Analysis Report',          week: 'Feb 9–15',     chapter: 'Ch. 3–4', datasetId: 'ds-portfolio', status: 'completed', points: 100,
         description: 'Pick two S&P 500 equities. Calculate expected return and beta using 12 months of price data, then compare to the CAPM prediction.' },
-      { id: 'i2', title: 'Portfolio Construction Project', week: 'Mar 2â€“8',      chapter: 'Ch. 4â€“6', datasetId: 'ds-portfolio', status: 'completed', points: 150,
+      { id: 'i2', title: 'Portfolio Construction Project', week: 'Mar 2–8',      chapter: 'Ch. 4–6', datasetId: 'ds-portfolio', status: 'completed', points: 150,
         description: 'Build a 5-asset diversified portfolio using the Beginner Investment Portfolio dataset. Optimize for Sharpe ratio and justify asset weights.' },
-      { id: 'i3', title: 'Options Pricing Assignment',     week: 'Mar 23â€“29',    chapter: 'Ch. 8',   datasetId: null,           status: 'active',    points: 75,
+      { id: 'i3', title: 'Options Pricing Assignment',     week: 'Mar 23–29',    chapter: 'Ch. 8',   datasetId: null,           status: 'active',    points: 75,
         description: 'Price a European call option using Black-Scholes. Sensitivity analysis on volatility and time-to-expiry. Submit a one-page memo.' },
-      { id: 'i4', title: 'Final Portfolio Report',         week: 'Apr 27â€“May 4', chapter: 'Ch. 1â€“10', datasetId: 'ds-portfolio', status: 'upcoming', points: 200,
+      { id: 'i4', title: 'Final Portfolio Report',         week: 'Apr 27–May 4', chapter: 'Ch. 1–10', datasetId: 'ds-portfolio', status: 'upcoming', points: 200,
         description: 'Comprehensive portfolio analysis: performance attribution, risk-adjusted returns, benchmark comparison, and 12-month forward outlook.' },
     ],
   },
@@ -1349,12 +1349,12 @@ const ALL_ASSIGNMENTS_MAP = Object.fromEntries(
 );
 
 const DEMO_ANNOUNCEMENTS = [
-  { id: 1, from: 'Prof. Thomas', course: 'FINA 3000', date: '2026-04-24', title: 'Future Forecasting Assignment Posted', body: 'Assignment 6 is now live in the Assignments tab. Forecasting model templates are available under Content â†’ Resources. Due April 20; late submissions accepted through May 4 for partial credit.' },
-  { id: 2, from: 'Prof. Thomas', course: 'FINA 3000', date: '2026-04-17', title: 'Projects 1â€“3 Graded', body: 'Scores and written feedback are posted. Check the Assignments tab. Office hours this week are Tue/Thu 2â€“4 PM in Brooks Hall 101 if you have questions.' },
+  { id: 1, from: 'Prof. Thomas', course: 'FINA 3000', date: '2026-04-24', title: 'Future Forecasting Assignment Posted', body: 'Assignment 6 is now live in the Assignments tab. Forecasting model templates are available under Content → Resources. Due April 20; late submissions accepted through May 4 for partial credit.' },
+  { id: 2, from: 'Prof. Thomas', course: 'FINA 3000', date: '2026-04-17', title: 'Projects 1–3 Graded', body: 'Scores and written feedback are posted. Check the Assignments tab. Office hours this week are Tue/Thu 2–4 PM in Brooks Hall 101 if you have questions.' },
   { id: 3, from: 'Prof. Thomas', course: 'FINA 4200', date: '2026-04-15', title: 'Options Pricing Memo: Deadline Extended', body: 'Extended to April 28 due to the exam schedule conflict. Peer review submissions (2 reviews) earn up to 10 pts extra credit. Details on the course page.' },
 ];
 
-// â”€â”€ Signal Engine â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Signal Engine ─────────────────────────────────────────────────────────────
 const MOAT_DB = {
   AAPL:1.15, MSFT:1.20, GOOGL:1.10, GOOG:1.10, AMZN:1.12, META:1.08,
   NVDA:1.18, TSLA:0.92, JPM:1.05, V:1.22, MA:1.22, WMT:1.08, JNJ:1.12,
@@ -1438,7 +1438,7 @@ function scoreArticle(article) {
   const primaryTicker = tickers.find(t => MOAT_DB[t]) || null;
   const moatLabel = primaryTicker ? (MOAT_DB[primaryTicker] > 1.1 ? 'wide' : MOAT_DB[primaryTicker] > 1.0 ? 'narrow' : 'no') : null;
   const moatNote = moatLabel === 'wide'
-    ? `${primaryTicker}'s wide moat â€” durable pricing power and high switching costs â€” ${isNeg ? 'dampens downside vol and limits multiple compression' : 'amplifies the structural alpha thesis'}.`
+    ? `${primaryTicker}'s wide moat — durable pricing power and high switching costs — ${isNeg ? 'dampens downside vol and limits multiple compression' : 'amplifies the structural alpha thesis'}.`
     : moatLabel === 'narrow'
     ? `Narrow moat provides partial buffer; ${isNeg ? 'watch for operating leverage bleed' : 'limited durable upside beyond near-term rerating'}.`
     : 'No identifiable moat; elevated sensitivity to macro and sector rotation.';
@@ -1465,7 +1465,7 @@ const SANDBOX_DATA = (() => {
   return {
   'ds-budget': {
     transactions: [
-      // â”€â”€ Current month â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Current month ──────────────────────────────────────────────────────
       { merchant_name: 'Athens Property Mgmt', name: 'Athens Property Mgmt', amount: 650,   date: `${C}-01`, ...cat('RENT_AND_UTILITIES') },
       { merchant_name: 'Georgia Power',        name: 'Georgia Power',        amount: 82,    date: `${C}-03`, ...cat('RENT_AND_UTILITIES') },
       { merchant_name: 'AT&T Mobile',          name: 'AT&T Mobile',          amount: 45,    date: `${C}-05`, ...cat('RENT_AND_UTILITIES') },
@@ -1509,7 +1509,7 @@ const SANDBOX_DATA = (() => {
       { merchant_name: 'UGA Bookstore',        name: 'UGA Bookstore',        amount: 89.95, date: `${C}-03`, ...cat('EDUCATION') },
       { merchant_name: 'Chegg',                name: 'Chegg Study',          amount: 19.95, date: `${C}-01`, ...cat('EDUCATION') },
       { merchant_name: 'Office Depot',         name: 'Office Depot',         amount: 34.50, date: `${C}-11`, ...cat('EDUCATION') },
-      // â”€â”€ Previous month (for Trends comparison) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Previous month (for Trends comparison) ─────────────────────────────
       { merchant_name: 'Athens Property Mgmt', name: 'Athens Property Mgmt', amount: 650,   date: `${P}-01`, ...cat('RENT_AND_UTILITIES') },
       { merchant_name: 'Georgia Power',        name: 'Georgia Power',        amount: 94.20, date: `${P}-03`, ...cat('RENT_AND_UTILITIES') },
       { merchant_name: 'AT&T Mobile',          name: 'AT&T Mobile',          amount: 45,    date: `${P}-05`, ...cat('RENT_AND_UTILITIES') },
@@ -1616,7 +1616,7 @@ function DragSection({ id, panel, order, onReorder, children }) {
       style={{ order: order.indexOf(id), outline: over ? '2px dashed rgba(77,163,255,0.4)' : '2px solid transparent', outlineOffset: 3, borderRadius: 12, position: 'relative' }}
       className="drag-section"
     >
-      <div className="drag-handle" title="Drag to reorder" style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab', color: '#555', fontSize: 13, borderRadius: 5, background: 'rgba(255,255,255,0.06)', opacity: 0, transition: 'opacity 0.15s', userSelect: 'none' }}>â ¿</div>
+      <div className="drag-handle" title="Drag to reorder" style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab', color: '#555', fontSize: 13, borderRadius: 5, background: 'rgba(255,255,255,0.06)', opacity: 0, transition: 'opacity 0.15s', userSelect: 'none' }}>⠿</div>
       {children}
     </div>
   );
@@ -1711,7 +1711,7 @@ export default function Dashboard() {
   const [taxItemized, setTaxItemized] = useState('0');
   const mainRef = useRef(null);
   const [courseView, setCourseView] = useState('schedule'); // 'schedule' | 'calendar'
-  const [calMonth, setCalMonth] = useState(3); // 0=Jan â€¦ 4=May (default April)
+  const [calMonth, setCalMonth] = useState(3); // 0=Jan … 4=May (default April)
   const [theme, setTheme] = useState(() => localStorage.getItem('merit_theme') || 'light');
   useEffect(() => {
     const r = document.documentElement;
@@ -2168,7 +2168,7 @@ export default function Dashboard() {
   const getAdvice = useCallback(async (panelKey) => {
     setAdviceState(s => ({ ...s, [panelKey]: { loading: true, text: '' } }));
     const prompts = {
-      overview:    'Give me a concise 3â€“4 bullet financial health summary and top recommendations based on my accounts, spending, and portfolio.',
+      overview:    'Give me a concise 3–4 bullet financial health summary and top recommendations based on my accounts, spending, and portfolio.',
       banking:     'Analyze my recent transactions and account balances. Give me 3 specific, actionable recommendations to improve my cash management.',
       investments: 'Review my investment portfolio. Give me 3 specific insights or recommendations about my investment strategy and diversification.',
       budgeting:   'Review my spending by category. Give me 3 actionable recommendations to cut spending or improve my budget this month.',
@@ -2223,10 +2223,10 @@ export default function Dashboard() {
   const SandboxBanner = sandboxDataset ? (
     <div style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, padding: '10px 16px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 12, cursor: 'pointer', padding: '4px 10px', fontWeight: 600 }}>â† Datasets</button>
-        <div style={{ fontSize: 12, color: GREEN, fontWeight: 700 }}>â—« Sandbox Â· {PREBUILT_DATASETS.find(d => d.id === sandboxDataset)?.title} Â· Education Mode</div>
+        <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 12, cursor: 'pointer', padding: '4px 10px', fontWeight: 600 }}>← Datasets</button>
+        <div style={{ fontSize: 12, color: GREEN, fontWeight: 700 }}>◫ Sandbox · {PREBUILT_DATASETS.find(d => d.id === sandboxDataset)?.title} · Education Mode</div>
       </div>
-      <button onClick={() => setSandboxDataset(null)} style={{ background: 'none', border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 11, cursor: 'pointer', padding: '3px 10px' }}>Exit sandbox Ã—</button>
+      <button onClick={() => setSandboxDataset(null)} style={{ background: 'none', border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 11, cursor: 'pointer', padding: '3px 10px' }}>Exit sandbox ×</button>
     </div>
   ) : null;
 
@@ -2277,15 +2277,15 @@ export default function Dashboard() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: BG, fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 14, color: TEXT }}>
 
-      {/* â”€â”€ TOAST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── TOAST ──────────────────────────────────────── */}
       {toast && (
         <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, background: CARD_BG, border: `1px solid ${toast.color || BORDER_C}`, borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 13, fontWeight: 600, color: TEXT, pointerEvents: 'none' }}>
-          <span style={{ color: toast.color || GREEN, fontSize: 16 }}>{toast.icon || 'âœ“'}</span>
+          <span style={{ color: toast.color || GREEN, fontSize: 16 }}>{toast.icon || '✓'}</span>
           {toast.message}
         </div>
       )}
 
-      {/* â”€â”€ ONBOARDING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── ONBOARDING ─────────────────────────────────── */}
       {showOnboarding && (() => {
         const dismiss = (panelKey, edu) => {
           localStorage.setItem(`merit_onboarded_${user.id}`, '1');
@@ -2310,31 +2310,31 @@ export default function Dashboard() {
                 {isProfOrAdmin && !isStudentRole && <>
                   <button onClick={() => dismiss('prof-dashboard', true)}
                     style={{ padding: '14px 20px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 10, color: GREEN, fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>âŠŸ Set up my course</span><span style={{ opacity: 0.6 }}>â†’</span>
+                    <span>⊟ Set up my course</span><span style={{ opacity: 0.6 }}>→</span>
                   </button>
                   <button onClick={() => dismiss('overview', false)}
                     style={{ padding: '14px 20px', background: MUTED, border: BORDER, borderRadius: 10, color: TEXT2, fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>âŠž Explore the finance dashboard</span><span style={{ opacity: 0.6 }}>â†’</span>
+                    <span>⊞ Explore the finance dashboard</span><span style={{ opacity: 0.6 }}>→</span>
                   </button>
                 </>}
                 {isStudentRole && <>
                   <button onClick={() => dismiss('edu-courses', true)}
                     style={{ padding: '14px 20px', background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 10, color: '#a78bfa', fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>â—« Go to my courses</span><span style={{ opacity: 0.6 }}>â†’</span>
+                    <span>◫ Go to my courses</span><span style={{ opacity: 0.6 }}>→</span>
                   </button>
                   <button onClick={() => dismiss('overview', false)}
                     style={{ padding: '14px 20px', background: MUTED, border: BORDER, borderRadius: 10, color: TEXT2, fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>âŠž Explore the finance dashboard</span><span style={{ opacity: 0.6 }}>â†’</span>
+                    <span>⊞ Explore the finance dashboard</span><span style={{ opacity: 0.6 }}>→</span>
                   </button>
                 </>}
                 {!isProfOrAdmin && !isStudentRole && <>
                   <button onClick={() => { dismiss('overview', false); setTimeout(() => window._plaidLinkHandler?.open(), 300); }}
                     style={{ padding: '14px 20px', background: 'rgba(77,163,255,0.1)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 10, color: BLUE, fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>ðŸ”— Connect my accounts</span><span style={{ opacity: 0.6 }}>â†’</span>
+                    <span>🔗 Connect my accounts</span><span style={{ opacity: 0.6 }}>→</span>
                   </button>
                   <button onClick={() => dismiss('overview', false)}
                     style={{ padding: '14px 20px', background: MUTED, border: BORDER, borderRadius: 10, color: TEXT2, fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>âŠž Explore with demo data</span><span style={{ opacity: 0.6 }}>â†’</span>
+                    <span>⊞ Explore with demo data</span><span style={{ opacity: 0.6 }}>→</span>
                   </button>
                 </>}
               </div>
@@ -2343,7 +2343,7 @@ export default function Dashboard() {
         );
       })()}
 
-      {/* â”€â”€ MOBILE TOP BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── MOBILE TOP BAR ─────────────────────────────── */}
       {isMobile && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 52, background: SIDE_BG, borderBottom: BORDER, zIndex: 200, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2351,7 +2351,7 @@ export default function Dashboard() {
             {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
           </div>
           <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
-            ðŸ””
+            🔔
             {inboxNotifs.filter(n => !n.read).length > 0 && (
               <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, background: RED, borderRadius: 8, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px', border: `2px solid ${SIDE_BG}` }}>
                 {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
@@ -2359,12 +2359,12 @@ export default function Dashboard() {
             )}
           </button>
           <button onClick={() => { setPanel('settings'); switchEduMode(false); }} style={{ background: panel === 'settings' ? 'rgba(255,255,255,0.08)' : MUTED, border: panel === 'settings' ? `1px solid ${BORDER_C}` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
-            âš™
+            ⚙
           </button>
         </div>
       )}
 
-      {/* â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── SIDEBAR ─────────────────────────────────────── */}
       <aside style={{ width: 220, flexShrink: 0, background: SIDE_BG, borderRight: BORDER, display: isMobile ? 'none' : 'flex', flexDirection: 'column' }}>
         <div data-tour="brand" style={{ padding: '18px 16px 16px', borderBottom: BORDER, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1 }}>
@@ -2372,7 +2372,7 @@ export default function Dashboard() {
             <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Finance OS</div>
           </div>
           <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
-            ðŸ””
+            🔔
             {inboxNotifs.filter(n => !n.read).length > 0 && (
               <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 17, height: 17, background: RED, borderRadius: 9, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', border: `2px solid ${SIDE_BG}` }}>
                 {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
@@ -2382,13 +2382,13 @@ export default function Dashboard() {
         </div>
         <nav style={{ flex: 1, paddingTop: 10, overflowY: 'auto' }}>
 
-          {/* â”€â”€ PERSONAL FINANCE SECTION â”€â”€ */}
+          {/* ── PERSONAL FINANCE SECTION ── */}
           {eduMode ? (
-            /* Collapsed â€” single switch pill */
+            /* Collapsed — single switch pill */
             <button onClick={() => { switchEduMode(false); setPanel('overview'); }}
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', margin: '4px 0', background: 'transparent', border: 'none', color: BLUE, cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: 'left', borderBottom: `1px solid ${BORDER_C}`, paddingBottom: 10, marginBottom: 4, transition: 'all 0.15s' }}>
               <span style={{ flex: 1, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Personal Finance</span>
-              <span style={{ fontSize: 11, fontWeight: 600 }}>â† Switch</span>
+              <span style={{ fontSize: 11, fontWeight: 600 }}>← Switch</span>
             </button>
           ) : (
             <>
@@ -2417,13 +2417,13 @@ export default function Dashboard() {
             </>
           )}
 
-          {/* â”€â”€ EDUCATION SECTION â”€â”€ */}
+          {/* ── EDUCATION SECTION ── */}
           {!isUser && (!eduMode ? (
-            /* Collapsed â€” single switch pill */
+            /* Collapsed — single switch pill */
             <button onClick={() => { switchEduMode(true); setPanel('edu-courses'); }}
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', margin: '4px 0', background: 'transparent', border: 'none', color: GREEN, cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: 'left', borderTop: `1px solid ${BORDER_C}`, marginTop: 6, transition: 'all 0.15s' }}>
               <span style={{ flex: 1, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Education</span>
-              <span style={{ fontSize: 11, fontWeight: 600 }}>Switch â†’</span>
+              <span style={{ fontSize: 11, fontWeight: 600 }}>Switch →</span>
             </button>
           ) : (
             <>
@@ -2440,13 +2440,13 @@ export default function Dashboard() {
               {effectiveProfessor && (
                 <button onClick={() => { setPanel('prof-dashboard'); switchEduMode(true); }}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 20px', background: panel === 'prof-dashboard' ? 'rgba(74,222,128,0.07)' : 'transparent', border: 'none', borderLeft: panel === 'prof-dashboard' ? `2px solid ${GREEN}` : '2px solid transparent', color: panel === 'prof-dashboard' ? GREEN : TEXT2, cursor: 'pointer', fontSize: 13, fontWeight: panel === 'prof-dashboard' ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
-                  <span style={{ fontSize: 14 }}>âŠŸ</span>
+                  <span style={{ fontSize: 14 }}>⊟</span>
                   <span>Professor Hub</span>
                 </button>
               )}
             </>
           ))}
-          {/* Connect Account + Tour + Settings â€” anchored under Education section */}
+          {/* Connect Account + Tour + Settings — anchored under Education section */}
           <div style={{ padding: '10px 14px 4px', display: 'flex', flexDirection: 'column', gap: 7 }}>
             {isAdmin && !viewAs && (
               <div data-tour="connect">
@@ -2458,12 +2458,12 @@ export default function Dashboard() {
                 onClick={() => { switchEduMode(false); setPanel('overview'); setTourStep(0); setShowTour(true); }}
                 style={{ width: '100%', padding: '8px 0', background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.25)', borderRadius: 8, color: BLUE, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
-                âœ¦ Take a Tour
+                ✦ Take a Tour
               </button>
             )}
             <button data-tour="nav-settings" onClick={() => setPanel('settings')}
               style={{ width: '100%', padding: '8px 0', background: panel === 'settings' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: panel === 'settings' ? `1px solid ${BORDER_C}` : `1px solid ${BORDER_C}`, borderRadius: 8, color: panel === 'settings' ? TEXT : TEXT2, fontSize: 12, fontWeight: panel === 'settings' ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.15s' }}>
-              âš™ Settings
+              ⚙ Settings
               {hiddenPanels.size > 0 && <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(251,191,36,0.15)', color: YELLOW, padding: '2px 5px', borderRadius: 4 }}>{hiddenPanels.size} hidden</span>}
             </button>
           </div>
@@ -2487,7 +2487,7 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* â”€â”€ NOTIFICATION PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── NOTIFICATION PANEL ─────────────────────────── */}
       {notifPanelOpen && (
         <>
           <div onClick={() => setNotifPanelOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 299 }} />
@@ -2502,12 +2502,12 @@ export default function Dashboard() {
                   Mark all read
                 </button>
               )}
-              <button onClick={() => setNotifPanelOpen(false)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: 0 }}>Ã—</button>
+              <button onClick={() => setNotifPanelOpen(false)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
             </div>
             <div style={{ overflowY: 'auto', flex: 1 }}>
               {inboxNotifs.length === 0 ? (
                 <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: TEXT3 }}>
-                  <div style={{ fontSize: 24, marginBottom: 8 }}>ðŸ””</div>
+                  <div style={{ fontSize: 24, marginBottom: 8 }}>🔔</div>
                   No notifications yet
                 </div>
               ) : inboxNotifs.map((n, i) => (
@@ -2537,14 +2537,14 @@ export default function Dashboard() {
         </>
       )}
 
-      {/* â”€â”€ CREATE ASSIGNMENT MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── CREATE ASSIGNMENT MODAL ─────────────────────── */}
       {showCreateAssignment && (
         <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
           onClick={e => { if (e.target === e.currentTarget) { setShowCreateAssignment(false); setCreateAssignCourseId(null); } }}>
           <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, padding: 28, width: '100%', maxWidth: 520, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <div style={{ fontWeight: 700, fontSize: 18 }}>Create Assignment</div>
-              <button onClick={() => { setShowCreateAssignment(false); setCreateAssignCourseId(null); }} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>Ã—</button>
+              <button onClick={() => { setShowCreateAssignment(false); setCreateAssignCourseId(null); }} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
             </div>
 
             <div style={{ marginBottom: 20 }}>
@@ -2556,9 +2556,9 @@ export default function Dashboard() {
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{c.name}</div>
-                      <div style={{ fontSize: 11, color: TEXT3 }}>{c.code} Â· {c.semester}</div>
+                      <div style={{ fontSize: 11, color: TEXT3 }}>{c.code} · {c.semester}</div>
                     </div>
-                    {createAssignCourseId === c.id && <span style={{ fontSize: 11, fontWeight: 700, color: c.color }}>âœ“</span>}
+                    {createAssignCourseId === c.id && <span style={{ fontSize: 11, fontWeight: 700, color: c.color }}>✓</span>}
                   </button>
                 ))}
               </div>
@@ -2566,7 +2566,7 @@ export default function Dashboard() {
 
             {[
               { label: 'Title', key: 'title', type: 'text', placeholder: 'e.g. Net Worth Statement' },
-              { label: 'Week / Due', key: 'week', type: 'text', placeholder: 'e.g. Feb 9â€“15' },
+              { label: 'Week / Due', key: 'week', type: 'text', placeholder: 'e.g. Feb 9–15' },
               { label: 'Points', key: 'points', type: 'number', placeholder: '100' },
             ].map(f => (
               <div key={f.key} style={{ marginBottom: 14 }}>
@@ -2626,20 +2626,20 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* â”€â”€ LINK CALENDAR MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── LINK CALENDAR MODAL ─────────────────────────── */}
       {showLinkCal && (
         <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
           onClick={e => { if (e.target === e.currentTarget) setShowLinkCal(false); }}>
           <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, padding: 28, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <div style={{ fontWeight: 700, fontSize: 18 }}>Link Calendar</div>
-              <button onClick={() => setShowLinkCal(false)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>Ã—</button>
+              <button onClick={() => setShowLinkCal(false)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
             </div>
             <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, marginBottom: 20 }}>
               Connect an external calendar to sync your financial events, bill due dates, and reminders.
             </div>
             {[
-              { name: 'Apple Calendar', icon: 'ðŸ—“', desc: 'Export as .ics file', color: '#888', available: true },
+              { name: 'Apple Calendar', icon: '🗓', desc: 'Export as .ics file', color: '#888', available: true },
             ].map(opt => (
               <div key={opt.name} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: DARK, border: BORDER, borderRadius: 10, marginBottom: 10 }}>
                 <span style={{ fontSize: 22 }}>{opt.icon}</span>
@@ -2669,15 +2669,15 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* â”€â”€ UPGRADE MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── UPGRADE MODAL ───────────────────────────────── */}
       {showUpgrade && (
         <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
           onClick={e => { if (e.target === e.currentTarget) setShowUpgrade(false); }}>
           <div style={{ position: 'relative', background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: 32, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.6)' }}>
-            <button onClick={() => setShowUpgrade(false)} style={{ position: 'absolute', top: 14, right: 14, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: TEXT2, fontSize: 16, cursor: 'pointer', lineHeight: 1, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>âœ•</button>
+            <button onClick={() => setShowUpgrade(false)} style={{ position: 'absolute', top: 14, right: 14, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: TEXT2, fontSize: 16, cursor: 'pointer', lineHeight: 1, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
 
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <div style={{ fontSize: 28, marginBottom: 10 }}>â­</div>
+              <div style={{ fontSize: 28, marginBottom: 10 }}>⭐</div>
               <div style={{ fontWeight: 800, fontSize: 22, marginBottom: 6 }}>Upgrade to Premium</div>
               <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.6 }}>Connect real accounts, unlock AI insights, and get a complete picture of your finances.</div>
             </div>
@@ -2694,7 +2694,7 @@ export default function Dashboard() {
                   'Tax estimator',
                 ].map(f => (
                   <div key={f} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 9 }}>
-                    <span style={{ color: TEXT3, fontSize: 13, lineHeight: '18px', flexShrink: 0 }}>âœ“</span>
+                    <span style={{ color: TEXT3, fontSize: 13, lineHeight: '18px', flexShrink: 0 }}>✓</span>
                     <span style={{ fontSize: 12, color: TEXT2, lineHeight: '18px' }}>{f}</span>
                   </div>
                 ))}
@@ -2716,7 +2716,7 @@ export default function Dashboard() {
                   'Downloadable templates',
                 ].map((f, i) => (
                   <div key={f} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 9 }}>
-                    <span style={{ color: i === 0 ? TEXT3 : BLUE, fontSize: 13, lineHeight: '18px', flexShrink: 0 }}>âœ“</span>
+                    <span style={{ color: i === 0 ? TEXT3 : BLUE, fontSize: 13, lineHeight: '18px', flexShrink: 0 }}>✓</span>
                     <span style={{ fontSize: 12, color: i === 0 ? TEXT2 : TEXT, fontWeight: i === 0 ? 400 : 500, lineHeight: '18px' }}>{f}</span>
                   </div>
                 ))}
@@ -2728,12 +2728,12 @@ export default function Dashboard() {
               <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 12 }}>Curated Resource Library</div>
               <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 8 }}>
                 {[
-                  { name: 'Investopedia',        icon: 'ðŸ“š', color: BLUE   },
-                  { name: 'NerdWallet',          icon: 'ðŸ§®', color: GREEN  },
-                  { name: 'Khan Academy',        icon: 'ðŸŽ“', color: '#10b981' },
-                  { name: 'IRS.gov',             icon: 'ðŸ›ï¸', color: RED    },
-                  { name: 'FRED â€” St. Louis Fed',icon: 'ðŸ“ˆ', color: YELLOW },
-                  { name: 'SEC Investor Ed.',    icon: 'âš–ï¸', color: '#a78bfa' },
+                  { name: 'Investopedia',        icon: '📚', color: BLUE   },
+                  { name: 'NerdWallet',          icon: '🧮', color: GREEN  },
+                  { name: 'Khan Academy',        icon: '🎓', color: '#10b981' },
+                  { name: 'IRS.gov',             icon: '🏛️', color: RED    },
+                  { name: 'FRED — St. Louis Fed',icon: '📈', color: YELLOW },
+                  { name: 'SEC Investor Ed.',    icon: '⚖️', color: '#a78bfa' },
                 ].map(r => (
                   <div key={r.name} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 10px', background: DARK, borderRadius: 8, border: BORDER }}>
                     <span style={{ fontSize: 14 }}>{r.icon}</span>
@@ -2746,23 +2746,23 @@ export default function Dashboard() {
             <button
               onClick={() => { window.open('mailto:connoraltonmigliore@gmail.com?subject=Merit Premium Access', '_blank'); }}
               style={{ width: '100%', padding: '14px 0', background: BLUE_BTN, border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>
-              Get Premium Access â†’
+              Get Premium Access →
             </button>
             <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3 }}>Currently in early access. Reach out to get set up.</div>
           </div>
         </div>
       )}
 
-      {/* â”€â”€ SUBMIT ASSIGNMENT MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── SUBMIT ASSIGNMENT MODAL ─────────────────────── */}
       {showSubmit && (
         <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
           onClick={e => { if (e.target === e.currentTarget) setShowSubmit(null); }}>
           <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, padding: 28, width: '100%', maxWidth: 500, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <div style={{ fontWeight: 700, fontSize: 18 }}>Submit Assignment</div>
-              <button onClick={() => setShowSubmit(null)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>Ã—</button>
+              <button onClick={() => setShowSubmit(null)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
             </div>
-            <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>{showSubmit.title} Â· {showSubmit.chapter} Â· {showSubmit.points} pts</div>
+            <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>{showSubmit.title} · {showSubmit.chapter} · {showSubmit.points} pts</div>
 
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Your Response / Notes</label>
@@ -2794,14 +2794,14 @@ export default function Dashboard() {
                 setShowSubmit(null);
                 setSubmitNote('');
               }} style={{ padding: '10px 20px', background: 'rgba(74,222,128,0.15)', border: '1px solid rgba(74,222,128,0.4)', borderRadius: 8, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                Submit â†’
+                Submit →
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* â”€â”€ GRADING MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── GRADING MODAL ──────────────────────────────── */}
       {showGrade && (() => {
         const assign = ALL_ASSIGNMENTS_MAP[showGrade.assignment_id];
         const maxPts = assign?.points ?? 100;
@@ -2814,9 +2814,9 @@ export default function Dashboard() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 2 }}>Grade Submission</div>
-                  <div style={{ fontSize: 13, color: TEXT2 }}>{assign?.title || showGrade.assignment_id} Â· {maxPts} pts possible</div>
+                  <div style={{ fontSize: 13, color: TEXT2 }}>{assign?.title || showGrade.assignment_id} · {maxPts} pts possible</div>
                 </div>
-                <button onClick={() => setShowGrade(null)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>Ã—</button>
+                <button onClick={() => setShowGrade(null)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
               </div>
 
               {/* Student info */}
@@ -2826,7 +2826,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{showGrade.student_name}</div>
-                  <div style={{ fontSize: 11, color: TEXT2 }}>{showGrade.student_email} Â· Submitted {new Date(showGrade.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                  <div style={{ fontSize: 11, color: TEXT2 }}>{showGrade.student_email} · Submitted {new Date(showGrade.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
                 </div>
               </div>
 
@@ -2855,7 +2855,7 @@ export default function Dashboard() {
                   {gradeForm.grade && validGrade && (
                     <div style={{ marginTop: 5, fontSize: 12, color: gradeNum / maxPts >= 0.9 ? GREEN : gradeNum / maxPts >= 0.7 ? YELLOW : RED, fontWeight: 600 }}>
                       {Math.round((gradeNum / maxPts) * 100)}%
-                      {gradeNum / maxPts >= 0.9 ? ' Â· A' : gradeNum / maxPts >= 0.8 ? ' Â· B' : gradeNum / maxPts >= 0.7 ? ' Â· C' : gradeNum / maxPts >= 0.6 ? ' Â· D' : ' Â· F'}
+                      {gradeNum / maxPts >= 0.9 ? ' · A' : gradeNum / maxPts >= 0.8 ? ' · B' : gradeNum / maxPts >= 0.7 ? ' · C' : gradeNum / maxPts >= 0.6 ? ' · D' : ' · F'}
                     </div>
                   )}
                 </div>
@@ -2884,14 +2884,14 @@ export default function Dashboard() {
                     }));
                     setShowGrade(null);
                     setGradeForm({ grade: '', feedback: '' });
-                    setToast({ message: 'Grade saved', color: GREEN, icon: 'âœ“' });
+                    setToast({ message: 'Grade saved', color: GREEN, icon: '✓' });
                     setTimeout(() => setToast(null), 3000);
                   } catch {
-                    setToast({ message: 'Failed to save grade', color: RED, icon: 'âœ•' });
+                    setToast({ message: 'Failed to save grade', color: RED, icon: '✕' });
                     setTimeout(() => setToast(null), 3000);
                   } finally { setGradeLoading(false); }
                 }} style={{ padding: '10px 22px', background: validGrade ? 'rgba(74,222,128,0.15)' : MUTED, border: validGrade ? '1px solid rgba(74,222,128,0.4)' : BORDER, borderRadius: 8, color: validGrade ? GREEN : TEXT3, fontSize: 13, fontWeight: 700, cursor: validGrade ? 'pointer' : 'default', opacity: gradeLoading ? 0.7 : 1 }}>
-                  {gradeLoading ? 'Savingâ€¦' : 'Save Grade â†’'}
+                  {gradeLoading ? 'Saving…' : 'Save Grade →'}
                 </button>
               </div>
             </div>
@@ -2899,7 +2899,7 @@ export default function Dashboard() {
         );
       })()}
 
-      {/* â”€â”€ INVITE STUDENTS MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── INVITE STUDENTS MODAL ───────────────────────── */}
       {showInvite && (() => {
         const COURSE_CODES = {
           fina3000: 'B-FINA3000-26',
@@ -2914,7 +2914,7 @@ export default function Dashboard() {
             <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, padding: 28, width: '100%', maxWidth: 480, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <div style={{ fontWeight: 700, fontSize: 18 }}>Invite Students</div>
-                <button onClick={() => { setShowInvite(false); setInviteSelectedCourse(null); }} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>Ã—</button>
+                <button onClick={() => { setShowInvite(false); setInviteSelectedCourse(null); }} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
               </div>
 
               <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, marginBottom: 20 }}>
@@ -2930,9 +2930,9 @@ export default function Dashboard() {
                       <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{c.name}</div>
-                        <div style={{ fontSize: 11, color: TEXT3 }}>{c.code} Â· {c.semester}</div>
+                        <div style={{ fontSize: 11, color: TEXT3 }}>{c.code} · {c.semester}</div>
                       </div>
-                      {inviteSelectedCourse === c.id && <span style={{ fontSize: 11, fontWeight: 700, color: c.color }}>âœ“</span>}
+                      {inviteSelectedCourse === c.id && <span style={{ fontSize: 11, fontWeight: 700, color: c.color }}>✓</span>}
                     </button>
                   ))}
                 </div>
@@ -2966,7 +2966,7 @@ export default function Dashboard() {
         );
       })()}
 
-      {/* â”€â”€ MAIN CONTENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── MAIN CONTENT ────────────────────────────────── */}
       {showTour && (() => {
         const _tourSteps = effectiveProfessor ? PROFESSOR_TOUR_STEPS : effectiveStudent ? STUDENT_TOUR_STEPS : FINANCE_TOUR_STEPS;
         const _applyStep = (s) => {
@@ -3050,17 +3050,17 @@ export default function Dashboard() {
               }
             `}</style>
 
-            {/* â”€â”€ ADMIN VIEW-AS BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── ADMIN VIEW-AS BANNER ──────────────────── */}
             {viewAs && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 10, marginBottom: 24 }}>
-                <span style={{ fontSize: 13 }}>ðŸ‘</span>
+                <span style={{ fontSize: 13 }}>👁</span>
                 <span style={{ fontSize: 13, color: YELLOW, fontWeight: 600 }}>Previewing as {viewAs === 'professor' ? 'Professor' : 'Student'}</span>
-                <span style={{ fontSize: 12, color: TEXT2 }}>â€” instructor-only controls are {viewAs === 'professor' ? 'visible' : 'hidden'}</span>
+                <span style={{ fontSize: 12, color: TEXT2 }}>— instructor-only controls are {viewAs === 'professor' ? 'visible' : 'hidden'}</span>
                 <button onClick={() => setViewAs(null)} style={{ marginLeft: 'auto', padding: '5px 12px', background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 6, color: YELLOW, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Exit Preview</button>
               </div>
             )}
 
-            {/* â”€â”€ OVERVIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── OVERVIEW ──────────────────────────────── */}
             {panel === 'overview' && eduMode && (() => {
               const activeCourse = enrolledCourses.find(c => c.id === selectedCourseId) || enrolledCourses[0];
               const modules      = activeCourse.modules;
@@ -3074,8 +3074,8 @@ export default function Dashboard() {
               const allAssign    = [...baseAssign, ...extraAssign];
               const totalPts     = completed.reduce((s, a) => s + (a.points || 0), 0);
               const progressPct  = Math.round(((currentIdx + 1) / modules.length) * 100);
-              const semesterStart = modules[0]?.week?.split('â€“')[0]?.trim() ?? '';
-              const lastWeekParts = (modules[modules.length - 1]?.week ?? '').split('â€“');
+              const semesterStart = modules[0]?.week?.split('–')[0]?.trim() ?? '';
+              const lastWeekParts = (modules[modules.length - 1]?.week ?? '').split('–');
               const semesterEnd   = lastWeekParts[lastWeekParts.length - 1]?.trim() ?? '';
               const dsMap       = Object.fromEntries(PREBUILT_DATASETS.map(d => [d.id, d]));
               const currentDs   = current?.datasetId ? dsMap[current.datasetId] : null;
@@ -3135,7 +3135,7 @@ export default function Dashboard() {
                               {active && <span style={{ fontSize: 9, fontWeight: 700, color: c.color, background: `${c.color}18`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>Active</span>}
                             </div>
                             <div style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 2 }}>{c.name}</div>
-                            <div style={{ fontSize: 11, color: TEXT2, marginBottom: 10 }}>{c.instructor} Â· {c.semester}</div>
+                            <div style={{ fontSize: 11, color: TEXT2, marginBottom: 10 }}>{c.instructor} · {c.semester}</div>
                             <div style={{ height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden', marginBottom: 6 }}>
                               <div style={{ height: '100%', width: `${cpct}%`, background: c.color, borderRadius: 2 }} />
                             </div>
@@ -3149,7 +3149,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* â”€â”€ Hero banner â”€â”€ */}
+                  {/* ── Hero banner ── */}
                   <div style={{ ...CARD, marginBottom: 20, padding: '22px 26px', border: '1px solid rgba(74,222,128,0.2)', background: 'rgba(74,222,128,0.025)' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
                       <div>
@@ -3159,14 +3159,14 @@ export default function Dashboard() {
                           </h1>
                         </div>
                         <div style={{ fontSize: 13, color: TEXT2 }}>
-                          Education Mode Â· {enrolledCourses.length} {enrolledCourses.length === 1 ? 'course' : 'courses'} enrolled
+                          Education Mode · {enrolledCourses.length} {enrolledCourses.length === 1 ? 'course' : 'courses'} enrolled
                         </div>
                       </div>
                       {effectiveProfessor && (
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button onClick={() => setShowCreateAssignment(true)} style={{ padding: '8px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ Assignment</button>
                           <button onClick={() => setShowInvite(true)} style={{ padding: '8px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Invite Students</button>
-                          <button onClick={() => setPanel('prof-dashboard')} style={{ padding: '8px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Professor Hub â†’</button>
+                          <button onClick={() => setPanel('prof-dashboard')} style={{ padding: '8px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Professor Hub →</button>
                         </div>
                       )}
                     </div>
@@ -3203,7 +3203,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* â”€â”€ Student: focus card (next/active assignment) â”€â”€ */}
+                  {/* ── Student: focus card (next/active assignment) ── */}
                   {!effectiveProfessor && (active[0] || upcoming[0]) && (() => {
                     const focus = active[0] || upcoming[0];
                     const fDs   = focus.datasetId ? dsMap[focus.datasetId] : null;
@@ -3214,16 +3214,16 @@ export default function Dashboard() {
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20 }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8, color: active[0] ? BLUE : GREEN }}>
-                              {active[0] ? 'â— Active Now' : 'â†‘ Up Next'}
+                              {active[0] ? '● Active Now' : '↑ Up Next'}
                             </div>
                             <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{focus.title}</div>
-                            <div style={{ fontSize: 12, color: TEXT2, marginBottom: 10 }}>{focus.chapter} Â· Due {focus.week} Â· {focus.points} pts</div>
+                            <div style={{ fontSize: 12, color: TEXT2, marginBottom: 10 }}>{focus.chapter} · Due {focus.week} · {focus.points} pts</div>
                             <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, marginBottom: fDs ? 14 : 0 }}>{focus.description}</div>
                             {fDs && (
                               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 12px', background: `${fDs.color}0e`, border: `1px solid ${fDs.color}30`, borderRadius: 8 }}>
                                 <span style={{ fontSize: 10, fontWeight: 700, color: fDs.color, textTransform: 'uppercase' }}>Dataset</span>
                                 <span style={{ fontSize: 12, fontWeight: 600, color: TEXT }}>{fDs.title}</span>
-                                <span style={{ fontSize: 11, color: TEXT3 }}>Â·</span>
+                                <span style={{ fontSize: 11, color: TEXT3 }}>·</span>
                                 <span style={{ fontSize: 11, color: TEXT2 }}>{fDs.subtitle}</span>
                               </div>
                             )}
@@ -3232,12 +3232,12 @@ export default function Dashboard() {
                             {fDs && (
                               <button onClick={() => { setSandboxDataset(fDs.id); setPanel(DATASET_TARGET_PANEL[fDs.id]); }}
                                 style={{ padding: '11px 20px', background: `${fDs.color}18`, border: `1px solid ${fDs.color}44`, borderRadius: 9, color: fDs.color, fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'center' }}>
-                                Open Dataset â†’
+                                Open Dataset →
                               </button>
                             )}
                             {submitted ? (
                               <div style={{ padding: '11px 20px', background: 'rgba(74,222,128,0.07)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 9, textAlign: 'center' }}>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: GREEN }}>âœ“ Submitted</div>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: GREEN }}>✓ Submitted</div>
                                 {detail?.grade != null
                                   ? <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>{detail.grade} / {focus.points} pts</div>
                                   : <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>Awaiting grade</div>}
@@ -3245,7 +3245,7 @@ export default function Dashboard() {
                             ) : (
                               <button onClick={() => { setShowSubmit(focus); setSubmitNote(''); }}
                                 style={{ padding: '11px 20px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 9, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'center' }}>
-                                Submit Work â†’
+                                Submit Work →
                               </button>
                             )}
                           </div>
@@ -3254,14 +3254,14 @@ export default function Dashboard() {
                     );
                   })()}
 
-                  {/* â”€â”€ Professor: pending grading queue â”€â”€ */}
+                  {/* ── Professor: pending grading queue ── */}
                   {effectiveProfessor && codeStudents.submissions.filter(s => s.grade == null).length > 0 && (
                     <div style={{ ...CARD, marginBottom: 16, border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.02)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                         <div style={{ fontSize: 10, color: YELLOW, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-                          Needs Grading Â· {codeStudents.submissions.filter(s => s.grade == null).length} pending
+                          Needs Grading · {codeStudents.submissions.filter(s => s.grade == null).length} pending
                         </div>
-                        <button onClick={() => setPanel('prof-dashboard')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Go to Hub â†’</button>
+                        <button onClick={() => setPanel('prof-dashboard')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Go to Hub →</button>
                       </div>
                       {codeStudents.submissions.filter(s => s.grade == null).slice(0, 4).map(s => {
                         const asgn = ALL_ASSIGNMENTS_MAP[s.assignment_id];
@@ -3272,11 +3272,11 @@ export default function Dashboard() {
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{s.student_name}</div>
-                              <div style={{ fontSize: 11, color: TEXT2 }}>{asgn?.title || s.assignment_id} Â· submitted {new Date(s.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                              <div style={{ fontSize: 11, color: TEXT2 }}>{asgn?.title || s.assignment_id} · submitted {new Date(s.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                             </div>
                             <button onClick={() => { setShowGrade(s); setGradeForm({ grade: '', feedback: '' }); }}
                               style={{ padding: '5px 12px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 6, color: GREEN, fontSize: 11, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
-                              Grade â†’
+                              Grade →
                             </button>
                           </div>
                         );
@@ -3296,7 +3296,7 @@ export default function Dashboard() {
                             <div style={{ fontSize: 11, fontWeight: 700, color: currentDs.color, marginBottom: 2 }}>Active Dataset</div>
                             <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{currentDs.title}</div>
                           </div>
-                          <button onClick={() => { setSandboxDataset(currentDs.id); setPanel(DATASET_TARGET_PANEL[currentDs.id]); }} style={{ padding: '6px 12px', background: `${currentDs.color}18`, border: `1px solid ${currentDs.color}44`, borderRadius: 7, color: currentDs.color, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Open â†’</button>
+                          <button onClick={() => { setSandboxDataset(currentDs.id); setPanel(DATASET_TARGET_PANEL[currentDs.id]); }} style={{ padding: '6px 12px', background: `${currentDs.color}18`, border: `1px solid ${currentDs.color}44`, borderRadius: 7, color: currentDs.color, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Open →</button>
                         </div>
                       )}
                       {current?.assignments?.length > 0 && (
@@ -3304,7 +3304,7 @@ export default function Dashboard() {
                           <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 8 }}>This Week</div>
                           {current.assignments.map(a => (
                             <div key={a} style={{ fontSize: 12, color: TEXT2, padding: '5px 0', borderBottom: `1px solid ${BORDER_C}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ color: TEXT3, fontSize: 10 }}>â—Ž</span>{a}
+                              <span style={{ color: TEXT3, fontSize: 10 }}>◎</span>{a}
                             </div>
                           ))}
                         </div>
@@ -3316,13 +3316,13 @@ export default function Dashboard() {
                       <div style={{ ...CARD }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                           <div style={{ fontSize: 10, color: BLUE, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>Assignment Status</div>
-                          <button onClick={() => setPanel('edu-assignments')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Manage all â†’</button>
+                          <button onClick={() => setPanel('edu-assignments')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Manage all →</button>
                         </div>
                         {allAssign.slice(0, 4).map(a => {
                           const statusColor = a.status === 'completed' ? GREEN : a.status === 'active' ? BLUE : TEXT3;
                           const _allSubs = Object.values(profStudents).flatMap(d => d.submissions || []);
                           const _total = profCodes.reduce((s, c) => s + (c.student_count || 0), 0);
-                          const submitted = a.status !== 'upcoming' ? `${_allSubs.filter(s => s.assignment_id === a.id).length} / ${_total}` : 'â€”';
+                          const submitted = a.status !== 'upcoming' ? `${_allSubs.filter(s => s.assignment_id === a.id).length} / ${_total}` : '—';
                           return (
                             <div key={a.id} style={{ padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
@@ -3330,8 +3330,8 @@ export default function Dashboard() {
                                 <span style={{ fontSize: 11, fontWeight: 700, color: statusColor }}>{submitted} submitted</span>
                               </div>
                               <div style={{ fontSize: 11, color: TEXT2, display: 'flex', gap: 10 }}>
-                                <span>{a.chapter}</span><span>Â·</span>
-                                <span>Due {a.week}</span><span>Â·</span>
+                                <span>{a.chapter}</span><span>·</span>
+                                <span>Due {a.week}</span><span>·</span>
                                 <span style={{ textTransform: 'capitalize', color: statusColor }}>{a.status}</span>
                               </div>
                             </div>
@@ -3347,7 +3347,7 @@ export default function Dashboard() {
                             <div style={{ fontSize: 10, color: YELLOW, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>Your Upcoming Work</div>
                             {overdue.length > 0 && <span style={{ fontSize: 9, fontWeight: 700, color: RED, background: 'rgba(248,113,113,0.12)', padding: '2px 7px', borderRadius: 8 }}>{overdue.length} overdue</span>}
                           </div>
-                          <button onClick={() => setPanel('edu-assignments')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>View all â†’</button>
+                          <button onClick={() => setPanel('edu-assignments')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>View all →</button>
                         </div>
                         {overdue.length > 0 && (
                           <div style={{ marginBottom: 10, paddingBottom: 10, borderBottom: `1px solid ${BORDER_C}` }}>
@@ -3356,9 +3356,9 @@ export default function Dashboard() {
                               <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: `1px solid ${BORDER_C}` }}>
                                 <div>
                                   <span style={{ fontSize: 13, fontWeight: 600, color: RED }}>{a.title}</span>
-                                  <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>Due {a.week} Â· {a.points} pts</div>
+                                  <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>Due {a.week} · {a.points} pts</div>
                                 </div>
-                                <button onClick={() => { setShowSubmit(a); setSubmitNote(''); }} style={{ fontSize: 10, fontWeight: 700, color: RED, background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>Submit â†’</button>
+                                <button onClick={() => { setShowSubmit(a); setSubmitNote(''); }} style={{ fontSize: 10, fontWeight: 700, color: RED, background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>Submit →</button>
                               </div>
                             ))}
                           </div>
@@ -3373,12 +3373,12 @@ export default function Dashboard() {
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
                                 <span style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{a.title}</span>
                                 {submitted
-                                  ? <span style={{ fontSize: 10, fontWeight: 700, color: GREEN }}>âœ“ Submitted</span>
-                                  : <button onClick={() => { setShowSubmit(a); setSubmitNote(''); }} style={{ fontSize: 10, fontWeight: 700, color: BLUE, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Submit â†’</button>
+                                  ? <span style={{ fontSize: 10, fontWeight: 700, color: GREEN }}>✓ Submitted</span>
+                                  : <button onClick={() => { setShowSubmit(a); setSubmitNote(''); }} style={{ fontSize: 10, fontWeight: 700, color: BLUE, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Submit →</button>
                                 }
                               </div>
                               <div style={{ fontSize: 11, color: TEXT2, display: 'flex', gap: 10, alignItems: 'center' }}>
-                                <span>Due {a.week}</span><span>Â·</span>
+                                <span>Due {a.week}</span><span>·</span>
                                 <span>{a.points} pts</span>
                                 {ds && <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, color: ds.color }}>{ds.title.split(' ').slice(0,2).join(' ')}</span>}
                               </div>
@@ -3396,7 +3396,7 @@ export default function Dashboard() {
                         <div style={{ fontSize: 15, fontWeight: 700 }}>Dataset Library</div>
                         <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Practice datasets for your coursework. No real account needed.</div>
                       </div>
-                      <button onClick={() => { setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ padding: '7px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>View all {PREBUILT_DATASETS.length} â†’</button>
+                      <button onClick={() => { setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ padding: '7px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>View all {PREBUILT_DATASETS.length} →</button>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12 }}>
                       {displayDs.map(ds => (
@@ -3406,7 +3406,7 @@ export default function Dashboard() {
                           <div style={{ fontSize: 11, color: TEXT2, marginBottom: 12, lineHeight: 1.4 }}>{ds.subtitle}</div>
                           <div style={{ display: 'flex', gap: 6, justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 10, fontWeight: 600, color: TEXT3 }}>{ds.difficulty}</span>
-                            <button onClick={() => { setSandboxDataset(ds.id); setPanel(DATASET_TARGET_PANEL[ds.id]); }} style={{ padding: '5px 10px', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 6, color: ds.color, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Explore â†’</button>
+                            <button onClick={() => { setSandboxDataset(ds.id); setPanel(DATASET_TARGET_PANEL[ds.id]); }} style={{ padding: '5px 10px', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 6, color: ds.color, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Explore →</button>
                           </div>
                         </div>
                       ))}
@@ -3425,9 +3425,9 @@ export default function Dashboard() {
                       <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Class Snapshot</div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
                         {[
-                          { label: 'Enrolled',        value: _snapTotal || 'â€”', sub: 'students',       color: TEXT },
-                          { label: 'Submissions',      value: _snapTotal > 0 ? `${_snapSubs} / ${_snapTotal}` : 'â€”', sub: 'all assignments', color: GREEN },
-                          { label: 'Avg Score',        value: _avg != null ? `${_avg}%` : 'â€”', sub: 'class average', color: BLUE },
+                          { label: 'Enrolled',        value: _snapTotal || '—', sub: 'students',       color: TEXT },
+                          { label: 'Submissions',      value: _snapTotal > 0 ? `${_snapSubs} / ${_snapTotal}` : '—', sub: 'all assignments', color: GREEN },
+                          { label: 'Avg Score',        value: _avg != null ? `${_avg}%` : '—', sub: 'class average', color: BLUE },
                           { label: 'Custom Datasets',  value: customAssignments.length || '0', sub: 'created by you', color: '#a78bfa' },
                         ].map(({ label, value, sub, color }) => (
                           <div key={label} style={{ padding: '14px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
@@ -3461,7 +3461,7 @@ export default function Dashboard() {
 
                 {isAdmin && !viewAs && isDemoData && !connectBannerDismissed && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)', borderLeft: '3px solid #4ade80', borderRadius: 10, marginBottom: 24 }}>
-                    <span style={{ fontSize: 20 }}>ðŸ”—</span>
+                    <span style={{ fontSize: 20 }}>🔗</span>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>You're viewing demo data</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Connect your bank and investment accounts to see your real finances.</div>
@@ -3476,7 +3476,7 @@ export default function Dashboard() {
                       onClick={() => { setConnectBannerDismissed(true); localStorage.setItem('merit_connect_banner_dismissed', '1'); }}
                       style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 16, cursor: 'pointer', lineHeight: 1, padding: '2px 4px', flexShrink: 0 }}
                     >
-                      âœ•
+                      ✕
                     </button>
                   </div>
                 )}
@@ -3548,10 +3548,10 @@ export default function Dashboard() {
                   const gy = (100 - 70 * Math.sin(gaugeRad)).toFixed(1);
 
                   const factors = [
-                    { name: 'Emergency Fund',  score: emergencyScore, max: 25, tip: monthsCovered < 3 && hasData ? `${monthsCovered.toFixed(1)} mo covered â€” target 6` : null },
-                    { name: 'Budget Control',  score: budgetScore,    max: 25, tip: catsWithLimits.length === 0 && hasData ? 'Set limits in Budgeting â†’ Expenses' : null },
-                    { name: 'Investments',     score: investScore,    max: 25, tip: holdings.length === 0 && hasData ? 'No positions â€” visit Investments' : null },
-                    { name: 'Savings Goals',   score: goalsScore,     max: 25, tip: goals.length === 0 && hasData ? 'Create a goal in Budgeting â†’ Goals' : null },
+                    { name: 'Emergency Fund',  score: emergencyScore, max: 25, tip: monthsCovered < 3 && hasData ? `${monthsCovered.toFixed(1)} mo covered — target 6` : null },
+                    { name: 'Budget Control',  score: budgetScore,    max: 25, tip: catsWithLimits.length === 0 && hasData ? 'Set limits in Budgeting → Expenses' : null },
+                    { name: 'Investments',     score: investScore,    max: 25, tip: holdings.length === 0 && hasData ? 'No positions — visit Investments' : null },
+                    { name: 'Savings Goals',   score: goalsScore,     max: 25, tip: goals.length === 0 && hasData ? 'Create a goal in Budgeting → Goals' : null },
                   ];
 
                   return (
@@ -3565,7 +3565,7 @@ export default function Dashboard() {
                           <text x="90" y="89" textAnchor="middle" fill={scoreColor} fontSize="30" fontWeight="800" fontFamily="monospace">{total}</text>
                           <text x="90" y="107" textAnchor="middle" fill={scoreColor} fontSize="11" fontWeight="700">{scoreLabel}</text>
                         </svg>
-                        <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>out of 100 Â· {!hasData && 'demo'}</div>
+                        <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>out of 100 · {!hasData && 'demo'}</div>
                       </div>
 
                       <div>
@@ -3667,18 +3667,18 @@ export default function Dashboard() {
                                 <button onClick={() => { setEditingGoal(goal); setGoalForm({ name: goal.name, target: String(goal.target), accountId: goal.accountId || '' }); setShowGoalForm(true); }}
                                   style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}>Edit</button>
                                 <button onClick={async () => { await api.delete(`/goals/${goal.id}`); setGoals(prev => prev.filter(g => g.id !== goal.id)); }}
-                                  style={{ background: 'none', border: 'none', color: RED, cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}>âœ•</button>
+                                  style={{ background: 'none', border: 'none', color: RED, cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}>✕</button>
                               </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                              <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px', color: done ? GREEN : TEXT }}>{acct ? fmt(current) : 'â€”'}</span>
+                              <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px', color: done ? GREEN : TEXT }}>{acct ? fmt(current) : '—'}</span>
                               <span style={{ fontSize: 12, color: TEXT2 }}>of {fmt(goal.target)}</span>
                             </div>
                             <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
                               <div style={{ height: '100%', width: `${acct ? pct : 0}%`, background: barColor, borderRadius: 3, transition: 'width 0.4s ease' }} />
                             </div>
                             <div style={{ fontSize: 11, color: TEXT3, marginTop: 5 }}>
-                              {acct ? `${pct.toFixed(0)}% Â· ${done ? 'Goal reached!' : fmt(goal.target - current) + ' to go'}` : 'Link an account to track'}
+                              {acct ? `${pct.toFixed(0)}% · ${done ? 'Goal reached!' : fmt(goal.target - current) + ' to go'}` : 'Link an account to track'}
                             </div>
                           </div>
                         );
@@ -3695,7 +3695,7 @@ export default function Dashboard() {
                       <div style={{ fontWeight: 600 }}>Recent Transactions</div>
                       {transactions.length > 5 && (
                         <button onClick={() => setShowAllTxns(v => !v)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 12, cursor: 'pointer', padding: 0 }}>
-                          {showAllTxns ? 'Show less â†‘' : `+${transactions.length - 5} more â†“`}
+                          {showAllTxns ? 'Show less ↑' : `+${transactions.length - 5} more ↓`}
                         </button>
                       )}
                     </div>
@@ -3705,10 +3705,10 @@ export default function Dashboard() {
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
                         <div>
                           <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
-                          <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} Â· {t.personal_finance_category?.primary || t.category?.[0] || 'Other'}</div>
+                          <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} · {t.personal_finance_category?.primary || t.category?.[0] || 'Other'}</div>
                         </div>
                         <div style={{ fontWeight: 600, color: t.amount > 0 ? RED : GREEN, fontFamily: 'monospace' }}>
-                          {t.amount > 0 ? 'âˆ’' : '+'}{fmt(Math.abs(t.amount))}
+                          {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
                         </div>
                       </div>
                     ))}
@@ -3718,14 +3718,14 @@ export default function Dashboard() {
                       <div style={{ fontWeight: 600 }}>Market Alerts</div>
                       {articles.length > 5 && (
                         <button onClick={() => setShowAllNews(v => !v)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 12, cursor: 'pointer', padding: 0 }}>
-                          {showAllNews ? 'Show less â†‘' : `+${articles.length - 5} more â†“`}
+                          {showAllNews ? 'Show less ↑' : `+${articles.length - 5} more ↓`}
                         </button>
                       )}
                     </div>
                     {(showAllNews ? articles : articles.slice(0, 5)).map((a, i, arr) => (
                       <div key={i} style={{ padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
                         <a href={a.url} target="_blank" rel="noreferrer" style={{ color: TEXT, textDecoration: 'none', fontSize: 13, fontWeight: 500, lineHeight: 1.4, display: 'block' }}>{a.headline}</a>
-                        <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{a.source} Â· {fmtDate(a.created_at)}</div>
+                        <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{a.source} · {fmtDate(a.created_at)}</div>
                       </div>
                     ))}
                   </div>
@@ -3815,10 +3815,10 @@ export default function Dashboard() {
                       {/* Month nav */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                         <button onClick={() => setCalViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
-                          style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '4px 10px', cursor: 'pointer', fontSize: 14, fontWeight: 700 }}>â€¹</button>
+                          style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '4px 10px', cursor: 'pointer', fontSize: 14, fontWeight: 700 }}>‹</button>
                         <div style={{ fontWeight: 700, fontSize: 14 }}>{monthLabel}</div>
                         <button onClick={() => setCalViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
-                          style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '4px 10px', cursor: 'pointer', fontSize: 14, fontWeight: 700 }}>â€º</button>
+                          style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '4px 10px', cursor: 'pointer', fontSize: 14, fontWeight: 700 }}>›</button>
                       </div>
 
                       {/* Day headers */}
@@ -3869,7 +3869,7 @@ export default function Dashboard() {
                                 </div>
                                 <div style={{ fontSize: 11, color: TEXT2, whiteSpace: 'nowrap' }}>{new Date(ev.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                                 <button onClick={() => setCalendarEvents(prev => prev.filter(e => e.id !== ev.id))}
-                                  style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 14, padding: '0 2px', lineHeight: 1 }}>Ã—</button>
+                                  style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 14, padding: '0 2px', lineHeight: 1 }}>×</button>
                               </div>
                             ))}
                           </div>
@@ -3884,7 +3884,7 @@ export default function Dashboard() {
               );
             })()}
 
-            {/* â”€â”€ CASH FLOW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── CASH FLOW ─────────────────────────────── */}
             {panel === 'cashflow' && (() => {
               const _CF_DEF = ['banking', 'budgeting', 'taxes', 'scholarship'];
               const _cfOrder = getOrder('cashflow-tabs', _CF_DEF);
@@ -3924,15 +3924,15 @@ export default function Dashboard() {
                 return (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                      <button onClick={() => setSelectedBankAccount(null)} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>â† Back</button>
+                      <button onClick={() => setSelectedBankAccount(null)} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>{acct?.name}</h1>
                     </div>
                     {acct && (
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
                         {[
-                          { label: 'Current Balance', value: acct.closed ? 'â€”' : fmt(acct.balances?.current), color: acct.closed ? TEXT3 : TEXT },
-                          { label: 'Account Type', value: acct.subtype || acct.type || 'â€”', color: TEXT2 },
-                          { label: 'Institution', value: acct.institution_name || 'â€”', color: BLUE },
+                          { label: 'Current Balance', value: acct.closed ? '—' : fmt(acct.balances?.current), color: acct.closed ? TEXT3 : TEXT },
+                          { label: 'Account Type', value: acct.subtype || acct.type || '—', color: TEXT2 },
+                          { label: 'Institution', value: acct.institution_name || '—', color: BLUE },
                         ].map(({ label, value, color }) => (
                           <div key={label} className="lc" style={CARD}>
                             <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>{label}</div>
@@ -3963,9 +3963,9 @@ export default function Dashboard() {
                                 <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
                                   <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(t.date)}</td>
                                   <td style={{ padding: '8px 12px', fontSize: 13, fontWeight: 500 }}>{t.merchant_name || t.name}</td>
-                                  <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12, textTransform: 'capitalize' }}>{(t.personal_finance_category?.primary || t.category?.[0] || 'â€”').replace(/_/g, ' ').toLowerCase()}</td>
+                                  <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12, textTransform: 'capitalize' }}>{(t.personal_finance_category?.primary || t.category?.[0] || '—').replace(/_/g, ' ').toLowerCase()}</td>
                                   <td style={{ padding: '8px 12px', fontWeight: 600, color: t.amount > 0 ? RED : GREEN, textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>
-                                    {t.amount > 0 ? 'âˆ’' : '+'}{fmt(Math.abs(t.amount))}
+                                    {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
                                   </td>
                                 </tr>
                               ))}
@@ -4012,10 +4012,10 @@ export default function Dashboard() {
                               {a.closed && <span style={{ fontSize: 10, fontWeight: 700, color: TEXT3, background: MUTED, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Closed</span>}
                             </div>
                             <div style={{ fontWeight: 600, margin: '6px 0 2px', fontSize: 15 }}>{a.name}</div>
-                            <div style={{ fontSize: 28, fontWeight: 700, margin: '8px 0 4px', letterSpacing: '-0.5px', color: a.closed ? TEXT3 : TEXT }}>{a.closed ? 'â€”' : fmt(a.balances?.current)}</div>
+                            <div style={{ fontSize: 28, fontWeight: 700, margin: '8px 0 4px', letterSpacing: '-0.5px', color: a.closed ? TEXT3 : TEXT }}>{a.closed ? '—' : fmt(a.balances?.current)}</div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div style={{ fontSize: 12, color: TEXT2, textTransform: 'capitalize' }}>{a.subtype}</div>
-                              <div style={{ fontSize: 11, color: TEXT3 }}>View transactions â†’</div>
+                              <div style={{ fontSize: 11, color: TEXT3 }}>View transactions →</div>
                             </div>
                           </div>
                         ))}
@@ -4023,7 +4023,7 @@ export default function Dashboard() {
                     </>
                   )}
 
-                  {/* â”€â”€ Credit Score â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {/* ── Credit Score ──────────────────────── */}
                   {(() => {
                     const sbCredit = SANDBOX_DATA['ds-credit'];
                     const score = sbCredit.creditScore;
@@ -4100,7 +4100,7 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
                   {selectedCategory && budgetTab === 'spending' && (
                     <button onClick={() => setSelectedCategory(null)} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>
-                      â† Back
+                      ← Back
                     </button>
                   )}
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>
@@ -4204,7 +4204,7 @@ export default function Dashboard() {
                         {[
                           { label: 'This Month',   value: fmt(thisM.total),  color: GREEN },
                           { label: 'Last Month',   value: fmt(lastM.total),  color: TEXT  },
-                          { label: 'Month Change', value: pct !== null ? `${diff >= 0 ? '+' : ''}${pct.toFixed(0)}%` : 'â€”', color: pct !== null ? (diff >= 0 ? GREEN : RED) : TEXT2 },
+                          { label: 'Month Change', value: pct !== null ? `${diff >= 0 ? '+' : ''}${pct.toFixed(0)}%` : '—', color: pct !== null ? (diff >= 0 ? GREEN : RED) : TEXT2 },
                         ].map(({ label, value, color }) => (
                           <div key={label} className="lc" style={CARD}>
                             <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
@@ -4297,8 +4297,8 @@ export default function Dashboard() {
                           <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
                             {[
                               { label: 'Month-to-Date Spend', value: fmt(hasRealExp ? activeMonthlySpend : 1620) },
-                              { label: 'Top Category',         value: toTitle(hasRealExp ? (activeBudget[0]?.category?.replace(/_/g, ' ').toLowerCase() || 'â€”') : 'Food and Drink') },
-                              { label: 'Month Change',         value: expPct !== null ? `${expDiff >= 0 ? '+' : ''}${expPct.toFixed(0)}%` : 'â€”', color: expPct !== null ? (expDiff <= 0 ? GREEN : RED) : TEXT2 },
+                              { label: 'Top Category',         value: toTitle(hasRealExp ? (activeBudget[0]?.category?.replace(/_/g, ' ').toLowerCase() || '—') : 'Food and Drink') },
+                              { label: 'Month Change',         value: expPct !== null ? `${expDiff >= 0 ? '+' : ''}${expPct.toFixed(0)}%` : '—', color: expPct !== null ? (expDiff <= 0 ? GREEN : RED) : TEXT2 },
                             ].map(({ label, value, color }) => (
                               <div key={label} className="lc" style={CARD}>
                                 <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
@@ -4328,7 +4328,7 @@ export default function Dashboard() {
                     <div className="lc" style={CARD}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                         <div style={{ fontWeight: 600 }}>Spending by Category: This Month</div>
-                        <div style={{ fontSize: 12, color: TEXT2 }}>Click name to see transactions Â· Click amount to set limit</div>
+                        <div style={{ fontSize: 12, color: TEXT2 }}>Click name to see transactions · Click amount to set limit</div>
                       </div>
 
                       {activeBudget.length === 0 ? (() => {
@@ -4448,7 +4448,7 @@ export default function Dashboard() {
                                   <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)}</div>
                                 </div>
                                 <div style={{ fontWeight: 600, color: RED, fontFamily: 'monospace' }}>
-                                  âˆ’{fmt(Math.abs(t.amount))}
+                                  −{fmt(Math.abs(t.amount))}
                                 </div>
                               </div>
                             ))}
@@ -4517,10 +4517,10 @@ export default function Dashboard() {
                               return (
                                 <tr key={cat} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
                                   <td style={{ padding: '11px 12px', fontWeight: 500, textTransform: 'capitalize', fontSize: 13 }}>{cat}</td>
-                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: TEXT2 }}>{last > 0 ? fmt(last) : 'â€”'}</td>
-                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{curr > 0 ? fmt(curr) : 'â€”'}</td>
+                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: TEXT2 }}>{last > 0 ? fmt(last) : '—'}</td>
+                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{curr > 0 ? fmt(curr) : '—'}</td>
                                   <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: changeColor }}>
-                                    {diff === 0 ? 'â€”' : `${diff > 0 ? '+' : ''}${fmt(Math.abs(diff))}`}
+                                    {diff === 0 ? '—' : `${diff > 0 ? '+' : ''}${fmt(Math.abs(diff))}`}
                                     {pct !== null && <span style={{ fontSize: 11, marginLeft: 5, opacity: 0.7 }}>({pct > 0 ? '+' : ''}{pct.toFixed(0)}%)</span>}
                                   </td>
                                 </tr>
@@ -4627,14 +4627,14 @@ export default function Dashboard() {
 
                 {budgetTab === 'goals' && (() => {
                   const PRESET_GOALS = [
-                    { name: 'Emergency Fund',     target: 10000, icon: 'ðŸ›¡ï¸', desc: '3â€“6 months of expenses' },
-                    { name: 'House Down Payment', target: 50000, icon: 'ðŸ ', desc: '20% down on a $250k home' },
-                    { name: 'New Car',            target: 8000,  icon: 'ðŸš—', desc: 'Solid used car fund' },
-                    { name: 'Vacation Fund',      target: 3000,  icon: 'âœˆï¸', desc: 'Annual travel budget' },
-                    { name: 'Pay Off Credit Card',target: 5000,  icon: 'ðŸ’³', desc: 'Clear high-interest debt' },
-                    { name: 'Wedding Fund',       target: 20000, icon: 'ðŸ’', desc: 'Average US wedding cost' },
-                    { name: 'College Fund',       target: 25000, icon: 'ðŸŽ“', desc: '529 savings head start' },
-                    { name: 'Home Renovation',    target: 15000, icon: 'ðŸ”¨', desc: 'Kitchen/bath upgrade' },
+                    { name: 'Emergency Fund',     target: 10000, icon: '🛡️', desc: '3–6 months of expenses' },
+                    { name: 'House Down Payment', target: 50000, icon: '🏠', desc: '20% down on a $250k home' },
+                    { name: 'New Car',            target: 8000,  icon: '🚗', desc: 'Solid used car fund' },
+                    { name: 'Vacation Fund',      target: 3000,  icon: '✈️', desc: 'Annual travel budget' },
+                    { name: 'Pay Off Credit Card',target: 5000,  icon: '💳', desc: 'Clear high-interest debt' },
+                    { name: 'Wedding Fund',       target: 20000, icon: '💍', desc: 'Average US wedding cost' },
+                    { name: 'College Fund',       target: 25000, icon: '🎓', desc: '529 savings head start' },
+                    { name: 'Home Renovation',    target: 15000, icon: '🔨', desc: 'Kitchen/bath upgrade' },
                   ];
 
                   const totalSaved  = goals.reduce((s, g) => { const a = accounts.find(ac => ac.account_id === g.accountId); return s + (a ? (a.balances?.current || 0) : 0); }, 0);
@@ -4669,7 +4669,7 @@ export default function Dashboard() {
                               onMouseLeave={e => e.currentTarget.style.borderColor = BORDER_C}>
                               <div style={{ fontSize: 18, marginBottom: 5 }}>{p.icon}</div>
                               <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 2 }}>{p.name}</div>
-                              <div style={{ fontSize: 10, color: TEXT3 }}>{fmt(p.target)} Â· {p.desc}</div>
+                              <div style={{ fontSize: 10, color: TEXT3 }}>{fmt(p.target)} · {p.desc}</div>
                             </button>
                           ))}
                         </div>
@@ -4745,22 +4745,22 @@ export default function Dashboard() {
                                     <div style={{ fontSize: 11, color: TEXT3 }}>{acct ? acct.name : 'No account linked'}</div>
                                   </div>
                                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                                    {done && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase' }}>Done âœ“</span>}
+                                    {done && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase' }}>Done ✓</span>}
                                     <button onClick={() => { setEditingGoal(goal); setGoalForm({ name: goal.name, target: String(goal.target), accountId: goal.accountId || '' }); setShowGoalForm(true); }}
                                       style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}>Edit</button>
                                     <button onClick={async () => { await api.delete(`/goals/${goal.id}`); setGoals(prev => prev.filter(g => g.id !== goal.id)); }}
-                                      style={{ background: 'none', border: 'none', color: RED, cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}>âœ•</button>
+                                      style={{ background: 'none', border: 'none', color: RED, cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}>✕</button>
                                   </div>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                                  <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: done ? GREEN : TEXT }}>{acct ? fmt(current) : 'â€”'}</span>
+                                  <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: done ? GREEN : TEXT }}>{acct ? fmt(current) : '—'}</span>
                                   <span style={{ fontSize: 12, color: TEXT2 }}>of {fmt(goal.target)}</span>
                                 </div>
                                 <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
                                   <div style={{ height: '100%', width: `${acct ? pct : 0}%`, background: barColor, borderRadius: 3, transition: 'width 0.4s ease' }} />
                                 </div>
                                 <div style={{ fontSize: 11, color: TEXT3, marginTop: 5 }}>
-                                  {acct ? `${pct.toFixed(0)}% Â· ${done ? 'Goal reached!' : fmt(goal.target - current) + ' to go'}` : 'Link an account to track'}
+                                  {acct ? `${pct.toFixed(0)}% · ${done ? 'Goal reached!' : fmt(goal.target - current) + ' to go'}` : 'Link an account to track'}
                                 </div>
                               </div>
                             );
@@ -4774,7 +4774,7 @@ export default function Dashboard() {
               );
             })()}
 
-            {/* â”€â”€ GOALS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── GOALS ────────────────────────────────── */}
             {panel === 'goals' && (() => {
               const totalSaved  = goals.reduce((s, g) => {
                 const acct = accounts.find(a => a.account_id === g.accountId);
@@ -4889,7 +4889,7 @@ export default function Dashboard() {
                   {/* Goal cards */}
                   {goals.length === 0 && !showGoalForm ? (
                     <div style={{ ...CARD, textAlign: 'center', padding: 48, color: TEXT2 }}>
-                      <div style={{ fontSize: 28, marginBottom: 12 }}>â—Ž</div>
+                      <div style={{ fontSize: 28, marginBottom: 12 }}>◎</div>
                       <div style={{ fontWeight: 600, marginBottom: 6, color: TEXT }}>No goals yet</div>
                       <div style={{ fontSize: 13 }}>Create a goal to track your progress toward a savings target.</div>
                     </div>
@@ -4908,7 +4908,7 @@ export default function Dashboard() {
                               <div>
                                 <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{goal.name}</div>
                                 {acct ? (
-                                  <div style={{ fontSize: 12, color: TEXT2 }}>{acct.name} Â· {acct.institution_name}</div>
+                                  <div style={{ fontSize: 12, color: TEXT2 }}>{acct.name} · {acct.institution_name}</div>
                                 ) : (
                                   <div style={{ fontSize: 12, color: TEXT3 }}>No account linked</div>
                                 )}
@@ -4918,7 +4918,7 @@ export default function Dashboard() {
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
                               <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px', color: done ? GREEN : TEXT }}>
-                                {acct ? fmt(current) : 'â€”'}
+                                {acct ? fmt(current) : '—'}
                               </span>
                               <span style={{ fontSize: 13, color: TEXT2 }}>of {fmt(goal.target)}</span>
                             </div>
@@ -4929,7 +4929,7 @@ export default function Dashboard() {
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span style={{ fontSize: 12, color: TEXT2 }}>
-                                {acct ? `${pct.toFixed(0)}% Â· ${done ? 'Goal reached!' : fmt(goal.target - current) + ' to go'}` : 'Link an account to track progress'}
+                                {acct ? `${pct.toFixed(0)}% · ${done ? 'Goal reached!' : fmt(goal.target - current) + ' to go'}` : 'Link an account to track progress'}
                               </span>
                               <div style={{ display: 'flex', gap: 8 }}>
                                 <button onClick={() => openEdit(goal)} style={{ background: 'none', border: 'none', color: TEXT2, cursor: 'pointer', fontSize: 12, padding: '2px 6px' }}>Edit</button>
@@ -4946,7 +4946,7 @@ export default function Dashboard() {
               );
             })()}
 
-            {/* â”€â”€ TAXES (under Cash Flow) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── TAXES (under Cash Flow) ──────────────── */}
             {panel === 'cashflow' && cashFlowTab === 'taxes' && (() => {
               // 2025 Federal brackets (Single / MFJ / HOH)
               const BRACKETS = {
@@ -5006,7 +5006,7 @@ export default function Dashboard() {
               const filingLabels = { single: 'Single', mfj: 'Married Filing Jointly', hoh: 'Head of Household' };
               const inputStyle = { padding: '9px 12px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 14, outline: 'none', width: '100%', fontFamily: 'monospace' };
 
-              // Derive real figures from linked accounts â€” gated on real income detection
+              // Derive real figures from linked accounts — gated on real income detection
               const INCOME_CATS_TAX = ['income','payroll','wages','salary','deposit','financial aid','dividends','interest'];
               const hasRealIncomeTax = activeTxns.some(t => {
                 if (t.amount >= 0) return false;
@@ -5054,7 +5054,7 @@ export default function Dashboard() {
                         {[
                           { label: 'Income (Last 12 Mo)',     value: fmt(txnIncomeLast12), color: TEXT,  note: 'From transaction history' },
                           { label: 'Investment Portfolio',     value: fmt(investmentValue), color: TEXT,  note: 'Brokerage, 401k, IRA' },
-                          { label: 'Est. Interest Income',     value: fmt(estInterest),     color: TEXT,  note: `${fmt(savingsValue)} savings Ã— 4.3% APY` },
+                          { label: 'Est. Interest Income',     value: fmt(estInterest),     color: TEXT,  note: `${fmt(savingsValue)} savings × 4.3% APY` },
                         ].map(({ label, value, color, note }) => (
                           <div key={label} style={{ padding: '14px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
                             <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
@@ -5091,7 +5091,7 @@ export default function Dashboard() {
                         <div>
                           <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Itemized Deductions (leave 0 for standard)</div>
                           <input type="number" value={taxItemized} onChange={e => setTaxItemized(e.target.value)} placeholder="0" style={inputStyle} />
-                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 4 }}>Standard deduction: {fmt(stdDed)} Â· {deduction > stdDed ? <span style={{ color: GREEN }}>Itemizing saves {fmt(deduction - stdDed)}</span> : 'Using standard'}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 4 }}>Standard deduction: {fmt(stdDed)} · {deduction > stdDed ? <span style={{ color: GREEN }}>Itemizing saves {fmt(deduction - stdDed)}</span> : 'Using standard'}</div>
                         </div>
                       </div>
                     </div>
@@ -5118,7 +5118,7 @@ export default function Dashboard() {
                     <div style={{ fontSize: 12, color: TEXT2, marginBottom: 20 }}>Taxable income: {fmt(taxable)} (after {deduction > stdDed ? 'itemized' : 'standard'} deduction of {fmt(deduction)}{pre401k > 0 ? ` + ${fmt(pre401k)} 401k` : ''})</div>
                     {breakdown.map((b, i) => {
                       const pct = tax > 0 ? (b.amount / tax) * 100 : 0;
-                      const label = b.to === Infinity ? `>${fmt(b.from)}` : `${fmt(b.from)} â€“ ${fmt(b.to)}`;
+                      const label = b.to === Infinity ? `>${fmt(b.from)}` : `${fmt(b.from)} – ${fmt(b.to)}`;
                       return (
                         <div key={i} style={{ marginBottom: 14, opacity: b.active ? 1 : 0.35 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
@@ -5177,7 +5177,7 @@ export default function Dashboard() {
                     </div>
                     <a href="https://turbotax.intuit.com" target="_blank" rel="noopener noreferrer"
                       style={{ flexShrink: 0, padding: '10px 20px', background: '#0077c5', color: '#fff', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none', whiteSpace: 'nowrap' }}>
-                      Open TurboTax â†’
+                      Open TurboTax →
                     </a>
                   </div>
 
@@ -5187,7 +5187,7 @@ export default function Dashboard() {
               );
             })()}
 
-            {/* â”€â”€ SCHOLARSHIP HEALTH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── SCHOLARSHIP HEALTH ────────────────────── */}
             {panel === 'cashflow' && cashFlowTab === 'scholarship' && (() => {
               const GRADE_POINTS = { 'A':4.0,'A-':3.7,'B+':3.3,'B':3.0,'B-':2.7,'C+':2.3,'C':2.0,'C-':1.7,'D':1.0,'F':0.0,'W':null };
               const GRADE_OPTIONS = ['A','A-','B+','B','B-','C+','C','C-','D','F','W'];
@@ -5216,7 +5216,7 @@ export default function Dashboard() {
               const isZell    = projGPA >= ZELL_MIN;
               const isHOPE    = projGPA >= HOPE_MIN;
               const statusColor  = isZell ? GREEN : isHOPE ? YELLOW : RED;
-              const statusLabel  = isZell ? 'Zell Miller Â· Safe' : isHOPE ? 'HOPE Â· Caution Zone' : 'At Risk Â· Financial Cliff';
+              const statusLabel  = isZell ? 'Zell Miller · Safe' : isHOPE ? 'HOPE · Caution Zone' : 'At Risk · Financial Cliff';
               const statusBg     = isZell ? 'rgba(74,222,128,0.08)' : isHOPE ? 'rgba(251,191,36,0.08)' : 'rgba(248,113,113,0.08)';
               const statusBorder = isZell ? 'rgba(74,222,128,0.25)' : isHOPE ? 'rgba(251,191,36,0.25)' : 'rgba(248,113,113,0.25)';
 
@@ -5260,11 +5260,11 @@ export default function Dashboard() {
 
               return (
                 <div>
-                  {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {/* ── Header ────────────────────────────────────── */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
                     <div>
                       <h1 data-tour="scholarship-header" style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700 }}>Scholarship Health</h1>
-                      <div style={{ fontSize: 13, color: TEXT2 }}>Georgia HOPE / Zell Miller Â· University of Georgia Â· GSFC Rules</div>
+                      <div style={{ fontSize: 13, color: TEXT2 }}>Georgia HOPE / Zell Miller · University of Georgia · GSFC Rules</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 3 }}>Projected HOPE GPA</div>
@@ -5272,7 +5272,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* â”€â”€ Status Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {/* ── Status Banner ─────────────────────────────── */}
                   <div style={{ background: statusBg, border: `1px solid ${statusBorder}`, borderRadius: 10, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{ width: 10, height: 10, borderRadius: '50%', background: statusColor, flexShrink: 0 }} />
@@ -5280,31 +5280,31 @@ export default function Dashboard() {
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2 }}>
                       {isHOPE
-                        ? <>{pointsAboveCliff >= 0 ? '+' : ''}{pointsAboveCliff.toFixed(2)} pts above the 3.0 cliff Â· {pointsAboveZell >= 0 ? '+' : ''}{pointsAboveZell.toFixed(2)} pts {pointsAboveZell >= 0 ? 'above' : 'below'} Zell buffer</>
-                        : <>GPA must reach 3.0 to restore coverage â€” currently {Math.abs(pointsAboveCliff).toFixed(2)} pts below</>
+                        ? <>{pointsAboveCliff >= 0 ? '+' : ''}{pointsAboveCliff.toFixed(2)} pts above the 3.0 cliff · {pointsAboveZell >= 0 ? '+' : ''}{pointsAboveZell.toFixed(2)} pts {pointsAboveZell >= 0 ? 'above' : 'below'} Zell buffer</>
+                        : <>GPA must reach 3.0 to restore coverage — currently {Math.abs(pointsAboveCliff).toFixed(2)} pts below</>
                       }
                     </div>
                   </div>
 
-                  {/* â”€â”€ Financial Stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {/* ── Financial Stats ───────────────────────────── */}
                   <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 20 }}>
                     {[
                       {
                         label: 'This Semester Coverage',
-                        value: isHOPE ? `+$${TUITION.toLocaleString()}` : 'â€”',
+                        value: isHOPE ? `+$${TUITION.toLocaleString()}` : '—',
                         sub:   isHOPE ? '100% tuition covered' : 'Coverage lost',
                         color: isHOPE ? GREEN : RED,
                       },
                       {
                         label: 'Out-of-Pocket Risk',
                         value: isHOPE ? '$0' : `-$${(TUITION).toLocaleString()}/sem`,
-                        sub:   isHOPE ? 'No exposure this semester' : `â‰ˆ -$${(TUITION * 2).toLocaleString()}/year risk`,
+                        sub:   isHOPE ? 'No exposure this semester' : `≈ -$${(TUITION * 2).toLocaleString()}/year risk`,
                         color: isHOPE ? TEXT2 : RED,
                       },
                       {
                         label: 'Lifetime Tuition Saved',
                         value: `$${lifetimeSaved.toLocaleString()}`,
-                        sub:   `${semsDone} semester${semsDone !== 1 ? 's' : ''} Ã— $${TUITION.toLocaleString()}`,
+                        sub:   `${semsDone} semester${semsDone !== 1 ? 's' : ''} × $${TUITION.toLocaleString()}`,
                         color: GREEN,
                       },
                     ].map(({ label, value, sub, color }) => (
@@ -5316,11 +5316,11 @@ export default function Dashboard() {
                     ))}
                   </div>
 
-                  {/* â”€â”€ Checkpoint Progress â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {/* ── Checkpoint Progress ───────────────────────── */}
                   <div className="lc" style={{ ...CARD, marginBottom: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                       <div style={{ fontWeight: 600 }}>GSFC Audit Checkpoints</div>
-                      <div style={{ fontSize: 12, color: TEXT2 }}>{totalHrs.toFixed(0)} attempted hrs Â· {nextCP ? `${hoursToCP.toFixed(0)} hrs until next audit` : 'All checkpoints cleared'}</div>
+                      <div style={{ fontSize: 12, color: TEXT2 }}>{totalHrs.toFixed(0)} attempted hrs · {nextCP ? `${hoursToCP.toFixed(0)} hrs until next audit` : 'All checkpoints cleared'}</div>
                     </div>
                     <div style={{ position: 'relative', height: 8, background: MUTED, borderRadius: 4, marginBottom: 52 }}>
                       <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${Math.min(100, (totalHrs / 90) * 100)}%`, background: statusColor, borderRadius: 4, transition: 'width 0.4s ease' }} />
@@ -5333,14 +5333,14 @@ export default function Dashboard() {
                             {cp} hrs
                           </div>
                           <div style={{ position: 'absolute', top: 30, left: '50%', transform: 'translateX(-50%)', fontSize: 9, color: TEXT3, whiteSpace: 'nowrap' }}>
-                            {totalHrs >= cp ? 'âœ“ Passed' : `${(cp - totalHrs).toFixed(0)} away`}
+                            {totalHrs >= cp ? '✓ Passed' : `${(cp - totalHrs).toFixed(0)} away`}
                           </div>
                         </div>
                       ))}
                     </div>
                     <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
                       {[
-                        { label: 'Current Scholarship', val: isZell ? 'Zell Miller (3.3+)' : isHOPE ? 'HOPE (3.0+)' : 'None â€” Below Cliff', color: statusColor },
+                        { label: 'Current Scholarship', val: isZell ? 'Zell Miller (3.3+)' : isHOPE ? 'HOPE (3.0+)' : 'None — Below Cliff', color: statusColor },
                         { label: 'HOPE Threshold', val: '3.0 GPA', color: YELLOW },
                         { label: 'Zell Miller Buffer', val: '3.3 GPA', color: GREEN },
                         { label: 'Both Tiers Cover', val: '100% Tuition', color: BLUE },
@@ -5353,7 +5353,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* â”€â”€ Input Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {/* ── Input Panel ───────────────────────────────── */}
                   <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
                     {/* Left: base inputs */}
                     <div className="lc" style={CARD}>
@@ -5379,9 +5379,9 @@ export default function Dashboard() {
                     <div className="lc" style={CARD}>
                       <div style={{ fontWeight: 600, marginBottom: 16 }}>GSFC GPA Requirements</div>
                       {[
-                        { tier: 'Zell Miller', gpa: '3.30', icon: 'â—', color: GREEN, desc: 'Safety buffer Â· $5,000/sem covered', active: isZell },
-                        { tier: 'HOPE Scholarship', gpa: '3.00', icon: 'â—', color: YELLOW, desc: '3.0 cliff Â· $5,000/sem covered', active: isHOPE && !isZell },
-                        { tier: 'Below Threshold', gpa: '< 3.00', icon: 'â—', color: RED, desc: 'Full tuition out-of-pocket', active: !isHOPE },
+                        { tier: 'Zell Miller', gpa: '3.30', icon: '●', color: GREEN, desc: 'Safety buffer · $5,000/sem covered', active: isZell },
+                        { tier: 'HOPE Scholarship', gpa: '3.00', icon: '●', color: YELLOW, desc: '3.0 cliff · $5,000/sem covered', active: isHOPE && !isZell },
+                        { tier: 'Below Threshold', gpa: '< 3.00', icon: '●', color: RED, desc: 'Full tuition out-of-pocket', active: !isHOPE },
                       ].map(({ tier, gpa, icon, color, desc, active }) => (
                         <div key={tier} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 8, background: active ? `${color.replace(')',',0.08)')}` : 'transparent', border: active ? `1px solid ${color.replace(')',',0.25)')}` : `1px solid transparent`, marginBottom: 8, transition: 'all 0.2s' }}>
                           <span style={{ fontSize: 10, color, flexShrink: 0 }}>{icon}</span>
@@ -5390,13 +5390,13 @@ export default function Dashboard() {
                             <div style={{ fontSize: 11, color: TEXT3 }}>{desc}</div>
                           </div>
                           <span style={{ fontSize: 16, fontWeight: 800, fontFamily: 'monospace', color: active ? color : TEXT3 }}>{gpa}</span>
-                          {active && <span style={{ fontSize: 10, color, fontWeight: 700 }}>â† YOU</span>}
+                          {active && <span style={{ fontSize: 10, color, fontWeight: 700 }}>← YOU</span>}
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* â”€â”€ What-If Course Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {/* ── What-If Course Builder ─────────────────────── */}
                   <div className="lc" style={{ ...CARD, marginBottom: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                       <div style={{ fontWeight: 600 }}>What-If: Current Semester Grade Forecast</div>
@@ -5435,7 +5435,7 @@ export default function Dashboard() {
                         </select>
                         <button
                           onClick={() => setSchCourses(p => p.filter((_, j) => j !== i))}
-                          style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, padding: 0, lineHeight: 1 }}>Ã—</button>
+                          style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>
                       </div>
                     ))}
                     {schCourses.length === 0 && (
@@ -5445,7 +5445,7 @@ export default function Dashboard() {
                       {[
                         { label: 'Semester Hours', value: `${addHrs} cr` },
                         { label: 'Projected GPA After Sem', value: projGPA.toFixed(3), color: statusColor },
-                        { label: 'GPA Î” from Current', value: (projGPA - baseGPA) >= 0 ? `+${(projGPA - baseGPA).toFixed(3)}` : (projGPA - baseGPA).toFixed(3), color: (projGPA - baseGPA) >= 0 ? GREEN : RED },
+                        { label: 'GPA Δ from Current', value: (projGPA - baseGPA) >= 0 ? `+${(projGPA - baseGPA).toFixed(3)}` : (projGPA - baseGPA).toFixed(3), color: (projGPA - baseGPA) >= 0 ? GREEN : RED },
                       ].map(({ label, value, color }) => (
                         <div key={label} style={{ padding: '10px 14px', background: DARK, borderRadius: 8 }}>
                           <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{label}</div>
@@ -5455,7 +5455,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* â”€â”€ Sensitivity Slider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {/* ── Sensitivity Slider ────────────────────────── */}
                   {schCourses.length > 0 && (
                     <div className="lc" style={CARD}>
                       <div style={{ fontWeight: 600, marginBottom: 4 }}>Grade Sensitivity Analysis</div>
@@ -5505,7 +5505,7 @@ export default function Dashboard() {
               );
             })()}
 
-            {/* â”€â”€ INVESTMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── INVESTMENTS ───────────────────────────── */}
             {panel === 'investments' && (
               <div>
                 <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>Investments</h1>
@@ -5514,7 +5514,7 @@ export default function Dashboard() {
                   {[
                     { label: 'Portfolio Value', value: fmt(activeTotalPortfolio) },
                     { label: 'Positions',        value: activeHoldings.length },
-                    { label: 'Avg Position',     value: activeHoldings.length ? fmt(activeTotalPortfolio / activeHoldings.length) : 'â€”' },
+                    { label: 'Avg Position',     value: activeHoldings.length ? fmt(activeTotalPortfolio / activeHoldings.length) : '—' },
                   ].map(({ label, value }) => (
                     <div key={label} className="lc" style={CARD}>
                       <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
@@ -5543,8 +5543,8 @@ export default function Dashboard() {
                         </thead>
                         <tbody>
                           {(holdingsExpanded ? activeHoldings : activeHoldings.slice(0, 4)).map((h, i) => {
-                            const ticker = h.security?.ticker_symbol || 'â€”';
-                            const name   = h.security?.name || 'â€”';
+                            const ticker = h.security?.ticker_symbol || '—';
+                            const name   = h.security?.name || '—';
                             const qty    = h.quantity || 0;
                             const price  = h.institution_price || 0;
                             const value  = qty * price;
@@ -5552,11 +5552,11 @@ export default function Dashboard() {
                             const pnl    = cost > 0 ? value - cost : null;
                             const ext    = extendedTickerData[ticker] || {};
                             const hPct   = (v) => {
-                              if (v == null) return <span style={{ color: TEXT3 }}>â€”</span>;
+                              if (v == null) return <span style={{ color: TEXT3 }}>—</span>;
                               const up = v >= 0;
-                              return <span style={{ color: up ? GREEN : RED, fontWeight: 700 }}>{up ? 'â–²' : 'â–¼'} {Math.abs(v).toFixed(2)}%</span>;
+                              return <span style={{ color: up ? GREEN : RED, fontWeight: 700 }}>{up ? '▲' : '▼'} {Math.abs(v).toFixed(2)}%</span>;
                             };
-                            const clickable = ticker !== 'â€”';
+                            const clickable = ticker !== '—';
                             return (
                               <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}`, cursor: clickable ? 'pointer' : 'default' }}
                                 onClick={() => {
@@ -5571,7 +5571,7 @@ export default function Dashboard() {
                                 <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{fmt(price)}</td>
                                 <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, fontFamily: 'monospace' }}>{fmt(value)}</td>
                                 <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: pnl === null ? TEXT3 : pnl >= 0 ? GREEN : RED }}>
-                                  {pnl === null ? 'â€”' : `${pnl >= 0 ? '+' : ''}${fmt(pnl)}`}
+                                  {pnl === null ? '—' : `${pnl >= 0 ? '+' : ''}${fmt(pnl)}`}
                                 </td>
                                 <td style={{ padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{hPct(ext.changePct1d ?? null)}</td>
                                 <td style={{ padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{hPct(ext.changePct1w ?? null)}</td>
@@ -5586,7 +5586,7 @@ export default function Dashboard() {
                           onClick={() => setHoldingsExpanded(e => !e)}
                           style={{ width: '100%', marginTop: 12, padding: '9px 0', background: 'none', border: `1px solid ${BORDER_C}`, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'border-color 0.15s' }}
                         >
-                          {holdingsExpanded ? `Show less â†‘` : `Show all ${activeHoldings.length} positions â†“`}
+                          {holdingsExpanded ? `Show less ↑` : `Show all ${activeHoldings.length} positions ↓`}
                         </button>
                       )}
                     </>
@@ -5595,13 +5595,13 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* â”€â”€ INSIGHTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── INSIGHTS ──────────────────────────────── */}
             {panel === 'insights' && (
               <div style={{ position: 'relative' }}>
               {!isAdmin && (
                 <div style={{ position: 'absolute', inset: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   <div style={{ pointerEvents: 'auto', background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: '36px 40px', textAlign: 'center', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
-                    <div style={{ fontSize: 40, marginBottom: 14 }}>â—¬</div>
+                    <div style={{ fontSize: 40, marginBottom: 14 }}>◬</div>
                     <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Market Insights</div>
                     <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 28 }}>
                       Live charts, Fear &amp; Greed index, yield curve, stock screeners, and a real-time news feed.
@@ -5652,9 +5652,9 @@ export default function Dashboard() {
                     {fearGreed ? (
                       <FearGreedGauge score={fearGreed.score} rating={fearGreed.rating} />
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 110, color: TEXT2, fontSize: 12 }}>Loadingâ€¦</div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 110, color: TEXT2, fontSize: 12 }}>Loading…</div>
                     )}
-                    <div style={{ fontSize: 11, color: TEXT3, marginTop: 8, textAlign: 'center' }}>CNN composite Â· 7 sentiment indicators</div>
+                    <div style={{ fontSize: 11, color: TEXT3, marginTop: 8, textAlign: 'center' }}>CNN composite · 7 sentiment indicators</div>
                   </div>
                 </div>
 
@@ -5672,7 +5672,7 @@ export default function Dashboard() {
                               {(t.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: 600, color: up ? GREEN : RED }}>
-                              {up ? 'â–²' : 'â–¼'} {Math.abs(t.changePct || 0).toFixed(2)}%
+                              {up ? '▲' : '▼'} {Math.abs(t.changePct || 0).toFixed(2)}%
                             </div>
                           </div>
                         );
@@ -5696,7 +5696,7 @@ export default function Dashboard() {
                         <option value="your_list">Your List</option>
                       </select>
                       <button onClick={() => fetchMarketView(marketView, customTickers)}
-                        style={{ padding: '5px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, cursor: 'pointer' }}>â†»</button>
+                        style={{ padding: '5px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, cursor: 'pointer' }}>↻</button>
                     </div>
                   </div>
 
@@ -5734,15 +5734,15 @@ export default function Dashboard() {
                     const rows = marketView === 'your_list'
                       ? customTickerData
                       : marketViewData.length ? marketViewData : marketTickers.active;
-                    if (loadingMarketView) return <div style={{ color: TEXT2, textAlign: 'center', padding: 24, fontSize: 13 }}>Loadingâ€¦</div>;
+                    if (loadingMarketView) return <div style={{ color: TEXT2, textAlign: 'center', padding: 24, fontSize: 13 }}>Loading…</div>;
                     if (!rows.length && marketView === 'your_list') return (
                       <div style={{ color: TEXT3, textAlign: 'center', padding: 24, fontSize: 13 }}>Add tickers above to track them here.</div>
                     );
-                    if (!rows.length) return <div style={{ color: TEXT2, textAlign: 'center', padding: 24, fontSize: 13 }}>Loading market dataâ€¦</div>;
+                    if (!rows.length) return <div style={{ color: TEXT2, textAlign: 'center', padding: 24, fontSize: 13 }}>Loading market data…</div>;
                     const pctCell = (val) => {
-                      if (val == null) return <span style={{ color: TEXT3, fontSize: 12 }}>â€”</span>;
+                      if (val == null) return <span style={{ color: TEXT3, fontSize: 12 }}>—</span>;
                       const up = val >= 0;
-                      return <span style={{ color: up ? GREEN : RED, fontWeight: 700 }}>{up ? 'â–²' : 'â–¼'} {Math.abs(val).toFixed(2)}%</span>;
+                      return <span style={{ color: up ? GREEN : RED, fontWeight: 700 }}>{up ? '▲' : '▼'} {Math.abs(val).toFixed(2)}%</span>;
                     };
                     return (
                       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -5782,7 +5782,7 @@ export default function Dashboard() {
                                       setCustomTickers(next);
                                       localStorage.setItem('merit_tickers', JSON.stringify(next));
                                       setCustomTickerData(prev => prev.filter(q => q.symbol !== t.symbol));
-                                    }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 14, padding: 0 }}>âœ•</button>
+                                    }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 14, padding: 0 }}>✕</button>
                                   </td>
                                 )}
                               </tr>
@@ -5836,7 +5836,7 @@ export default function Dashboard() {
                         </a>
                         {a.summary && (
                           <p style={{ margin: '0 0 10px', color: TEXT2, fontSize: 13, lineHeight: 1.5 }}>
-                            {a.summary.length > 160 ? a.summary.slice(0, 160) + 'â€¦' : a.summary}
+                            {a.summary.length > 160 ? a.summary.slice(0, 160) + '…' : a.summary}
                           </p>
                         )}
                         <div style={{ fontSize: 11, color: TEXT3 }}>{a.source} &middot; {fmtDate(a.created_at)}</div>
@@ -5848,11 +5848,11 @@ export default function Dashboard() {
             )}
 
             {insightsTab === 'signals' && (() => {
-              // â”€â”€ Score all articles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── Score all articles ─────────────────────────────────────────
               const scored = articles.map(a => ({ ...a, ...scoreArticle(a) }));
               const bySignal = [...scored].sort((a, b) => b.signal - a.signal);
 
-              // â”€â”€ Build ticker heat map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── Build ticker heat map ──────────────────────────────────────
               const tickerMap = {};
               scored.forEach(a => {
                 a.tickers.forEach(t => {
@@ -5867,12 +5867,12 @@ export default function Dashboard() {
                 .sort((a, b) => b.maxSignal - a.maxSignal)
                 .slice(0, 24);
 
-              // â”€â”€ Contagion for selected ticker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── Contagion for selected ticker ──────────────────────────────
               const contagion = signalFilter ? SECTOR_GRAPH[signalFilter] : null;
               const selEntry  = signalFilter ? tickerMap[signalFilter] : null;
               const selSignal = selEntry ? selEntry.maxSignal : 0;
 
-              // â”€â”€ Color helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── Color helpers ──────────────────────────────────────────────
               const sigColor = s =>
                 s >= 0.65 ? '#f87171' : s >= 0.42 ? '#f97316' : s >= 0.22 ? '#fbbf24' : TEXT3;
               const sigBg = s =>
@@ -5896,24 +5896,24 @@ export default function Dashboard() {
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
                     <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Signal Engine</h1>
                     <span style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-                      {scored.length} articles Â· {heatTickers.length} tickers Â· live scoring
+                      {scored.length} articles · {heatTickers.length} tickers · live scoring
                     </span>
                   </div>
                   <p style={{ margin: '0 0 24px', fontSize: 13, color: TEXT2, lineHeight: 1.6 }}>
-                    Multi-vector scoring: <strong style={{ color: TEXT }}>M</strong> magnitude Ã—{' '}
-                    <strong style={{ color: TEXT }}>P</strong> probability Ã—{' '}
-                    <strong style={{ color: TEXT }}>I</strong> immediacy Ã—{' '}
+                    Multi-vector scoring: <strong style={{ color: TEXT }}>M</strong> magnitude ×{' '}
+                    <strong style={{ color: TEXT }}>P</strong> probability ×{' '}
+                    <strong style={{ color: TEXT }}>I</strong> immediacy ×{' '}
                     <strong style={{ color: TEXT }}>R</strong> moat-adjusted resilience.
                     Click any ticker to see sector contagion.
                   </p>
 
                   {articles.length === 0 ? (
                     <div style={{ ...CARD, textAlign: 'center', padding: 48, color: TEXT2 }}>
-                      No articles loaded â€” check the News tab for status.
+                      No articles loaded — check the News tab for status.
                     </div>
                   ) : (
                     <>
-                      {/* â”€â”€ Ticker Heatmap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                      {/* ── Ticker Heatmap ──────────────────────────────── */}
                       <div style={{ ...CARD, marginBottom: 20 }}>
                         <div style={{ fontWeight: 600, marginBottom: 16, fontSize: 13 }}>Live Ticker Signal Heatmap</div>
                         {heatTickers.length === 0 ? (
@@ -5948,18 +5948,18 @@ export default function Dashboard() {
                         )}
                       </div>
 
-                      {/* â”€â”€ Chain Reaction Map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                      {/* ── Chain Reaction Map ──────────────────────────── */}
                       {contagion && selEntry && (
                         <div style={{ ...CARD, marginBottom: 20, border: `1px solid ${sigBorder(selSignal)}`, background: sigBg(selSignal) }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                             <div>
                               <span style={{ fontSize: 15, fontWeight: 700, color: sigColor(selSignal), marginRight: 10 }}>{signalFilter}</span>
                               <span style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                {contagion.sector} Â· Sector Contagion
+                                {contagion.sector} · Sector Contagion
                               </span>
                             </div>
                             <button onClick={() => setSignalFilter(null)}
-                              style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, padding: 0 }}>âœ•</button>
+                              style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, padding: 0 }}>✕</button>
                           </div>
 
                           <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12 }}>
@@ -5975,7 +5975,7 @@ export default function Dashboard() {
                                   </div>
                                   {items.map(sym => {
                                     const contagionScore = selSignal * mult;
-                                    const dir = selEntry.articles.some(a => a.isNeg) ? 'â–¼' : 'â–²';
+                                    const dir = selEntry.articles.some(a => a.isNeg) ? '▼' : '▲';
                                     const col = selEntry.articles.some(a => a.isNeg) ? RED : GREEN;
                                     return (
                                       <div key={sym} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${BORDER_C}` }}>
@@ -5998,13 +5998,13 @@ export default function Dashboard() {
                         </div>
                       )}
 
-                      {/* â”€â”€ Scored Articles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                      {/* ── Scored Articles ──────────────────────────────── */}
                       <div style={{ ...CARD }}>
                         <div style={{ fontWeight: 600, marginBottom: 16, fontSize: 13 }}>
                           Articles by Signal Strength
                           {signalFilter && (
                             <span style={{ marginLeft: 8, fontSize: 11, color: BLUE, fontWeight: 600 }}>
-                              Â· filtered: {signalFilter}
+                              · filtered: {signalFilter}
                             </span>
                           )}
                         </div>
@@ -6034,10 +6034,10 @@ export default function Dashboard() {
                               {/* Vector bars */}
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 8 }}>
                                 {[
-                                  { label: 'M Â· Magnitude', val: a.M, color: '#4da3ff' },
-                                  { label: 'P Â· Probability', val: a.P, color: '#4ade80' },
-                                  { label: 'I Â· Immediacy', val: a.I, color: '#fbbf24' },
-                                  { label: 'R Â· Resilience', val: Math.min(1, (a.R - 0.5) / 1), color: '#c084fc' },
+                                  { label: 'M · Magnitude', val: a.M, color: '#4da3ff' },
+                                  { label: 'P · Probability', val: a.P, color: '#4ade80' },
+                                  { label: 'I · Immediacy', val: a.I, color: '#fbbf24' },
+                                  { label: 'R · Resilience', val: Math.min(1, (a.R - 0.5) / 1), color: '#c084fc' },
                                 ].map(({ label, val, color }) => (
                                   <div key={label}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
@@ -6070,7 +6070,7 @@ export default function Dashboard() {
                               </div>
 
                               <div style={{ marginTop: 6, fontSize: 10, color: TEXT3 }}>
-                                {a.source} Â· {fmtDate(a.created_at)}
+                                {a.source} · {fmtDate(a.created_at)}
                               </div>
                             </div>
                           ))
@@ -6097,7 +6097,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* â”€â”€ LEARN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── LEARN ────────────────────────────────── */}
             {panel === 'learn' && (() => {
               const section = LEARN_CONTENT.find(s => s.category === learnCategory);
               const toggleExpand = (id) => setLearnExpanded(prev => {
@@ -6156,7 +6156,7 @@ export default function Dashboard() {
                                 <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>{item.summary}</div>
                               </div>
                             </div>
-                            <span style={{ color: TEXT3, fontSize: 18, marginLeft: 8, flexShrink: 0 }}>{expanded ? 'âˆ’' : '+'}</span>
+                            <span style={{ color: TEXT3, fontSize: 18, marginLeft: 8, flexShrink: 0 }}>{expanded ? '−' : '+'}</span>
                           </div>
 
                           {expanded && (
@@ -6183,12 +6183,12 @@ export default function Dashboard() {
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Trusted external references for going deeper on any topic.</div>
                     <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12 }}>
                       {[
-                        { name: 'Investopedia',          url: 'https://www.investopedia.com',                                          desc: 'The most comprehensive financial dictionary and concept explainer on the web. Look up any term, formula, or strategy.',       color: BLUE,   icon: 'ðŸ“š' },
-                        { name: 'NerdWallet',             url: 'https://www.nerdwallet.com',                                            desc: 'Personal finance comparisons, calculators, and actionable guides for budgeting, credit cards, mortgages, and more.',         color: GREEN,  icon: 'ðŸ§®' },
-                        { name: 'Khan Academy Finance',   url: 'https://www.khanacademy.org/college-careers-more/personal-finance',     desc: 'Free video-based personal finance course covering taxes, interest, credit, insurance, and retirement from scratch.',              color: '#10b981', icon: 'ðŸŽ“' },
-                        { name: 'IRS.gov',                url: 'https://www.irs.gov',                                                   desc: 'Official IRS resources: current tax brackets, deduction limits, 401(k) contribution limits, and filing guides.',              color: RED,    icon: 'ðŸ›ï¸' },
-                        { name: 'FRED â€” St. Louis Fed',   url: 'https://fred.stlouisfed.org',                                          desc: 'Federal Reserve economic data: interest rates, inflation, unemployment, GDP, and yield curves. The primary source for macro data.', color: YELLOW, icon: 'ðŸ“ˆ' },
-                        { name: 'SEC Investor Education', url: 'https://www.investor.gov',                                              desc: 'Compound interest calculators, investment disclosures, broker check tools, and fraud alerts from the SEC.',                    color: '#a78bfa', icon: 'âš–ï¸' },
+                        { name: 'Investopedia',          url: 'https://www.investopedia.com',                                          desc: 'The most comprehensive financial dictionary and concept explainer on the web. Look up any term, formula, or strategy.',       color: BLUE,   icon: '📚' },
+                        { name: 'NerdWallet',             url: 'https://www.nerdwallet.com',                                            desc: 'Personal finance comparisons, calculators, and actionable guides for budgeting, credit cards, mortgages, and more.',         color: GREEN,  icon: '🧮' },
+                        { name: 'Khan Academy Finance',   url: 'https://www.khanacademy.org/college-careers-more/personal-finance',     desc: 'Free video-based personal finance course covering taxes, interest, credit, insurance, and retirement from scratch.',              color: '#10b981', icon: '🎓' },
+                        { name: 'IRS.gov',                url: 'https://www.irs.gov',                                                   desc: 'Official IRS resources: current tax brackets, deduction limits, 401(k) contribution limits, and filing guides.',              color: RED,    icon: '🏛️' },
+                        { name: 'FRED — St. Louis Fed',   url: 'https://fred.stlouisfed.org',                                          desc: 'Federal Reserve economic data: interest rates, inflation, unemployment, GDP, and yield curves. The primary source for macro data.', color: YELLOW, icon: '📈' },
+                        { name: 'SEC Investor Education', url: 'https://www.investor.gov',                                              desc: 'Compound interest calculators, investment disclosures, broker check tools, and fraud alerts from the SEC.',                    color: '#a78bfa', icon: '⚖️' },
                       ].map(({ name, url, desc, color, icon }) => (
                         <a key={name} href={url} target="_blank" rel="noopener noreferrer"
                           style={{ display: 'block', textDecoration: 'none', ...CARD, cursor: 'pointer', transition: 'border-color 0.15s', borderColor: BORDER_C }}
@@ -6198,7 +6198,7 @@ export default function Dashboard() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                             <span style={{ fontSize: 20 }}>{icon}</span>
                             <span style={{ fontWeight: 700, fontSize: 14, color }}>{name}</span>
-                            <span style={{ fontSize: 10, color: TEXT3, marginLeft: 'auto' }}>â†—</span>
+                            <span style={{ fontSize: 10, color: TEXT3, marginLeft: 'auto' }}>↗</span>
                           </div>
                           <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{desc}</div>
                         </a>
@@ -6209,7 +6209,7 @@ export default function Dashboard() {
               );
             })()}
 
-            {/* â”€â”€ PROFESSOR HUB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── PROFESSOR HUB ─────────────────────────── */}
             {panel === 'prof-dashboard' && effectiveProfessor && (() => {
               const codeData = profStudents[selectedProfCode] || { students: [], submissions: [] };
               const totalStudents = profCodes.reduce((s, c) => s + (c.student_count || 0), 0);
@@ -6241,7 +6241,7 @@ export default function Dashboard() {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 24 }}>
                     <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Professor Hub</h1>
-                    <span style={{ fontSize: 11, color: TEXT2 }}>Instructor view Â· {user?.name}</span>
+                    <span style={{ fontSize: 11, color: TEXT2 }}>Instructor view · {user?.name}</span>
                   </div>
 
                   {/* Stats row */}
@@ -6259,7 +6259,7 @@ export default function Dashboard() {
                     ))}
                   </div>
 
-                  {/* â”€â”€ Tab switcher â”€â”€ */}
+                  {/* ── Tab switcher ── */}
                   <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: `1px solid ${BORDER_C}` }}>
                     {[
                       { id: 'analytics',     label: 'Analytics' },
@@ -6278,17 +6278,17 @@ export default function Dashboard() {
 
                   {profLoadingCode === selectedProfCode && selectedProfCode && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER, marginBottom: 20, fontSize: 13, color: TEXT2 }}>
-                      <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block', fontSize: 16 }}>â†»</span>
+                      <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block', fontSize: 16 }}>↻</span>
                       Loading data for {selectedProfCode}...
                     </div>
                   )}
 
                   {profHubTab === 'analytics' && <>
-                  {/* â”€â”€ First-run onboarding â”€â”€ */}
+                  {/* ── First-run onboarding ── */}
                   {profCodes.length === 0 && (
                     <div style={{ ...CARD, marginBottom: 24, border: '1px solid rgba(74,222,128,0.25)', background: 'rgba(74,222,128,0.03)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>âŠŸ</div>
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⊟</div>
                         <div>
                           <div style={{ fontSize: 17, fontWeight: 700, color: TEXT }}>Welcome to your Professor Hub</div>
                           <div style={{ fontSize: 13, color: TEXT2, marginTop: 2 }}>Three steps to get your class running on Merit.</div>
@@ -6296,7 +6296,7 @@ export default function Dashboard() {
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 0, margin: '20px 0' }}>
                         {[
-                          { num: 1, title: 'Create a course code', desc: 'Choose a short memorable code â€” like B-FIN-26. Students enter it when they register to enroll in your course.', done: false, color: GREEN },
+                          { num: 1, title: 'Create a course code', desc: 'Choose a short memorable code — like B-FIN-26. Students enter it when they register to enroll in your course.', done: false, color: GREEN },
                           { num: 2, title: 'Share it with your class', desc: 'Post the code on your syllabus, LMS, or slides. Any student with a .edu email or the code can enroll in under a minute.', done: false, color: BLUE },
                           { num: 3, title: 'Assign, grade, and track', desc: 'Create assignments, review submissions here in the Hub, return grades with written feedback, and export the class roster to CSV.', done: false, color: '#a78bfa' },
                         ].map((step, i) => (
@@ -6311,12 +6311,12 @@ export default function Dashboard() {
                       </div>
                       <button onClick={() => { setShowNewCode(true); setProfHubTab('analytics'); }}
                         style={{ padding: '10px 22px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.4)', borderRadius: 9, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                        + Create Your First Course Code â†’
+                        + Create Your First Course Code →
                       </button>
                     </div>
                   )}
 
-                  {/* â”€â”€ Analytics â”€â”€ */}
+                  {/* ── Analytics ── */}
                   {profCodes.length > 0 && (() => {
                     const getLetter = (score, maxPts) => {
                       const pct = score / maxPts * 100;
@@ -6395,7 +6395,7 @@ export default function Dashboard() {
                               URL.revokeObjectURL(url);
                             }}
                               style={{ padding: '5px 12px', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 6, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                              â†“ Export CSV
+                              ↓ Export CSV
                             </button>
                           </div>
                         </div>
@@ -6444,14 +6444,14 @@ export default function Dashboard() {
                                   <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: DARK, borderRadius: 8 }}>
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                       <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</div>
-                                      <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{a.submitted}/{codeData.students.length} submitted Â· {a.graded} graded</div>
+                                      <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{a.submitted}/{codeData.students.length} submitted · {a.graded} graded</div>
                                     </div>
                                     {a.letter ? (
                                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
                                         <div style={{ fontSize: 15, fontWeight: 800, color: letterColor[a.letter], lineHeight: 1 }}>{a.letter}</div>
                                         <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{a.avgPct}% avg</div>
                                       </div>
-                                    ) : <div style={{ fontSize: 12, color: TEXT3, flexShrink: 0 }}>â€”</div>}
+                                    ) : <div style={{ fontSize: 12, color: TEXT3, flexShrink: 0 }}>—</div>}
                                   </div>
                                 ))}
                               </div>
@@ -6483,7 +6483,7 @@ export default function Dashboard() {
                                       {assignIds.map(id => {
                                         const sub = stu.grades[id];
                                         const maxPts = ALL_ASSIGNMENTS_MAP[id]?.points ?? 100;
-                                        if (!sub) return <td key={id} style={{ textAlign: 'center', padding: '9px 12px', color: TEXT3, borderBottom: `1px solid ${BORDER_C}` }}>â€”</td>;
+                                        if (!sub) return <td key={id} style={{ textAlign: 'center', padding: '9px 12px', color: TEXT3, borderBottom: `1px solid ${BORDER_C}` }}>—</td>;
                                         if (sub.grade == null) return (
                                           <td key={id} style={{ textAlign: 'center', padding: '9px 12px', borderBottom: `1px solid ${BORDER_C}` }}>
                                             <span style={{ fontSize: 10, color: YELLOW, fontWeight: 700 }}>Pending</span>
@@ -6500,7 +6500,7 @@ export default function Dashboard() {
                                       <td style={{ textAlign: 'center', padding: '9px 12px', borderBottom: `1px solid ${BORDER_C}` }}>
                                         {stu.overallPct != null
                                           ? <span style={{ fontSize: 13, fontWeight: 800, color: letterColor[getLetter(stu.overallPct, 100)] }}>{stu.overallPct}%</span>
-                                          : <span style={{ color: TEXT3 }}>â€”</span>}
+                                          : <span style={{ color: TEXT3 }}>—</span>}
                                       </td>
                                     </tr>
                                   ))}
@@ -6559,7 +6559,7 @@ export default function Dashboard() {
                       <div style={{ fontWeight: 700, fontSize: 15 }}>Course Codes</div>
                       <button onClick={() => { setShowNewCode(v => !v); setNewCodeError(''); }}
                         style={{ padding: '6px 14px', background: showNewCode ? MUTED : 'rgba(74,222,128,0.1)', border: showNewCode ? BORDER : '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: showNewCode ? TEXT2 : GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                        {showNewCode ? 'âœ• Cancel' : '+ New Code'}
+                        {showNewCode ? '✕ Cancel' : '+ New Code'}
                       </button>
                     </div>
 
@@ -6583,7 +6583,7 @@ export default function Dashboard() {
                         {newCodeError && <div style={{ fontSize: 12, color: RED, marginBottom: 10 }}>{newCodeError}</div>}
                         <button onClick={createCode}
                           style={{ padding: '8px 20px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 8, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                          Create Code â†’
+                          Create Code →
                         </button>
                       </div>
                     )}
@@ -6597,7 +6597,7 @@ export default function Dashboard() {
                             <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14, color: GREEN, letterSpacing: '1px' }}>{c.code}</span>
                             <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: c.active ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)', color: c.active ? GREEN : RED }}>{c.active ? 'Active' : 'Inactive'}</span>
                           </div>
-                          <div style={{ fontSize: 12, color: TEXT2 }}>{c.course_name} Â· {c.instructor_name} Â· {c.semester}</div>
+                          <div style={{ fontSize: 12, color: TEXT2 }}>{c.course_name} · {c.instructor_name} · {c.semester}</div>
                         </div>
                         <div style={{ fontSize: 12, color: TEXT2, textAlign: 'right', marginRight: 12 }}>
                           <div style={{ fontWeight: 700, color: TEXT }}>{c.student_count}</div>
@@ -6617,7 +6617,7 @@ export default function Dashboard() {
 
                   </>}
 
-                  {/* â”€â”€ ROSTER TAB â”€â”€ */}
+                  {/* ── ROSTER TAB ── */}
                   {profHubTab === 'roster' && profCodes.length > 0 && (() => {
                     const getLetter = (score, maxPts) => { const pct = score / maxPts * 100; if (pct >= 90) return 'A'; if (pct >= 80) return 'B'; if (pct >= 70) return 'C'; if (pct >= 60) return 'D'; return 'F'; };
                     const letterColor = { A: GREEN, B: BLUE, C: YELLOW, D: '#f97316', F: RED };
@@ -6669,12 +6669,12 @@ export default function Dashboard() {
                                     </div>
                                     <div style={{ textAlign: 'center', fontSize: 13, color: TEXT2 }}>{stu.submCount}</div>
                                     <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 700, color: stu.overallPct != null ? letterColor[getLetter(stu.overallPct, 100)] : TEXT3 }}>
-                                      {stu.overallPct != null ? `${stu.overallPct}%` : 'â€”'}
+                                      {stu.overallPct != null ? `${stu.overallPct}%` : '—'}
                                     </div>
                                     <div style={{ textAlign: 'center' }}>
                                       <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 10, background: statusBg, color: statusColor }}>{status}</span>
                                     </div>
-                                    <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3 }}>{isExpanded ? 'â–´' : 'â–¾'}</div>
+                                    <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3 }}>{isExpanded ? '▴' : '▾'}</div>
                                     <div style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                                       <button onClick={() => {
                                         if (!window.confirm(`Remove ${stu.name} from this course?`)) return;
@@ -6715,11 +6715,11 @@ export default function Dashboard() {
                                                   <td style={{ padding: '5px 10px', fontWeight: 700, color: sub.grade != null ? letterColor[getLetter(sub.grade, maxPts)] : YELLOW }}>
                                                     {sub.grade != null ? `${sub.grade}/${maxPts}` : 'Pending'}
                                                   </td>
-                                                  <td style={{ padding: '5px 10px', color: TEXT3, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub.feedback || 'â€”'}</td>
+                                                  <td style={{ padding: '5px 10px', color: TEXT3, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub.feedback || '—'}</td>
                                                   <td style={{ padding: '5px 10px' }}>
                                                     <button onClick={e => { e.stopPropagation(); setShowGrade(sub); setGradeForm({ grade: sub.grade != null ? String(sub.grade) : '', feedback: sub.feedback || '' }); }}
                                                       style={{ padding: '3px 10px', background: sub.grade != null ? MUTED : 'rgba(74,222,128,0.1)', border: sub.grade != null ? BORDER : '1px solid rgba(74,222,128,0.3)', borderRadius: 5, color: sub.grade != null ? TEXT2 : GREEN, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-                                                      {sub.grade != null ? 'Revise' : 'Grade â†’'}
+                                                      {sub.grade != null ? 'Revise' : 'Grade →'}
                                                     </button>
                                                   </td>
                                                 </tr>
@@ -6739,7 +6739,7 @@ export default function Dashboard() {
                     );
                   })()}
 
-                  {/* â”€â”€ ANNOUNCEMENTS TAB â”€â”€ */}
+                  {/* ── ANNOUNCEMENTS TAB ── */}
                   {profHubTab === 'announcements' && (
                     <div>
                       <div style={{ ...CARD, marginBottom: 20 }}>
@@ -6747,7 +6747,7 @@ export default function Dashboard() {
                           <div style={{ fontWeight: 700, fontSize: 15 }}>New Announcement</div>
                           <button onClick={() => setShowAnnForm(v => !v)}
                             style={{ padding: '6px 14px', background: showAnnForm ? MUTED : 'rgba(77,163,255,0.1)', border: showAnnForm ? BORDER : '1px solid rgba(77,163,255,0.3)', borderRadius: 8, color: showAnnForm ? TEXT2 : BLUE, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                            {showAnnForm ? 'âœ• Cancel' : '+ Compose'}
+                            {showAnnForm ? '✕ Cancel' : '+ Compose'}
                           </button>
                         </div>
                         {showAnnForm && (
@@ -6800,7 +6800,7 @@ export default function Dashboard() {
                                 setShowAnnForm(false);
                               }}
                                 style={{ padding: '9px 24px', background: 'rgba(77,163,255,0.12)', border: '1px solid rgba(77,163,255,0.35)', borderRadius: 8, color: BLUE, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                                Post Announcement â†’
+                                Post Announcement →
                               </button>
                             </div>
                           </div>
@@ -6821,7 +6821,7 @@ export default function Dashboard() {
                                 <div style={{ fontSize: 10, color: TEXT3, flexShrink: 0, marginTop: 2 }}>{new Date(ann.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                               </div>
                               <div style={{ fontSize: 11, color: TEXT3, marginBottom: 6 }}>
-                                {ann.course}{ann.courseCode ? ` (${ann.courseCode})` : ''} Â· {ann.from}
+                                {ann.course}{ann.courseCode ? ` (${ann.courseCode})` : ''} · {ann.from}
                               </div>
                               <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{ann.body}</div>
                             </div>
@@ -6838,7 +6838,7 @@ export default function Dashboard() {
               );
             })()}
 
-            {/* â”€â”€ AI ASSISTANT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── AI ASSISTANT ──────────────────────────── */}
             {panel === 'assistant' && canSeeAI && (
               <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
                 <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>AI Assistant</h1>
@@ -6846,7 +6846,7 @@ export default function Dashboard() {
                   <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {chatMessages.length === 0 && (
                       <div style={{ textAlign: 'center', color: TEXT2, marginTop: 60 }}>
-                        <div style={{ fontSize: 32, marginBottom: 12 }}>âœ¦</div>
+                        <div style={{ fontSize: 32, marginBottom: 12 }}>✦</div>
                         <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, color: TEXT }}>Financial Assistant</div>
                         <div style={{ fontSize: 13 }}>Ask about your spending, investments, budget, or anything in your accounts.</div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 20 }}>
@@ -6892,7 +6892,7 @@ export default function Dashboard() {
                       value={chatInput}
                       onChange={e => setChatInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                      placeholder="Ask anything about your financesâ€¦"
+                      placeholder="Ask anything about your finances…"
                       style={{ flex: 1, padding: '12px 16px', border: BORDER, borderRadius: 24, fontSize: 14, outline: 'none', background: MUTED, color: TEXT }}
                     />
                     <button
@@ -6907,14 +6907,14 @@ export default function Dashboard() {
                         transition: 'background 0.15s', flexShrink: 0,
                       }}
                     >
-                      â†‘
+                      ↑
                     </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* â”€â”€ SETTINGS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── SETTINGS ─────────────────────────────── */}
             {panel === 'settings' && (
               <div>
                 <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700 }}>Settings</h1>
@@ -6947,7 +6947,7 @@ export default function Dashboard() {
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                     <span style={{ fontSize: 13, fontWeight: 500, color: hiddenPanels.has(n.key) ? TEXT3 : (sectionColor === GREEN ? GREEN : TEXT) }}>{n.label}</span>
                                     {subtabs && (
-                                      <span style={{ fontSize: 10, color: TEXT3, transition: 'transform 0.15s', display: 'inline-block', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>â€º</span>
+                                      <span style={{ fontSize: 10, color: TEXT3, transition: 'transform 0.15s', display: 'inline-block', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>›</span>
                                     )}
                                     {hiddenCount > 0 && (
                                       <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(251,191,36,0.15)', color: YELLOW, padding: '1px 4px', borderRadius: 3 }}>{hiddenCount} hidden</span>
@@ -7049,9 +7049,9 @@ export default function Dashboard() {
                     <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>View As</div>
                     <div style={{ display: 'flex', gap: 10 }}>
                       {[
-                        { key: null,        label: 'Admin',     icon: 'â—ˆ', desc: 'Your real role', color: '#a78bfa', activeBg: 'rgba(167,139,250,0.1)', activeBorder: 'rgba(167,139,250,0.4)' },
-                        { key: 'professor', label: 'Professor', icon: 'â—«', desc: 'Instructor controls on', color: GREEN, activeBg: 'rgba(74,222,128,0.08)', activeBorder: 'rgba(74,222,128,0.35)' },
-                        { key: 'student',   label: 'Student',   icon: 'â—©', desc: 'Student-only view', color: BLUE, activeBg: 'rgba(77,163,255,0.08)', activeBorder: 'rgba(77,163,255,0.35)' },
+                        { key: null,        label: 'Admin',     icon: '◈', desc: 'Your real role', color: '#a78bfa', activeBg: 'rgba(167,139,250,0.1)', activeBorder: 'rgba(167,139,250,0.4)' },
+                        { key: 'professor', label: 'Professor', icon: '◫', desc: 'Instructor controls on', color: GREEN, activeBg: 'rgba(74,222,128,0.08)', activeBorder: 'rgba(74,222,128,0.35)' },
+                        { key: 'student',   label: 'Student',   icon: '◩', desc: 'Student-only view', color: BLUE, activeBg: 'rgba(77,163,255,0.08)', activeBorder: 'rgba(77,163,255,0.35)' },
                       ].map(({ key, label, icon, desc, color, activeBg, activeBorder }) => {
                         const active = viewAs === key;
                         return (
@@ -7067,7 +7067,7 @@ export default function Dashboard() {
 
                     {viewAs && (
                       <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 8, fontSize: 12, color: TEXT2 }}>
-                        Preview mode is active. A banner appears at the top of every panel. <button onClick={() => setViewAs(null)} style={{ background: 'none', border: 'none', color: YELLOW, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Exit preview â†’</button>
+                        Preview mode is active. A banner appears at the top of every panel. <button onClick={() => setViewAs(null)} style={{ background: 'none', border: 'none', color: YELLOW, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Exit preview →</button>
                       </div>
                     )}
                   </div>
@@ -7080,7 +7080,7 @@ export default function Dashboard() {
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Notifications</div>
                   <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>
                     Email alerts for budget overruns, goals reached, and low balances.
-                    {!notifConfigured && <span style={{ color: YELLOW, marginLeft: 6 }}>Â· Add EMAIL_USER + EMAIL_PASS to backend .env to enable sending.</span>}
+                    {!notifConfigured && <span style={{ color: YELLOW, marginLeft: 6 }}>· Add EMAIL_USER + EMAIL_PASS to backend .env to enable sending.</span>}
                   </div>
 
                   <div style={{ marginBottom: 16 }}>
@@ -7132,7 +7132,7 @@ export default function Dashboard() {
                       setNotifSaving(false);
                       setTimeout(() => setNotifEmailStatus(null), 2500);
                     }} style={{ padding: '8px 18px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontWeight: 600, opacity: notifSaving ? 0.6 : 1 }}>
-                      {notifSaving ? 'Savingâ€¦' : 'Save'}
+                      {notifSaving ? 'Saving…' : 'Save'}
                     </button>
                     <button onClick={async () => {
                       try {
@@ -7144,9 +7144,9 @@ export default function Dashboard() {
                     }} style={{ padding: '8px 16px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                       Send Test Email
                     </button>
-                    {notifEmailStatus === 'saved' && <span style={{ fontSize: 12, color: GREEN, alignSelf: 'center' }}>Saved âœ“</span>}
-                    {notifEmailStatus === 'sent'  && <span style={{ fontSize: 12, color: GREEN, alignSelf: 'center' }}>Test email sent âœ“</span>}
-                    {notifEmailStatus === 'error' && <span style={{ fontSize: 12, color: RED,   alignSelf: 'center' }}>Failed â€” check .env credentials</span>}
+                    {notifEmailStatus === 'saved' && <span style={{ fontSize: 12, color: GREEN, alignSelf: 'center' }}>Saved ✓</span>}
+                    {notifEmailStatus === 'sent'  && <span style={{ fontSize: 12, color: GREEN, alignSelf: 'center' }}>Test email sent ✓</span>}
+                    {notifEmailStatus === 'error' && <span style={{ fontSize: 12, color: RED,   alignSelf: 'center' }}>Failed — check .env credentials</span>}
                   </div>
                 </div>
 
@@ -7157,7 +7157,7 @@ export default function Dashboard() {
 
                   {feedbackSent ? (
                     <div style={{ padding: '16px', background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, fontSize: 13, color: GREEN, textAlign: 'center' }}>
-                      Thanks for the feedback! âœ“
+                      Thanks for the feedback! ✓
                     </div>
                   ) : (
                     <>
@@ -7165,7 +7165,7 @@ export default function Dashboard() {
                         {[1, 2, 3, 4, 5].map(n => (
                           <button key={n} onClick={() => setFeedbackRating(r => r === n ? 0 : n)}
                             style={{ fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', color: feedbackRating >= n ? '#f59e0b' : TEXT3, opacity: feedbackRating >= n ? 1 : 0.4, transition: 'color 0.1s, opacity 0.1s', padding: '0 2px' }}>
-                            â˜…
+                            ★
                           </button>
                         ))}
                         {feedbackRating > 0 && <span style={{ fontSize: 11, color: TEXT3, alignSelf: 'center', marginLeft: 4 }}>{['','Needs work','Could be better','Good','Great','Love it!'][feedbackRating]}</span>}
@@ -7206,7 +7206,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* â”€â”€ EDU: COURSES (eLC-style) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── EDU: COURSES (eLC-style) ──────────────── */}
             {panel === 'edu-courses' && (() => {
               const activeCourse = selectedCourseId ? enrolledCourses.find(c => c.id === selectedCourseId) : null;
               const now = new Date();
@@ -7227,8 +7227,8 @@ export default function Dashboard() {
               const primaryCourse = enrolledCourses[0];
               const primaryIdx = primaryCourse?.modules.findIndex(m => m.current) ?? 0;
               const lProgressPct = primaryCourse ? Math.round(((primaryIdx + 1) / primaryCourse.modules.length) * 100) : 0;
-              const lSemStart = primaryCourse?.modules[0]?.week?.split('â€“')[0]?.trim() ?? '';
-              const lLastWeekParts = (primaryCourse?.modules[primaryCourse.modules.length - 1]?.week ?? '').split('â€“');
+              const lSemStart = primaryCourse?.modules[0]?.week?.split('–')[0]?.trim() ?? '';
+              const lLastWeekParts = (primaryCourse?.modules[primaryCourse.modules.length - 1]?.week ?? '').split('–');
               const lSemEnd = lLastWeekParts[lLastWeekParts.length - 1]?.trim() ?? '';
               const allLandingAssign = enrolledCourses.flatMap(c => [...c.assignments, ...(customAssignments.filter(a => a.courseId === c.id))]);
               const lActive   = allLandingAssign.filter(a => a.status === 'active'   && !submittedAssignments.has(a.id));
@@ -7257,19 +7257,19 @@ export default function Dashboard() {
               return (
                 <div style={{ display: 'flex', margin: -32, minHeight: 'calc(100vh - 64px)' }}>
 
-                  {/* â”€â”€ Left: Course list â”€â”€ */}
+                  {/* ── Left: Course list ── */}
                   <div style={{ width: 240, flexShrink: 0, borderRight: `1px solid ${BORDER_C}`, background: 'var(--side-bg, #111115)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-                    {/* Rail header â€” always visible */}
+                    {/* Rail header — always visible */}
                     <div style={{ padding: '14px 16px 10px', borderBottom: `1px solid ${BORDER_C}`, flexShrink: 0 }}>
                       <button onClick={() => setSelectedCourseId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', width: '100%' }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: !selectedCourseId ? TEXT : TEXT2 }}>My Courses</div>
-                        <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>Spring 2026 Â· Education Mode</div>
+                        <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>Spring 2026 · Education Mode</div>
                       </button>
                     </div>
 
                     {!selectedCourseId ? (
-                      /* â”€â”€ Overview mode: course list â”€â”€ */
+                      /* ── Overview mode: course list ── */
                       <div style={{ flex: 1, overflow: 'auto', paddingTop: 6 }}>
                         {enrolledCourses.map(c => {
                           const overdueC = effectiveProfessor || isAdmin ? 0 : c.assignments.filter(a => {
@@ -7291,11 +7291,11 @@ export default function Dashboard() {
                         })}
                       </div>
                     ) : (
-                      /* â”€â”€ In-course mode: back + sub-nav + due dates â”€â”€ */
+                      /* ── In-course mode: back + sub-nav + due dates ── */
                       <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
                         <button onClick={() => setSelectedCourseId(null)}
                           style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', border: 'none', cursor: 'pointer', background: 'transparent', borderBottom: `1px solid ${BORDER_C}`, width: '100%', flexShrink: 0 }}>
-                          <span style={{ color: TEXT3, fontSize: 16, lineHeight: 1 }}>â€¹</span>
+                          <span style={{ color: TEXT3, fontSize: 16, lineHeight: 1 }}>‹</span>
                           <span style={{ fontSize: 12, color: TEXT2, fontWeight: 500 }}>All Courses</span>
                         </button>
 
@@ -7312,11 +7312,11 @@ export default function Dashboard() {
                         {/* Sub-nav */}
                         <div style={{ flexShrink: 0 }}>
                           {[
-                            ['syllabus',    'â—§', 'Syllabus'],
-                            ['schedule',    'â—·', 'Schedule'],
-                            ['content',     'â—«', 'Content'],
-                            ['assignments', 'â—©', 'Assignments'],
-                            ...(!effectiveProfessor ? [['grades', 'â—ˆ', 'Grades']] : []),
+                            ['syllabus',    '◧', 'Syllabus'],
+                            ['schedule',    '◷', 'Schedule'],
+                            ['content',     '◫', 'Content'],
+                            ['assignments', '◩', 'Assignments'],
+                            ...(!effectiveProfessor ? [['grades', '◈', 'Grades']] : []),
                           ].map(([tab, icon, label]) => (
                             <button key={tab} onClick={() => setEduInnerTab(tab)}
                               style={{ width: '100%', textAlign: 'left', padding: '9px 16px 9px 14px', border: 'none', cursor: 'pointer', background: eduInnerTab === tab ? `${activeCourse?.color}10` : 'transparent', borderLeft: `3px solid ${eduInnerTab === tab ? activeCourse?.color : 'transparent'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -7327,13 +7327,13 @@ export default function Dashboard() {
                           {effectiveProfessor && !mirrorStudentView && (
                             <button onClick={() => setEduInnerTab('admin')}
                               style={{ width: '100%', textAlign: 'left', padding: '9px 16px 9px 14px', border: 'none', cursor: 'pointer', background: eduInnerTab === 'admin' ? `${activeCourse?.color}10` : 'transparent', borderLeft: `3px solid ${eduInnerTab === 'admin' ? activeCourse?.color : 'transparent'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ fontSize: 12, opacity: 0.7, color: eduInnerTab === 'admin' ? activeCourse?.color : TEXT3, width: 16, textAlign: 'center', flexShrink: 0 }}>âš™</span>
+                              <span style={{ fontSize: 12, opacity: 0.7, color: eduInnerTab === 'admin' ? activeCourse?.color : TEXT3, width: 16, textAlign: 'center', flexShrink: 0 }}>⚙</span>
                               <span style={{ fontSize: 13, fontWeight: eduInnerTab === 'admin' ? 600 : 400, color: eduInnerTab === 'admin' ? TEXT : TEXT2 }}>Course Admin</span>
                             </button>
                           )}
                         </div>
 
-                        {/* Course-specific due dates â€” students only */}
+                        {/* Course-specific due dates — students only */}
                         {!effectiveProfessor && allDueItems.filter(a => a.course.id === selectedCourseId).length > 0 && (
                           <div style={{ marginTop: 'auto', borderTop: `1px solid ${BORDER_C}`, padding: '10px 14px', flexShrink: 0 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Due Dates</div>
@@ -7357,13 +7357,13 @@ export default function Dashboard() {
                           </div>
                         )}
 
-                        {/* Professor tools â€” pinned at bottom */}
+                        {/* Professor tools — pinned at bottom */}
                         {effectiveProfessor && (
                           <div style={{ borderTop: `1px solid ${BORDER_C}`, padding: '10px 14px', flexShrink: 0 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Prof Tools</div>
                             <button onClick={() => { setMirrorStudentView(v => !v); if (eduInnerTab === 'admin') setEduInnerTab('content'); }}
                               style={{ width: '100%', padding: '6px 10px', border: `1px solid ${mirrorStudentView ? 'rgba(251,191,36,0.4)' : BORDER_C}`, borderRadius: 6, background: mirrorStudentView ? 'rgba(251,191,36,0.08)' : 'transparent', color: mirrorStudentView ? YELLOW : TEXT2, fontSize: 11, fontWeight: 600, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span>ðŸ‘</span>{mirrorStudentView ? 'Exit Student View' : 'Preview as Student'}
+                              <span>👁</span>{mirrorStudentView ? 'Exit Student View' : 'Preview as Student'}
                             </button>
                           </div>
                         )}
@@ -7371,10 +7371,10 @@ export default function Dashboard() {
                     )}
                   </div>
 
-                  {/* â”€â”€ Right: Content area â”€â”€ */}
+                  {/* ── Right: Content area ── */}
                   <div style={{ flex: 1, overflow: 'auto' }}>
 
-                    {/* â”€â”€ OVERVIEW (eLC homepage style) â”€â”€ */}
+                    {/* ── OVERVIEW (eLC homepage style) ── */}
                     {!selectedCourseId && (
                       <div style={{ padding: 28 }}>
                         {/* Hero: greeting + semester progress + stats */}
@@ -7386,13 +7386,13 @@ export default function Dashboard() {
                                   {effectiveProfessor ? 'Instructor Overview' : `${lGreet}, ${lFirst}!`}
                                 </h1>
                               </div>
-                              <div style={{ fontSize: 13, color: TEXT2 }}>Education Mode Â· {enrolledCourses.length} {enrolledCourses.length === 1 ? 'course' : 'courses'} enrolled</div>
+                              <div style={{ fontSize: 13, color: TEXT2 }}>Education Mode · {enrolledCourses.length} {enrolledCourses.length === 1 ? 'course' : 'courses'} enrolled</div>
                             </div>
                             {effectiveProfessor && (
                               <div style={{ display: 'flex', gap: 8 }}>
                                 <button onClick={() => setShowCreateAssignment(true)} style={{ padding: '8px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ Assignment</button>
                                 <button onClick={() => setShowInvite(true)} style={{ padding: '8px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Invite Students</button>
-                                <button onClick={() => setPanel('prof-dashboard')} style={{ padding: '8px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Professor Hub â†’</button>
+                                <button onClick={() => setPanel('prof-dashboard')} style={{ padding: '8px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Professor Hub →</button>
                               </div>
                             )}
                           </div>
@@ -7438,10 +7438,10 @@ export default function Dashboard() {
                               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20 }}>
                                 <div style={{ flex: 1 }}>
                                   <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8, color: isActive ? BLUE : GREEN }}>
-                                    {isActive ? 'â— Active Now' : 'â†‘ Up Next'}{lFocusCourse ? ` Â· ${lFocusCourse.code}` : ''}
+                                    {isActive ? '● Active Now' : '↑ Up Next'}{lFocusCourse ? ` · ${lFocusCourse.code}` : ''}
                                   </div>
                                   <div style={{ fontSize: 17, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{lFocus.title}</div>
-                                  <div style={{ fontSize: 12, color: TEXT2, marginBottom: fDs ? 10 : 0 }}>{lFocus.chapter} Â· Due {lFocus.week} Â· {lFocus.points} pts</div>
+                                  <div style={{ fontSize: 12, color: TEXT2, marginBottom: fDs ? 10 : 0 }}>{lFocus.chapter} · Due {lFocus.week} · {lFocus.points} pts</div>
                                   {fDs && (
                                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: `${fDs.color}0e`, border: `1px solid ${fDs.color}30`, borderRadius: 8 }}>
                                       <span style={{ fontSize: 10, fontWeight: 700, color: fDs.color, textTransform: 'uppercase' }}>Dataset</span>
@@ -7453,12 +7453,12 @@ export default function Dashboard() {
                                   {fDs && (
                                     <button onClick={() => { setSandboxDataset(fDs.id); setPanel(DATASET_TARGET_PANEL[fDs.id]); }}
                                       style={{ padding: '10px 18px', background: `${fDs.color}18`, border: `1px solid ${fDs.color}44`, borderRadius: 9, color: fDs.color, fontSize: 13, fontWeight: 700, cursor: 'pointer', textAlign: 'center' }}>
-                                      Open Dataset â†’
+                                      Open Dataset →
                                     </button>
                                   )}
                                   {submitted ? (
                                     <div style={{ padding: '10px 18px', background: 'rgba(74,222,128,0.07)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 9, textAlign: 'center' }}>
-                                      <div style={{ fontSize: 12, fontWeight: 700, color: GREEN }}>âœ“ Submitted</div>
+                                      <div style={{ fontSize: 12, fontWeight: 700, color: GREEN }}>✓ Submitted</div>
                                       {detail?.grade != null
                                         ? <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>{detail.grade} / {lFocus.points} pts</div>
                                         : <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>Awaiting grade</div>}
@@ -7466,7 +7466,7 @@ export default function Dashboard() {
                                   ) : (
                                     <button onClick={() => { setShowSubmit(lFocus); setSubmitNote(''); }}
                                       style={{ padding: '10px 18px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 9, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer', textAlign: 'center' }}>
-                                      Submit Work â†’
+                                      Submit Work →
                                     </button>
                                   )}
                                 </div>
@@ -7480,9 +7480,9 @@ export default function Dashboard() {
                           <div style={{ ...CARD, marginBottom: 20, border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.02)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                               <div style={{ fontSize: 10, color: YELLOW, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-                                Needs Grading Â· {lPending} pending
+                                Needs Grading · {lPending} pending
                               </div>
-                              <button onClick={() => setPanel('prof-dashboard')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Go to Hub â†’</button>
+                              <button onClick={() => setPanel('prof-dashboard')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Go to Hub →</button>
                             </div>
                             {lAllProfSubs.filter(s => s.grade == null).slice(0, 4).map(s => {
                               const asgn = ALL_ASSIGNMENTS_MAP[s.assignment_id];
@@ -7493,11 +7493,11 @@ export default function Dashboard() {
                                   </div>
                                   <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{s.student_name}</div>
-                                    <div style={{ fontSize: 11, color: TEXT2 }}>{asgn?.title || s.assignment_id} Â· submitted {new Date(s.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                                    <div style={{ fontSize: 11, color: TEXT2 }}>{asgn?.title || s.assignment_id} · submitted {new Date(s.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                                   </div>
                                   <button onClick={() => { setShowGrade(s); setGradeForm({ grade: '', feedback: '' }); }}
                                     style={{ padding: '5px 12px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 6, color: GREEN, fontSize: 11, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
-                                    Grade â†’
+                                    Grade →
                                   </button>
                                 </div>
                               );
@@ -7587,7 +7587,7 @@ export default function Dashboard() {
                               </div>
                             </div>
 
-                            {/* Due Date Tracker â€” students only */}
+                            {/* Due Date Tracker — students only */}
                             {!effectiveProfessor && <div style={{ ...CARD, padding: 0, overflow: 'hidden' }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${BORDER_C}` }}>
                                 <div style={{ fontSize: 13, fontWeight: 700 }}>Due Date Tracker</div>
@@ -7610,10 +7610,10 @@ export default function Dashboard() {
                                     <div key={`${a.course.id}-${a.id}`}
                                       onClick={() => { setSelectedCourseId(a.course.id); setEduInnerTab('assignments'); }}
                                       style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', cursor: 'pointer', borderBottom: `1px solid ${BORDER_C}` }}>
-                                      <div style={{ width: 28, height: 28, borderRadius: 4, background: isOver ? 'rgba(248,113,113,0.1)' : `${a.course.color}10`, border: isOver ? '1px solid rgba(248,113,113,0.25)' : `1px solid ${a.course.color}30`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>â—©</div>
+                                      <div style={{ width: 28, height: 28, borderRadius: 4, background: isOver ? 'rgba(248,113,113,0.1)' : `${a.course.color}10`, border: isOver ? '1px solid rgba(248,113,113,0.25)' : `1px solid ${a.course.color}30`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>◩</div>
                                       <div style={{ flex: 1, minWidth: 0 }}>
                                         <div style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.title}</div>
-                                        <div style={{ fontSize: 10, color: TEXT3, marginTop: 1 }}>Due {due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} Â· {a.course.code}</div>
+                                        <div style={{ fontSize: 10, color: TEXT3, marginTop: 1 }}>Due {due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {a.course.code}</div>
                                       </div>
                                       <div style={{ fontSize: 10, fontWeight: 700, color: isOver ? RED : daysUntil <= 3 ? YELLOW : TEXT3, flexShrink: 0 }}>
                                         {isOver ? `${Math.abs(daysUntil)}d late` : daysUntil === 0 ? 'Today' : `${daysUntil}d`}
@@ -7651,7 +7651,7 @@ export default function Dashboard() {
                       </div>
                     )}
 
-                    {/* â”€â”€ COURSE VIEW â”€â”€ */}
+                    {/* ── COURSE VIEW ── */}
                     {activeCourse && (() => {
                       const modules = activeCourse.modules;
                       const currentIdx = modules.findIndex(m => m.current);
@@ -7667,7 +7667,7 @@ export default function Dashboard() {
                           {/* Mirror mode banner */}
                           {inMirror && (
                             <div style={{ margin: '0 0 0', padding: '8px 24px', background: 'rgba(251,191,36,0.08)', borderBottom: '1px solid rgba(251,191,36,0.25)', fontSize: 12, color: YELLOW, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-                              ðŸ‘ Previewing as student. Hidden items not shown.
+                              👁 Previewing as student. Hidden items not shown.
                               <button onClick={() => setMirrorStudentView(false)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: YELLOW, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Exit</button>
                             </div>
                           )}
@@ -7678,7 +7678,7 @@ export default function Dashboard() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                                 <div style={{ width: 10, height: 10, borderRadius: '50%', background: activeCourse.color, flexShrink: 0 }} />
                                 <span style={{ fontSize: 11, fontWeight: 700, color: activeCourse.color, letterSpacing: '0.3px' }}>{activeCourse.code}</span>
-                                <span style={{ fontSize: 11, color: TEXT3 }}>Â·</span>
+                                <span style={{ fontSize: 11, color: TEXT3 }}>·</span>
                                 <span style={{ fontSize: 11, color: TEXT3 }}>{activeCourse.semester}</span>
                               </div>
                               <h2 style={{ margin: '0 0 3px', fontSize: 20, fontWeight: 700, lineHeight: 1.2 }}>{activeCourse.name}</h2>
@@ -7689,7 +7689,7 @@ export default function Dashboard() {
                                 <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.4px', marginRight: 2 }}>Instructor</div>
                                 <button onClick={() => { setMirrorStudentView(v => !v); if (eduInnerTab === 'admin') setEduInnerTab('content'); }}
                                   style={{ padding: '5px 12px', border: `1px solid ${mirrorStudentView ? 'rgba(251,191,36,0.5)' : BORDER_C}`, borderRadius: 6, background: mirrorStudentView ? 'rgba(251,191,36,0.1)' : 'transparent', color: mirrorStudentView ? YELLOW : TEXT2, fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
-                                  <span>ðŸ‘</span>{mirrorStudentView ? 'Exit Student View' : 'Student View'}
+                                  <span>👁</span>{mirrorStudentView ? 'Exit Student View' : 'Student View'}
                                 </button>
                               </div>
                             )}
@@ -7697,7 +7697,7 @@ export default function Dashboard() {
 
                           <div style={{ padding: 28 }}>
 
-                            {/* â”€â”€ CONTENT TAB â”€â”€ */}
+                            {/* ── CONTENT TAB ── */}
                             {eduInnerTab === 'content' && (
                               <div>
                                 <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -7711,7 +7711,7 @@ export default function Dashboard() {
                                   ))}
                                 </div>
 
-                                {/* SLIDES â€” collapsible rows */}
+                                {/* SLIDES — collapsible rows */}
                                 {contentFolder === 'slides' && (
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                                     {modules.map((mod, i) => {
@@ -7728,13 +7728,13 @@ export default function Dashboard() {
                                             <span style={{ fontSize: 10, color: TEXT3, marginRight: 4 }}>{mod.chapter}</span>
                                             {mod.current && <span style={{ fontSize: 9, fontWeight: 700, color: activeCourse.color, background: `${activeCourse.color}15`, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', flexShrink: 0 }}>Current</span>}
                                             {profView && slideHidden && <span style={{ fontSize: 9, fontWeight: 700, color: RED, background: 'rgba(248,113,113,0.1)', padding: '2px 7px', borderRadius: 4, flexShrink: 0 }}>Hidden</span>}
-                                            <span style={{ color: TEXT3, fontSize: 14, flexShrink: 0, display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>â€º</span>
+                                            <span style={{ color: TEXT3, fontSize: 14, flexShrink: 0, display: 'inline-block', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
                                           </button>
                                           {isOpen && (
                                             <div style={{ margin: '2px 0 4px 8px', padding: '16px 18px', background: DARK, border: BORDER, borderRadius: 8 }}>
-                                              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{mod.topic} Â· {mod.chapter}</div>
+                                              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{mod.topic} · {mod.chapter}</div>
                                               <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 8, marginBottom: mod.assignments.length > 0 ? 12 : 0 }}>
-                                                {[['ðŸ“„ Slides PDF', mod.isBreak ? 'No class' : `Week ${i + 1}`], ['ðŸ“¹ Lecture Recording', mod.isBreak ? 'No recording' : 'Posted after class']].map(([label, sub]) => (
+                                                {[['📄 Slides PDF', mod.isBreak ? 'No class' : `Week ${i + 1}`], ['📹 Lecture Recording', mod.isBreak ? 'No recording' : 'Posted after class']].map(([label, sub]) => (
                                                   <div key={label} style={{ padding: '10px 14px', background: CARD_BG, border: BORDER, borderRadius: 8, cursor: 'not-allowed' }}>
                                                     <div style={{ fontSize: 13, color: TEXT2 }}>{label}</div>
                                                     <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{sub}</div>
@@ -7777,7 +7777,7 @@ export default function Dashboard() {
                                               <div style={{ fontWeight: 700, fontSize: 15 }}>{ds.title}</div>
                                               <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>{ds.subtitle}</div>
                                             </div>
-                                            <span style={{ color: TEXT3, fontSize: 16, marginLeft: 8, flexShrink: 0 }}>{expanded ? 'âˆ’' : '+'}</span>
+                                            <span style={{ color: TEXT3, fontSize: 16, marginLeft: 8, flexShrink: 0 }}>{expanded ? '−' : '+'}</span>
                                           </div>
                                           <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.55, marginBottom: 12 }}>{ds.description}</div>
                                           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -7795,7 +7795,7 @@ export default function Dashboard() {
                                             <div style={{ marginTop: 16, borderTop: BORDER, paddingTop: 16 }} onClick={e => e.stopPropagation()}>
                                               <p style={{ margin: '0 0 16px', fontSize: 13, color: TEXT, lineHeight: 1.65 }}>{ds.overview}</p>
                                               <div style={{ display: 'flex', gap: 8 }}>
-                                                <button onClick={() => { setSandboxDataset(ds.id); setPanel(DATASET_TARGET_PANEL[ds.id]); }} style={{ flex: 1, padding: '9px 0', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 8, color: ds.color, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Explore in Sandbox â†’</button>
+                                                <button onClick={() => { setSandboxDataset(ds.id); setPanel(DATASET_TARGET_PANEL[ds.id]); }} style={{ flex: 1, padding: '9px 0', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 8, color: ds.color, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Explore in Sandbox →</button>
                                                 {effectiveProfessor && <button onClick={() => { setCreateForm(f => ({ ...f, datasetId: ds.id })); setCreateAssignCourseId(selectedCourseId || COURSES[0]?.id); setShowCreateAssignment(true); }} style={{ flex: 1, padding: '9px 0', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Assign to Class</button>}
                                               </div>
                                             </div>
@@ -7813,8 +7813,8 @@ export default function Dashboard() {
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
                                       {[
                                         { title: 'Investopedia', subtitle: 'Financial dictionary & explainers for every concept in this course', tag: 'Reference' },
-                                        { title: 'Khan Academy Â· Finance', subtitle: 'Free video lessons on TVM, credit, investing, and taxes', tag: 'Video' },
-                                        { title: 'IRS.gov Â· Free File', subtitle: 'Federal tax filing resources, brackets, and guides', tag: 'Tax' },
+                                        { title: 'Khan Academy · Finance', subtitle: 'Free video lessons on TVM, credit, investing, and taxes', tag: 'Video' },
+                                        { title: 'IRS.gov · Free File', subtitle: 'Federal tax filing resources, brackets, and guides', tag: 'Tax' },
                                         { title: 'NerdWallet', subtitle: 'Credit card comparisons, budgeting calculators, and rate tools', tag: 'Tools' },
                                         { title: 'FRED Economic Data', subtitle: 'Federal Reserve inflation, rate, and economic data charts', tag: 'Data' },
                                         { title: 'r/personalfinance Wiki', subtitle: 'Community flowchart: the right order for financial decisions', tag: 'Community' },
@@ -7844,9 +7844,9 @@ export default function Dashboard() {
                                     <div>
                                       {items.length === 0 && (
                                         <div style={{ textAlign: 'center', padding: '40px 20px', color: TEXT3 }}>
-                                          <div style={{ fontSize: 28, marginBottom: 10 }}>â—«</div>
+                                          <div style={{ fontSize: 28, marginBottom: 10 }}>◫</div>
                                           <div style={{ fontSize: 13 }}>No content yet.</div>
-                                          {canManageContent && <div style={{ fontSize: 12, marginTop: 4 }}>Add items via Course Admin â†’ Custom Content.</div>}
+                                          {canManageContent && <div style={{ fontSize: 12, marginTop: 4 }}>Add items via Course Admin → Custom Content.</div>}
                                         </div>
                                       )}
                                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
@@ -7868,16 +7868,16 @@ export default function Dashboard() {
                               </div>
                             )}
 
-                            {/* â”€â”€ ASSIGNMENTS TAB â”€â”€ */}
+                            {/* ── ASSIGNMENTS TAB ── */}
                             {eduInnerTab === 'assignments' && (
                               <div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                                  <div style={{ fontSize: 13, color: TEXT2 }}>{activeCourse.name} Â· {baseAssign.length + extraAssign.length} assignments</div>
+                                  <div style={{ fontSize: 13, color: TEXT2 }}>{activeCourse.name} · {baseAssign.length + extraAssign.length} assignments</div>
                                   {effectiveProfessor && selectedCourseId === 'fina3000' && (
                                     <div style={{ display: 'flex', gap: 8 }}>
                                       <label style={{ padding: '7px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                                         <input type="file" style={{ display: 'none' }} accept=".pdf,.docx" onChange={e => setSyllabusFile(e.target.files[0]?.name || null)} />
-                                        â†‘ Upload Assignment
+                                        ↑ Upload Assignment
                                       </label>
                                       <button onClick={() => setShowCreateAssignment(true)} style={{ padding: '7px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ New Assignment</button>
                                     </div>
@@ -7903,7 +7903,7 @@ export default function Dashboard() {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
                                               <span style={{ fontWeight: 700, fontSize: 15 }}>{a.title}</span>
                                               <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: statusBg, color: statusColor, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                                                {isOverdue ? 'âš  Overdue' : a.status === 'completed' ? 'âœ“ Completed' : a.status === 'upcoming' ? 'Upcoming' : 'Active'}
+                                                {isOverdue ? '⚠ Overdue' : a.status === 'completed' ? '✓ Completed' : a.status === 'upcoming' ? 'Upcoming' : 'Active'}
                                               </span>
                                               {a.custom && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa', textTransform: 'uppercase' }}>Custom</span>}
                                               {profView && assignHidden && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: 'rgba(248,113,113,0.1)', color: RED }}>Hidden</span>}
@@ -7927,9 +7927,9 @@ export default function Dashboard() {
                                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: `${ds.color}0e`, border: `1px solid ${ds.color}30`, borderRadius: 8, marginBottom: 12 }}>
                                             <span style={{ fontSize: 10, fontWeight: 700, color: ds.color }}>Dataset</span>
                                             <span style={{ fontSize: 12, fontWeight: 600 }}>{ds.title}</span>
-                                            <span style={{ fontSize: 11, color: TEXT3 }}>Â·</span>
+                                            <span style={{ fontSize: 11, color: TEXT3 }}>·</span>
                                             <span style={{ fontSize: 11, color: TEXT2 }}>{ds.subtitle}</span>
-                                            <button onClick={() => { setExpandedDataset(ds.id); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ marginLeft: 'auto', padding: '4px 10px', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 6, color: ds.color, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Open Dataset â†’</button>
+                                            <button onClick={() => { setExpandedDataset(ds.id); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ marginLeft: 'auto', padding: '4px 10px', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 6, color: ds.color, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Open Dataset →</button>
                                           </div>
                                         )}
                                         {!effectiveProfessor && (
@@ -7940,10 +7940,10 @@ export default function Dashboard() {
                                                 <div>
                                                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                                     <span style={{ fontSize: 12, fontWeight: 700, color: GREEN, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                      <span style={{ fontSize: 14 }}>âœ“</span> Submitted
+                                                      <span style={{ fontSize: 14 }}>✓</span> Submitted
                                                       {submittedLate && <span style={{ fontSize: 10, fontWeight: 700, color: YELLOW, background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 4, padding: '1px 6px' }}>Late</span>}
                                                     </span>
-                                                    {graded && <span style={{ fontSize: 13, fontWeight: 700, color: detail.grade / a.points >= 0.9 ? GREEN : detail.grade / a.points >= 0.7 ? YELLOW : RED }}>{detail.grade} / {a.points} pts Â· {Math.round((detail.grade / a.points) * 100)}%</span>}
+                                                    {graded && <span style={{ fontSize: 13, fontWeight: 700, color: detail.grade / a.points >= 0.9 ? GREEN : detail.grade / a.points >= 0.7 ? YELLOW : RED }}>{detail.grade} / {a.points} pts · {Math.round((detail.grade / a.points) * 100)}%</span>}
                                                   </div>
                                                   {graded && detail.feedback && (
                                                     <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(74,222,128,0.05)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 8 }}>
@@ -7956,7 +7956,7 @@ export default function Dashboard() {
                                                 </div>
                                               );
                                             })() : (
-                                              <button onClick={() => { setShowSubmit(a); setSubmitNote(''); }} style={{ padding: '7px 18px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Submit Assignment â†’</button>
+                                              <button onClick={() => { setShowSubmit(a); setSubmitNote(''); }} style={{ padding: '7px 18px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Submit Assignment →</button>
                                             )}
                                           </div>
                                         )}
@@ -7972,13 +7972,13 @@ export default function Dashboard() {
                               </div>
                             )}
 
-                            {/* â”€â”€ GRADES TAB â”€â”€ */}
+                            {/* ── GRADES TAB ── */}
                             {eduInnerTab === 'grades' && (() => {
                               const completedGrades = baseAssign.filter(a => submissionDetails[a.id]?.grade != null);
                               const totalEarned = completedGrades.reduce((s, a) => s + submissionDetails[a.id].grade, 0);
                               const totalPossible = completedGrades.reduce((s, a) => s + (a.points || 0), 0);
                               const gradePct = totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : null;
-                              const gradeLetter = gradePct == null ? 'â€”' : gradePct >= 90 ? 'A' : gradePct >= 80 ? 'B' : gradePct >= 70 ? 'C' : gradePct >= 60 ? 'D' : 'F';
+                              const gradeLetter = gradePct == null ? '—' : gradePct >= 90 ? 'A' : gradePct >= 80 ? 'B' : gradePct >= 70 ? 'C' : gradePct >= 60 ? 'D' : 'F';
                               const gradeColor = gradePct == null ? TEXT3 : gradePct >= 90 ? GREEN : gradePct >= 80 ? BLUE : gradePct >= 70 ? YELLOW : RED;
                               const allGradable = baseAssign.filter(a => a.status !== 'upcoming');
                               const allPossible = allGradable.reduce((s, a) => s + (a.points || 0), 0);
@@ -7995,7 +7995,7 @@ export default function Dashboard() {
                                       <div style={{ fontWeight: 700, fontSize: 15 }}>Grade Summary</div>
                                       {trend != null && (
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: trend >= 0 ? GREEN : RED, background: trend >= 0 ? 'rgba(74,222,128,0.08)' : 'rgba(248,113,113,0.08)', border: `1px solid ${trend >= 0 ? 'rgba(74,222,128,0.25)' : 'rgba(248,113,113,0.25)'}`, borderRadius: 6, padding: '4px 10px' }}>
-                                          <span style={{ fontSize: 14 }}>{trend >= 0 ? 'â†‘' : 'â†“'}</span>
+                                          <span style={{ fontSize: 14 }}>{trend >= 0 ? '↑' : '↓'}</span>
                                           <span style={{ fontWeight: 600 }}>{trend >= 0 ? 'Trending up' : 'Trending down'}</span>
                                           <span style={{ color: TEXT3 }}>last 2 assignments</span>
                                         </div>
@@ -8010,7 +8010,7 @@ export default function Dashboard() {
                                       </div>
                                       <div style={{ flex: 1 }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                                          <span style={{ fontSize: 28, fontWeight: 800, fontFamily: 'monospace', color: gradeColor }}>{gradePct != null ? `${gradePct}%` : 'â€”'}</span>
+                                          <span style={{ fontSize: 28, fontWeight: 800, fontFamily: 'monospace', color: gradeColor }}>{gradePct != null ? `${gradePct}%` : '—'}</span>
                                           <span style={{ fontSize: 13, color: TEXT2 }}>{totalEarned} / {totalPossible} pts graded</span>
                                         </div>
                                         <div style={{ height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden', marginBottom: 6 }}>
@@ -8025,8 +8025,8 @@ export default function Dashboard() {
 
                                     <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12 }}>
                                       {[
-                                        { label: 'Points Earned', value: totalEarned || 'â€”', color: GREEN },
-                                        { label: 'Points Possible', value: totalPossible || 'â€”', color: TEXT },
+                                        { label: 'Points Earned', value: totalEarned || '—', color: GREEN },
+                                        { label: 'Points Possible', value: totalPossible || '—', color: TEXT },
                                         { label: 'Assignments Graded', value: `${completedGrades.length} / ${allGradable.length}`, color: BLUE },
                                       ].map(({ label, value, color }) => (
                                         <div key={label} style={{ background: DARK, borderRadius: 8, padding: '14px 16px', border: BORDER }}>
@@ -8071,7 +8071,7 @@ export default function Dashboard() {
                               );
                             })()}
 
-                            {/* â”€â”€ SYLLABUS TAB â”€â”€ */}
+                            {/* ── SYLLABUS TAB ── */}
                             {eduInnerTab === 'syllabus' && (
                               <div>
                                 {effectiveProfessor && (
@@ -8081,7 +8081,7 @@ export default function Dashboard() {
                                       <input type="file" accept=".pdf,.docx,.doc" style={{ display: 'none' }} onChange={e => setSyllabusFile(e.target.files[0]?.name || null)} />
                                       {syllabusFile ? (
                                         <div>
-                                          <div style={{ fontSize: 13, fontWeight: 600, color: GREEN }}>âœ“ {syllabusFile}</div>
+                                          <div style={{ fontSize: 13, fontWeight: 600, color: GREEN }}>✓ {syllabusFile}</div>
                                           <div style={{ fontSize: 11, color: TEXT3, marginTop: 4 }}>Click to replace</div>
                                         </div>
                                       ) : (
@@ -8112,7 +8112,7 @@ export default function Dashboard() {
                               </div>
                             )}
 
-                            {/* â”€â”€ SCHEDULE TAB â”€â”€ */}
+                            {/* ── SCHEDULE TAB ── */}
                             {eduInnerTab === 'schedule' && (
                               <div data-tour="edu-schedule" style={CARD}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
@@ -8134,7 +8134,7 @@ export default function Dashboard() {
                                         {mod.topic}
                                         {mod.current && <span style={{ fontSize: 9, fontWeight: 700, color: activeCourse.color, background: `${activeCourse.color}12`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>Current</span>}
                                       </div>
-                                      <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{mod.chapter}{activeCourse.classTimes ? ` Â· ${activeCourse.classTimes}` : ''}</div>
+                                      <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{mod.chapter}{activeCourse.classTimes ? ` · ${activeCourse.classTimes}` : ''}</div>
                                     </div>
                                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'flex-start', maxWidth: 240, justifyContent: 'flex-end' }}>
                                       {mod.assignments.map(a => (
@@ -8160,9 +8160,9 @@ export default function Dashboard() {
                                   return (
                                     <div>
                                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                                        <button onClick={() => setCalMonth(m => Math.max(0, m - 1))} disabled={calMonth === 0} style={{ width: 28, height: 28, border: BORDER, borderRadius: 6, background: 'transparent', color: calMonth === 0 ? TEXT3 : TEXT, cursor: calMonth === 0 ? 'default' : 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>â€¹</button>
+                                        <button onClick={() => setCalMonth(m => Math.max(0, m - 1))} disabled={calMonth === 0} style={{ width: 28, height: 28, border: BORDER, borderRadius: 6, background: 'transparent', color: calMonth === 0 ? TEXT3 : TEXT, cursor: calMonth === 0 ? 'default' : 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
                                         <span style={{ fontWeight: 700, fontSize: 15 }}>{MONTH_NAMES[calMonth]} {yr}</span>
-                                        <button onClick={() => setCalMonth(m => Math.min(4, m + 1))} disabled={calMonth === 4} style={{ width: 28, height: 28, border: BORDER, borderRadius: 6, background: 'transparent', color: calMonth === 4 ? TEXT3 : TEXT, cursor: calMonth === 4 ? 'default' : 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>â€º</button>
+                                        <button onClick={() => setCalMonth(m => Math.min(4, m + 1))} disabled={calMonth === 4} style={{ width: 28, height: 28, border: BORDER, borderRadius: 6, background: 'transparent', color: calMonth === 4 ? TEXT3 : TEXT, cursor: calMonth === 4 ? 'default' : 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
                                       </div>
                                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3, marginBottom: 3 }}>
                                         {DAY_LABELS.map(d => (
@@ -8206,7 +8206,7 @@ export default function Dashboard() {
                               </div>
                             )}
 
-                            {/* â”€â”€ COURSE ADMIN (professor) â”€â”€ */}
+                            {/* ── COURSE ADMIN (professor) ── */}
                             {eduInnerTab === 'admin' && effectiveProfessor && (() => {
                               const courseKey = selectedCourseId;
                               const currentHidden = hiddenItems[courseKey] || new Set();
@@ -8220,8 +8220,8 @@ export default function Dashboard() {
 
                               const allContent = [
                                 ...PREBUILT_DATASETS.map(d => ({ type: 'Dataset', label: d.title, sub: d.subtitle, color: d.color })),
-                                ...baseAssign.map(a => ({ type: 'Assignment', label: a.title, sub: `${a.chapter} Â· ${a.points} pts`, color: activeCourse.color })),
-                                ...modules.filter(m => !m.isBreak).map(m => ({ type: 'Slide', label: m.topic, sub: `${m.chapter} Â· ${m.week}`, color: TEXT2 })),
+                                ...baseAssign.map(a => ({ type: 'Assignment', label: a.title, sub: `${a.chapter} · ${a.points} pts`, color: activeCourse.color })),
+                                ...modules.filter(m => !m.isBreak).map(m => ({ type: 'Slide', label: m.topic, sub: `${m.chapter} · ${m.week}`, color: TEXT2 })),
                               ];
                               const filtered = pushSearch.trim()
                                 ? allContent.filter(i => i.label.toLowerCase().includes(pushSearch.toLowerCase()) || i.sub.toLowerCase().includes(pushSearch.toLowerCase()))
@@ -8239,20 +8239,20 @@ export default function Dashboard() {
                                     </div>
                                   </div>
 
-                                  {/* â”€â”€ Search & Push â”€â”€ */}
+                                  {/* ── Search & Push ── */}
                                   <div style={CARD}>
                                     <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Search & Push</div>
                                     <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Find any assignment, dataset, or slide and push it to a course.</div>
                                     <div style={{ position: 'relative', marginBottom: 12 }}>
                                       <input
                                         type="text"
-                                        placeholder="Search assignments, datasets, slidesâ€¦"
+                                        placeholder="Search assignments, datasets, slides…"
                                         value={pushSearch}
                                         onChange={e => setPushSearch(e.target.value)}
                                         style={{ width: '100%', padding: '9px 36px 9px 12px', background: DARK, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
                                       />
                                       {pushSearch && (
-                                        <button onClick={() => setPushSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>Ã—</button>
+                                        <button onClick={() => setPushSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
                                       )}
                                     </div>
                                     {pushSearch.trim() && filtered.length === 0 && (
@@ -8263,7 +8263,7 @@ export default function Dashboard() {
                                         {filtered.map((item, i) => {
                                           const key = `${item.type}-${i}`;
                                           const targetCode = pushTarget[key] || '';
-                                          const pushed = pushTarget[key] === 'âœ“';
+                                          const pushed = pushTarget[key] === '✓';
                                           return (
                                             <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: DARK, border: BORDER, borderRadius: 8 }}>
                                               <div style={{ flex: 1, minWidth: 0 }}>
@@ -8274,7 +8274,7 @@ export default function Dashboard() {
                                                 <div style={{ fontSize: 11, color: TEXT3 }}>{item.sub}</div>
                                               </div>
                                               {pushed ? (
-                                                <span style={{ fontSize: 11, fontWeight: 700, color: GREEN }}>âœ“ Pushed</span>
+                                                <span style={{ fontSize: 11, fontWeight: 700, color: GREEN }}>✓ Pushed</span>
                                               ) : (
                                                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
                                                   <input
@@ -8286,9 +8286,9 @@ export default function Dashboard() {
                                                   />
                                                   <button
                                                     disabled={!targetCode.trim()}
-                                                    onClick={() => setPushTarget(p => ({ ...p, [key]: 'âœ“' }))}
+                                                    onClick={() => setPushTarget(p => ({ ...p, [key]: '✓' }))}
                                                     style={{ padding: '5px 12px', background: targetCode.trim() ? 'rgba(77,163,255,0.12)' : MUTED, border: `1px solid ${targetCode.trim() ? 'rgba(77,163,255,0.3)' : BORDER_C}`, borderRadius: 6, color: targetCode.trim() ? BLUE : TEXT3, fontSize: 12, fontWeight: 600, cursor: targetCode.trim() ? 'pointer' : 'not-allowed' }}>
-                                                    Push â†’
+                                                    Push →
                                                   </button>
                                                 </div>
                                               )}
@@ -8302,7 +8302,7 @@ export default function Dashboard() {
                                     )}
                                   </div>
 
-                                  {/* â”€â”€ Content Visibility â”€â”€ */}
+                                  {/* ── Content Visibility ── */}
                                   <div style={CARD}>
                                     <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Content Visibility</div>
                                     <div style={{ fontSize: 12, color: TEXT2, marginBottom: 20 }}>Control which items students see. Built-in items can be hidden/shown. Custom items you add can be deleted.</div>
@@ -8325,7 +8325,7 @@ export default function Dashboard() {
                                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: DARK, borderRadius: 7, border: hidden ? '1px solid rgba(248,113,113,0.2)' : BORDER }}>
                                               <span style={{ fontSize: 10, color: TEXT3, width: 80, flexShrink: 0, fontFamily: 'monospace' }}>{mod.week}</span>
                                               <span style={{ flex: 1, fontSize: 13, color: hidden ? TEXT3 : TEXT, fontWeight: mod.current ? 600 : 400 }}>{mod.topic}{mod.current && <span style={{ fontSize: 9, fontWeight: 700, color: activeCourse.color, background: `${activeCourse.color}15`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', marginLeft: 6 }}>Current</span>}</span>
-                                              <button onClick={() => toggleItem(itemId)} style={{ padding: '4px 12px', borderRadius: 5, border: `1px solid ${hidden ? 'rgba(248,113,113,0.35)' : 'rgba(74,222,128,0.35)'}`, background: hidden ? 'rgba(248,113,113,0.08)' : 'rgba(74,222,128,0.08)', color: hidden ? RED : GREEN, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>{hidden ? 'ðŸš« Hidden' : 'âœ“ Visible'}</button>
+                                              <button onClick={() => toggleItem(itemId)} style={{ padding: '4px 12px', borderRadius: 5, border: `1px solid ${hidden ? 'rgba(248,113,113,0.35)' : 'rgba(74,222,128,0.35)'}`, background: hidden ? 'rgba(248,113,113,0.08)' : 'rgba(74,222,128,0.08)', color: hidden ? RED : GREEN, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>{hidden ? '🚫 Hidden' : '✓ Visible'}</button>
                                             </div>
                                           );
                                         })}
@@ -8333,7 +8333,7 @@ export default function Dashboard() {
                                           <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: DARK, borderRadius: 7, border: BORDER }}>
                                             <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.12)', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>Custom</span>
                                             <span style={{ flex: 1, fontSize: 13 }}>{item.title}{item.description && <span style={{ fontSize: 11, color: TEXT3, marginLeft: 8 }}>{item.description}</span>}</span>
-                                            <button onClick={() => { const ck = `${selectedCourseId}_slides`; const updated = { ...profCustomContent, [ck]: (profCustomContent[ck] || []).filter(i => i.id !== item.id) }; setProfCustomContent(updated); localStorage.setItem('merit_prof_content', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>Ã—</button>
+                                            <button onClick={() => { const ck = `${selectedCourseId}_slides`; const updated = { ...profCustomContent, [ck]: (profCustomContent[ck] || []).filter(i => i.id !== item.id) }; setProfCustomContent(updated); localStorage.setItem('merit_prof_content', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
                                           </div>
                                         ))}
                                       </div>
@@ -8356,9 +8356,9 @@ export default function Dashboard() {
                                             <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: DARK, borderRadius: 7, border: hidden ? '1px solid rgba(248,113,113,0.2)' : BORDER }}>
                                               <div style={{ flex: 1, minWidth: 0 }}>
                                                 <div style={{ fontSize: 13, color: hidden ? TEXT3 : TEXT, fontWeight: 500 }}>{a.title}</div>
-                                                <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{a.chapter} Â· {a.points} pts</div>
+                                                <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{a.chapter} · {a.points} pts</div>
                                               </div>
-                                              <button onClick={() => toggleItem(itemId)} style={{ padding: '4px 12px', borderRadius: 5, border: `1px solid ${hidden ? 'rgba(248,113,113,0.35)' : 'rgba(74,222,128,0.35)'}`, background: hidden ? 'rgba(248,113,113,0.08)' : 'rgba(74,222,128,0.08)', color: hidden ? RED : GREEN, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>{hidden ? 'ðŸš« Hidden' : 'âœ“ Visible'}</button>
+                                              <button onClick={() => toggleItem(itemId)} style={{ padding: '4px 12px', borderRadius: 5, border: `1px solid ${hidden ? 'rgba(248,113,113,0.35)' : 'rgba(74,222,128,0.35)'}`, background: hidden ? 'rgba(248,113,113,0.08)' : 'rgba(74,222,128,0.08)', color: hidden ? RED : GREEN, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>{hidden ? '🚫 Hidden' : '✓ Visible'}</button>
                                             </div>
                                           );
                                         })}
@@ -8369,16 +8369,16 @@ export default function Dashboard() {
                                                 <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.12)', padding: '2px 6px', borderRadius: 4 }}>Custom</span>
                                                 <span style={{ fontSize: 13, fontWeight: 500 }}>{a.title}</span>
                                               </div>
-                                              <div style={{ fontSize: 11, color: TEXT3 }}>{a.chapter} Â· {a.points} pts</div>
+                                              <div style={{ fontSize: 11, color: TEXT3 }}>{a.chapter} · {a.points} pts</div>
                                             </div>
-                                            <button onClick={() => setCustomAssignments(prev => prev.filter(x => x.id !== a.id))} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>Ã—</button>
+                                            <button onClick={() => setCustomAssignments(prev => prev.filter(x => x.id !== a.id))} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
                                           </div>
                                         ))}
                                       </div>
                                     </div>
                                   </div>
 
-                                  {/* â”€â”€ Content Tabs â”€â”€ */}
+                                  {/* ── Content Tabs ── */}
                                   <div style={CARD}>
                                     <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Content Tabs</div>
                                     <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Add custom tabs to the Content section. Students see all tabs.</div>
@@ -8387,7 +8387,7 @@ export default function Dashboard() {
                                         {(profCustomTabs[selectedCourseId] || []).map(t => (
                                           <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: DARK, border: BORDER, borderRadius: 8 }}>
                                             <span style={{ fontSize: 13 }}>{t.label}</span>
-                                            <button onClick={() => { const updated = { ...profCustomTabs, [selectedCourseId]: (profCustomTabs[selectedCourseId] || []).filter(x => x.key !== t.key) }; setProfCustomTabs(updated); localStorage.setItem('merit_prof_tabs', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: 0 }}>Ã—</button>
+                                            <button onClick={() => { const updated = { ...profCustomTabs, [selectedCourseId]: (profCustomTabs[selectedCourseId] || []).filter(x => x.key !== t.key) }; setProfCustomTabs(updated); localStorage.setItem('merit_prof_tabs', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: 0 }}>×</button>
                                           </div>
                                         ))}
                                       </div>
@@ -8398,7 +8398,7 @@ export default function Dashboard() {
                                     <button onClick={() => { setAddTabName(''); setShowAddTab(true); }} style={{ padding: '8px 16px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ Add Tab</button>
                                   </div>
 
-                                  {/* â”€â”€ Custom Content â”€â”€ */}
+                                  {/* ── Custom Content ── */}
                                   <div style={CARD}>
                                     <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Custom Content</div>
                                     <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Add items (links, notes, files) to Resources, Datasets, or any custom tab.</div>
@@ -8426,7 +8426,7 @@ export default function Dashboard() {
                                                     {item.url && <div style={{ fontSize: 11, color: BLUE, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.url}</div>}
                                                     {item.description && <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{item.description}</div>}
                                                   </div>
-                                                  <button onClick={() => { const updated = { ...profCustomContent, [ck]: items.filter(i => i.id !== item.id) }; setProfCustomContent(updated); localStorage.setItem('merit_prof_content', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>Ã—</button>
+                                                  <button onClick={() => { const updated = { ...profCustomContent, [ck]: items.filter(i => i.id !== item.id) }; setProfCustomContent(updated); localStorage.setItem('merit_prof_content', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
                                                 </div>
                                               ))}
                                             </div>
@@ -8450,7 +8450,7 @@ export default function Dashboard() {
               );
             })()}
 
-            {/* â”€â”€ EDU: DATASETS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── EDU: DATASETS ─────────────────────────── */}
             {panel === 'edu-datasets' && (
               <div>
                 <div style={{ marginBottom: 28 }}>
@@ -8474,7 +8474,7 @@ export default function Dashboard() {
                             <div style={{ fontWeight: 700, fontSize: 15 }}>{ds.title}</div>
                             <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>{ds.subtitle}</div>
                           </div>
-                          <span style={{ color: TEXT3, fontSize: 16, marginLeft: 8, flexShrink: 0 }}>{expanded ? 'âˆ’' : '+'}</span>
+                          <span style={{ color: TEXT3, fontSize: 16, marginLeft: 8, flexShrink: 0 }}>{expanded ? '−' : '+'}</span>
                         </div>
                         <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.55, marginBottom: 12 }}>{ds.description}</div>
                         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -8495,7 +8495,7 @@ export default function Dashboard() {
                             <p style={{ margin: '0 0 16px', fontSize: 13, color: TEXT, lineHeight: 1.65 }}>{ds.overview}</p>
                             <div style={{ display: 'flex', gap: 8 }}>
                               <button onClick={() => { setSandboxDataset(ds.id); setPanel(DATASET_TARGET_PANEL[ds.id]); }} style={{ flex: 1, padding: '9px 0', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 8, color: ds.color, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                                Explore in Sandbox â†’
+                                Explore in Sandbox →
                               </button>
                               {effectiveProfessor && (
                                 <button onClick={() => { setCreateForm(f => ({ ...f, datasetId: ds.id })); setCreateAssignCourseId(selectedCourseId || COURSES[0]?.id); setShowCreateAssignment(true); }} style={{ flex: 1, padding: '9px 0', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
@@ -8512,12 +8512,12 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* â”€â”€ EDU: ASSIGNMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── EDU: ASSIGNMENTS ──────────────────────── */}
             {panel === 'edu-sandbox' && (() => {
               const ds = PREBUILT_DATASETS.find(d => d.id === sandboxDataset);
               const sbD = SANDBOX_DATA[sandboxDataset] || {};
 
-              // â”€â”€ TVM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── TVM ───────────────────────────────────────────────────────
               if (sandboxDataset === 'ds-tvm') {
                 const scenarios = sbD.scenarios || [];
                 const tvmRows = (principal, monthly, annualRate, years) => {
@@ -8538,9 +8538,9 @@ export default function Dashboard() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
                       <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
-                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>â† Back</button>
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Time Value of Money</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(249,115,22,0.1)', color: '#f97316' }}>Sandbox Â· Ch. 7</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(249,115,22,0.1)', color: '#f97316' }}>Sandbox · Ch. 7</span>
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Compound growth scenarios: how money grows over time at different rates and contribution levels.
@@ -8576,7 +8576,7 @@ export default function Dashboard() {
                               {[
                                 { label: 'Total Contributed', value: fmt(final?.contributed || 0) },
                                 { label: 'Interest Earned',   value: fmt(final?.growth || 0), color: GREEN },
-                                { label: 'Growth Multiple',   value: `${((final?.fv || 0) / Math.max(final?.contributed || 1, 1)).toFixed(2)}Ã—` },
+                                { label: 'Growth Multiple',   value: `${((final?.fv || 0) / Math.max(final?.contributed || 1, 1)).toFixed(2)}×` },
                               ].map(({ label, value, color: c }) => (
                                 <div key={label} style={{ background: MUTED, borderRadius: 8, padding: '12px 14px' }}>
                                   <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
@@ -8628,7 +8628,7 @@ export default function Dashboard() {
                       const fv   = pv * Math.pow(1 + r, n) + (r > 0 ? pmt * (Math.pow(1 + r, n) - 1) / r : pmt * n);
                       const contributed = pv + pmt * n;
                       const growth = fv - contributed;
-                      const rule72 = rate > 0 ? (72 / rate).toFixed(1) : 'â€”';
+                      const rule72 = rate > 0 ? (72 / rate).toFixed(1) : '—';
                       const inputStyle = { width: '100%', padding: '9px 12px', background: DARK, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'monospace' };
                       const labelStyle = { display: 'block', fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 };
                       return (
@@ -8653,7 +8653,7 @@ export default function Dashboard() {
                               { label: 'Future Value', value: fmt(fv), color: '#a855f7', big: true },
                               { label: 'Total Contributed', value: fmt(contributed), color: TEXT },
                               { label: 'Interest Earned', value: fmt(growth), color: GREEN },
-                              { label: 'Rule of 72', value: `â‰ˆ ${rule72} yrs`, color: YELLOW },
+                              { label: 'Rule of 72', value: `≈ ${rule72} yrs`, color: YELLOW },
                             ].map(({ label, value, color, big }) => (
                               <div key={label} style={{ background: MUTED, borderRadius: 8, padding: '12px 14px' }}>
                                 <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
@@ -8679,24 +8679,24 @@ export default function Dashboard() {
                       <div style={{ background: MUTED, padding: '14px 18px', borderRadius: 6, marginBottom: 10, fontSize: 14, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, fontFamily: 'Georgia, serif', color: TEXT, lineHeight: 2.2 }}>
                         <strong style={{ color: '#a855f7' }}>FV</strong>
                         <span style={{ color: TEXT2, margin: '0 4px' }}>=</span>
-                        <span>PV Â· (1 + <Frac n="r" d="12" />)<sup style={{ fontSize: 11 }}>12t</sup></span>
+                        <span>PV · (1 + <Frac n="r" d="12" />)<sup style={{ fontSize: 11 }}>12t</sup></span>
                         <span style={{ color: TEXT2, margin: '0 6px' }}>+</span>
-                        <span>PMT Â·</span>
+                        <span>PMT ·</span>
                         <Frac
                           sz={13}
-                          n={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>(1 + <Frac n="r" d="12" sz={11} />)<sup style={{ fontSize: 10 }}>12t</sup><span style={{ margin: '0 3px' }}>âˆ’ 1</span></span>}
+                          n={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>(1 + <Frac n="r" d="12" sz={11} />)<sup style={{ fontSize: 10 }}>12t</sup><span style={{ margin: '0 3px' }}>− 1</span></span>}
                           d={<Frac n="r" d="12" sz={11} />}
                         />
                       </div>
                       <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.8 }}>
-                        where <strong style={{ color: TEXT }}>PV</strong> = present value &nbsp;Â·&nbsp; <strong style={{ color: TEXT }}>PMT</strong> = monthly contribution &nbsp;Â·&nbsp; <strong style={{ color: TEXT }}>r</strong> = annual rate &nbsp;Â·&nbsp; <strong style={{ color: TEXT }}>t</strong> = years
+                        where <strong style={{ color: TEXT }}>PV</strong> = present value &nbsp;·&nbsp; <strong style={{ color: TEXT }}>PMT</strong> = monthly contribution &nbsp;·&nbsp; <strong style={{ color: TEXT }}>r</strong> = annual rate &nbsp;·&nbsp; <strong style={{ color: TEXT }}>t</strong> = years
                       </div>
                     </div>
                   </div>
                 );
               }
 
-              // â”€â”€ HOUSING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── HOUSING ───────────────────────────────────────────────────
               if (sandboxDataset === 'ds-housing') {
                 const { rent = 1200, homePrice = 285000, downPct = 0.05, rate = 7.1, termYears = 30, propertyTaxRate = 0.012, insurancePerYear = 1800, appreciationRate = 0.03 } = sbD;
                 const down      = homePrice * downPct;
@@ -8731,9 +8731,9 @@ export default function Dashboard() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
                       <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
-                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>â† Back</button>
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Mortgage vs. Rent</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(234,179,8,0.1)', color: '#eab308' }}>Sandbox Â· Ch. 6</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(234,179,8,0.1)', color: '#eab308' }}>Sandbox · Ch. 6</span>
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Side-by-side cost analysis for buying vs. renting in Athens, GA.
@@ -8757,7 +8757,7 @@ export default function Dashboard() {
                           <span style={{ fontFamily: 'monospace', color: BLUE }}>{fmt(totalOwn)}</span>
                         </div>
                         <div style={{ marginTop: 12, fontSize: 11, color: TEXT3 }}>
-                          {fmt(homePrice)} home Â· {(downPct * 100).toFixed(0)}% down ({fmt(down)}) Â· {rate}% rate Â· {termYears}-yr fixed
+                          {fmt(homePrice)} home · {(downPct * 100).toFixed(0)}% down ({fmt(down)}) · {rate}% rate · {termYears}-yr fixed
                         </div>
                       </div>
 
@@ -8874,22 +8874,22 @@ export default function Dashboard() {
                       <div style={{ background: MUTED, padding: '14px 18px', borderRadius: 6, marginBottom: 10, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Georgia, serif', color: TEXT, lineHeight: 2.2 }}>
                         <strong style={{ color: YELLOW }}>M</strong>
                         <span style={{ color: TEXT2, margin: '0 4px' }}>=</span>
-                        <span>P Â·</span>
+                        <span>P ·</span>
                         <Frac
                           sz={13}
-                          n={<span>r Â· (1 + r)<sup style={{ fontSize: 11 }}>n</sup></span>}
-                          d={<span>(1 + r)<sup style={{ fontSize: 11 }}>n</sup> âˆ’ 1</span>}
+                          n={<span>r · (1 + r)<sup style={{ fontSize: 11 }}>n</sup></span>}
+                          d={<span>(1 + r)<sup style={{ fontSize: 11 }}>n</sup> − 1</span>}
                         />
                       </div>
                       <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.8 }}>
-                        where <strong style={{ color: TEXT }}>M</strong> = monthly payment &nbsp;Â·&nbsp; <strong style={{ color: TEXT }}>P</strong> = loan principal &nbsp;Â·&nbsp; <strong style={{ color: TEXT }}>r</strong> = monthly rate &nbsp;Â·&nbsp; <strong style={{ color: TEXT }}>n</strong> = number of payments
+                        where <strong style={{ color: TEXT }}>M</strong> = monthly payment &nbsp;·&nbsp; <strong style={{ color: TEXT }}>P</strong> = loan principal &nbsp;·&nbsp; <strong style={{ color: TEXT }}>r</strong> = monthly rate &nbsp;·&nbsp; <strong style={{ color: TEXT }}>n</strong> = number of payments
                       </div>
                     </div>
                   </div>
                 );
               }
 
-              // â”€â”€ CREDIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── CREDIT ────────────────────────────────────────────────────
               if (sandboxDataset === 'ds-credit') {
                 const { creditScore = 672, creditScoreChange = -8, scoreLabel = 'Fair', scoreFactors = [], paymentHistory = [], accounts: ccAccounts = [] } = sbD;
                 const creditCards = ccAccounts.filter(a => a.subtype === 'credit card');
@@ -8949,9 +8949,9 @@ export default function Dashboard() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
                       <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
-                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>â† Back</button>
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Credit Score & Card Profile</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>Sandbox Â· Ch. 5</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>Sandbox · Ch. 5</span>
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>Credit health analysis: FICO score breakdown, utilization, and paydown impact.</div>
 
@@ -8972,12 +8972,12 @@ export default function Dashboard() {
                           {/* 300/850 endpoint labels */}
                           <text x={CX - R + 2} y={CY + 16} textAnchor="middle" fontSize={9} fill={TEXT3}>300</text>
                           <text x={CX + R - 2} y={CY + 16} textAnchor="middle" fontSize={9} fill={TEXT3}>850</text>
-                          {/* Score number and label â€” well below the arc */}
+                          {/* Score number and label — well below the arc */}
                           <text x={CX} y={CY + 44} textAnchor="middle" fontSize={36} fontWeight="700" fill={TEXT}>{creditScore}</text>
                           <text x={CX} y={CY + 62} textAnchor="middle" fontSize={12} fontWeight="700" fill={activeRange.color}>{scoreLabel.toUpperCase()}</text>
                         </svg>
                         <div style={{ fontSize: 12, color: creditScoreChange < 0 ? RED : GREEN, fontWeight: 600, marginTop: 8 }}>
-                          {creditScoreChange > 0 ? 'â–²' : 'â–¼'} {Math.abs(creditScoreChange)} pts from last month
+                          {creditScoreChange > 0 ? '▲' : '▼'} {Math.abs(creditScoreChange)} pts from last month
                         </div>
                         <div style={{ marginTop: 12, display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
                           {scoreRanges.map(r => (
@@ -9012,7 +9012,7 @@ export default function Dashboard() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                         <div style={{ fontWeight: 600 }}>Credit Card Utilization</div>
                         <span style={{ fontSize: 12, fontWeight: 700, color: utilPct > 30 ? RED : GREEN }}>
-                          Total: {utilPct.toFixed(1)}% {utilPct > 30 ? 'âš  Above 30% threshold' : 'âœ“ Below 30%'}
+                          Total: {utilPct.toFixed(1)}% {utilPct > 30 ? '⚠ Above 30% threshold' : '✓ Below 30%'}
                         </span>
                       </div>
                       {creditCards.map(a => {
@@ -9023,7 +9023,7 @@ export default function Dashboard() {
                         return (
                           <div key={a.account_id} style={{ marginBottom: 16 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                              <span style={{ fontSize: 13, fontWeight: 500 }}>{a.name} <span style={{ color: TEXT3, fontSize: 11 }}>Â· {a.institution_name}</span></span>
+                              <span style={{ fontSize: 13, fontWeight: 500 }}>{a.name} <span style={{ color: TEXT3, fontSize: 11 }}>· {a.institution_name}</span></span>
                               <span style={{ fontSize: 13, fontFamily: 'monospace', fontWeight: 600, color: col }}>{fmt(bal)} / {fmt(lim)} ({pct.toFixed(1)}%)</span>
                             </div>
                             <div style={{ height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
@@ -9061,7 +9061,7 @@ export default function Dashboard() {
                       {/* Min payment danger */}
                       <div style={{ ...CARD }}>
                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Min Payment vs. Full Payment</div>
-                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Chase Freedom Â· $1,850 balance Â· 26.99% APR</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Chase Freedom · $1,850 balance · 26.99% APR</div>
                         {[
                           { label: 'Minimum payment only', months: minMonths, interest: minInterest, color: RED },
                           { label: 'Pay in full this month', months: 1, interest: fullInterest, color: GREEN },
@@ -9095,21 +9095,21 @@ export default function Dashboard() {
                         {paymentHistory.map((h, i) => (
                           <div key={i} style={{ flex: 1, textAlign: 'center' }}>
                             <div style={{ width: 32, height: 32, borderRadius: '50%', background: h.paid === null ? MUTED : h.paid ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.15)', border: `2px solid ${h.paid === null ? BORDER_C : h.paid ? GREEN : RED}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px', fontSize: 14 }}>
-                              {h.paid === null ? 'Â·' : h.paid ? 'âœ“' : 'âœ—'}
+                              {h.paid === null ? '·' : h.paid ? '✓' : '✗'}
                             </div>
                             <div style={{ fontSize: 10, color: TEXT3 }}>{h.month.split(' ')[0]}</div>
                           </div>
                         ))}
                       </div>
                       <div style={{ marginTop: 12, fontSize: 12, color: TEXT2 }}>
-                        Payment history is the <strong style={{ color: TEXT }}>single most important factor (35%)</strong> in your FICO score. One missed payment can drop your score by 60â€“110 points and stays on your report for 7 years.
+                        Payment history is the <strong style={{ color: TEXT }}>single most important factor (35%)</strong> in your FICO score. One missed payment can drop your score by 60–110 points and stays on your report for 7 years.
                       </div>
                     </div>
                   </div>
                 );
               }
 
-              // â”€â”€ HOUSING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── HOUSING ───────────────────────────────────────────────────
               if (sandboxDataset === 'ds-housing') {
                 const { rent, homePrice, downPct, rate, termYears, propertyTaxRate, insurancePerYear, appreciationRate } = sbD;
                 const downPayment    = homePrice * downPct;
@@ -9163,9 +9163,9 @@ export default function Dashboard() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
                       <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
-                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>â† Back</button>
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Mortgage vs. Rent</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${YELLOW_HOUSING}18`, color: YELLOW_HOUSING }}>Sandbox Â· Ch. 6</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${YELLOW_HOUSING}18`, color: YELLOW_HOUSING }}>Sandbox · Ch. 6</span>
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Rent vs. buy decision analysis: amortization schedule, equity build, and break-even horizon.
@@ -9174,9 +9174,9 @@ export default function Dashboard() {
                     {/* Top stats */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
-                        { label: 'Home Price',    value: fmt(homePrice),    sub: `${downPct * 100}% down Â· ${fmt(downPayment)}` },
+                        { label: 'Home Price',    value: fmt(homePrice),    sub: `${downPct * 100}% down · ${fmt(downPayment)}` },
                         { label: 'Monthly PITI',  value: fmt(monthlyBuy),   sub: `vs ${fmt(rent)}/mo rent`, color: monthlyBuy > rent ? RED : GREEN },
-                        { label: 'Loan Amount',   value: fmt(loanAmount),   sub: `${rate}% APR Â· ${termYears}-yr fixed` },
+                        { label: 'Loan Amount',   value: fmt(loanAmount),   sub: `${rate}% APR · ${termYears}-yr fixed` },
                         { label: 'Total Interest',value: fmt(totalInterest),sub: 'paid over 30 years', color: RED },
                       ].map(({ label, value, sub, color }) => (
                         <div key={label} style={{ ...CARD, padding: '16px 18px' }}>
@@ -9369,7 +9369,7 @@ export default function Dashboard() {
                 );
               }
 
-              // â”€â”€ NET WORTH SNAPSHOT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── NET WORTH SNAPSHOT ───────────────────────────────────────
               if (sandboxDataset === 'ds-net-worth') {
                 const accts = sbD.accounts || [];
                 const assets      = accts.filter(a => a.balances?.current > 0);
@@ -9385,9 +9385,9 @@ export default function Dashboard() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
                       <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
-                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>â† Back</button>
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Net Worth Snapshot</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(77,163,255,0.12)', color: BLUE }}>Sandbox Â· Ch. 1</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(77,163,255,0.12)', color: BLUE }}>Sandbox · Ch. 1</span>
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Balance sheet for a 22-year-old college senior. Calculate net worth, classify assets and liabilities, and build a paydown plan.
@@ -9398,7 +9398,7 @@ export default function Dashboard() {
                       {[
                         { label: 'Total Assets',      value: fmt(totalAssets), color: GREEN, sub: `${assets.length} account${assets.length !== 1 ? 's' : ''}` },
                         { label: 'Total Liabilities', value: fmt(totalLiab),   color: RED,   sub: `${liabilities.length} account${liabilities.length !== 1 ? 's' : ''}` },
-                        { label: 'Net Worth',         value: fmt(netWorth),    color: netWorth >= 0 ? GREEN : RED, sub: netWorth >= 0 ? 'Positive â€” building wealth' : 'Negative â€” dig out first' },
+                        { label: 'Net Worth',         value: fmt(netWorth),    color: netWorth >= 0 ? GREEN : RED, sub: netWorth >= 0 ? 'Positive — building wealth' : 'Negative — dig out first' },
                       ].map(m => (
                         <div key={m.label} style={{ ...CARD, padding: '20px 22px' }}>
                           <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
@@ -9429,7 +9429,7 @@ export default function Dashboard() {
                           <div key={a.account_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
                             <div>
                               <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{a.name}</div>
-                              <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{typeLabel[a.subtype] || a.subtype} Â· {a.institution_name}</div>
+                              <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{typeLabel[a.subtype] || a.subtype} · {a.institution_name}</div>
                             </div>
                             <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: GREEN }}>{fmt(a.balances.current)}</div>
                           </div>
@@ -9447,12 +9447,12 @@ export default function Dashboard() {
                           <div key={a.account_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
                             <div>
                               <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{a.name}</div>
-                              <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{typeLabel[a.subtype] || a.subtype} Â· {a.institution_name}</div>
+                              <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{typeLabel[a.subtype] || a.subtype} · {a.institution_name}</div>
                             </div>
                             <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: RED }}>{fmt(Math.abs(a.balances.current))}</div>
                           </div>
                         ))}
-                        {liabilities.length === 0 && <div style={{ fontSize: 13, color: TEXT3, padding: '10px 0' }}>No liabilities â€” debt free!</div>}
+                        {liabilities.length === 0 && <div style={{ fontSize: 13, color: TEXT3, padding: '10px 0' }}>No liabilities — debt free!</div>}
                         <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, fontSize: 13, fontWeight: 700 }}>
                           <span>Total Liabilities</span>
                           <span style={{ fontFamily: 'monospace', color: RED }}>{fmt(totalLiab)}</span>
@@ -9495,7 +9495,7 @@ export default function Dashboard() {
                                   <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>{fmt(savings)}</td>
                                   <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: RED }}>{fmt(debt)}</td>
                                   <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: nw >= 0 ? GREEN : RED }}>{fmt(nw)}</td>
-                                  <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: delta >= 0 ? GREEN : RED }}>{mo === 0 ? 'â€”' : `+${fmt(delta)}`}</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: delta >= 0 ? GREEN : RED }}>{mo === 0 ? '—' : `+${fmt(delta)}`}</td>
                                 </tr>
                               );
                             })}
@@ -9508,7 +9508,7 @@ export default function Dashboard() {
                     <div style={{ ...CARD, background: `${BLUE}06`, border: `1px solid ${BLUE}20` }}>
                       <div style={{ fontWeight: 700, fontSize: 13, color: BLUE, marginBottom: 10 }}>The Formula</div>
                       <div style={{ fontSize: 16, fontFamily: 'monospace', color: TEXT, marginBottom: 12, padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
-                        Net Worth = Total Assets âˆ’ Total Liabilities
+                        Net Worth = Total Assets − Total Liabilities
                       </div>
                       <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>
                         Assets include anything you own with monetary value: cash, savings, investments, real estate, vehicles.
@@ -9520,7 +9520,7 @@ export default function Dashboard() {
                 );
               }
 
-              // â”€â”€ BUDGET SANDBOX â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── BUDGET SANDBOX ────────────────────────────────────────────
               if (sandboxDataset === 'ds-budget') {
                 const _now = new Date();
                 const _CM = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}`;
@@ -9557,12 +9557,12 @@ export default function Dashboard() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
                       <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
-                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>â† Back</button>
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>College Student Monthly Budget</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(34,197,94,0.12)', color: '#22c55e' }}>Sandbox Â· Ch. 2</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(34,197,94,0.12)', color: '#22c55e' }}>Sandbox · Ch. 2</span>
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
-                      Monthly income $1,800 Â· {txns.length} transactions across {cats.length} categories. Identify the deficit and propose a fix.
+                      Monthly income $1,800 · {txns.length} transactions across {cats.length} categories. Identify the deficit and propose a fix.
                     </div>
 
                     {/* Hero stats */}
@@ -9570,7 +9570,7 @@ export default function Dashboard() {
                       {[
                         { label: 'Monthly Income',  value: fmt(INCOME),         color: GREEN, sub: 'Part-time wages + financial aid' },
                         { label: 'Monthly Spending', value: fmt(totalSpending),  color: totalSpending > INCOME ? RED : TEXT, sub: `${txns.length} transactions this month` },
-                        { label: 'Surplus / Deficit', value: (deficit >= 0 ? '+' : '') + fmt(deficit), color: deficit >= 0 ? GREEN : RED, sub: deficit < 0 ? 'Spending exceeds income' : 'Good â€” save the difference' },
+                        { label: 'Surplus / Deficit', value: (deficit >= 0 ? '+' : '') + fmt(deficit), color: deficit >= 0 ? GREEN : RED, sub: deficit < 0 ? 'Spending exceeds income' : 'Good — save the difference' },
                       ].map(m => (
                         <div key={m.label} style={{ ...CARD, padding: '20px 22px' }}>
                           <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
@@ -9612,7 +9612,7 @@ export default function Dashboard() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div style={CARD}>
                           <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>50/30/20 Rule Analysis</div>
-                          <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>50% needs Â· 30% wants Â· 20% savings</div>
+                          <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>50% needs · 30% wants · 20% savings</div>
                           {[
                             { label: 'Needs (50%)', actual: needsPct, target: 50, amt: needs, color: BLUE },
                             { label: 'Wants (30%)', actual: wantsPct, target: 30, amt: wants, color: '#f97316' },
@@ -9624,7 +9624,7 @@ export default function Dashboard() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: 12 }}>
                                   <span style={{ color: TEXT, fontWeight: 500 }}>{row.label}</span>
                                   <span style={{ fontFamily: 'monospace', fontWeight: 700, color: over && row.label !== 'Savings (20%)' ? RED : row.color }}>
-                                    {row.actual}% {over && row.label !== 'Savings (20%)' ? 'â†‘' : row.actual < row.target && row.label === 'Savings (20%)' ? 'â†“' : 'âœ“'}
+                                    {row.actual}% {over && row.label !== 'Savings (20%)' ? '↑' : row.actual < row.target && row.label === 'Savings (20%)' ? '↓' : '✓'}
                                   </span>
                                 </div>
                                 <div style={{ height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
@@ -9640,7 +9640,7 @@ export default function Dashboard() {
                         {/* Fix suggestions */}
                         <div style={{ ...CARD, background: deficit < 0 ? 'rgba(248,113,113,0.04)' : 'rgba(74,222,128,0.04)', border: `1px solid ${deficit < 0 ? 'rgba(248,113,113,0.2)' : 'rgba(74,222,128,0.2)'}` }}>
                           <div style={{ fontWeight: 700, fontSize: 13, color: deficit < 0 ? RED : GREEN, marginBottom: 10 }}>
-                            {deficit < 0 ? 'âš  Deficit Analysis' : 'âœ“ Budget is Balanced'}
+                            {deficit < 0 ? '⚠ Deficit Analysis' : '✓ Budget is Balanced'}
                           </div>
                           {deficit < 0 ? (
                             <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>
@@ -9652,7 +9652,7 @@ export default function Dashboard() {
                             </div>
                           ) : (
                             <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>
-                              Surplus of <strong style={{ color: GREEN }}>{fmt(deficit)}/mo</strong>. Move this to a high-yield savings account immediately â€” don't leave it in checking.
+                              Surplus of <strong style={{ color: GREEN }}>{fmt(deficit)}/mo</strong>. Move this to a high-yield savings account immediately — don't leave it in checking.
                             </div>
                           )}
                         </div>
@@ -9669,7 +9669,7 @@ export default function Dashboard() {
                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: `1px solid ${BORDER_C}` }}>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.merchant_name || t.name}</div>
-                                <div style={{ fontSize: 11, color: meta.color, marginTop: 1 }}>{meta.label} Â· {t.date}</div>
+                                <div style={{ fontSize: 11, color: meta.color, marginTop: 1 }}>{meta.label} · {t.date}</div>
                               </div>
                               <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: RED, marginLeft: 12 }}>{fmt(Math.abs(t.amount))}</div>
                             </div>
@@ -9681,10 +9681,10 @@ export default function Dashboard() {
                 );
               }
 
-              // â”€â”€ PORTFOLIO SIMULATOR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── PORTFOLIO SIMULATOR ───────────────────────────────────────
               if (sandboxDataset === 'ds-portfolio') {
                 const SIM_ASSETS = [
-                  { ticker: 'VTI',  name: 'Vanguard Total Stock Market ETF', type: 'US Equity',   ret: 0.12, vol: 0.15, color: BLUE,      desc: 'Broad exposure to the entire US equity market â€” ~4,000 stocks.' },
+                  { ticker: 'VTI',  name: 'Vanguard Total Stock Market ETF', type: 'US Equity',   ret: 0.12, vol: 0.15, color: BLUE,      desc: 'Broad exposure to the entire US equity market — ~4,000 stocks.' },
                   { ticker: 'BND',  name: 'Vanguard Total Bond Market ETF',  type: 'Bonds',        ret: 0.04, vol: 0.04, color: GREEN,     desc: 'Investment-grade US bonds. Lower return, lower risk, negative correlation to equities.' },
                   { ticker: 'VXUS', name: 'Vanguard Total Intl Stock ETF',   type: 'Intl Equity',  ret: 0.08, vol: 0.17, color: '#a78bfa', desc: 'All world ex-US stocks. Adds geographic diversification.' },
                   { ticker: 'SCHD', name: 'Schwab US Dividend Equity ETF',   type: 'Dividend',     ret: 0.10, vol: 0.12, color: YELLOW,    desc: 'High-quality dividend payers. Defensive tilt, lower volatility than pure growth.' },
@@ -9715,9 +9715,9 @@ export default function Dashboard() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
                       <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
-                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>â† Back</button>
+                        style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Portfolio Simulator</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${BLUE}18`, color: BLUE }}>Sandbox Â· Ch. 7 & 8</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${BLUE}18`, color: BLUE }}>Sandbox · Ch. 7 & 8</span>
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Allocate $10,000 across four assets. See how expected return, volatility, and Sharpe ratio change as you adjust the mix.
@@ -9745,7 +9745,7 @@ export default function Dashboard() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
                           <div style={{ fontWeight: 700, fontSize: 14 }}>Allocation Sliders</div>
                           <div style={{ fontSize: 12, color: allocTotal === 100 ? GREEN : YELLOW, fontWeight: 700, fontFamily: 'monospace' }}>
-                            {allocTotal}% {allocTotal !== 100 ? `(need ${100 - allocTotal > 0 ? '+' : ''}${100 - allocTotal}%)` : 'âœ“'}
+                            {allocTotal}% {allocTotal !== 100 ? `(need ${100 - allocTotal > 0 ? '+' : ''}${100 - allocTotal}%)` : '✓'}
                           </div>
                         </div>
                         {SIM_ASSETS.map(a => {
@@ -9832,9 +9832,9 @@ export default function Dashboard() {
 
                     {/* 10-year projection */}
                     <div style={{ ...CARD, marginBottom: 20 }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>10-Year Projection Â· $10,000 Starting Balance</div>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>10-Year Projection · $10,000 Starting Balance</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 18 }}>
-                        Bear = base âˆ’5pp &nbsp;Â·&nbsp; Base = {(expRet * 100).toFixed(1)}% &nbsp;Â·&nbsp; Bull = base +3pp. No annual contributions assumed.
+                        Bear = base −5pp &nbsp;·&nbsp; Base = {(expRet * 100).toFixed(1)}% &nbsp;·&nbsp; Bull = base +3pp. No annual contributions assumed.
                       </div>
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
@@ -9876,9 +9876,9 @@ export default function Dashboard() {
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: BLUE }}>Key Concepts</div>
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
                         {[
-                          { term: 'Sharpe Ratio', formula: '(E[R] âˆ’ Rf) / Ïƒ', body: 'Measures return per unit of risk. > 1.0 is excellent, 0.5â€“1.0 is good, < 0.5 is below average. The risk-free rate here is 5% (current T-bill).' },
-                          { term: 'Diversification Benefit', formula: 'Ïƒ_weighted âˆ’ Ïƒ_portfolio', body: 'When assets are imperfectly correlated, portfolio volatility is lower than the weighted average of individual volatilities. This is the free lunch of investing.' },
-                          { term: 'Portfolio Variance', formula: 'Î£áµ¢ Î£â±¼ wáµ¢wâ±¼Ïƒáµ¢Ïƒâ±¼Ïáµ¢â±¼', body: 'Variance depends not just on individual volatilities but on how assets co-move. Low or negative Ï (BND vs equities) sharply reduces overall risk.' },
+                          { term: 'Sharpe Ratio', formula: '(E[R] − Rf) / σ', body: 'Measures return per unit of risk. > 1.0 is excellent, 0.5–1.0 is good, < 0.5 is below average. The risk-free rate here is 5% (current T-bill).' },
+                          { term: 'Diversification Benefit', formula: 'σ_weighted − σ_portfolio', body: 'When assets are imperfectly correlated, portfolio volatility is lower than the weighted average of individual volatilities. This is the free lunch of investing.' },
+                          { term: 'Portfolio Variance', formula: 'Σᵢ Σⱼ wᵢwⱼσᵢσⱼρᵢⱼ', body: 'Variance depends not just on individual volatilities but on how assets co-move. Low or negative ρ (BND vs equities) sharply reduces overall risk.' },
                         ].map(c => (
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
@@ -9895,7 +9895,7 @@ export default function Dashboard() {
               // fallback
               return (
                 <div style={{ textAlign: 'center', padding: 60, color: TEXT2 }}>
-                  <div style={{ fontSize: 36, marginBottom: 16 }}>â—«</div>
+                  <div style={{ fontSize: 36, marginBottom: 16 }}>◫</div>
                   <div style={{ fontWeight: 600 }}>No sandbox dataset loaded</div>
                   <button onClick={() => { setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ marginTop: 16, padding: '8px 20px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, cursor: 'pointer', fontSize: 13 }}>Browse Datasets</button>
                 </div>
@@ -9921,7 +9921,7 @@ export default function Dashboard() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
                     <div>
                       <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700 }}>Assignments</h1>
-                      <div style={{ fontSize: 13, color: TEXT2 }}>{activeCourse.name} Â· {activeCourse.semester} Â· {baseAssign.length + extraAssign.length} assignments</div>
+                      <div style={{ fontSize: 13, color: TEXT2 }}>{activeCourse.name} · {activeCourse.semester} · {baseAssign.length + extraAssign.length} assignments</div>
                     </div>
                     {effectiveProfessor && selectedCourseId === 'fina3000' && (
                       <button onClick={() => setShowCreateAssignment(true)} style={{ padding: '9px 16px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ New Assignment</button>
@@ -9945,7 +9945,7 @@ export default function Dashboard() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
                                 <span style={{ fontWeight: 700, fontSize: 15 }}>{a.title}</span>
                                 <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: statusBg, color: statusColor, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                                  {isOverdue ? 'âš  Overdue' : a.status === 'completed' ? 'âœ“ Completed' : a.status === 'upcoming' ? 'Upcoming' : 'Active'}
+                                  {isOverdue ? '⚠ Overdue' : a.status === 'completed' ? '✓ Completed' : a.status === 'upcoming' ? 'Upcoming' : 'Active'}
                                 </span>
                                 {a.custom && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Custom</span>}
                               </div>
@@ -9968,10 +9968,10 @@ export default function Dashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: `${ds.color}0e`, border: `1px solid ${ds.color}30`, borderRadius: 8, marginBottom: 12 }}>
                               <span style={{ fontSize: 10, fontWeight: 700, color: ds.color }}>Dataset</span>
                               <span style={{ fontSize: 12, fontWeight: 600, color: TEXT }}>{ds.title}</span>
-                              <span style={{ fontSize: 11, color: TEXT3 }}>Â·</span>
+                              <span style={{ fontSize: 11, color: TEXT3 }}>·</span>
                               <span style={{ fontSize: 11, color: TEXT2 }}>{ds.subtitle}</span>
                               <button onClick={() => { setExpandedDataset(ds.id); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ marginLeft: 'auto', padding: '4px 10px', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 6, color: ds.color, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-                                Open Dataset â†’
+                                Open Dataset →
                               </button>
                             </div>
                           )}
@@ -9984,12 +9984,12 @@ export default function Dashboard() {
                                   <div>
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                       <span style={{ fontSize: 12, fontWeight: 700, color: GREEN, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <span style={{ fontSize: 14 }}>âœ“</span> Submitted
+                                        <span style={{ fontSize: 14 }}>✓</span> Submitted
                                         {submittedLate && <span style={{ fontSize: 10, fontWeight: 700, color: YELLOW, background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 4, padding: '1px 6px' }}>Late</span>}
                                       </span>
                                       {graded && (
                                         <span style={{ fontSize: 13, fontWeight: 700, color: detail.grade / a.points >= 0.9 ? GREEN : detail.grade / a.points >= 0.7 ? YELLOW : RED }}>
-                                          {detail.grade} / {a.points} pts Â· {Math.round((detail.grade / a.points) * 100)}%
+                                          {detail.grade} / {a.points} pts · {Math.round((detail.grade / a.points) * 100)}%
                                         </span>
                                       )}
                                     </div>
@@ -10010,7 +10010,7 @@ export default function Dashboard() {
                               })() : (
                                 <button onClick={() => { setShowSubmit(a); setSubmitNote(''); }}
                                   style={{ padding: '7px 18px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                                  Submit Assignment â†’
+                                  Submit Assignment →
                                 </button>
                               )}
                             </div>
@@ -10033,19 +10033,19 @@ export default function Dashboard() {
         )}
         </div>
 
-        {/* â”€â”€ AI ASSISTANT FLOATING BUBBLE â”€â”€ */}
+        {/* ── AI ASSISTANT FLOATING BUBBLE ── */}
         {canSeeAI && panel !== 'assistant' && (
           <button
             onClick={() => { setPanel('assistant'); switchEduMode(false); }}
-            title="AI Assistant (âŒ˜K)"
+            title="AI Assistant (⌘K)"
             style={{ position: 'fixed', bottom: 28, right: 28, width: 46, height: 46, borderRadius: '50%', background: BLUE_BTN, color: '#fff', border: 'none', fontSize: 18, cursor: 'pointer', zIndex: 90, boxShadow: '0 4px 20px rgba(0,102,245,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.15s, box-shadow 0.15s' }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,102,245,0.6)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,102,245,0.45)'; }}
           >
-            âœ¦
+            ✦
           </button>
         )}
-      {/* â”€â”€ ADD TAB MODAL â”€â”€ */}
+      {/* ── ADD TAB MODAL ── */}
       {showAddTab && (
         <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
           onClick={e => { if (e.target === e.currentTarget) setShowAddTab(false); }}>
@@ -10061,7 +10061,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* â”€â”€ TICKER CHART MODAL â”€â”€ */}
+      {/* ── TICKER CHART MODAL ── */}
       {selectedTicker && (
         <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
           onClick={e => { if (e.target === e.currentTarget) setSelectedTicker(null); }}>
@@ -10083,7 +10083,7 @@ export default function Dashboard() {
                   </button>
                 ))}
                 <button onClick={() => setSelectedTicker(null)}
-                  style={{ marginLeft: 8, background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, width: 32, height: 32, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>âœ•</button>
+                  style={{ marginLeft: 8, background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, width: 32, height: 32, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
             </div>
             <SP500Chart candles={tickerChartCandles} period={tickerChartPeriod} onPeriodChange={() => {}} hidePeriods />
@@ -10118,7 +10118,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* â”€â”€ ADD CONTENT ITEM MODAL â”€â”€ */}
+      {/* ── ADD CONTENT ITEM MODAL ── */}
       {showAddContentModal && (
         <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
           onClick={e => { if (e.target === e.currentTarget) setShowAddContentModal(null); }}>
@@ -10138,7 +10138,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* â”€â”€ MOBILE BOTTOM NAV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── MOBILE BOTTOM NAV ──────────────────────────── */}
       {isMobile && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: SIDE_BG, borderTop: BORDER, zIndex: 200, display: 'flex', paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: 4 }}>
           {!eduMode ? (
@@ -10153,7 +10153,7 @@ export default function Dashboard() {
               {!isUser && (
                 <button onClick={() => { switchEduMode(true); setPanel('edu-courses'); }}
                   style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: TEXT3, fontSize: 10, fontWeight: 400, transition: 'color 0.15s', borderLeft: `1px solid ${BORDER_C}`, minWidth: 0 }}>
-                  <span style={{ fontSize: 19, lineHeight: 1 }}>â—«</span>
+                  <span style={{ fontSize: 19, lineHeight: 1 }}>◫</span>
                   <span style={{ fontSize: 9, letterSpacing: '0.2px' }}>Education</span>
                 </button>
               )}
@@ -10170,13 +10170,13 @@ export default function Dashboard() {
               {effectiveProfessor && (
                 <button onClick={() => { setPanel('prof-dashboard'); switchEduMode(true); }}
                   style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: panel === 'prof-dashboard' ? GREEN : TEXT3, fontSize: 10, fontWeight: panel === 'prof-dashboard' ? 700 : 400, transition: 'color 0.15s', minWidth: 0 }}>
-                  <span style={{ fontSize: 19, lineHeight: 1 }}>âŠŸ</span>
+                  <span style={{ fontSize: 19, lineHeight: 1 }}>⊟</span>
                   <span style={{ fontSize: 9, letterSpacing: '0.2px' }}>Prof Hub</span>
                 </button>
               )}
               <button onClick={() => { switchEduMode(false); setPanel('overview'); }}
                 style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: TEXT3, fontSize: 10, fontWeight: 400, transition: 'color 0.15s', borderLeft: `1px solid ${BORDER_C}`, minWidth: 0 }}>
-                <span style={{ fontSize: 19, lineHeight: 1 }}>âŠž</span>
+                <span style={{ fontSize: 19, lineHeight: 1 }}>⊞</span>
                 <span style={{ fontSize: 9, letterSpacing: '0.2px' }}>Finance</span>
               </button>
             </>
@@ -10188,5 +10188,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-
