@@ -104,9 +104,6 @@ export default function Login() {
           <Link to="/register" style={{ color: BLUE, textDecoration: 'none', fontWeight: 600 }}>Create one</Link>
         </div>
 
-        <div style={{ marginTop: 'auto', paddingTop: 48, fontSize: 11, color: TEXT3, textAlign: 'center' }}>
-          Built for UGA · FINA 3000 Personal Finance
-        </div>
       </div>
 
     </div>

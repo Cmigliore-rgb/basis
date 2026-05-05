@@ -18,12 +18,14 @@ function GuestRoute({ children }) {
   return user ? <Navigate to="/app" replace /> : children;
 }
 
+const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/"          element={<Landing />} />
+          <Route path="/"          element={isElectron ? <Navigate to="/login" replace /> : <Landing />} />
           <Route path="/login"     element={<GuestRoute><Login /></GuestRoute>} />
           <Route path="/register"  element={<GuestRoute><Register /></GuestRoute>} />
           <Route path="/app/*"     element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
