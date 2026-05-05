@@ -36,7 +36,7 @@ export default function Register() {
   const codeTimer = useRef(null);
 
   const isEdu       = form.email.toLowerCase().endsWith('.edu');
-  const showCodeField = form.role === 'student' || isEdu;
+  const showCodeField = form.role === 'student' || form.role === 'professor' || isEdu;
 
   useEffect(() => {
     const raw = form.courseCode.trim().toUpperCase();
@@ -184,9 +184,6 @@ export default function Register() {
           <Link to="/login" style={{ color: BLUE, textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
         </div>
 
-        <div style={{ marginTop: 'auto', paddingTop: 48, fontSize: 11, color: TEXT3, textAlign: 'center' }}>
-          Built for UGA · FINA 3000 Personal Finance
-        </div>
       </div>
 
     </div>
