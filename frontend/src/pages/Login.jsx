@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -47,7 +47,7 @@ export default function Login() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 64px', borderRight: BORDER, minWidth: 0 }}>
         <div style={{ maxWidth: 440 }}>
           <div style={{ marginBottom: 48 }}>
-            <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-1.5px', color: TEXT }}>Merit</div>
+            <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-1.5px', color: TEXT }}>PeakLedger</div>
             <div style={{ fontSize: 20, fontWeight: 600, color: TEXT2, marginTop: 10, letterSpacing: '-0.3px', lineHeight: 1.4 }}>
               Personal finance,<br />inside the classroom.
             </div>

@@ -1,4 +1,4 @@
-let _transporter = null;
+﻿let _transporter = null;
 
 function getTransporter() {
   if (_transporter) return _transporter;
@@ -16,7 +16,7 @@ function getTransporter() {
 async function send({ to, subject, html }) {
   const t = getTransporter();
   if (!t) throw new Error('Email not configured. Add EMAIL_USER and EMAIL_PASS to backend .env.');
-  return t.sendMail({ from: `Merit <${process.env.EMAIL_USER}>`, to, subject, html });
+  return t.sendMail({ from: `PeakLedger <${process.env.EMAIL_USER}>`, to, subject, html });
 }
 
 module.exports = { send, isConfigured: () => !!getTransporter() };

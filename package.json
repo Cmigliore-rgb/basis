@@ -1,7 +1,7 @@
-{
-  "name": "merit",
+﻿{
+  "name": "peakledger",
   "version": "1.0.0",
-  "description": "Merit personal finance platform",
+  "description": "PeakLedger personal finance platform",
   "main": "electron/main.js",
   "type": "commonjs",
   "scripts": {
@@ -14,8 +14,8 @@
   "author": "",
   "license": "ISC",
   "build": {
-    "appId": "com.merit.app",
-    "productName": "Merit",
+    "appId": "com.PeakLedger.app",
+    "productName": "PeakLedger",
     "electronVersion": "30.5.1",
     "directories": {
       "output": "release"

@@ -430,7 +430,7 @@ function AdviceBox({ onGetAdvice, loading, text }) {
         {loading ? 'Analyzing…' : 'Get Recommendation'}
       </button>
       <div style={{ marginTop: 6, fontSize: 11, color: TEXT3, maxWidth: 560 }}>
-        AI-generated recommendations are for informational purposes only and do not constitute financial, investment, tax, or legal advice. Merit and its developers are not liable for any decisions made based on these suggestions. Always consult a qualified professional before acting on financial information.
+        AI-generated recommendations are for informational purposes only and do not constitute financial, investment, tax, or legal advice. PeakLedger and its developers are not liable for any decisions made based on these suggestions. Always consult a qualified professional before acting on financial information.
       </div>
       {text && (
         <div style={{ marginTop: 12, padding: '14px 18px', background: EXAMPLE_BG, border: `1px solid var(--example-border, #1a3a6b)`, borderRadius: 8, fontSize: 13, lineHeight: 1.65, color: TEXT, whiteSpace: 'pre-wrap' }}>
@@ -950,8 +950,8 @@ function YieldCurveChart({ yieldCurve }) {
 
 const FINANCE_TOUR_STEPS = [
   { sel: '[data-tour="brand"]',                panel: 'overview',   side: 'right',
-    title: 'Welcome to Merit',
-    body: 'Merit keeps your full financial picture in one place: accounts, spending, investments, and market data. This tour walks through each section of the personal finance platform.' },
+    title: 'Welcome to PeakLedger',
+    body: 'PeakLedger keeps your full financial picture in one place: accounts, spending, investments, and market data. This tour walks through each section of the personal finance platform.' },
   { sel: '[data-tour="overview-cards"]',       panel: 'overview',   side: 'bottom',
     title: 'Your Financial Snapshot',
     body: 'Net worth, total cash across linked accounts, and portfolio value update in real time. Net worth (assets minus liabilities) is the single most important number in personal finance.' },
@@ -969,13 +969,13 @@ const FINANCE_TOUR_STEPS = [
     body: 'Spending is automatically sorted into categories like Food, Transport, and Housing. The 50/30/20 rule is applied: 50% needs, 30% wants, 20% savings. Set a cap on any category to trigger alerts.' },
   { sel: '[data-tour="taxes-brackets"]',       panel: 'cashflow',   tab: 'taxes',     side: 'bottom',
     title: 'Tax Estimator',
-    body: 'Enter gross income, 401(k) contributions, and deduction type. Merit calculates your effective and marginal rates across every federal bracket. Good for modeling a raise or side income.' },
+    body: 'Enter gross income, 401(k) contributions, and deduction type. PeakLedger calculates your effective and marginal rates across every federal bracket. Good for modeling a raise or side income.' },
   { sel: '[data-tour="nav-investments"]',      panel: 'investments',                  side: 'right',
     title: 'Investments',
     body: 'Your full portfolio in one place: holdings, allocation breakdown, and unrealized P&L per position. Prices update via live market feeds during trading hours.' },
   { sel: '[data-tour="investments-holdings"]', panel: 'investments',                  side: 'bottom',
     title: 'Portfolio Holdings',
-    body: 'Each row shows ticker, shares held, cost Merit, live price, total value, and gain/loss. The allocation ring on the right breaks down how much of your portfolio each position makes up.' },
+    body: 'Each row shows ticker, shares held, cost PeakLedger, live price, total value, and gain/loss. The allocation ring on the right breaks down how much of your portfolio each position makes up.' },
   { sel: '[data-tour="markets-sp500"]',        panel: 'insights',   insightsTab: 'markets', side: 'bottom',
     title: 'Market Data',
     body: 'The S&P 500 chart, Fear and Greed index, yield curve, and major index levels give you market context without leaving the app. News pulls from financial sources and is filtered for relevance.' },
@@ -989,8 +989,8 @@ const FINANCE_TOUR_STEPS = [
 
 const STUDENT_TOUR_STEPS = [
   { sel: '[data-tour="brand"]',                panel: 'overview',   side: 'right',
-    title: 'Welcome to Merit',
-    body: 'Merit connects your real financial life with your coursework. Track accounts, analyze spending, and build real financial skills, all in one place. This tour walks through every section of the platform.' },
+    title: 'Welcome to PeakLedger',
+    body: 'PeakLedger connects your real financial life with your coursework. Track accounts, analyze spending, and build real financial skills, all in one place. This tour walks through every section of the platform.' },
   { sel: '[data-tour="overview-cards"]',       panel: 'overview',   side: 'bottom',
     title: 'Your Financial Snapshot',
     body: 'Net worth, total cash, and portfolio value update in real time when you link accounts. Net worth (assets minus liabilities) is the single most important number in personal finance. This is yours.' },
@@ -1005,13 +1005,13 @@ const STUDENT_TOUR_STEPS = [
     body: 'Each card shows the institution, account type, and live balance. These feed into your net worth calculation automatically. Connect real accounts via Plaid in Settings, or explore with sample data first.' },
   { sel: '[data-tour="scholarship-header"]',   panel: 'cashflow',   tab: 'scholarship', side: 'bottom',
     title: 'Scholarship Health',
-    body: 'Tracks HOPE and Zell Miller eligibility in real time. Enter your current GPA, credit hours, and this semester\'s courses. Merit projects your HOPE GPA and flags whether your award is safe, at risk, or lost.' },
+    body: 'Tracks HOPE and Zell Miller eligibility in real time. Enter your current GPA, credit hours, and this semester\'s courses. PeakLedger projects your HOPE GPA and flags whether your award is safe, at risk, or lost.' },
   { sel: '[data-tour="budgeting-tabs"]',       panel: 'cashflow',   tab: 'budgeting', side: 'bottom',
     title: 'Budget Tracker',
     body: 'Spending is automatically sorted into categories and the 50/30/20 rule is applied: 50% needs, 30% wants, 20% savings. Set a cap on any category to get alerted before you go over.' },
   { sel: '[data-tour="taxes-brackets"]',       panel: 'cashflow',   tab: 'taxes',     side: 'bottom',
     title: 'Tax Estimator',
-    body: 'Enter gross income, 401(k) contributions, and deduction type. Merit shows your federal tax liability bracket by bracket with your effective and marginal rates. Try adjusting income to see how it shifts.' },
+    body: 'Enter gross income, 401(k) contributions, and deduction type. PeakLedger shows your federal tax liability bracket by bracket with your effective and marginal rates. Try adjusting income to see how it shifts.' },
   { sel: '[data-tour="nav-investments"]',      panel: 'investments',                  side: 'right',
     title: 'Investments',
     body: 'Your full portfolio with live prices, allocation breakdown, and unrealized P&L. The Portfolio Simulator lets you build and test hypothetical allocations before putting real money to work.' },
@@ -1028,11 +1028,11 @@ const STUDENT_TOUR_STEPS = [
 
 const PROFESSOR_TOUR_STEPS = [
   { sel: '[data-tour="brand"]',                panel: 'overview',   side: 'right',
-    title: 'Welcome to Merit',
-    body: 'Merit is what your class will use to connect real financial data with coursework. This tour walks through the personal finance tools so you know exactly what each person in your course is working with.' },
+    title: 'Welcome to PeakLedger',
+    body: 'PeakLedger is what your class will use to connect real financial data with coursework. This tour walks through the personal finance tools so you know exactly what each person in your course is working with.' },
   { sel: '[data-tour="overview-cards"]',       panel: 'overview',   side: 'bottom',
     title: 'Financial Snapshot',
-    body: 'Net worth, total cash, and portfolio value update in real time when accounts are linked. In demo mode, Merit loads realistic synthetic data so anyone can complete work without connecting personal accounts.' },
+    body: 'Net worth, total cash, and portfolio value update in real time when accounts are linked. In demo mode, PeakLedger loads realistic synthetic data so anyone can complete work without connecting personal accounts.' },
   { sel: '[data-tour="overview-txns"]',        panel: 'overview',   side: 'top',
     title: 'Transaction Feed',
     body: 'Every transaction shows up here with merchant, category, and amount. This is the raw data behind budget analysis and spending pattern work. Real accounts and sample data both work the same way.' },
@@ -1234,7 +1234,7 @@ const PREBUILT_DATASETS = [
     category: 'Budgeting',  color: '#22c55e',  difficulty: 'Beginner',
     concepts: ['Fixed vs Variable Expenses', '50/30/20 Rule', 'Budget Surplus/Deficit'],
     stats: [['Income', '$1,800/mo'], ['Spending', '$1,924/mo'], ['Deficit', '−$124/mo']],
-    overview: 'Students identify spending categories causing a deficit, apply the 50/30/20 rule, and propose a revised budget. Links to Merit Budgeting tools for live visualization.',
+    overview: 'Students identify spending categories causing a deficit, apply the 50/30/20 rule, and propose a revised budget. Links to PeakLedger Budgeting tools for live visualization.',
   },
   {
     id: 'ds-tvm',        title: 'Time Value of Money Scenarios',  subtitle: 'Savings · Ch. 7',
@@ -1250,7 +1250,7 @@ const PREBUILT_DATASETS = [
     category: 'Investments', color: '#a855f7', difficulty: 'Intermediate',
     concepts: ['Diversification', 'Asset Allocation', 'Index Funds', 'Risk vs Return'],
     stats: [['Portfolio', '$5,000'], ['Positions', '4 ETFs'], ['YTD', '+7.2%']],
-    overview: 'Students analyze allocation, compute weighted portfolio return, identify concentration risk, and propose a rebalancing strategy. Maps directly to the Merit Investments panel.',
+    overview: 'Students analyze allocation, compute weighted portfolio return, identify concentration risk, and propose a rebalancing strategy. Maps directly to the PeakLedger Investments panel.',
   },
   {
     id: 'ds-credit',     title: 'Credit Card & Score Profile',    subtitle: 'Credit · Ch. 5',
@@ -1624,7 +1624,7 @@ function DragSection({ id, panel, order, onReorder, children }) {
 
 export default function Dashboard() {
   const { user, logout, isPremium, isProfessor, isAdmin, isStudent, isUser } = useAuth();
-  const [panel, setPanel] = useState(() => localStorage.getItem('merit_panel') || 'overview');
+  const [panel, setPanel] = useState(() => localStorage.getItem('pl_panel') || 'overview');
   const [accounts, setAccounts] = useState([]);
   const [isDemoData, setIsDemoData] = useState(false);
   const [transactions, setTransactions] = useState([]);
@@ -1648,8 +1648,8 @@ export default function Dashboard() {
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackMsg, setFeedbackMsg] = useState('');
   const [feedbackSent, setFeedbackSent] = useState(false);
-  const [profCustomTabs, setProfCustomTabs] = useState(() => { try { return JSON.parse(localStorage.getItem('merit_prof_tabs') || '{}'); } catch { return {}; } });
-  const [profCustomContent, setProfCustomContent] = useState(() => { try { return JSON.parse(localStorage.getItem('merit_prof_content') || '{}'); } catch { return {}; } });
+  const [profCustomTabs, setProfCustomTabs] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_prof_tabs') || '{}'); } catch { return {}; } });
+  const [profCustomContent, setProfCustomContent] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_prof_content') || '{}'); } catch { return {}; } });
   const [showAddTab, setShowAddTab] = useState(false);
   const [addTabName, setAddTabName] = useState('');
   const [showAddContentModal, setShowAddContentModal] = useState(null);
@@ -1666,8 +1666,8 @@ export default function Dashboard() {
   const [sp500Period, setSp500Period] = useState('3mo');
   const [learnCategory, setLearnCategory] = useState(() => {
     try {
-      const h = new Set(JSON.parse(localStorage.getItem('merit_hidden_subtabs') || '[]'));
-      const saved = JSON.parse(localStorage.getItem('merit_layout_order') || '{}')['learn-tabs'];
+      const h = new Set(JSON.parse(localStorage.getItem('pl_hidden_subtabs') || '[]'));
+      const saved = JSON.parse(localStorage.getItem('pl_layout_order') || '{}')['learn-tabs'];
       const def = PANEL_SUBTABS.learn.map(s => s.key);
       const order = saved?.length ? [...saved.filter(id => def.includes(id)), ...def.filter(id => !saved.includes(id))] : def;
       return order.find(v => !h.has(`learn:${v}`)) || 'essentials';
@@ -1682,16 +1682,16 @@ export default function Dashboard() {
   const [expandedDataset, setExpandedDataset] = useState(null);
   const [sandboxDataset, setSandboxDataset] = useState(null);
   const [connectBannerDismissed, setConnectBannerDismissed] = useState(
-    () => localStorage.getItem('merit_connect_banner_dismissed') === '1'
+    () => localStorage.getItem('pl_connect_banner_dismissed') === '1'
   );
   const [toast, setToast] = useState(null);
-  const [layoutOrder, setLayoutOrder] = useState(() => { try { return JSON.parse(localStorage.getItem('merit_layout_order') || '{}'); } catch { return {}; } });
+  const [layoutOrder, setLayoutOrder] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_layout_order') || '{}'); } catch { return {}; } });
   const getOrder = (key, defaults) => { const s = layoutOrder[key]; if (!s?.length) return defaults; const ss = new Set(s); return [...s.filter(id => defaults.includes(id)), ...defaults.filter(id => !ss.has(id))]; };
   const handleReorder = (key, defaults) => (srcId, tgtId) => { const order = getOrder(key, defaults); const si = order.indexOf(srcId), ti = order.indexOf(tgtId); if (si === -1 || ti === -1 || si === ti) return; const next = [...order]; next.splice(si, 1); next.splice(ti, 0, srcId); setLayoutOrder(prev => ({ ...prev, [key]: next })); };
   const resetLayout = (key) => setLayoutOrder(prev => { const n = { ...prev }; delete n[key]; return n; });
   const [showOnboarding, setShowOnboarding] = useState(() => {
     if (!user?.id) return false;
-    return localStorage.getItem(`merit_onboarded_${user.id}`) !== '1';
+    return localStorage.getItem(`pl_onboarded_${user.id}`) !== '1';
   });
   const [taxIncome, setTaxIncome] = useState('65000');
   const [taxFiling, setTaxFiling] = useState('single');
@@ -1712,7 +1712,7 @@ export default function Dashboard() {
   const mainRef = useRef(null);
   const [courseView, setCourseView] = useState('schedule'); // 'schedule' | 'calendar'
   const [calMonth, setCalMonth] = useState(3); // 0=Jan … 4=May (default April)
-  const [theme, setTheme] = useState(() => localStorage.getItem('merit_theme') || 'light');
+  const [theme, setTheme] = useState(() => localStorage.getItem('pl_theme') || 'light');
   useEffect(() => {
     const r = document.documentElement;
     if (theme === 'light') {
@@ -1736,23 +1736,23 @@ export default function Dashboard() {
       ['--bg','--side-bg','--card-bg','--border-c','--text','--text2','--text3','--muted','--inner-dark','--example-bg','--example-border','--overlay','--accent','--accent-btn','--green','--red']
         .forEach(v => r.style.removeProperty(v));
     }
-    localStorage.setItem('merit_theme', theme);
+    localStorage.setItem('pl_theme', theme);
   }, [theme]);
 
   const [hiddenPanels, setHiddenPanels] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('merit_hidden') || '[]')); } catch { return new Set(); }
+    try { return new Set(JSON.parse(localStorage.getItem('pl_hidden') || '[]')); } catch { return new Set(); }
   });
   const toggleHidden = (key) => {
     setHiddenPanels(prev => {
       const next = new Set(prev);
       next.has(key) ? next.delete(key) : next.add(key);
-      localStorage.setItem('merit_hidden', JSON.stringify([...next]));
+      localStorage.setItem('pl_hidden', JSON.stringify([...next]));
       return next;
     });
   };
 
   const [hiddenSubtabs, setHiddenSubtabs] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('merit_hidden_subtabs') || '[]')); } catch { return new Set(); }
+    try { return new Set(JSON.parse(localStorage.getItem('pl_hidden_subtabs') || '[]')); } catch { return new Set(); }
   });
   const toggleSubtabHidden = (panelKey, subtabKey) => {
     const id = `${panelKey}:${subtabKey}`;
@@ -1760,7 +1760,7 @@ export default function Dashboard() {
     setHiddenSubtabs(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
-      localStorage.setItem('merit_hidden_subtabs', JSON.stringify([...next]));
+      localStorage.setItem('pl_hidden_subtabs', JSON.stringify([...next]));
       return next;
     });
     if (hiding) {
@@ -1805,8 +1805,8 @@ export default function Dashboard() {
   const [housingIncome, setHousingIncome] = useState('');
   const [cashFlowTab, setCashFlowTab] = useState(() => {
     try {
-      const h = new Set(JSON.parse(localStorage.getItem('merit_hidden_subtabs') || '[]'));
-      const saved = JSON.parse(localStorage.getItem('merit_layout_order') || '{}')['cashflow-tabs'];
+      const h = new Set(JSON.parse(localStorage.getItem('pl_hidden_subtabs') || '[]'));
+      const saved = JSON.parse(localStorage.getItem('pl_layout_order') || '{}')['cashflow-tabs'];
       const def = PANEL_SUBTABS.cashflow.map(s => s.key);
       const order = saved?.length ? [...saved.filter(id => def.includes(id)), ...def.filter(id => !saved.includes(id))] : def;
       return order.find(v => !h.has(`cashflow:${v}`)) || 'banking';
@@ -1816,8 +1816,8 @@ export default function Dashboard() {
   const [selectedInstitution, setSelectedInstitution] = useState(null);
   const [insightsTab, setInsightsTab] = useState(() => {
     try {
-      const h = new Set(JSON.parse(localStorage.getItem('merit_hidden_subtabs') || '[]'));
-      const saved = JSON.parse(localStorage.getItem('merit_layout_order') || '{}')['insights-tabs'];
+      const h = new Set(JSON.parse(localStorage.getItem('pl_hidden_subtabs') || '[]'));
+      const saved = JSON.parse(localStorage.getItem('pl_layout_order') || '{}')['insights-tabs'];
       const def = PANEL_SUBTABS.insights.map(s => s.key);
       const order = saved?.length ? [...saved.filter(id => def.includes(id)), ...def.filter(id => !saved.includes(id))] : def;
       return order.find(v => !h.has(`insights:${v}`)) || 'markets';
@@ -1829,14 +1829,14 @@ export default function Dashboard() {
   const [marketView, setMarketView]         = useState('most_actives');
   const [marketViewData, setMarketViewData] = useState([]);
   const [loadingMarketView, setLoadingMarketView] = useState(false);
-  const [customTickers, setCustomTickers]   = useState(() => { try { return JSON.parse(localStorage.getItem('merit_tickers') || '[]'); } catch { return []; } });
+  const [customTickers, setCustomTickers]   = useState(() => { try { return JSON.parse(localStorage.getItem('pl_tickers') || '[]'); } catch { return []; } });
   const [customTickerData, setCustomTickerData] = useState([]);
   const [tickerInput, setTickerInput]       = useState('');
   const [selectedTicker, setSelectedTicker] = useState(null);
   const [tickerChartCandles, setTickerChartCandles] = useState([]);
   const [tickerChartPeriod, setTickerChartPeriod] = useState('3mo');
   const [extendedTickerData, setExtendedTickerData] = useState({});
-  const [calendarEvents, setCalendarEvents] = useState(() => { try { return JSON.parse(localStorage.getItem('merit_calendar') || '[]'); } catch { return []; } });
+  const [calendarEvents, setCalendarEvents] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_calendar') || '[]'); } catch { return []; } });
   const [calViewDate, setCalViewDate]       = useState(() => new Date());
   const [showEventForm, setShowEventForm]   = useState(false);
   const [eventForm, setEventForm]           = useState({ title: '', date: '', type: 'reminder', note: '' });
@@ -1857,11 +1857,11 @@ export default function Dashboard() {
   const [showNewCode, setShowNewCode] = useState(false);
   const [newCodeError, setNewCodeError] = useState('');
   const [eduMode, setEduMode] = useState(() => {
-    const saved = localStorage.getItem('merit_edu_mode');
+    const saved = localStorage.getItem('pl_edu_mode');
     if (saved !== null) return saved === 'true';
     return !!(user?.enrollments?.length);
   });
-  const switchEduMode = (val) => { localStorage.setItem('merit_edu_mode', String(val)); setEduMode(val); };
+  const switchEduMode = (val) => { localStorage.setItem('pl_edu_mode', String(val)); setEduMode(val); };
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const enrolledCourses = (() => {
     if (isProfessor || isAdmin) return COURSES;
@@ -1890,7 +1890,7 @@ export default function Dashboard() {
   const [profLoadingCode, setProfLoadingCode] = useState('');
   const [profHubTab, setProfHubTab] = useState('analytics');
   const [profAnnouncements, setProfAnnouncements] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('merit_announcements') || 'null') || DEMO_ANNOUNCEMENTS; }
+    try { return JSON.parse(localStorage.getItem('pl_announcements') || 'null') || DEMO_ANNOUNCEMENTS; }
     catch { return DEMO_ANNOUNCEMENTS; }
   });
   const [annForm, setAnnForm] = useState({ courseCode: '', title: '', body: '' });
@@ -1898,7 +1898,7 @@ export default function Dashboard() {
   const [expandedStudent, setExpandedStudent] = useState(null);
   const [inboxNotifs, setInboxNotifs] = useState([]);
   const [notifPanelOpen, setNotifPanelOpen] = useState(false);
-  const [accent, setAccent] = useState(() => localStorage.getItem('merit_accent') || 'blue');
+  const [accent, setAccent] = useState(() => localStorage.getItem('pl_accent') || 'blue');
   const ACCENT_PRESETS = {
     blue:   { accent: '#4da3ff', btn: '#0066f5' },
     purple: { accent: '#a78bfa', btn: '#7c3aed' },
@@ -1911,12 +1911,12 @@ export default function Dashboard() {
     const p = ACCENT_PRESETS[accent] || ACCENT_PRESETS.blue;
     r.style.setProperty('--accent',     p.accent);
     r.style.setProperty('--accent-btn', p.btn);
-    localStorage.setItem('merit_accent', accent);
+    localStorage.setItem('pl_accent', accent);
   }, [accent]);
-  useEffect(() => { localStorage.setItem('merit_panel', panel); }, [panel]);
-  useEffect(() => { localStorage.setItem('merit_layout_order', JSON.stringify(layoutOrder)); }, [layoutOrder]);
-  useEffect(() => { localStorage.setItem('merit_calendar', JSON.stringify(calendarEvents)); }, [calendarEvents]);
-  useEffect(() => { localStorage.setItem('merit_announcements', JSON.stringify(profAnnouncements)); }, [profAnnouncements]);
+  useEffect(() => { localStorage.setItem('pl_panel', panel); }, [panel]);
+  useEffect(() => { localStorage.setItem('pl_layout_order', JSON.stringify(layoutOrder)); }, [layoutOrder]);
+  useEffect(() => { localStorage.setItem('pl_calendar', JSON.stringify(calendarEvents)); }, [calendarEvents]);
+  useEffect(() => { localStorage.setItem('pl_announcements', JSON.stringify(profAnnouncements)); }, [profAnnouncements]);
   useEffect(() => {
     if (!user) return;
     const fetchNotifs = () => api.get('/notifications/inbox').then(r => setInboxNotifs(r.data.notifications || [])).catch(() => {});
@@ -2016,14 +2016,14 @@ export default function Dashboard() {
   useEffect(() => {
     if (!notifPrefs.budgetAlert && !notifPrefs.goalAlert && !notifPrefs.lowBalanceAlert) return;
     const COOLDOWN = 24 * 60 * 60 * 1000;
-    const lastSent = JSON.parse(localStorage.getItem('merit_notif_sent') || '{}');
+    const lastSent = JSON.parse(localStorage.getItem('pl_notif_sent') || '{}');
     const now = Date.now();
     const trigger = async (type, subject, details, key) => {
       if (lastSent[key] && now - lastSent[key] < COOLDOWN) return;
       try {
         await api.post('/notifications/send', { type, subject, details });
         lastSent[key] = now;
-        localStorage.setItem('merit_notif_sent', JSON.stringify(lastSent));
+        localStorage.setItem('pl_notif_sent', JSON.stringify(lastSent));
       } catch {}
     };
     if (notifPrefs.goalAlert) {
@@ -2288,7 +2288,7 @@ export default function Dashboard() {
       {/* ── ONBOARDING ─────────────────────────────────── */}
       {showOnboarding && (() => {
         const dismiss = (panelKey, edu) => {
-          localStorage.setItem(`merit_onboarded_${user.id}`, '1');
+          localStorage.setItem(`pl_onboarded_${user.id}`, '1');
           setShowOnboarding(false);
           if (edu !== undefined) switchEduMode(edu);
           if (panelKey) setPanel(panelKey);
@@ -2298,7 +2298,7 @@ export default function Dashboard() {
         return (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
             <div style={{ background: CARD_BG, border: BORDER, borderRadius: 16, padding: 36, width: '100%', maxWidth: 480, boxShadow: '0 32px 80px rgba(0,0,0,0.6)' }}>
-              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 6 }}>Welcome to Merit{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</div>
+              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 6 }}>Welcome to PeakLedger{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</div>
               <div style={{ fontSize: 14, color: TEXT2, marginBottom: 32, lineHeight: 1.6 }}>
                 {isProfOrAdmin && !isStudentRole
                   ? 'Your professor account is ready. Set up your course or explore the platform first.'
@@ -2347,7 +2347,7 @@ export default function Dashboard() {
       {isMobile && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 52, background: SIDE_BG, borderBottom: BORDER, zIndex: 200, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>Merit</span>
+            <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
             {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
           </div>
           <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
@@ -2368,7 +2368,7 @@ export default function Dashboard() {
       <aside style={{ width: 220, flexShrink: 0, background: SIDE_BG, borderRight: BORDER, display: isMobile ? 'none' : 'flex', flexDirection: 'column' }}>
         <div data-tour="brand" style={{ padding: '18px 16px 16px', borderBottom: BORDER, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>Merit</div>
+            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</div>
             <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Finance OS</div>
           </div>
           <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
@@ -2649,14 +2649,14 @@ export default function Dashboard() {
                 </div>
                 {opt.available ? (
                   <button onClick={() => {
-                    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Merit//EN'];
+                    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//PeakLedger//EN'];
                     calendarEvents.forEach(ev => {
                       const d = ev.date.replace(/-/g, '');
                       lines.push('BEGIN:VEVENT', `DTSTART;VALUE=DATE:${d}`, `SUMMARY:${ev.title}`, `DESCRIPTION:${ev.note || ''}`, 'END:VEVENT');
                     });
                     lines.push('END:VCALENDAR');
                     const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar' });
-                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Merit-calendar.ics'; a.click();
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'PeakLedger-calendar.ics'; a.click();
                   }} style={{ padding: '7px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 7, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
                     Export .ics
                   </button>
@@ -2744,7 +2744,7 @@ export default function Dashboard() {
             </div>
 
             <button
-              onClick={() => { window.open('mailto:connoraltonmigliore@gmail.com?subject=Merit Premium Access', '_blank'); }}
+              onClick={() => { window.open('mailto:connoraltonmigliore@gmail.com?subject=PeakLedger Premium Access', '_blank'); }}
               style={{ width: '100%', padding: '14px 0', background: BLUE_BTN, border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>
               Get Premium Access →
             </button>
@@ -3473,7 +3473,7 @@ export default function Dashboard() {
                       + Connect Account
                     </button>
                     <button
-                      onClick={() => { setConnectBannerDismissed(true); localStorage.setItem('merit_connect_banner_dismissed', '1'); }}
+                      onClick={() => { setConnectBannerDismissed(true); localStorage.setItem('pl_connect_banner_dismissed', '1'); }}
                       style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 16, cursor: 'pointer', lineHeight: 1, padding: '2px 4px', flexShrink: 0 }}
                     >
                       ✕
@@ -5709,7 +5709,7 @@ export default function Dashboard() {
                             if (!customTickers.includes(sym)) {
                               const next = [...customTickers, sym];
                               setCustomTickers(next);
-                              localStorage.setItem('merit_tickers', JSON.stringify(next));
+                              localStorage.setItem('pl_tickers', JSON.stringify(next));
                               fetchMarketView('your_list', next);
                             }
                             setTickerInput('');
@@ -5722,7 +5722,7 @@ export default function Dashboard() {
                         if (sym && !customTickers.includes(sym)) {
                           const next = [...customTickers, sym];
                           setCustomTickers(next);
-                          localStorage.setItem('merit_tickers', JSON.stringify(next));
+                          localStorage.setItem('pl_tickers', JSON.stringify(next));
                           fetchMarketView('your_list', next);
                         }
                         setTickerInput('');
@@ -5780,7 +5780,7 @@ export default function Dashboard() {
                                     <button onClick={() => {
                                       const next = customTickers.filter(s => s !== t.symbol);
                                       setCustomTickers(next);
-                                      localStorage.setItem('merit_tickers', JSON.stringify(next));
+                                      localStorage.setItem('pl_tickers', JSON.stringify(next));
                                       setCustomTickerData(prev => prev.filter(q => q.symbol !== t.symbol));
                                     }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 14, padding: 0 }}>✕</button>
                                   </td>
@@ -6291,7 +6291,7 @@ export default function Dashboard() {
                         <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⊟</div>
                         <div>
                           <div style={{ fontSize: 17, fontWeight: 700, color: TEXT }}>Welcome to your Professor Hub</div>
-                          <div style={{ fontSize: 13, color: TEXT2, marginTop: 2 }}>Three steps to get your class running on Merit.</div>
+                          <div style={{ fontSize: 13, color: TEXT2, marginTop: 2 }}>Three steps to get your class running on PeakLedger.</div>
                         </div>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 0, margin: '20px 0' }}>
@@ -6918,7 +6918,7 @@ export default function Dashboard() {
             {panel === 'settings' && (
               <div>
                 <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700 }}>Settings</h1>
-                <p style={{ margin: '0 0 28px', color: TEXT2, fontSize: 14 }}>Customize Merit to keep the sidebar focused on what you use.</p>
+                <p style={{ margin: '0 0 28px', color: TEXT2, fontSize: 14 }}>Customize PeakLedger to keep the sidebar focused on what you use.</p>
 
                 <div style={{ ...CARD, marginBottom: 16 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Visible Tabs</div>
@@ -6992,8 +6992,8 @@ export default function Dashboard() {
 
                   {(hiddenPanels.size > 0 || hiddenSubtabs.size > 0) && (
                     <button onClick={() => {
-                      setHiddenPanels(new Set()); localStorage.removeItem('merit_hidden');
-                      setHiddenSubtabs(new Set()); localStorage.removeItem('merit_hidden_subtabs');
+                      setHiddenPanels(new Set()); localStorage.removeItem('pl_hidden');
+                      setHiddenSubtabs(new Set()); localStorage.removeItem('pl_hidden_subtabs');
                     }} style={{ marginTop: 4, padding: '8px 16px', background: 'transparent', border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, cursor: 'pointer' }}>
                       Reset: show all tabs
                     </button>
@@ -7137,7 +7137,7 @@ export default function Dashboard() {
                     <button onClick={async () => {
                       try {
                         await api.put('/notifications/prefs', notifPrefs);
-                        await api.post('/notifications/send', { type: 'test', subject: 'Merit: Test Notification' });
+                        await api.post('/notifications/send', { type: 'test', subject: 'PeakLedger: Test Notification' });
                         setNotifEmailStatus('sent');
                       } catch (e) { setNotifEmailStatus('error'); }
                       setTimeout(() => setNotifEmailStatus(null), 3000);
@@ -8333,7 +8333,7 @@ export default function Dashboard() {
                                           <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: DARK, borderRadius: 7, border: BORDER }}>
                                             <span style={{ fontSize: 9, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.12)', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>Custom</span>
                                             <span style={{ flex: 1, fontSize: 13 }}>{item.title}{item.description && <span style={{ fontSize: 11, color: TEXT3, marginLeft: 8 }}>{item.description}</span>}</span>
-                                            <button onClick={() => { const ck = `${selectedCourseId}_slides`; const updated = { ...profCustomContent, [ck]: (profCustomContent[ck] || []).filter(i => i.id !== item.id) }; setProfCustomContent(updated); localStorage.setItem('merit_prof_content', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
+                                            <button onClick={() => { const ck = `${selectedCourseId}_slides`; const updated = { ...profCustomContent, [ck]: (profCustomContent[ck] || []).filter(i => i.id !== item.id) }; setProfCustomContent(updated); localStorage.setItem('pl_prof_content', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
                                           </div>
                                         ))}
                                       </div>
@@ -8387,7 +8387,7 @@ export default function Dashboard() {
                                         {(profCustomTabs[selectedCourseId] || []).map(t => (
                                           <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: DARK, border: BORDER, borderRadius: 8 }}>
                                             <span style={{ fontSize: 13 }}>{t.label}</span>
-                                            <button onClick={() => { const updated = { ...profCustomTabs, [selectedCourseId]: (profCustomTabs[selectedCourseId] || []).filter(x => x.key !== t.key) }; setProfCustomTabs(updated); localStorage.setItem('merit_prof_tabs', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: 0 }}>×</button>
+                                            <button onClick={() => { const updated = { ...profCustomTabs, [selectedCourseId]: (profCustomTabs[selectedCourseId] || []).filter(x => x.key !== t.key) }; setProfCustomTabs(updated); localStorage.setItem('pl_prof_tabs', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: 0 }}>×</button>
                                           </div>
                                         ))}
                                       </div>
@@ -8426,7 +8426,7 @@ export default function Dashboard() {
                                                     {item.url && <div style={{ fontSize: 11, color: BLUE, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.url}</div>}
                                                     {item.description && <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{item.description}</div>}
                                                   </div>
-                                                  <button onClick={() => { const updated = { ...profCustomContent, [ck]: items.filter(i => i.id !== item.id) }; setProfCustomContent(updated); localStorage.setItem('merit_prof_content', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
+                                                  <button onClick={() => { const updated = { ...profCustomContent, [ck]: items.filter(i => i.id !== item.id) }; setProfCustomContent(updated); localStorage.setItem('pl_prof_content', JSON.stringify(updated)); }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
                                                 </div>
                                               ))}
                                             </div>
@@ -8456,7 +8456,7 @@ export default function Dashboard() {
                 <div style={{ marginBottom: 28 }}>
                   <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700 }}>Datasets</h1>
                   <p style={{ margin: 0, color: TEXT2, fontSize: 14, lineHeight: 1.6, maxWidth: 680 }}>
-                    6 prebuilt personal finance datasets, each mapped to a course chapter and ready to assign to students or explore directly in Merit.
+                    6 prebuilt personal finance datasets, each mapped to a course chapter and ready to assign to students or explore directly in PeakLedger.
                   </p>
                 </div>
                 <div data-tour="edu-datasets-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, alignItems: 'start' }}>
@@ -10052,10 +10052,10 @@ export default function Dashboard() {
           <div style={{ background: CARD_BG, borderRadius: 16, padding: 28, width: 360, border: BORDER }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 18 }}>Add Content Tab</div>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Tab Name</label>
-            <input autoFocus value={addTabName} onChange={e => setAddTabName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && addTabName.trim()) { const key = addTabName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''); const updated = { ...profCustomTabs, [selectedCourseId]: [...(profCustomTabs[selectedCourseId] || []), { key, label: addTabName.trim() }] }; setProfCustomTabs(updated); localStorage.setItem('merit_prof_tabs', JSON.stringify(updated)); setContentFolder(key); setShowAddTab(false); } }} placeholder="e.g. Videos, Links, Notes" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: BORDER, background: DARK, color: TEXT, fontSize: 13, marginBottom: 20, boxSizing: 'border-box' }} />
+            <input autoFocus value={addTabName} onChange={e => setAddTabName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && addTabName.trim()) { const key = addTabName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''); const updated = { ...profCustomTabs, [selectedCourseId]: [...(profCustomTabs[selectedCourseId] || []), { key, label: addTabName.trim() }] }; setProfCustomTabs(updated); localStorage.setItem('pl_prof_tabs', JSON.stringify(updated)); setContentFolder(key); setShowAddTab(false); } }} placeholder="e.g. Videos, Links, Notes" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: BORDER, background: DARK, color: TEXT, fontSize: 13, marginBottom: 20, boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setShowAddTab(false)} style={{ flex: 1, padding: '9px 0', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button disabled={!addTabName.trim()} onClick={() => { const key = addTabName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''); const updated = { ...profCustomTabs, [selectedCourseId]: [...(profCustomTabs[selectedCourseId] || []), { key, label: addTabName.trim() }] }; setProfCustomTabs(updated); localStorage.setItem('merit_prof_tabs', JSON.stringify(updated)); setContentFolder(key); setShowAddTab(false); }} style={{ flex: 1, padding: '9px 0', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 13, fontWeight: 700, cursor: addTabName.trim() ? 'pointer' : 'not-allowed', opacity: addTabName.trim() ? 1 : 0.5 }}>Add Tab</button>
+              <button disabled={!addTabName.trim()} onClick={() => { const key = addTabName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''); const updated = { ...profCustomTabs, [selectedCourseId]: [...(profCustomTabs[selectedCourseId] || []), { key, label: addTabName.trim() }] }; setProfCustomTabs(updated); localStorage.setItem('pl_prof_tabs', JSON.stringify(updated)); setContentFolder(key); setShowAddTab(false); }} style={{ flex: 1, padding: '9px 0', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 13, fontWeight: 700, cursor: addTabName.trim() ? 'pointer' : 'not-allowed', opacity: addTabName.trim() ? 1 : 0.5 }}>Add Tab</button>
             </div>
           </div>
         </div>
@@ -10132,7 +10132,7 @@ export default function Dashboard() {
             ))}
             <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
               <button onClick={() => setShowAddContentModal(null)} style={{ flex: 1, padding: '9px 0', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button disabled={!addContentForm.title.trim()} onClick={() => { const ck = `${showAddContentModal.courseId}_${showAddContentModal.folder}`; const item = { id: Date.now().toString(), title: addContentForm.title.trim(), url: addContentForm.url.trim(), description: addContentForm.description.trim() }; const updated = { ...profCustomContent, [ck]: [...(profCustomContent[ck] || []), item] }; setProfCustomContent(updated); localStorage.setItem('merit_prof_content', JSON.stringify(updated)); setShowAddContentModal(null); }} style={{ flex: 1, padding: '9px 0', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 13, fontWeight: 700, cursor: addContentForm.title.trim() ? 'pointer' : 'not-allowed', opacity: addContentForm.title.trim() ? 1 : 0.5 }}>Add Item</button>
+              <button disabled={!addContentForm.title.trim()} onClick={() => { const ck = `${showAddContentModal.courseId}_${showAddContentModal.folder}`; const item = { id: Date.now().toString(), title: addContentForm.title.trim(), url: addContentForm.url.trim(), description: addContentForm.description.trim() }; const updated = { ...profCustomContent, [ck]: [...(profCustomContent[ck] || []), item] }; setProfCustomContent(updated); localStorage.setItem('pl_prof_content', JSON.stringify(updated)); setShowAddContentModal(null); }} style={{ flex: 1, padding: '9px 0', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 13, fontWeight: 700, cursor: addContentForm.title.trim() ? 'pointer' : 'not-allowed', opacity: addContentForm.title.trim() ? 1 : 0.5 }}>Add Item</button>
             </div>
           </div>
         </div>

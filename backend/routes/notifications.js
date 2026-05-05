@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const store = require('../store');
 const requireAuth = require('../middleware/requireAuth');
@@ -34,29 +34,29 @@ router.post('/send', requireAuth, async (req, res) => {
         ${details?.category ? `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px 18px;margin:20px 0">
           <strong>${details.category}</strong>: ${details.spent} of ${details.limit} limit (${details.pct}%)
         </div>` : ''}
-        <p style="color:#888;font-size:13px;margin-top:24px">Open Merit to review your spending.</p>
+        <p style="color:#888;font-size:13px;margin-top:24px">Open PeakLedger to review your spending.</p>
       </div>`,
     goal_reached: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
         <h2 style="color:#16a34a;margin-bottom:8px">Goal Reached! 🎉</h2>
         <p style="color:#555;font-size:15px">You've hit your savings goal: <strong>${details?.goalName || 'Savings Goal'}</strong></p>
-        <p style="color:#888;font-size:13px;margin-top:24px">Log in to Merit to celebrate and set your next goal.</p>
+        <p style="color:#888;font-size:13px;margin-top:24px">Log in to PeakLedger to celebrate and set your next goal.</p>
       </div>`,
     low_balance: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
         <h2 style="color:#dc2626;margin-bottom:8px">Low Balance Alert</h2>
         <p style="color:#555;font-size:15px">${details?.accountName || 'An account'} is below your threshold: <strong>${details?.balance}</strong></p>
-        <p style="color:#888;font-size:13px;margin-top:24px">Open Merit to review your accounts.</p>
+        <p style="color:#888;font-size:13px;margin-top:24px">Open PeakLedger to review your accounts.</p>
       </div>`,
     test: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
-        <h2 style="color:#1a1a1a;margin-bottom:8px">Merit Notifications are working ✓</h2>
+        <h2 style="color:#1a1a1a;margin-bottom:8px">PeakLedger Notifications are working ✓</h2>
         <p style="color:#555;font-size:15px">Your email notifications are configured correctly. You'll receive alerts here for budget overruns, goals reached, and low balances.</p>
       </div>`,
   };
 
   try {
-    await email.send({ to, subject: subject || 'Merit Alert', html: bodies[type] || bodies.test });
+    await email.send({ to, subject: subject || 'PeakLedger Alert', html: bodies[type] || bodies.test });
     res.json({ ok: true, to });
   } catch (e) {
     res.status(503).json({ error: e.message });

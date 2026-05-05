@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+﻿import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
@@ -8,21 +8,21 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('merit_token');
+    const token = localStorage.getItem('pl_token');
     if (!token) { setLoading(false); return; }
     api.get('/auth/me')
       .then(r => setUser(r.data.user))
-      .catch(() => localStorage.removeItem('merit_token'))
+      .catch(() => localStorage.removeItem('pl_token'))
       .finally(() => setLoading(false));
   }, []);
 
   const login = (token, userData) => {
-    localStorage.setItem('merit_token', token);
+    localStorage.setItem('pl_token', token);
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('merit_token');
+    localStorage.removeItem('pl_token');
     setUser(null);
   };
 

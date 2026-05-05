@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const store = require('../store');
 const requireAuth = require('../middleware/requireAuth');
@@ -27,7 +27,7 @@ router.post('/', requireAuth, async (req, res) => {
     const stars = rating ? '★'.repeat(rating) + '☆'.repeat(5 - rating) : 'No rating';
     email.send({
       to: ADMIN,
-      subject: `Merit Feedback: ${stars}`,
+      subject: `PeakLedger Feedback: ${stars}`,
       html: `<div style="font-family:sans-serif;max-width:520px;padding:24px">
         <h2 style="margin-bottom:8px">New Feedback</h2>
         <p><strong>From:</strong> ${req.user.email}</p>

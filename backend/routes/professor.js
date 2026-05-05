@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const requireAuth = require('../middleware/requireAuth');
@@ -94,7 +94,7 @@ router.patch('/submissions/:id', requireAuth, requireProfessor, async (req, res)
       subject: `Grade posted: ${assignmentTitle || updated.assignment_id}`,
       html: `
         <div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#0f0f0f;color:#f0f0f0;border-radius:12px">
-          <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px">Merit</div>
+          <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px">PeakLedger</div>
           <div style="font-size:13px;color:#8e8e93;margin-bottom:28px">Grade Notification</div>
           <div style="font-size:16px;font-weight:700;margin-bottom:6px">Hi ${updated.student_name},</div>
           <p style="font-size:14px;color:#c0c0c0;line-height:1.6;margin:0 0 24px">
@@ -107,7 +107,7 @@ router.patch('/submissions/:id', requireAuth, requireProfessor, async (req, res)
             </div>
             ${feedback ? `<div style="border-top:1px solid #2a2a2a;padding-top:14px"><div style="font-size:11px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Instructor Feedback</div><div style="font-size:13px;color:#c0c0c0;line-height:1.6">${feedback}</div></div>` : ''}
           </div>
-          <p style="font-size:12px;color:#555;margin:0">Log in to Merit to view all your grades and assignments.</p>
+          <p style="font-size:12px;color:#555;margin:0">Log in to PeakLedger to view all your grades and assignments.</p>
         </div>
       `,
     }).catch(err => console.warn('Grade email failed:', err.message));
