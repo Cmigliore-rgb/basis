@@ -1,13 +1,13 @@
-// Central data controller.
-// No linked tokens → Athens, GA demo dataset.
-// Linked tokens present → real Plaid data.
-// Both paths return the same shape so all routes, charts, and AI work unchanged.
-
 const { plaidClient } = require('./routes/plaid');
 const getDummyData = require('./dummy_data');
+const db = require('./db');
+
+function getUserTokens(userId) {
+  return db.prepare('SELECT access_token, institution_name FROM plaid_tokens WHERE user_id = ?').all(userId);
+}
 
 async function getAccounts(req) {
-  const tokens = req.app.locals.accessTokens || [];
+  const tokens = getUserTokens(req.user.id);
   if (!tokens.length) return { accounts: getDummyData().accounts, demo: true };
 
   const all = await Promise.all(
@@ -28,7 +28,7 @@ async function getAccounts(req) {
 }
 
 async function getTransactions(req, start, end) {
-  const tokens = req.app.locals.accessTokens || [];
+  const tokens = getUserTokens(req.user.id);
   if (!tokens.length) {
     const { transactions } = getDummyData();
     return {
@@ -52,7 +52,7 @@ async function getTransactions(req, start, end) {
 }
 
 async function getHoldings(req) {
-  const tokens = req.app.locals.accessTokens || [];
+  const tokens = getUserTokens(req.user.id);
   if (!tokens.length) return { holdings: getDummyData().holdings };
 
   const results = await Promise.all(

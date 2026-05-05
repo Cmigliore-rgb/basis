@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { PlaidApi, PlaidEnvironments, Configuration, Products, CountryCode } = require('plaid');
-const store = require('../store');
 const requireAuth = require('../middleware/requireAuth');
+const db = require('../db');
 
 const config = new Configuration({
   basePath: PlaidEnvironments[process.env.PLAID_ENV || 'production'],
@@ -16,11 +16,10 @@ const config = new Configuration({
 
 const plaidClient = new PlaidApi(config);
 
-// CREATE LINK TOKEN
-router.post('/create_link_token', async (req, res) => {
+router.post('/create_link_token', requireAuth, async (req, res) => {
   try {
     const params = {
-      user: { client_user_id: 'ledger-user' },
+      user: { client_user_id: String(req.user.id) },
       client_name: 'Basis',
       products: [Products.Transactions],
       country_codes: [CountryCode.Us],
@@ -37,15 +36,15 @@ router.post('/create_link_token', async (req, res) => {
   }
 });
 
-// EXCHANGE PUBLIC TOKEN
-router.post('/exchange_token', async (req, res) => {
+router.post('/exchange_token', requireAuth, async (req, res) => {
   const { public_token, institution_name } = req.body;
   try {
     const response = await plaidClient.itemPublicTokenExchange({ public_token });
     const access_token = response.data.access_token;
-    if (!req.app.locals.accessTokens) req.app.locals.accessTokens = [];
-    req.app.locals.accessTokens.push({ access_token, institution_name });
-    store.save(req.app);
+    db.prepare(`
+      INSERT INTO plaid_tokens (user_id, access_token, institution_name)
+      VALUES (?, ?, ?)
+    `).run(req.user.id, access_token, institution_name || 'Unknown');
     res.json({ success: true });
   } catch (err) {
     console.error('exchange_token error:', err.message);
@@ -53,7 +52,6 @@ router.post('/exchange_token', async (req, res) => {
   }
 });
 
-// FETCH ALL ACCOUNTS
 router.get('/accounts', requireAuth, async (req, res) => {
   try {
     const { getAccounts } = require('../data_controller');
@@ -62,6 +60,16 @@ router.get('/accounts', requireAuth, async (req, res) => {
     console.error('accounts error:', err.response?.data || err.message);
     res.status(500).json({ error: err.message });
   }
+});
+
+router.delete('/disconnect/:id', requireAuth, async (req, res) => {
+  db.prepare('DELETE FROM plaid_tokens WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+  res.json({ success: true });
+});
+
+router.get('/connections', requireAuth, (req, res) => {
+  const rows = db.prepare('SELECT id, institution_name, created_at FROM plaid_tokens WHERE user_id = ?').all(req.user.id);
+  res.json(rows);
 });
 
 module.exports = router;

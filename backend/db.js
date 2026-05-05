@@ -56,6 +56,14 @@ db.exec(`
     read INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS plaid_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    access_token TEXT NOT NULL,
+    institution_name TEXT NOT NULL DEFAULT 'Unknown',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
 
 // Seed admin account
