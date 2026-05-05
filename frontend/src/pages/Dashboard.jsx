@@ -2373,7 +2373,6 @@ export default function Dashboard() {
         <div data-tour="brand" style={{ padding: '18px 16px 16px', borderBottom: BORDER, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</div>
-            <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Finance OS</div>
           </div>
           <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
             🔔
