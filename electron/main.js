@@ -9,7 +9,7 @@ function createWindow() {
     height: 900,
     minWidth: 900,
     minHeight: 600,
-    title: 'Basis',
+    title: 'Merit',
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

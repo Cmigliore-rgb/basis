@@ -27,7 +27,7 @@ router.post('/', requireAuth, async (req, res) => {
     const stars = rating ? '★'.repeat(rating) + '☆'.repeat(5 - rating) : 'No rating';
     email.send({
       to: ADMIN,
-      subject: `Basis Feedback: ${stars}`,
+      subject: `Merit Feedback: ${stars}`,
       html: `<div style="font-family:sans-serif;max-width:520px;padding:24px">
         <h2 style="margin-bottom:8px">New Feedback</h2>
         <p><strong>From:</strong> ${req.user.email}</p>

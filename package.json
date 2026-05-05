@@ -1,7 +1,7 @@
 {
-  "name": "basis",
+  "name": "merit",
   "version": "1.0.0",
-  "description": "Basis personal finance platform",
+  "description": "Merit personal finance platform",
   "main": "electron/main.js",
   "type": "commonjs",
   "scripts": {
@@ -14,8 +14,8 @@
   "author": "",
   "license": "ISC",
   "build": {
-    "appId": "com.basis.app",
-    "productName": "Basis",
+    "appId": "com.merit.app",
+    "productName": "Merit",
     "electronVersion": "30.5.1",
     "directories": {
       "output": "release"

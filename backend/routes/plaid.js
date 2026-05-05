@@ -20,7 +20,7 @@ router.post('/create_link_token', requireAuth, async (req, res) => {
   try {
     const params = {
       user: { client_user_id: String(req.user.id) },
-      client_name: 'Basis',
+      client_name: 'Merit',
       products: [Products.Transactions],
       country_codes: [CountryCode.Us],
       language: 'en',

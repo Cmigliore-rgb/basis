@@ -14,7 +14,7 @@ const GREEN    = '#4ade80';
 const PURPLE   = '#a78bfa';
 const YELLOW   = '#fbbf24';
 
-const DOWNLOAD_URL = 'https://github.com/Cmigliore-rgb/basis/releases/download/v1.0.0/Basis.Setup.1.0.0.exe';
+const DOWNLOAD_URL = 'https://github.com/Cmigliore-rgb/basis/releases/download/v1.0.0/Merit.Setup.1.0.0.exe';
 
 const FEATURES = [
   {
@@ -83,7 +83,7 @@ export default function Landing() {
         borderBottom: scrolled ? `1px solid ${BORDER}` : 'none',
         transition: 'all 0.2s',
       }}>
-        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-1px', color: TEXT }}>Basis</div>
+        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-1px', color: TEXT }}>Merit</div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <button onClick={() => navigate('/login')}
             style={{ padding: '8px 18px', background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, color: TEXT2, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
@@ -106,7 +106,7 @@ export default function Landing() {
         </h1>
 
         <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: TEXT2, maxWidth: 520, lineHeight: 1.65, margin: '0 0 40px' }}>
-          Basis brings together a live personal finance dashboard and hands-on education tools for students, instructors, and anyone who wants to get serious about their money.
+          Merit brings together a live personal finance dashboard and hands-on education tools for students, instructors, and anyone who wants to get serious about their money.
         </p>
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -147,7 +147,7 @@ export default function Landing() {
       <section style={{ padding: '80px 40px', borderTop: `1px solid ${BORDER}` }}>
         <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, letterSpacing: '-1.5px', margin: '0 0 12px' }}>Up and running in minutes</h2>
-          <p style={{ fontSize: 17, color: TEXT2, marginBottom: 56 }}>Use Basis in your browser or download the desktop app. Your data stays in sync either way.</p>
+          <p style={{ fontSize: 17, color: TEXT2, marginBottom: 56 }}>Use Merit in your browser or download the desktop app. Your data stays in sync either way.</p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {STEPS.map((s, i) => (
@@ -167,7 +167,7 @@ export default function Landing() {
       <section style={{ padding: '80px 40px', borderTop: `1px solid ${BORDER}` }}>
         <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center', background: CARD, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '56px 48px' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: BLUE, letterSpacing: '1px', marginBottom: 16 }}>DESKTOP APP</div>
-          <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 36px)', fontWeight: 800, letterSpacing: '-1px', margin: '0 0 14px' }}>Take Basis offline</h2>
+          <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 36px)', fontWeight: 800, letterSpacing: '-1px', margin: '0 0 14px' }}>Take Merit offline</h2>
           <p style={{ fontSize: 16, color: TEXT2, lineHeight: 1.65, marginBottom: 36 }}>
             The Windows desktop app runs everything locally with no browser needed. Your data, your machine.
           </p>
@@ -183,7 +183,7 @@ export default function Landing() {
 
       {/* Footer */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, padding: '32px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.5px', color: TEXT }}>Basis</div>
+        <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.5px', color: TEXT }}>Merit</div>
         <div style={{ fontSize: 13, color: TEXT3 }}>Personal finance, built for real life.</div>
         <div style={{ display: 'flex', gap: 20 }}>
           <button onClick={() => navigate('/login')} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 13, cursor: 'pointer' }}>Sign In</button>

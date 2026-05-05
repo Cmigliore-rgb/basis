@@ -67,7 +67,7 @@ db.exec(`
 `);
 
 // Seed admin account
-const adminHash = bcrypt.hashSync('Basis2026!', 8);
+const adminHash = bcrypt.hashSync('Merit2026!', 8);
 db.prepare(`
   INSERT OR IGNORE INTO users (email, password_hash, name, role, tier)
   VALUES ('connoraltonmigliore@gmail.com', ?, 'Connor', 'admin', 'premium')
