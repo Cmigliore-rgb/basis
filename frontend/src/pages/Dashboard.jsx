@@ -1682,7 +1682,7 @@ export default function Dashboard() {
   const [expandedDataset, setExpandedDataset] = useState(null);
   const [sandboxDataset, setSandboxDataset] = useState(null);
   const [connectBannerDismissed, setConnectBannerDismissed] = useState(
-    () => localStorage.getItem('ledger_connect_banner_dismissed') === '1'
+    () => localStorage.getItem('merit_connect_banner_dismissed') === '1'
   );
   const [toast, setToast] = useState(null);
   const [layoutOrder, setLayoutOrder] = useState(() => { try { return JSON.parse(localStorage.getItem('merit_layout_order') || '{}'); } catch { return {}; } });
@@ -3473,7 +3473,7 @@ export default function Dashboard() {
                       + Connect Account
                     </button>
                     <button
-                      onClick={() => { setConnectBannerDismissed(true); localStorage.setItem('ledger_connect_banner_dismissed', '1'); }}
+                      onClick={() => { setConnectBannerDismissed(true); localStorage.setItem('merit_connect_banner_dismissed', '1'); }}
                       style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 16, cursor: 'pointer', lineHeight: 1, padding: '2px 4px', flexShrink: 0 }}
                     >
                       âœ•
@@ -10188,4 +10188,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
 

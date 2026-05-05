@@ -8,21 +8,21 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('ledger_token');
+    const token = localStorage.getItem('merit_token');
     if (!token) { setLoading(false); return; }
     api.get('/auth/me')
       .then(r => setUser(r.data.user))
-      .catch(() => localStorage.removeItem('ledger_token'))
+      .catch(() => localStorage.removeItem('merit_token'))
       .finally(() => setLoading(false));
   }, []);
 
   const login = (token, userData) => {
-    localStorage.setItem('ledger_token', token);
+    localStorage.setItem('merit_token', token);
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('ledger_token');
+    localStorage.removeItem('merit_token');
     setUser(null);
   };
 
