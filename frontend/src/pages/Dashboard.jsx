@@ -6181,7 +6181,7 @@ export default function Dashboard() {
                   {learnCategory === 'analyst' && isPremium && <YieldCurveChart yieldCurve={yieldCurve} />}
 
                   {/* Cards */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, alignItems: 'stretch', ...(learnCategory === 'analyst' && !isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}) }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, alignItems: 'start', ...(learnCategory === 'analyst' && !isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}) }}>
                     {section?.items.map(item => {
                       const expanded = learnExpanded.has(item.id);
                       return (
