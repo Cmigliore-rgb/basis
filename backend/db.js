@@ -64,6 +64,32 @@ db.exec(`
     institution_name TEXT NOT NULL DEFAULT 'Unknown',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS baselines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    avg_monthly_income REAL NOT NULL DEFAULT 0,
+    avg_monthly_spending REAL NOT NULL DEFAULT 0,
+    avg_monthly_net REAL NOT NULL DEFAULT 0,
+    net_stddev REAL NOT NULL DEFAULT 0,
+    category_averages TEXT NOT NULL DEFAULT '{}',
+    seasonal_multipliers TEXT NOT NULL DEFAULT '{}',
+    months_of_data INTEGER NOT NULL DEFAULT 0,
+    computed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(user_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS monthly_actuals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    year INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    income REAL NOT NULL DEFAULT 0,
+    spending REAL NOT NULL DEFAULT 0,
+    net REAL NOT NULL DEFAULT 0,
+    category_totals TEXT NOT NULL DEFAULT '{}',
+    UNIQUE(user_id, year, month)
+  );
 `);
 
 // Seed admin account

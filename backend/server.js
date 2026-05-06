@@ -18,6 +18,7 @@ const professorRoutes = require('./routes/professor');
 const submissionsRoutes = require('./routes/submissions');
 const notificationsRoutes = require('./routes/notifications');
 const feedbackRoutes = require('./routes/feedback');
+const baselineRoutes = require('./routes/baseline');
 const store = require('./store');
 
 const app = express();
@@ -68,6 +69,7 @@ app.use('/api/professor', professorRoutes);
 app.use('/api/submissions', submissionsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/baseline', baselineRoutes);
 
 if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, 'public');

@@ -233,6 +233,136 @@ function NetWorthChart({ snapshots }) {
   );
 }
 
+function BaselineChart({ months, baseline, currentMTD, status, onRefresh, refreshing }) {
+  const W = 620, H = 180, PAD = { top: 20, right: 16, bottom: 32, left: 68 };
+  const innerW = W - PAD.left - PAD.right;
+  const innerH = H - PAD.top - PAD.bottom;
+
+  const allVals = months.flatMap(m => [m.net, m.bandUpper, m.bandLower]);
+  const minV = Math.min(...allVals);
+  const maxV = Math.max(...allVals);
+  const range = maxV - minV || 1;
+  const pad = range * 0.12;
+  const lo = minV - pad, hi = maxV + pad, span = hi - lo;
+
+  const toX = i => PAD.left + (i / Math.max(months.length - 1, 1)) * innerW;
+  const toY = v => PAD.top + innerH - ((v - lo) / span) * innerH;
+  const zeroY = toY(0);
+
+  const netPts = months.map((m, i) => `${toX(i)},${toY(m.net)}`).join(' ');
+  const bandTopPts = months.map((m, i) => `${toX(i)},${toY(m.bandUpper)}`).join(' ');
+  const bandBotPts = [...months].reverse().map((m, i) => `${toX(months.length - 1 - i)},${toY(m.bandLower)}`).join(' ');
+
+  const statusColor = status === 'red' ? '#f87171' : status === 'warning' ? '#fbbf24' : '#4ade80';
+  const statusLabel = status === 'red' ? 'Below Baseline' : status === 'warning' ? 'Trending Low' : 'On Track';
+
+  const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const labelStep = months.length <= 6 ? 1 : months.length <= 9 ? 2 : 3;
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor }} />
+            <span style={{ fontSize: 12, color: statusColor, fontWeight: 600 }}>{statusLabel}</span>
+          </div>
+          {currentMTD && (
+            <span style={{ fontSize: 12, color: '#8e8e93' }}>
+              {currentMTD.pctOfMonth}% through month · projecting{' '}
+              <span style={{ color: currentMTD.projectedNet >= currentMTD.baseline ? '#4ade80' : '#f87171', fontWeight: 600, fontFamily: 'monospace' }}>
+                {currentMTD.projectedNet >= 0 ? '+' : ''}{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(currentMTD.projectedNet)}
+              </span>
+            </span>
+          )}
+        </div>
+        <button onClick={onRefresh} disabled={refreshing}
+          style={{ background: 'none', border: 'none', color: '#444', fontSize: 11, cursor: refreshing ? 'default' : 'pointer', opacity: refreshing ? 0.5 : 1 }}>
+          {refreshing ? 'Updating…' : '↻ Refresh'}
+        </button>
+      </div>
+
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+        {/* Zero line */}
+        {zeroY > PAD.top && zeroY < PAD.top + innerH && (
+          <line x1={PAD.left} x2={W - PAD.right} y1={zeroY} y2={zeroY} stroke="#333" strokeWidth={1} strokeDasharray="3,3" />
+        )}
+
+        {/* Grid lines */}
+        {[0.25, 0.5, 0.75].map(t => {
+          const y = PAD.top + t * innerH;
+          return <line key={t} x1={PAD.left} x2={W - PAD.right} y1={y} y2={y} stroke="#222" strokeWidth={1} />;
+        })}
+
+        {/* Baseline band */}
+        <polygon points={`${bandTopPts} ${bandBotPts}`} fill="#4da3ff" fillOpacity={0.08} />
+        {/* Band border lines */}
+        <polyline points={bandTopPts} fill="none" stroke="#4da3ff" strokeWidth={1} strokeDasharray="4,3" strokeOpacity={0.4} />
+        <polyline points={months.map((m, i) => `${toX(i)},${toY(m.bandLower)}`).join(' ')} fill="none" stroke="#4da3ff" strokeWidth={1} strokeDasharray="4,3" strokeOpacity={0.4} />
+
+        {/* Actual net line — red segments when below baseline */}
+        {months.map((m, i) => {
+          if (i === 0) return null;
+          const prev = months[i - 1];
+          const color = m.belowBaseline || prev.belowBaseline ? '#f87171' : '#4ade80';
+          return (
+            <line key={i}
+              x1={toX(i - 1)} y1={toY(prev.net)}
+              x2={toX(i)} y2={toY(m.net)}
+              stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round"
+            />
+          );
+        })}
+
+        {/* Data point dots */}
+        {months.map((m, i) => (
+          <circle key={i} cx={toX(i)} cy={toY(m.net)} r={3}
+            fill={m.belowBaseline ? '#f87171' : '#4ade80'}
+            stroke="#0f0f0f" strokeWidth={1.5}
+          />
+        ))}
+
+        {/* Y-axis labels */}
+        {[0, 0.33, 0.67, 1].map(t => {
+          const v = lo + t * span;
+          const y = PAD.top + (1 - t) * innerH;
+          return (
+            <text key={t} x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize={9} fill="#555">
+              {v >= 0 ? '+' : ''}{(v / 1000).toFixed(0)}k
+            </text>
+          );
+        })}
+
+        {/* X-axis labels */}
+        {months.map((m, i) => {
+          if (i % labelStep !== 0 && i !== months.length - 1) return null;
+          const [, mo] = m.label.split('-');
+          return (
+            <text key={i} x={toX(i)} y={H - 4} textAnchor="middle" fontSize={9} fill="#555">
+              {MONTH_SHORT[parseInt(mo) - 1]}
+            </text>
+          );
+        })}
+      </svg>
+
+      <div style={{ display: 'flex', gap: 20, marginTop: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 20, height: 2, background: '#4da3ff', opacity: 0.5, borderTop: '1px dashed #4da3ff' }} />
+          <span style={{ fontSize: 10, color: '#555' }}>Your baseline range</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#4ade80' }} />
+          <span style={{ fontSize: 10, color: '#555' }}>Above baseline</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#f87171' }} />
+          <span style={{ fontSize: 10, color: '#555' }}>Below baseline</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TickerBar({ indices, active }) {
   const all = [...indices, ...active];
   if (!all.length) return null;
@@ -1634,6 +1764,8 @@ export default function Dashboard() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [snapshots, setSnapshots] = useState([]);
+  const [baselineData, setBaselineData] = useState(null);
+  const [baselineRefreshing, setBaselineRefreshing] = useState(false);
   const [budgetLimits, setBudgetLimits] = useState({});
   const [editingLimit, setEditingLimit] = useState(null);
   const [limitInput, setLimitInput] = useState('');
@@ -1691,6 +1823,14 @@ export default function Dashboard() {
   const getOrder = (key, defaults) => { const s = layoutOrder[key]; if (!s?.length) return defaults; const ss = new Set(s); return [...s.filter(id => defaults.includes(id)), ...defaults.filter(id => !ss.has(id))]; };
   const handleReorder = (key, defaults) => (srcId, tgtId) => { const order = getOrder(key, defaults); const si = order.indexOf(srcId), ti = order.indexOf(tgtId); if (si === -1 || ti === -1 || si === ti) return; const next = [...order]; next.splice(si, 1); next.splice(ti, 0, srcId); setLayoutOrder(prev => ({ ...prev, [key]: next })); };
   const resetLayout = (key) => setLayoutOrder(prev => { const n = { ...prev }; delete n[key]; return n; });
+  const refreshBaseline = async () => {
+    setBaselineRefreshing(true);
+    try {
+      await api.post('/baseline/compute');
+      const r = await api.get('/baseline');
+      setBaselineData(r.data);
+    } catch {} finally { setBaselineRefreshing(false); }
+  };
   const [showOnboarding, setShowOnboarding] = useState(() => {
     if (!user?.id) return false;
     return localStorage.getItem(`pl_onboarded_${user.id}`) !== '1';
@@ -1993,6 +2133,19 @@ export default function Dashboard() {
       if (tickersRes.status  === 'fulfilled') setMarketTickers(tickersRes.value.data);
       if (sp500Res.status  === 'fulfilled') setSp500Candles(sp500Res.value.data.candles || []);
       if (yieldRes.status  === 'fulfilled') setYieldCurve(yieldRes.value.data);
+
+      // Fetch baseline (auto-compute if user has tokens but no baseline yet)
+      try {
+        const blRes = await api.get('/baseline');
+        if (blRes.data.baseline) {
+          setBaselineData(blRes.data);
+        } else if (allAccounts.length > 0 && !holdData.demo) {
+          // Has real accounts but no baseline — compute it
+          await api.post('/baseline/compute');
+          const blRes2 = await api.get('/baseline');
+          setBaselineData(blRes2.data);
+        }
+      } catch {}
 
       // Record today's net worth snapshot
       const cash      = allAccounts.reduce((s, a) => s + (a.balances?.current || 0), 0);
@@ -3513,89 +3666,45 @@ export default function Dashboard() {
 
                 </DragSection>
                 <DragSection id="health" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
-                {(() => {
-                  const hasData = accounts.length > 0 || transactions.length > 0;
-                  const monthlyExp = activeMonthlySpend > 50 ? activeMonthlySpend : 1620;
-                  const monthsCovered = hasData ? (totalCash / Math.max(monthlyExp, 1)) : 2.1;
+                <div style={{ ...CARD, marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>Cash Flow Baseline</div>
+                    {baselineData?.baseline && (
+                      <span style={{ fontSize: 11, color: TEXT3 }}>
+                        Based on {baselineData.baseline.monthsOfData} mo of history · adjusts for seasonality
+                      </span>
+                    )}
+                  </div>
 
-                  const emergencyScore = Math.round(Math.min(monthsCovered / 6, 1) * 25);
-
-                  const catsWithLimits = activeBudget.filter(b => budgetLimits[b.category]);
-                  const catsUnder = catsWithLimits.filter(b => b.total <= budgetLimits[b.category]);
-                  const budgetScore = catsWithLimits.length > 0
-                    ? Math.round((catsUnder.length / catsWithLimits.length) * 25)
-                    : hasData ? 10 : 13;
-
-                  const investScore = holdings.length === 0
-                    ? (hasData ? 0 : 14)
-                    : Math.round(Math.min(holdings.length / 5, 1) * 25);
-
-                  const linkedGoals = goals.filter(g => g.accountId);
-                  const goalsScore = goals.length === 0
-                    ? (hasData ? 6 : 10)
-                    : linkedGoals.length === 0 ? 8
-                    : Math.round(Math.min(
-                        linkedGoals.reduce((s, g) => {
-                          const acct = accounts.find(a => a.account_id === g.accountId);
-                          const curr = acct ? (acct.balances?.current || 0) : 0;
-                          return s + Math.min(curr / Math.max(g.target, 1), 1);
-                        }, 0) / linkedGoals.length, 1
-                      ) * 25);
-
-                  const total = Math.min(emergencyScore + budgetScore + investScore + goalsScore, 100);
-                  const scoreColor = total >= 80 ? GREEN : total >= 60 ? BLUE : total >= 40 ? YELLOW : RED;
-                  const scoreLabel = total >= 80 ? 'Excellent' : total >= 60 ? 'Good' : total >= 40 ? 'Fair' : 'Needs Work';
-
-                  const gaugeRad = Math.PI * (1 - total / 100);
-                  const gx = (90 + 70 * Math.cos(gaugeRad)).toFixed(1);
-                  const gy = (100 - 70 * Math.sin(gaugeRad)).toFixed(1);
-
-                  const factors = [
-                    { name: 'Emergency Fund',  score: emergencyScore, max: 25, tip: monthsCovered < 3 && hasData ? `${monthsCovered.toFixed(1)} mo covered — target 6` : null },
-                    { name: 'Budget Control',  score: budgetScore,    max: 25, tip: catsWithLimits.length === 0 && hasData ? 'Set limits in Budgeting → Expenses' : null },
-                    { name: 'Investments',     score: investScore,    max: 25, tip: holdings.length === 0 && hasData ? 'No positions — visit Investments' : null },
-                    { name: 'Savings Goals',   score: goalsScore,     max: 25, tip: goals.length === 0 && hasData ? 'Create a goal in Budgeting → Goals' : null },
-                  ];
-
-                  return (
-                    <div style={{ ...CARD, marginBottom: 16, display: 'grid', gridTemplateColumns: '170px 1fr', gap: 28, alignItems: 'center' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <svg width={170} height={108} viewBox="0 0 180 110" style={{ display: 'block' }}>
-                          <path d="M 20 100 A 70 70 0 0 1 160 100" fill="none" stroke={MUTED} strokeWidth={13} strokeLinecap="round" />
-                          {total > 0 && (
-                            <path d={`M 20 100 A 70 70 0 0 1 ${gx} ${gy}`} fill="none" stroke={scoreColor} strokeWidth={13} strokeLinecap="round" />
-                          )}
-                          <text x="90" y="89" textAnchor="middle" fill={scoreColor} fontSize="30" fontWeight="800" fontFamily="monospace">{total}</text>
-                          <text x="90" y="107" textAnchor="middle" fill={scoreColor} fontSize="11" fontWeight="700">{scoreLabel}</text>
-                        </svg>
-                        <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>out of 100 · {!hasData && 'demo'}</div>
-                      </div>
-
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Financial Health Score</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-                          {factors.map(f => {
-                            const r = f.score / f.max;
-                            const fc = r >= 0.8 ? GREEN : r >= 0.6 ? BLUE : r >= 0.4 ? YELLOW : RED;
-                            return (
-                              <div key={f.name}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                  <span style={{ fontSize: 12, color: TEXT }}>{f.name}</span>
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: fc, fontFamily: 'monospace' }}>{f.score}/{f.max}</span>
-                                </div>
-                                <div style={{ height: 5, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
-                                  <div style={{ height: '100%', width: `${r * 100}%`, background: fc, borderRadius: 3, transition: 'width 0.4s ease' }} />
-                                </div>
-                                {f.tip && <div style={{ fontSize: 10, color: TEXT3, marginTop: 3 }}>{f.tip}</div>}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
+                  {!baselineData && !isDemoData && (
+                    <div style={{ padding: '32px 0', textAlign: 'center' }}>
+                      <div style={{ fontSize: 13, color: TEXT2, marginBottom: 12 }}>Connect a bank account to establish your personal baseline.</div>
                     </div>
-                  );
-                })()}
+                  )}
 
+                  {!baselineData && isDemoData && (
+                    <div style={{ padding: '24px 0', textAlign: 'center' }}>
+                      <div style={{ fontSize: 12, color: TEXT3 }}>Baseline analysis requires your real account data.</div>
+                    </div>
+                  )}
+
+                  {baselineData?.baseline && baselineData.months.length > 0 && (
+                    <BaselineChart
+                      months={baselineData.months}
+                      baseline={baselineData.baseline}
+                      currentMTD={baselineData.currentMTD}
+                      status={baselineData.status}
+                      onRefresh={refreshBaseline}
+                      refreshing={baselineRefreshing}
+                    />
+                  )}
+
+                  {baselineData && !baselineData.baseline && (
+                    <div style={{ padding: '24px 0', textAlign: 'center' }}>
+                      <div style={{ fontSize: 12, color: TEXT3, marginBottom: 10 }}>Not enough history yet. Baseline builds after your first month.</div>
+                    </div>
+                  )}
+                </div>
                 </DragSection>
                 <DragSection id="goals" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
                 <div className="lc" style={{ ...CARD, marginBottom: 16 }}>
