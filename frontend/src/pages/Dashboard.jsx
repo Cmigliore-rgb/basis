@@ -233,7 +233,52 @@ function NetWorthChart({ snapshots }) {
   );
 }
 
-function BaselineChart({ months, baseline, currentMTD, status, onRefresh, refreshing }) {
+function buildDemoBaseline() {
+  const AVG_INCOME = 1270, AVG_SPENDING = 1350;
+  const SM = { Q1: 0.92, Q2: 1.00, Q3: 1.03, Q4: 1.18 };
+  const BAND = 110;
+  const getQ = m => m <= 3 ? 'Q1' : m <= 6 ? 'Q2' : m <= 9 ? 'Q3' : 'Q4';
+
+  // Pre-set net values for the last 12 months: realistic deficit persona with 2 red months
+  const NET_VALUES = [-40, -90, -110, -280, -140, -310, -450, -380, 40, 20, -10, -60];
+
+  const now = new Date();
+  const months = NET_VALUES.map((net, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+    const mo = d.getMonth() + 1;
+    const q = getQ(mo);
+    const bl = AVG_INCOME - AVG_SPENDING * SM[q];
+    return {
+      label: `${d.getFullYear()}-${String(mo).padStart(2, '0')}`,
+      income: AVG_INCOME + (i % 3 === 2 ? 40 : 0),
+      spending: AVG_INCOME + (i % 3 === 2 ? 40 : 0) - net,
+      net,
+      baseline: bl,
+      bandUpper: bl + BAND,
+      bandLower: bl - BAND,
+      belowBaseline: net < bl - BAND,
+    };
+  });
+
+  const lastNet = NET_VALUES[NET_VALUES.length - 1];
+  const nowMo = now.getMonth() + 1;
+  const q = getQ(nowMo);
+  const bl = AVG_INCOME - AVG_SPENDING * SM[q];
+  const mtdFrac = now.getDate() / new Date(now.getFullYear(), nowMo, 0).getDate();
+  const projectedNet = lastNet / Math.max(mtdFrac, 0.01);
+  const status = projectedNet < bl - BAND ? 'red' : projectedNet < bl ? 'warning' : 'good';
+
+  return {
+    baseline: { avgMonthlyIncome: AVG_INCOME, avgMonthlySpending: AVG_SPENDING, avgMonthlyNet: -80, monthsOfData: 12 },
+    months,
+    currentMTD: { net: Math.round(lastNet * mtdFrac), projectedNet: Math.round(projectedNet), baseline: bl, pctOfMonth: Math.round(mtdFrac * 100) },
+    status,
+    isDemo: true,
+  };
+}
+const DEMO_BASELINE = buildDemoBaseline();
+
+function BaselineChart({ months, baseline, currentMTD, status, onRefresh, refreshing, isDemo }) {
   const W = 620, H = 180, PAD = { top: 20, right: 16, bottom: 32, left: 68 };
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
@@ -276,10 +321,12 @@ function BaselineChart({ months, baseline, currentMTD, status, onRefresh, refres
             </span>
           )}
         </div>
-        <button onClick={onRefresh} disabled={refreshing}
-          style={{ background: 'none', border: 'none', color: '#444', fontSize: 11, cursor: refreshing ? 'default' : 'pointer', opacity: refreshing ? 0.5 : 1 }}>
-          {refreshing ? 'Updating…' : '↻ Refresh'}
-        </button>
+        {!isDemo && (
+          <button onClick={onRefresh} disabled={refreshing}
+            style={{ background: 'none', border: 'none', color: '#444', fontSize: 11, cursor: refreshing ? 'default' : 'pointer', opacity: refreshing ? 0.5 : 1 }}>
+            {refreshing ? 'Updating…' : '↻ Refresh'}
+          </button>
+        )}
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
@@ -3676,34 +3723,32 @@ export default function Dashboard() {
                     )}
                   </div>
 
-                  {!baselineData && !isDemoData && (
-                    <div style={{ padding: '32px 0', textAlign: 'center' }}>
-                      <div style={{ fontSize: 13, color: TEXT2, marginBottom: 12 }}>Connect a bank account to establish your personal baseline.</div>
-                    </div>
-                  )}
-
-                  {!baselineData && isDemoData && (
-                    <div style={{ padding: '24px 0', textAlign: 'center' }}>
-                      <div style={{ fontSize: 12, color: TEXT3 }}>Baseline analysis requires your real account data.</div>
-                    </div>
-                  )}
-
-                  {baselineData?.baseline && baselineData.months.length > 0 && (
-                    <BaselineChart
-                      months={baselineData.months}
-                      baseline={baselineData.baseline}
-                      currentMTD={baselineData.currentMTD}
-                      status={baselineData.status}
-                      onRefresh={refreshBaseline}
-                      refreshing={baselineRefreshing}
-                    />
-                  )}
-
-                  {baselineData && !baselineData.baseline && (
-                    <div style={{ padding: '24px 0', textAlign: 'center' }}>
-                      <div style={{ fontSize: 12, color: TEXT3, marginBottom: 10 }}>Not enough history yet. Baseline builds after your first month.</div>
-                    </div>
-                  )}
+                  {(() => {
+                    const display = baselineData?.baseline ? baselineData : (isDemoData ? DEMO_BASELINE : null);
+                    if (!display) return (
+                      <div style={{ padding: '32px 0', textAlign: 'center' }}>
+                        <div style={{ fontSize: 13, color: TEXT2 }}>Connect a bank account to establish your personal baseline.</div>
+                      </div>
+                    );
+                    return (
+                      <>
+                        {display.isDemo && (
+                          <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 12, display: 'inline-block' }}>
+                            Demo data — connect an account to see your real baseline
+                          </div>
+                        )}
+                        <BaselineChart
+                          months={display.months}
+                          baseline={display.baseline}
+                          currentMTD={display.currentMTD}
+                          status={display.status}
+                          onRefresh={refreshBaseline}
+                          refreshing={baselineRefreshing}
+                          isDemo={!!display.isDemo}
+                        />
+                      </>
+                    );
+                  })()}
                 </div>
                 </DragSection>
                 <DragSection id="goals" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
