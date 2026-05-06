@@ -6185,14 +6185,14 @@ export default function Dashboard() {
                     {section?.items.map(item => {
                       const expanded = learnExpanded.has(item.id);
                       return (
-                        <div key={item.id} className="lc" style={{ ...CARD, cursor: 'pointer', transition: 'all 0.2s' }}
+                        <div key={item.id} className="lc" style={{ ...CARD, cursor: 'pointer', transition: 'all 0.2s', ...(!expanded ? { minHeight: 112 } : {}) }}
                           onClick={() => toggleExpand(item.id)}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                               <span style={{ fontSize: 24 }}>{item.icon}</span>
                               <div>
                                 <div style={{ fontWeight: 700, fontSize: 15 }}>{item.title}</div>
-                                <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>{item.summary}</div>
+                                <div style={{ fontSize: 12, color: TEXT2, marginTop: 2, ...(!expanded ? { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}) }}>{item.summary}</div>
                               </div>
                             </div>
                             <span style={{ color: TEXT3, fontSize: 18, marginLeft: 8, flexShrink: 0 }}>{expanded ? '−' : '+'}</span>
