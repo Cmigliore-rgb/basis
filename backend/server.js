@@ -22,9 +22,16 @@ const store = require('./store');
 
 const app = express();
 
+app.use((req, res, next) => {
+  if (req.headers['x-forwarded-proto'] === 'http') {
+    return res.redirect(301, `https://${req.headers.host}${req.url}`);
+  }
+  next();
+});
+
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || origin.includes('localhost') || origin.includes('172.20.142.211') || origin.includes('ngrok-free') || origin.includes('ngrok.io') || origin.includes('railway.app')) {
+    if (!origin || origin.includes('localhost') || origin.includes('172.20.142.211') || origin.includes('ngrok-free') || origin.includes('ngrok.io') || origin.includes('railway.app') || origin.includes('peakledger.app')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
