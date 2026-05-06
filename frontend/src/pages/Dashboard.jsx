@@ -732,7 +732,7 @@ const LEARN_CONTENT = [
         formula: 'Net Worth = Total Assets − Total Liabilities',
         example: 'You have $15,000 in savings, $30,000 in investments, and $8,000 in credit card debt → Net Worth = $37,000.' },
       { id: '503020', title: 'A Simple Budgeting Framework', icon: '📊',
-        summary: 'Split spending into needs, wants, and savings — then adjust the ratios to fit your life.',
+        summary: 'Split spending into needs, wants, and savings. Adjust the ratios to fit your own situation.',
         body: 'A common starting point divides take-home pay into three buckets: Needs (essentials like rent, utilities, groceries, minimum debt payments), Wants (dining out, subscriptions, entertainment, travel), and Savings/Debt payoff (emergency fund, retirement contributions, investments, extra debt payoff). The exact percentages matter far less than the habit of separating these buckets intentionally. Someone in a high cost-of-living city might spend 65% on needs. A recent grad aggressively paying down loans might push savings to 30%. Use the categories as a diagnostic tool, not a grade.',
         formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Savings Rate = <Frac n="Income − Expenses" d="Income" /> × 100</span>,
         example: 'Income: $5,000/month → $2,500 needs, $1,500 wants, $1,000 savings/investing.' },
@@ -5101,11 +5101,11 @@ export default function Dashboard() {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                       {[
-                        { label: 'Estimated Federal Tax',   value: fmt(tax),             color: RED   },
                         { label: 'Effective Tax Rate',       value: `${effectiveRate.toFixed(1)}%`,   color: TEXT2 },
                         { label: 'Marginal Rate (Top Bracket)', value: `${marginalRate.toFixed(0)}%`, color: TEXT2 },
                         { label: 'After-Tax Income',         value: fmt(afterTax),        color: GREEN },
                         { label: 'Monthly Take-Home',        value: fmt(monthlyTakeHome), color: GREEN },
+                        { label: 'Estimated Federal Tax',   value: fmt(tax),             color: TEXT2 },
                       ].map(({ label, value, color }) => (
                         <div key={label} className="lc" style={{ ...CARD, padding: '16px 20px', flex: 1 }}>
                           <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
