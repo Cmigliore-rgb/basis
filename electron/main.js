@@ -1,7 +1,7 @@
 ﻿'use strict';
 const { app, BrowserWindow, shell } = require('electron');
 
-const BACKEND_URL = 'https://basis-production-826f.up.railway.app';
+const BACKEND_URL = 'https://peakledger.app';
 
 function createWindow() {
   const win = new BrowserWindow({
