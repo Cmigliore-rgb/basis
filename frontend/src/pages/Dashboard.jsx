@@ -6145,7 +6145,7 @@ export default function Dashboard() {
                               onDragOver={e => e.preventDefault()}
                               onDrop={e => { e.preventDefault(); const [, srcId] = e.dataTransfer.getData('text/plain').split('|||'); if (srcId !== s.category) handleReorder('learn-tabs', _LN_DEF)(srcId, s.category); }}
                               onClick={() => { setLearnCategory(s.category); setLearnExpanded(new Set()); }}
-                              style={{ padding: '8px 20px', borderRadius: 8, border: learnCategory === s.category ? `1px solid ${s.color}` : BORDER, background: learnCategory === s.category ? `${s.color}18` : MUTED, color: learnCategory === s.category ? s.color : TEXT2, fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s' }}>
+                              style={{ padding: '8px 20px', minWidth: 130, textAlign: 'center', borderRadius: 8, border: learnCategory === s.category ? `1px solid ${s.color}` : BORDER, background: learnCategory === s.category ? `${s.color}18` : MUTED, color: learnCategory === s.category ? s.color : TEXT2, fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s' }}>
                               {s.label}
                             </button>
                           );
