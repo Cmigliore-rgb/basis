@@ -1599,7 +1599,7 @@ const SANDBOX_DATA = (() => {
   };
 })();
 
-function DragSection({ id, panel, order, onReorder, children }) {
+function DragSection({ id, panel, order, onReorder, children, handleTop = 10 }) {
   const [over, setOver] = React.useState(false);
   return (
     <div
@@ -1616,7 +1616,7 @@ function DragSection({ id, panel, order, onReorder, children }) {
       style={{ order: order.indexOf(id), outline: over ? '2px dashed rgba(77,163,255,0.4)' : '2px solid transparent', outlineOffset: 3, borderRadius: 12, position: 'relative' }}
       className="drag-section"
     >
-      <div className="drag-handle" title="Drag to reorder" style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab', color: '#555', fontSize: 13, borderRadius: 5, background: 'rgba(255,255,255,0.06)', opacity: 0, transition: 'opacity 0.15s', userSelect: 'none' }}>⠿</div>
+      <div className="drag-handle" title="Drag to reorder" style={{ position: 'absolute', top: handleTop, right: 10, zIndex: 10, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab', color: '#555', fontSize: 13, borderRadius: 5, background: 'rgba(255,255,255,0.06)', opacity: 0, transition: 'opacity 0.15s', userSelect: 'none' }}>⠿</div>
       {children}
     </div>
   );
@@ -3487,7 +3487,7 @@ export default function Dashboard() {
                 {canSeeAI && <AdviceBox onGetAdvice={() => getAdvice('overview')} loading={adviceState.overview?.loading} text={adviceState.overview?.text} />}
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <DragSection id="stats" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
+                <DragSection id="stats" panel="overview" order={_ovOrder} onReorder={_ovReorder} handleTop={30}>
                 <div data-tour="overview-cards" style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24, marginTop: 24 }}>
                   {[
                     { label: 'Net Worth',       value: fmt(netWorth),       sub: 'Cash + Portfolio' },
@@ -3735,7 +3735,7 @@ export default function Dashboard() {
                 </div>
                 </DragSection>
 
-                <DragSection id="calendar" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
+                <DragSection id="calendar" panel="overview" order={_ovOrder} onReorder={_ovReorder} handleTop={22}>
                 {(() => {
                   const EVENT_TYPES = {
                     reminder:     { label: 'Reminder',     color: BLUE   },
