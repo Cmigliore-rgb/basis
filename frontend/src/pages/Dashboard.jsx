@@ -8007,7 +8007,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Feedback */}
-                <div style={{ ...CARD, marginBottom: 16 }}>
+                {user?.role !== 'admin' && <div style={{ ...CARD, marginBottom: 16 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Send Feedback</div>
                   <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Suggestions, bugs, or anything on your mind.</div>
 
@@ -8041,10 +8041,10 @@ export default function Dashboard() {
                       </button>
                     </>
                   )}
-                </div>
+                </div>}
 
                 {/* Contact Support */}
-                <div style={{ ...CARD, marginBottom: 16 }}>
+                {user?.role !== 'admin' && <div style={{ ...CARD, marginBottom: 16 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Contact Support</div>
                   <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Have a question or need help? We'll reply to {user?.email}.</div>
                   {contactSent ? (
@@ -8078,7 +8078,7 @@ export default function Dashboard() {
                       </button>
                     </>
                   )}
-                </div>
+                </div>}
 
                 <div style={{ ...CARD }}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Account</div>
