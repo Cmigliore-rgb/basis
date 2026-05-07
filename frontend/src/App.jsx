@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Landing from './pages/Landing.jsx';
+import Privacy from './pages/Privacy.jsx';
+import Terms from './pages/Terms.jsx';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -29,6 +31,8 @@ export default function App() {
           <Route path="/login"     element={<GuestRoute><Login /></GuestRoute>} />
           <Route path="/register"  element={<GuestRoute><Register /></GuestRoute>} />
           <Route path="/app/*"     element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/privacy"   element={<Privacy />} />
+          <Route path="/terms"     element={<Terms />} />
           <Route path="*"          element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

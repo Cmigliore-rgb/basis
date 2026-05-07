@@ -207,6 +207,13 @@ export default function Register() {
           Already have an account?{' '}
           <Link to="/login" style={{ color: BLUE_BTN, textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
         </div>
+
+        <div style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: TEXT3, lineHeight: 1.6 }}>
+          By creating an account you agree to our{' '}
+          <Link to="/terms" style={{ color: TEXT3, textDecoration: 'underline' }}>Terms of Service</Link>{' '}
+          and{' '}
+          <Link to="/privacy" style={{ color: TEXT3, textDecoration: 'underline' }}>Privacy Policy</Link>.
+        </div>
       </div>
 
     </div>

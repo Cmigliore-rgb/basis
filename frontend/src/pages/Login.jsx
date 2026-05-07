@@ -114,6 +114,12 @@ export default function Login() {
           Don't have an account?{' '}
           <Link to="/register" style={{ color: BLUE_BTN, textDecoration: 'none', fontWeight: 600 }}>Create one</Link>
         </div>
+
+        <div style={{ textAlign: 'center', marginTop: 32, fontSize: 11, color: TEXT3 }}>
+          <Link to="/privacy" style={{ color: TEXT3, textDecoration: 'none' }}>Privacy Policy</Link>
+          {' · '}
+          <Link to="/terms" style={{ color: TEXT3, textDecoration: 'none' }}>Terms of Service</Link>
+        </div>
       </div>
 
     </div>
