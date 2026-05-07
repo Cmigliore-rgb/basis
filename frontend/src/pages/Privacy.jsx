@@ -30,9 +30,9 @@ export default function Privacy() {
         </p>
 
         <h2 style={S.h2}>1. Information We Collect</h2>
-        <p style={S.p}><strong style={{ color: '#e2e8f0' }}>Account information</strong> — when you register, we collect your name, email address, and a
+        <p style={S.p}><strong style={{ color: '#e2e8f0' }}>Account information:</strong> when you register, we collect your name, email address, and a
           bcrypt-hashed version of your password. We never store your plaintext password.</p>
-        <p style={S.p}><strong style={{ color: '#e2e8f0' }}>Financial data via Plaid</strong> — if you choose to connect a bank or investment account, we
+        <p style={S.p}><strong style={{ color: '#e2e8f0' }}>Financial data via Plaid:</strong> if you choose to connect a bank or investment account, we
           access the following through Plaid Technologies, Inc.:</p>
         <ul style={S.ul}>
           <li style={S.li}>Account balances and account names</li>
@@ -40,9 +40,9 @@ export default function Privacy() {
           <li style={S.li}>Investment holdings and portfolio values</li>
           <li style={S.li}>Liability details (credit cards, student loans, mortgages)</li>
         </ul>
-        <p style={S.p}><strong style={{ color: '#e2e8f0' }}>Manually entered data</strong> — liabilities, baselines, and other data you enter directly
+        <p style={S.p}><strong style={{ color: '#e2e8f0' }}>Manually entered data:</strong> liabilities, baselines, and other data you enter directly
           into the Service.</p>
-        <p style={S.p}><strong style={{ color: '#e2e8f0' }}>Usage data</strong> — we may log standard server-side request logs (IP address, browser
+        <p style={S.p}><strong style={{ color: '#e2e8f0' }}>Usage data:</strong> we may log standard server-side request logs (IP address, browser
           type, pages visited) for security and debugging purposes.</p>
 
         <h2 style={S.h2}>2. How We Use Your Information</h2>
@@ -56,8 +56,8 @@ export default function Privacy() {
           your financial data to train machine learning models or for advertising.</p>
 
         <h2 style={S.h2}>3. How We Store and Protect Your Data</h2>
-        <p style={S.p}>Your data is stored in a secured server-side database. Plaid access tokens — which
-          authorize us to retrieve your bank data — are stored exclusively on our servers and are never
+        <p style={S.p}>Your data is stored in a secured server-side database. Plaid access tokens, which
+          authorize us to retrieve your bank data, are stored exclusively on our servers and are never
           transmitted to your browser or any third party other than Plaid.</p>
         <p style={S.p}>We use industry-standard security practices including HTTPS, hashed passwords, and
           bearer-token authentication. However, no method of transmission or storage is 100% secure,
@@ -74,25 +74,20 @@ export default function Privacy() {
 
         <h2 style={S.h2}>5. Data Retention and Deletion</h2>
         <p style={S.p}>We retain your data for as long as your account is active. You may permanently delete
-          your account and all associated data at any time from Settings → Account → Delete Account.
-          This action removes all financial data, Plaid connections, and account information from our
-          servers and is irreversible.</p>
+          your account and all associated data at any time from Settings, under Account, using the
+          Delete Account option. This action removes all financial data, Plaid connections, and account
+          information from our servers and is irreversible.</p>
 
         <h2 style={S.h2}>6. Cookies and Local Storage</h2>
         <p style={S.p}>We use your browser's local storage to persist your authentication token across
           sessions. We do not use third-party tracking cookies or advertising cookies.</p>
 
-        <h2 style={S.h2}>7. Children's Privacy</h2>
-        <p style={S.p}>The Service is not directed to individuals under the age of 18. We do not knowingly
-          collect personal information from minors. If you believe a minor has provided us with
-          information, please contact us so we can delete it.</p>
-
-        <h2 style={S.h2}>8. Changes to This Policy</h2>
+        <h2 style={S.h2}>7. Changes to This Policy</h2>
         <p style={S.p}>We may update this Privacy Policy from time to time. We will notify you of material
           changes by updating the "Last updated" date at the top of this page. Continued use of the
           Service after changes constitutes acceptance of the updated policy.</p>
 
-        <h2 style={S.h2}>9. Contact</h2>
+        <h2 style={S.h2}>8. Contact</h2>
         <p style={S.p}>If you have questions about this Privacy Policy or your data, contact us at{' '}
           <a href="mailto:support@peakledger.app" style={S.a}>support@peakledger.app</a>.</p>
       </div>

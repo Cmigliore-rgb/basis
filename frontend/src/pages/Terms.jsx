@@ -30,9 +30,10 @@ export default function Terms() {
         </p>
 
         <h2 style={S.h2}>1. Eligibility</h2>
-        <p style={S.p}>You must be at least 18 years old to use the Service. By using the Service, you
-          represent that you meet this requirement and that all information you provide is accurate
-          and complete.</p>
+        <p style={S.p}>You may use the educational features of the Service at any age. To connect financial
+          accounts through Plaid, you must have the legal capacity to enter into contracts in your
+          jurisdiction. By connecting a financial account, you represent that you have that capacity
+          and that all information you provide is accurate and complete.</p>
 
         <h2 style={S.h2}>2. Your Account</h2>
         <p style={S.p}>You are responsible for maintaining the confidentiality of your account credentials
@@ -78,8 +79,9 @@ export default function Terms() {
           reasonable notice where practicable.</p>
 
         <h2 style={S.h2}>8. Termination</h2>
-        <p style={S.p}>You may terminate your account at any time from Settings → Account → Delete Account.
-          We may suspend or terminate your access if you violate these Terms, with or without notice.</p>
+        <p style={S.p}>You may terminate your account at any time from Settings, under Account, using the
+          Delete Account option. We may suspend or terminate your access if you violate these Terms,
+          with or without notice.</p>
         <p style={S.p}>Upon termination, all your data is permanently deleted from our servers.</p>
 
         <h2 style={S.h2}>9. Disclaimer of Warranties</h2>
