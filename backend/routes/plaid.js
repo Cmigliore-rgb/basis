@@ -25,6 +25,7 @@ router.post('/create_link_token', requireAuth, async (req, res) => {
       optional_products: [Products.Investments],
       country_codes: [CountryCode.Us],
       language: 'en',
+      webhook: 'https://peakledger.app/api/plaid/webhook',
     };
     if (process.env.PLAID_REDIRECT_URI) {
       params.redirect_uri = process.env.PLAID_REDIRECT_URI;
@@ -72,6 +73,21 @@ router.delete('/disconnect/:id', requireAuth, async (req, res) => {
 router.get('/connections', requireAuth, (req, res) => {
   const rows = db.prepare('SELECT id, institution_name, created_at FROM plaid_tokens WHERE user_id = ?').all(req.user.id);
   res.json(rows);
+});
+
+router.post('/webhook', express.json(), (req, res) => {
+  const { webhook_type, webhook_code, item_id } = req.body;
+  console.log(`Plaid webhook: ${webhook_type}/${webhook_code} item=${item_id}`);
+
+  if (webhook_type === 'TRANSACTIONS' && ['DEFAULT_UPDATE', 'INITIAL_UPDATE', 'HISTORICAL_UPDATE'].includes(webhook_code)) {
+    // New transactions available — logged for now, real-time push can be added later
+  }
+
+  if (webhook_type === 'ITEM' && webhook_code === 'ERROR') {
+    console.warn(`Plaid item error for item ${item_id}:`, req.body.error);
+  }
+
+  res.json({ received: true });
 });
 
 module.exports = router;
