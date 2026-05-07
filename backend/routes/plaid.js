@@ -22,7 +22,7 @@ router.post('/create_link_token', requireAuth, async (req, res) => {
       user: { client_user_id: String(req.user.id) },
       client_name: 'PeakLedger',
       products: [Products.Transactions],
-      optional_products: [Products.Investments],
+      optional_products: [Products.Investments, Products.Liabilities],
       country_codes: [CountryCode.Us],
       language: 'en',
       webhook: 'https://peakledger.app/api/plaid/webhook',
@@ -61,6 +61,16 @@ router.get('/accounts', requireAuth, async (req, res) => {
     res.json(await getAccounts(req));
   } catch (err) {
     console.error('accounts error:', err.response?.data || err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/liabilities', requireAuth, async (req, res) => {
+  try {
+    const { getLiabilities } = require('../data_controller');
+    res.json(await getLiabilities(req));
+  } catch (err) {
+    console.error('liabilities error:', err.response?.data || err.message);
     res.status(500).json({ error: err.message });
   }
 });

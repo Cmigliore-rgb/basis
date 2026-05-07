@@ -78,4 +78,23 @@ async function getHoldings(req) {
   return { holdings };
 }
 
-module.exports = { getAccounts, getTransactions, getHoldings };
+async function getLiabilities(req) {
+  const tokens = getUserTokens(req.user.id);
+  if (!tokens.length) return { credit: [], student: [], mortgage: [], demo: true };
+
+  const results = await Promise.all(
+    tokens.map(({ access_token }) =>
+      plaidClient.liabilitiesGet({ access_token })
+        .then(r => r.data.liabilities)
+        .catch(() => null)
+    )
+  );
+
+  const credit   = results.flatMap(r => r?.credit   || []);
+  const student  = results.flatMap(r => r?.student  || []);
+  const mortgage = results.flatMap(r => r?.mortgage || []);
+
+  return { credit, student, mortgage };
+}
+
+module.exports = { getAccounts, getTransactions, getHoldings, getLiabilities };

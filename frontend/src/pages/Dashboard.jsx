@@ -1878,6 +1878,7 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState([]);
   const [holdings, setHoldings] = useState([]);
   const [noBrokerage, setNoBrokerage] = useState(false);
+  const [liabilities, setLiabilities] = useState({ credit: [], student: [], mortgage: [] });
   const [budget, setBudget] = useState([]);
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -2052,6 +2053,7 @@ export default function Dashboard() {
     return () => window.removeEventListener('resize', handle);
   }, []);
   const g3 = isMobile ? '1fr 1fr' : 'repeat(3, 1fr)';
+  const g4 = isMobile ? '1fr 1fr' : 'repeat(4, 1fr)';
   const g2 = isMobile ? '1fr' : '1fr 1fr';
 
   const [tvmPV, setTvmPV] = useState('1000');
@@ -2221,12 +2223,13 @@ export default function Dashboard() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [acc, tellerAcc, txns, tellerTxns, hold, news, snaps, limits, goalsRes, marketRes, tickersRes, sp500Res, yieldRes] = await Promise.allSettled([
+      const [acc, tellerAcc, txns, tellerTxns, hold, liabRes, news, snaps, limits, goalsRes, marketRes, tickersRes, sp500Res, yieldRes] = await Promise.allSettled([
         api.get('/plaid/accounts'),
         api.get('/teller/accounts'),
         api.get('/transactions'),
         api.get('/teller/transactions'),
         api.get('/investments/holdings'),
+        api.get('/plaid/liabilities'),
         api.get('/news'),
         api.get('/snapshots'),
         api.get('/budget/limits'),
@@ -2266,6 +2269,14 @@ export default function Dashboard() {
       const allHoldings = holdData.holdings || [];
       setHoldings(allHoldings);
       setNoBrokerage(!!holdData.noBrokerage);
+
+      if (liabRes.status === 'fulfilled') {
+        setLiabilities({
+          credit:   liabRes.value.data.credit   || [],
+          student:  liabRes.value.data.student  || [],
+          mortgage: liabRes.value.data.mortgage || [],
+        });
+      }
       if (news.status  === 'fulfilled') setArticles(news.value.data.articles || []);
       if (snaps.status === 'fulfilled') setSnapshots(snaps.value.data.snapshots || []);
       if (limits.status   === 'fulfilled') setBudgetLimits(limits.value.data.limits   || {});
@@ -2291,7 +2302,13 @@ export default function Dashboard() {
       // Record today's net worth snapshot
       const cash      = allAccounts.reduce((s, a) => s + (a.balances?.current || 0), 0);
       const portfolio = allHoldings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
-      const nw = cash + portfolio;
+      const liabData  = liabRes.status === 'fulfilled' ? liabRes.value.data : {};
+      const totalLiab = [
+        ...(liabData.credit   || []),
+        ...(liabData.student  || []),
+        ...(liabData.mortgage || []),
+      ].reduce((s, l) => s + (l.balances?.current || 0), 0);
+      const nw = cash + portfolio - totalLiab;
       if (nw > 0) {
         api.post('/snapshots', { netWorth: nw }).catch(() => {});
       }
@@ -2488,9 +2505,10 @@ export default function Dashboard() {
     }
   }, [accounts, transactions, holdings, budget, budgetLimits]);
 
-  const totalCash      = accounts.filter(a => !a.closed && a.type !== 'investment').reduce((s, a) => s + (a.balances?.current || 0), 0);
-  const totalPortfolio = holdings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
-  const netWorth       = totalCash + totalPortfolio;
+  const totalCash        = accounts.filter(a => !a.closed && a.type !== 'investment').reduce((s, a) => s + (a.balances?.current || 0), 0);
+  const totalPortfolio   = holdings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
+  const totalLiabilities = [...(liabilities.credit || []), ...(liabilities.student || []), ...(liabilities.mortgage || [])].reduce((s, l) => s + (l.balances?.current || 0), 0);
+  const netWorth         = totalCash + totalPortfolio - totalLiabilities;
   const monthlySpend   = budget.reduce((s, b) => s + b.total, 0);
 
   const sbData = sandboxDataset ? (SANDBOX_DATA[sandboxDataset] || {}) : {};
@@ -3836,13 +3854,13 @@ export default function Dashboard() {
                 <DragSection id="stats" panel="overview" order={_ovOrder} onReorder={_ovReorder} handleTop={30}>
                 <div data-tour="overview-cards" style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24, marginTop: 24 }}>
                   {[
-                    { label: 'Net Worth',       value: fmt(netWorth),       sub: 'Cash + Portfolio' },
-                    { label: 'Cash & Deposits', value: fmt(totalCash),      sub: (() => { const n = accounts.filter(a => !a.closed && a.type !== 'investment').length; return `${n} account${n !== 1 ? 's' : ''}`; })() },
-                    { label: 'Portfolio Value', value: fmt(totalPortfolio), sub: `${holdings.length} position${holdings.length !== 1 ? 's' : ''}` },
-                  ].map(({ label, value, sub }) => (
+                    { label: 'Net Worth',         value: fmt(netWorth),                   sub: 'Assets − Liabilities', color: netWorth >= 0 ? GREEN : RED },
+                    { label: 'Total Assets',      value: fmt(totalCash + totalPortfolio), sub: (() => { const n = accounts.filter(a => !a.closed && a.type !== 'investment').length; return `${n} account${n !== 1 ? 's' : ''} · ${holdings.length} position${holdings.length !== 1 ? 's' : ''}`; })() },
+                    { label: 'Total Liabilities', value: fmt(totalLiabilities),           sub: (() => { const n = (liabilities.credit?.length || 0) + (liabilities.student?.length || 0) + (liabilities.mortgage?.length || 0); return `${n} account${n !== 1 ? 's' : ''}`; })() },
+                  ].map(({ label, value, sub, color }) => (
                     <div key={label} className="lc" style={CARD}>
                       <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-                      <div style={{ fontSize: 30, fontWeight: 700, margin: '8px 0 4px', letterSpacing: '-1px' }}>{value}</div>
+                      <div style={{ fontSize: 30, fontWeight: 700, margin: '8px 0 4px', letterSpacing: '-1px', color: color || TEXT }}>{value}</div>
                       <div style={{ fontSize: 12, color: TEXT2 }}>{sub}</div>
                     </div>
                   ))}
@@ -3861,6 +3879,130 @@ export default function Dashboard() {
                 </div>
 
                 </DragSection>
+                {totalLiabilities > 0 && (
+                <DragSection id="liabilities" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
+                <div style={{ ...CARD, marginBottom: 16 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Liabilities</div>
+                  <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>Outstanding balances across credit cards, loans, and mortgages.</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {(liabilities.credit || []).length > 0 && (
+                      <div>
+                        <div style={{ fontSize: 11, color: TEXT2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Credit Cards</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {liabilities.credit.map((c, i) => {
+                            const acct = accounts.find(a => a.account_id === c.account_id);
+                            const name = acct?.name || `Credit Card ${i + 1}`;
+                            const bal = c.balances?.current || 0;
+                            const limit = c.balances?.limit || null;
+                            const util = limit ? Math.round((bal / limit) * 100) : null;
+                            const apr = c.aprs?.find(a => a.apr_type === 'purchase_apr')?.apr_percentage;
+                            const minPmt = c.minimum_payment_amount;
+                            const nextDue = c.next_payment_due_date;
+                            return (
+                              <div key={c.account_id || i} style={{ padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
+                                  <div style={{ fontSize: 15, fontWeight: 700, color: RED, fontFamily: 'monospace' }}>{fmt(bal)}</div>
+                                </div>
+                                {limit && (
+                                  <div style={{ marginBottom: 8 }}>
+                                    <div style={{ height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden' }}>
+                                      <div style={{ height: '100%', width: `${Math.min(util, 100)}%`, background: util > 80 ? RED : util > 50 ? YELLOW : GREEN, borderRadius: 2 }} />
+                                    </div>
+                                    <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{util}% of {fmt(limit)} limit used</div>
+                                  </div>
+                                )}
+                                <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2 }}>
+                                  {apr != null && <span>APR {apr.toFixed(2)}%</span>}
+                                  {minPmt != null && <span>Min payment {fmt(minPmt)}</span>}
+                                  {nextDue && <span>Due {new Date(nextDue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {(liabilities.student || []).length > 0 && (
+                      <div>
+                        <div style={{ fontSize: 11, color: TEXT2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Student Loans</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {liabilities.student.map((s, i) => {
+                            const acct = accounts.find(a => a.account_id === s.account_id);
+                            const name = acct?.name || `Student Loan ${i + 1}`;
+                            const bal = s.balances?.current || s.outstanding_interest_amount || 0;
+                            const origBal = s.origination_principal_amount;
+                            const pct = origBal ? Math.round((bal / origBal) * 100) : null;
+                            const rate = s.interest_rate_percentage;
+                            const minPmt = s.minimum_payment_amount;
+                            const nextDue = s.next_payment_due_date;
+                            return (
+                              <div key={s.account_id || i} style={{ padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
+                                  <div style={{ fontSize: 15, fontWeight: 700, color: RED, fontFamily: 'monospace' }}>{fmt(bal)}</div>
+                                </div>
+                                {pct != null && (
+                                  <div style={{ marginBottom: 8 }}>
+                                    <div style={{ height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden' }}>
+                                      <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: BLUE, borderRadius: 2 }} />
+                                    </div>
+                                    <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{pct}% of {fmt(origBal)} original balance remaining</div>
+                                  </div>
+                                )}
+                                <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2 }}>
+                                  {rate != null && <span>Rate {rate.toFixed(2)}%</span>}
+                                  {minPmt != null && <span>Min payment {fmt(minPmt)}</span>}
+                                  {nextDue && <span>Due {new Date(nextDue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {(liabilities.mortgage || []).length > 0 && (
+                      <div>
+                        <div style={{ fontSize: 11, color: TEXT2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Mortgages</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {liabilities.mortgage.map((m, i) => {
+                            const acct = accounts.find(a => a.account_id === m.account_id);
+                            const name = acct?.name || `Mortgage ${i + 1}`;
+                            const bal = m.balances?.current || 0;
+                            const origBal = m.origination_principal_amount;
+                            const pct = origBal ? Math.round((bal / origBal) * 100) : null;
+                            const rate = m.interest_rate?.percentage;
+                            const nextPmt = m.next_monthly_payment;
+                            const nextDue = m.next_payment_due_date;
+                            return (
+                              <div key={m.account_id || i} style={{ padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
+                                  <div style={{ fontSize: 15, fontWeight: 700, color: RED, fontFamily: 'monospace' }}>{fmt(bal)}</div>
+                                </div>
+                                {pct != null && (
+                                  <div style={{ marginBottom: 8 }}>
+                                    <div style={{ height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden' }}>
+                                      <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: BLUE, borderRadius: 2 }} />
+                                    </div>
+                                    <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{pct}% of {fmt(origBal)} remaining</div>
+                                  </div>
+                                )}
+                                <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2 }}>
+                                  {rate != null && <span>Rate {rate.toFixed(2)}%</span>}
+                                  {nextPmt != null && <span>Monthly payment {fmt(nextPmt)}</span>}
+                                  {nextDue && <span>Due {new Date(nextDue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                </DragSection>
+                )}
                 <DragSection id="health" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
                 <div style={{ ...CARD, marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
