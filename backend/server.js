@@ -87,6 +87,8 @@ app.locals.feedback          = saved.feedback          || [];
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth/login',               loginLimiter);
 app.use('/api/auth/register',            registerLimiter);
+app.use('/api/auth/forgot-password',     strictLimiter);
+app.use('/api/auth/reset-password',      strictLimiter);
 app.use('/api/auth/resend-verification', strictLimiter);
 app.use('/api/feedback/contact',         strictLimiter);
 app.use('/api/auth', authRoutes);

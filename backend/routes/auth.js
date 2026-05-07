@@ -131,6 +131,57 @@ router.get('/me', requireAuth, (req, res) => {
   res.json({ user: safeUser(user, enrollments) });
 });
 
+// Forgot password — send reset email
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'email is required' });
+  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
+  // Always respond 200 to avoid email enumeration
+  if (!user || !emailConfigured()) return res.json({ ok: true });
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+  db.prepare('UPDATE users SET reset_token = ?, reset_token_expires_at = ? WHERE id = ?').run(token, expires, user.id);
+
+  const resetUrl = `${APP_URL}/reset-password?token=${token}`;
+  sendEmail({
+    to: user.email,
+    subject: 'Reset your PeakLedger password',
+    html: `
+      <div style="font-family:-apple-system,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f172a;border-radius:12px;">
+        <div style="font-size:22px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Reset your password</div>
+        <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;line-height:1.6;">
+          Hi ${user.name}, click the button below to reset your password. This link expires in 1 hour.
+        </div>
+        <a href="${resetUrl}" style="display:inline-block;padding:12px 28px;background:#0066f5;color:#fff;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">
+          Reset Password
+        </a>
+        <div style="margin-top:24px;font-size:12px;color:#475569;">
+          If you didn't request this, you can safely ignore this email.
+        </div>
+      </div>
+    `,
+  }).catch(err => console.error('Reset email failed:', err.message));
+
+  res.json({ ok: true });
+});
+
+// Reset password — validate token and set new password
+router.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: 'token and password are required' });
+  if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+
+  const user = db.prepare('SELECT * FROM users WHERE reset_token = ?').get(token);
+  if (!user || !user.reset_token_expires_at) return res.status(400).json({ error: 'Invalid or expired reset link' });
+  if (new Date(user.reset_token_expires_at) < new Date()) return res.status(400).json({ error: 'Reset link has expired. Please request a new one.' });
+
+  const password_hash = await bcrypt.hash(password, 12);
+  db.prepare('UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires_at = NULL WHERE id = ?').run(password_hash, user.id);
+
+  res.json({ ok: true });
+});
+
 // Update own profile (backup email)
 router.patch('/me', requireAuth, (req, res) => {
   const { backup_email } = req.body;

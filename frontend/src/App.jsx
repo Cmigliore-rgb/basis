@@ -7,6 +7,8 @@ import Register from './pages/Register.jsx';
 import Landing from './pages/Landing.jsx';
 import Privacy from './pages/Privacy.jsx';
 import Terms from './pages/Terms.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -31,8 +33,10 @@ export default function App() {
           <Route path="/login"     element={<GuestRoute><Login /></GuestRoute>} />
           <Route path="/register"  element={<GuestRoute><Register /></GuestRoute>} />
           <Route path="/app/*"     element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/privacy"   element={<Privacy />} />
-          <Route path="/terms"     element={<Terms />} />
+          <Route path="/privacy"         element={<Privacy />} />
+          <Route path="/terms"           element={<Terms />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password"  element={<ResetPassword />} />
           <Route path="*"          element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

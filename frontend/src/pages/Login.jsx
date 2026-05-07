@@ -108,6 +108,9 @@ export default function Login() {
             style={{ width: '100%', padding: '13px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 9, fontSize: 15, fontWeight: 700, cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1, marginTop: 4 }}>
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
+          <div style={{ textAlign: 'right', marginTop: 10 }}>
+            <Link to="/forgot-password" style={{ fontSize: 12, color: TEXT2, textDecoration: 'none' }}>Forgot password?</Link>
+          </div>
         </form>
 
         <div style={{ textAlign: 'center', marginTop: 28, fontSize: 13, color: TEXT2 }}>
