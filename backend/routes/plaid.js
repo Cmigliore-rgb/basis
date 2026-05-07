@@ -100,6 +100,12 @@ router.get('/liabilities', requireAuth, async (req, res) => {
 });
 
 router.delete('/disconnect/:id', requireAuth, async (req, res) => {
+  const row = db.prepare('SELECT access_token FROM plaid_tokens WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+  if (row) {
+    try { await plaidClient.itemRemove({ access_token: row.access_token }); } catch (e) {
+      console.warn('itemRemove error (continuing):', e.message);
+    }
+  }
   db.prepare('DELETE FROM plaid_tokens WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
   res.json({ success: true });
 });
@@ -164,8 +170,44 @@ router.delete('/manual-liabilities/:id', requireAuth, (req, res) => {
   res.json({ success: true });
 });
 
-router.post('/webhook', express.json(), (req, res) => {
-  const { webhook_type, webhook_code, item_id } = req.body;
+const jwkCache = new Map();
+
+async function verifyPlaidWebhook(token, rawBody) {
+  const [headerB64] = token.split('.');
+  const { kid, alg } = JSON.parse(Buffer.from(headerB64, 'base64url').toString());
+
+  let jwk = jwkCache.get(kid);
+  if (!jwk) {
+    const { data } = await plaidClient.webhookVerificationKeyGet({ key_id: kid });
+    jwk = data.key;
+    // Plaid keys expire after 5 minutes — cache with TTL
+    jwkCache.set(kid, jwk);
+    setTimeout(() => jwkCache.delete(kid), 5 * 60 * 1000);
+  }
+
+  const { importJWK, jwtVerify, createHash } = await import('jose');
+  const key = await importJWK(jwk, alg);
+  const { payload } = await jwtVerify(token, key, { maxTokenAge: '5 minutes' });
+
+  const bodyHash = require('crypto').createHash('sha256').update(rawBody).digest('hex');
+  if (payload.request_body_sha256 !== bodyHash) throw new Error('Body hash mismatch');
+}
+
+router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const rawBody = req.body;
+  const verificationToken = req.headers['plaid-verification'];
+
+  if (verificationToken) {
+    try {
+      await verifyPlaidWebhook(verificationToken, rawBody);
+    } catch (err) {
+      console.error('Plaid webhook verification failed:', err.message);
+      return res.status(400).json({ error: 'Webhook verification failed' });
+    }
+  }
+
+  const body = JSON.parse(rawBody.toString());
+  const { webhook_type, webhook_code, item_id } = body;
   console.log(`Plaid webhook: ${webhook_type}/${webhook_code} item=${item_id}`);
 
   if (webhook_type === 'TRANSACTIONS' && ['DEFAULT_UPDATE', 'INITIAL_UPDATE', 'HISTORICAL_UPDATE'].includes(webhook_code)) {
@@ -173,16 +215,24 @@ router.post('/webhook', express.json(), (req, res) => {
   }
 
   if (webhook_type === 'ITEM') {
-    // Flag items that need re-authentication
     if (['ITEM_LOGIN_REQUIRED', 'PENDING_EXPIRATION', 'PENDING_DISCONNECT'].includes(webhook_code)) {
       db.prepare('UPDATE plaid_tokens SET needs_update = 1 WHERE item_id = ?').run(item_id);
       console.log(`Item needs re-auth: ${item_id} (${webhook_code})`);
     }
     if (webhook_code === 'ERROR') {
-      console.warn(`Plaid item error for item ${item_id}:`, req.body.error);
-      if (req.body.error?.error_code === 'ITEM_LOGIN_REQUIRED') {
+      console.warn(`Plaid item error for item ${item_id}:`, body.error);
+      if (body.error?.error_code === 'ITEM_LOGIN_REQUIRED') {
         db.prepare('UPDATE plaid_tokens SET needs_update = 1 WHERE item_id = ?').run(item_id);
       }
+    }
+    // User revoked access at their bank — remove the item entirely
+    if (webhook_code === 'USER_PERMISSION_REVOKED') {
+      const row = db.prepare('SELECT access_token FROM plaid_tokens WHERE item_id = ?').get(item_id);
+      if (row) {
+        try { await plaidClient.itemRemove({ access_token: row.access_token }); } catch {}
+      }
+      db.prepare('DELETE FROM plaid_tokens WHERE item_id = ?').run(item_id);
+      console.log(`User revoked access, item removed: ${item_id}`);
     }
   }
 

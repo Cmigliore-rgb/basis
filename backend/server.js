@@ -1,7 +1,30 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts. Try again in 15 minutes.' },
+  standardHeaders: true, legacyHeaders: false,
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 8,
+  message: { error: 'Too many registration attempts. Try again later.' },
+  standardHeaders: true, legacyHeaders: false,
+});
+
+const strictLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many requests. Try again later.' },
+  standardHeaders: true, legacyHeaders: false,
+});
 
 const authRoutes = require('./routes/auth');
 const plaidRoutes = require('./routes/plaid');
@@ -23,6 +46,11 @@ const stripeRoutes   = require('./routes/stripe');
 const store = require('./store');
 
 const app = express();
+
+app.use(helmet({
+  contentSecurityPolicy: false,       // inline styles throughout the app
+  crossOriginEmbedderPolicy: false,   // Plaid Link iframe
+}));
 
 app.use((req, res, next) => {
   if (req.headers['x-forwarded-proto'] === 'http') {
@@ -57,6 +85,10 @@ app.locals.notificationPrefs = saved.notificationPrefs || {};
 app.locals.feedback          = saved.feedback          || [];
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+app.use('/api/auth/login',               loginLimiter);
+app.use('/api/auth/register',            registerLimiter);
+app.use('/api/auth/resend-verification', strictLimiter);
+app.use('/api/feedback/contact',         strictLimiter);
 app.use('/api/auth', authRoutes);
 
 app.use('/api/plaid', plaidRoutes);
