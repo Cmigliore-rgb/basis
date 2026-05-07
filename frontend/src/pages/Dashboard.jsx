@@ -8051,8 +8051,17 @@ export default function Dashboard() {
                       <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '3px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>{user?.role}</span>
                     </div>
                   </div>
-                  <div style={{ paddingTop: 14 }}>
+                  <div style={{ paddingTop: 14, display: 'flex', gap: 8 }}>
                     <button onClick={logout} style={{ padding: '8px 16px', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 7, color: RED, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Sign out</button>
+                    <button onClick={async () => {
+                      if (!window.confirm('Are you sure? This will permanently delete your account and all data. This cannot be undone.')) return;
+                      try {
+                        await api.delete('/auth/me');
+                        logout();
+                      } catch {
+                        alert('Failed to delete account. Please try again.');
+                      }
+                    }} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 7, color: 'rgba(248,113,113,0.6)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Delete Account</button>
                   </div>
                 </div>
               </div>
