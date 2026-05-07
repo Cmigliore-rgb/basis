@@ -330,9 +330,9 @@ function buildDemoBaseline() {
 const DEMO_BASELINE = buildDemoBaseline();
 
 function buildDemoSnapshots() {
-  // Align with demo accounts: checking $3,240 + savings $5,800 + credit $748 + portfolio $7,832 ≈ $17,620
-  const CURRENT_NW = 17620;
-  const START_NW   = 15540;
+  // Align with demo data: (checking $3,240 + savings $5,800 + credit card $748) + portfolio $7,832 − liabilities ($124 + $2,800) ≈ $14,696
+  const CURRENT_NW = 14696;
+  const START_NW   = 12800;
   const DAYS = 30;
   const now = new Date();
   const snapshots = [];
@@ -2346,7 +2346,8 @@ export default function Dashboard() {
       } catch {}
 
       // Record today's net worth snapshot
-      const cash      = allAccounts.reduce((s, a) => s + (a.balances?.current || 0), 0);
+      // Only sum non-investment accounts to avoid double-counting (portfolio from holdings covers investments)
+      const cash      = allAccounts.filter(a => a.type !== 'investment').reduce((s, a) => s + (a.balances?.current || 0), 0);
       const portfolio = allHoldings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
       const liabData  = liabRes.status === 'fulfilled' ? liabRes.value.data : {};
       const totalLiab = [
@@ -3959,6 +3960,32 @@ export default function Dashboard() {
                           refreshing={baselineRefreshing}
                           isDemo={!!display.isDemo}
                         />
+                        {(() => {
+                          const allLiab = [
+                            ...(liabilities.credit   || []),
+                            ...(liabilities.student  || []),
+                            ...(liabilities.mortgage || []),
+                          ];
+                          const totalMinPmt = allLiab.reduce((s, l) => s + (l.minimum_payment_amount || 0), 0);
+                          if (totalMinPmt === 0) return null;
+                          const avgNet = display.baseline?.avgMonthlyNet ?? 0;
+                          const effectiveNet = avgNet - totalMinPmt;
+                          return (
+                            <div style={{ marginTop: 16, paddingTop: 16, borderTop: BORDER, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              <div style={{ fontSize: 11, color: TEXT2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Fixed Debt Obligations</div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                                <span style={{ color: TEXT2 }}>Minimum monthly payments</span>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>−{fmt(totalMinPmt)}</span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, paddingTop: 6, borderTop: `1px solid ${MUTED}` }}>
+                                <span style={{ color: TEXT2 }}>Effective monthly net</span>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: effectiveNet >= 0 ? GREEN : RED }}>
+                                  {effectiveNet >= 0 ? '+' : ''}{fmt(effectiveNet)}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </>
                     );
                   })()}
