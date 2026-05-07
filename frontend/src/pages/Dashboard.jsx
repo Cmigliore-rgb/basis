@@ -23,6 +23,57 @@ const YELLOW   = '#fbbf24';
 
 const CARD = { background: CARD_BG, border: BORDER, borderRadius: 10, padding: 24 };
 
+function ConnectedAccountsCard() {
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading]   = useState(true);
+
+  const load = () => {
+    setLoading(true);
+    api.get('/plaid/connections')
+      .then(r => setAccounts(r.data))
+      .catch(() => setAccounts([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const disconnect = async (id, name) => {
+    if (!window.confirm(`Disconnect ${name}? This will remove the account link.`)) return;
+    await api.delete(`/plaid/disconnect/${id}`);
+    load();
+  };
+
+  return (
+    <div style={{ ...CARD, marginBottom: 16 }}>
+      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Connected Accounts</div>
+      <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Bank and investment accounts linked via Plaid.</div>
+      {loading ? (
+        <div style={{ fontSize: 13, color: TEXT2 }}>Loading…</div>
+      ) : accounts.length === 0 ? (
+        <div style={{ fontSize: 13, color: TEXT2 }}>No accounts connected yet.</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {accounts.map(a => (
+            <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: DARK, borderRadius: 8, border: BORDER }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{a.institution_name}</div>
+                <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>
+                  Connected {new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </div>
+              </div>
+              <button
+                onClick={() => disconnect(a.id, a.institution_name)}
+                style={{ padding: '5px 12px', background: 'transparent', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 6, color: RED, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                Disconnect
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const NAV = [
   { key: 'overview',       label: 'Overview',     icon: '⊞', premium: false, section: 'finance'   },
   { key: 'cashflow',       label: 'Cash Flow',    icon: '⬡', premium: false, section: 'finance'   },
@@ -7340,6 +7391,8 @@ export default function Dashboard() {
                     </button>
                   )}
                 </div>
+
+                <ConnectedAccountsCard />
 
                 <div style={{ ...CARD, marginBottom: 16 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Appearance</div>
