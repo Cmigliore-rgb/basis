@@ -1927,6 +1927,10 @@ export default function Dashboard() {
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackMsg, setFeedbackMsg] = useState('');
   const [feedbackSent, setFeedbackSent] = useState(false);
+  const [contactSubject, setContactSubject] = useState('');
+  const [contactMsg, setContactMsg] = useState('');
+  const [contactSent, setContactSent] = useState(false);
+  const [contactErr, setContactErr] = useState('');
   const [profCustomTabs, setProfCustomTabs] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_prof_tabs') || '{}'); } catch { return {}; } });
   const [profCustomContent, setProfCustomContent] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_prof_content') || '{}'); } catch { return {}; } });
   const [showAddTab, setShowAddTab] = useState(false);
@@ -8034,6 +8038,43 @@ export default function Dashboard() {
                         } catch {}
                       }} disabled={!feedbackMsg.trim()} style={{ marginTop: 10, padding: '8px 18px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, cursor: feedbackMsg.trim() ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: 600, opacity: feedbackMsg.trim() ? 1 : 0.5 }}>
                         Submit
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Contact Support */}
+                <div style={{ ...CARD, marginBottom: 16 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Contact Support</div>
+                  <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Have a question or need help? We'll reply to {user?.email}.</div>
+                  {contactSent ? (
+                    <div style={{ padding: 16, background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, fontSize: 13, color: GREEN, textAlign: 'center' }}>
+                      Message sent. We'll be in touch soon. ✓
+                    </div>
+                  ) : (
+                    <>
+                      {contactErr && <div style={{ fontSize: 12, color: RED, marginBottom: 10 }}>{contactErr}</div>}
+                      <input
+                        type="text" placeholder="Subject" value={contactSubject}
+                        onChange={e => setContactSubject(e.target.value)}
+                        style={{ width: '100%', padding: '10px 12px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 10, fontFamily: 'inherit' }}
+                      />
+                      <textarea rows={4} value={contactMsg} onChange={e => setContactMsg(e.target.value)}
+                        placeholder="Describe your issue or question..."
+                        style={{ width: '100%', padding: '10px 12px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                      <button onClick={async () => {
+                        if (!contactSubject.trim() || !contactMsg.trim()) return;
+                        setContactErr('');
+                        try {
+                          await api.post('/feedback/contact', { subject: contactSubject.trim(), message: contactMsg.trim() });
+                          setContactSent(true);
+                          setTimeout(() => { setContactSent(false); setContactSubject(''); setContactMsg(''); }, 5000);
+                        } catch (err) {
+                          setContactErr(err.response?.data?.error || 'Failed to send. Try again.');
+                        }
+                      }} disabled={!contactSubject.trim() || !contactMsg.trim()}
+                        style={{ marginTop: 10, padding: '8px 18px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, cursor: (contactSubject.trim() && contactMsg.trim()) ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: 600, opacity: (contactSubject.trim() && contactMsg.trim()) ? 1 : 0.5 }}>
+                        Send Message
                       </button>
                     </>
                   )}

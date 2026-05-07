@@ -46,4 +46,28 @@ router.get('/', requireAuth, (req, res) => {
   res.json({ feedback: req.app.locals.feedback || [] });
 });
 
+// POST /api/feedback/contact — sends message to support@peakledger.app
+router.post('/contact', requireAuth, async (req, res) => {
+  const { subject, message } = req.body;
+  if (!subject?.trim() || !message?.trim()) return res.status(400).json({ error: 'subject and message required' });
+  if (!email.isConfigured()) return res.status(500).json({ error: 'Email not configured' });
+
+  try {
+    await email.send({
+      to: 'support@peakledger.app',
+      subject: `Support: ${subject.trim()}`,
+      html: `<div style="font-family:sans-serif;max-width:520px;padding:24px">
+        <h2 style="margin-bottom:8px">Support Request</h2>
+        <p><strong>From:</strong> ${req.user.name} (${req.user.email})</p>
+        <p><strong>Subject:</strong> ${subject.trim()}</p>
+        <div style="background:#f5f5f5;border-radius:8px;padding:14px 18px;margin:16px 0;font-size:15px;color:#333;white-space:pre-wrap">${message.trim()}</div>
+      </div>`,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Contact email failed:', err.message);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
 module.exports = router;
