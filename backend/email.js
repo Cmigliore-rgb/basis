@@ -1,22 +1,11 @@
-﻿let _transporter = null;
-
-function getTransporter() {
-  if (_transporter) return _transporter;
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return null;
-  try {
-    const nodemailer = require('nodemailer');
-    _transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-    });
-    return _transporter;
-  } catch { return null; }
-}
+const FROM = 'PeakLedger <support@peakledger.app>';
 
 async function send({ to, subject, html }) {
-  const t = getTransporter();
-  if (!t) throw new Error('Email not configured. Add EMAIL_USER and EMAIL_PASS to backend .env.');
-  return t.sendMail({ from: `PeakLedger <${process.env.EMAIL_USER}>`, to, subject, html });
+  if (!process.env.RESEND_API_KEY) throw new Error('RESEND_API_KEY not set');
+  const { Resend } = require('resend');
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const { error } = await resend.emails.send({ from: FROM, to, subject, html });
+  if (error) throw new Error(error.message);
 }
 
-module.exports = { send, isConfigured: () => !!getTransporter() };
+module.exports = { send, isConfigured: () => !!process.env.RESEND_API_KEY };

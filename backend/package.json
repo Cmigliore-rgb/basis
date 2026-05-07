@@ -20,6 +20,7 @@
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^8.0.7",
     "plaid": "^28.0.0",
+    "resend": "^6.12.3",
     "rss-parser": "^3.13.0",
     "stripe": "^22.1.1",
     "yahoo-finance2": "^3.14.0"
