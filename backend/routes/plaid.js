@@ -31,8 +31,9 @@ router.post('/create_link_token', requireAuth, async (req, res) => {
     const response = await plaidClient.linkTokenCreate(params);
     res.json({ link_token: response.data.link_token });
   } catch (err) {
-    console.error('create_link_token error:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to create link token' });
+    const detail = err.response?.data || err.message;
+    console.error('create_link_token error:', JSON.stringify(detail));
+    res.status(500).json({ error: typeof detail === 'object' ? JSON.stringify(detail) : detail });
   }
 });
 

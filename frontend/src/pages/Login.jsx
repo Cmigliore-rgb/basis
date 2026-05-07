@@ -19,7 +19,7 @@ const GREEN   = '#16a34a';
 const RED     = '#dc2626';
 
 const FEATURES = [
-  { icon: '◎', color: '#60a5fa', label: 'Live financial dashboard',     sub: 'Net worth, spending, investments — all in one place.' },
+  { icon: '◎', color: '#60a5fa', label: 'Live financial dashboard',     sub: 'Net worth, spending, and investments in one place.' },
   { icon: '◫', color: '#4ade80', label: 'Curriculum-aligned education', sub: 'Assignments built around real personal finance decisions.' },
   { icon: '⊞', color: '#c084fc', label: 'Professor analytics',          sub: 'Track submissions, grades, and class progress in real time.' },
   { icon: '◈', color: '#fbbf24', label: 'Live market data',             sub: 'S&P 500, fear & greed index, yield curve, and more.' },
