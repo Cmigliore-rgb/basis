@@ -3736,17 +3736,15 @@ export default function Dashboard() {
 
                 </DragSection>
                 <DragSection id="chart" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
-                {(snapshots.length > 0 || isDemoData) && (
-                  <div style={{ ...CARD, marginBottom: 16 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Net Worth History</div>
-                    {isDemoData && snapshots.length === 0 && (
-                      <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 12, display: 'inline-block' }}>
-                        Demo data — connect an account to see your real history
-                      </div>
-                    )}
-                    <NetWorthChart snapshots={snapshots.length > 0 ? snapshots : DEMO_SNAPSHOTS} />
-                  </div>
-                )}
+                <div style={{ ...CARD, marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Net Worth History</div>
+                  {snapshots.length === 0 && (
+                    <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 12, display: 'inline-block' }}>
+                      {isDemoData ? 'Demo data — connect an account to see your real history' : 'Example — your history builds up day by day'}
+                    </div>
+                  )}
+                  <NetWorthChart snapshots={snapshots.length > 0 ? snapshots : DEMO_SNAPSHOTS} />
+                </div>
 
                 </DragSection>
                 <DragSection id="health" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
@@ -7375,11 +7373,11 @@ export default function Dashboard() {
                           placeholder="Search by name or email…"
                           style={{ width: '100%', padding: '8px 12px', background: DARK, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }}
                         />
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: '0', fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', padding: '0 4px 8px', borderBottom: BORDER }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 90px 90px', gap: '0', fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', padding: '0 4px 8px', borderBottom: BORDER }}>
                           <span>Name / Email</span>
                           <span style={{ textAlign: 'center' }}>Role</span>
                           <span style={{ textAlign: 'center' }}>Plan</span>
-                          <span style={{ textAlign: 'center', paddingLeft: 24 }}>Joined</span>
+                          <span style={{ textAlign: 'center' }}>Joined</span>
                         </div>
                         <div style={{ maxHeight: 380, overflowY: 'auto' }}>
                           {adminUsers
@@ -7391,7 +7389,7 @@ export default function Dashboard() {
                               const roleColor = u.role === 'admin' ? '#a78bfa' : u.role === 'professor' ? GREEN : u.role === 'student' ? BLUE : TEXT3;
                               const isPrem = u.tier === 'premium';
                               return (
-                                <div key={u.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: 0, alignItems: 'center', padding: '10px 4px', borderBottom: BORDER }}>
+                                <div key={u.id} style={{ display: 'grid', gridTemplateColumns: '1fr 110px 90px 90px', gap: 0, alignItems: 'center', padding: '10px 4px', borderBottom: BORDER }}>
                                   <div>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{u.name}</div>
                                     <div style={{ fontSize: 11, color: TEXT2, marginTop: 1 }}>{u.email}</div>
@@ -7410,7 +7408,7 @@ export default function Dashboard() {
                                       {isPrem ? 'Premium' : 'Free'}
                                     </button>
                                   </div>
-                                  <div style={{ textAlign: 'center', fontSize: 11, color: TEXT3, paddingLeft: 24 }}>
+                                  <div style={{ textAlign: 'center', fontSize: 11, color: TEXT3 }}>
                                     {new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
                                   </div>
                                 </div>
