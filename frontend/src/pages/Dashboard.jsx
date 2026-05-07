@@ -2583,7 +2583,8 @@ export default function Dashboard() {
       {isMobile && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 52, background: SIDE_BG, borderBottom: BORDER, zIndex: 200, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
+            <img src="/logo-icon.svg" alt="" style={{ width: 24, height: 24, borderRadius: 6 }} />
+            <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 17, fontWeight: 700, color: TEXT, letterSpacing: '-0.3px' }}>Peak<span style={{ fontWeight: 400, color: '#C9A84C' }}>Ledger</span></span>
             {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
           </div>
           <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
@@ -2603,8 +2604,9 @@ export default function Dashboard() {
       {/* ── SIDEBAR ─────────────────────────────────────── */}
       <aside style={{ width: 220, flexShrink: 0, background: SIDE_BG, borderRight: BORDER, display: isMobile ? 'none' : 'flex', flexDirection: 'column' }}>
         <div data-tour="brand" style={{ padding: '18px 16px 16px', borderBottom: BORDER, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src="/logo-icon.svg" alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
+            <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 17, fontWeight: 700, color: TEXT, letterSpacing: '-0.3px' }}>Peak<span style={{ fontWeight: 400, color: '#C9A84C' }}>Ledger</span></span>
           </div>
           <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
             🔔

@@ -83,7 +83,10 @@ export default function Landing() {
         borderBottom: scrolled ? `1px solid ${BORDER}` : 'none',
         transition: 'all 0.2s',
       }}>
-        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-1px', color: TEXT }}>PeakLedger</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img src="/logo-icon.svg" alt="" style={{ width: 34, height: 34, borderRadius: 8 }} />
+          <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 22, fontWeight: 700, color: TEXT, letterSpacing: '-0.5px' }}>Peak<span style={{ fontWeight: 400, color: '#C9A84C', letterSpacing: '2px' }}>Ledger</span></span>
+        </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <button onClick={() => navigate('/login')}
             style={{ padding: '8px 18px', background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, color: TEXT2, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>

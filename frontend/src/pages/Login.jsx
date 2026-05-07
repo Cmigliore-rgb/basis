@@ -47,7 +47,13 @@ export default function Login() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 64px', borderRight: BORDER, minWidth: 0 }}>
         <div style={{ maxWidth: 440 }}>
           <div style={{ marginBottom: 48 }}>
-            <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-1.5px', color: TEXT }}>PeakLedger</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 4 }}>
+              <img src="/logo-icon.svg" alt="" style={{ width: 52, height: 52, borderRadius: 12, flexShrink: 0 }} />
+              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", lineHeight: 1 }}>
+                <span style={{ fontSize: 36, fontWeight: 700, color: TEXT, letterSpacing: '-1px' }}>Peak</span>
+                <span style={{ fontSize: 36, fontWeight: 400, color: '#C9A84C', letterSpacing: '3px' }}>Ledger</span>
+              </div>
+            </div>
             <div style={{ fontSize: 20, fontWeight: 600, color: TEXT2, marginTop: 10, letterSpacing: '-0.3px', lineHeight: 1.4 }}>
               Personal finance,<br />inside the classroom.
             </div>
