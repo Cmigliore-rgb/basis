@@ -2102,8 +2102,9 @@ export default function Dashboard() {
   const [pushTarget, setPushTarget] = useState({});
   const [submittedAssignments, setSubmittedAssignments] = useState(new Set());
   const [submissionDetails, setSubmissionDetails] = useState({});
-  const [showUpgrade, setShowUpgrade]       = useState(false);
+  const [showUpgrade, setShowUpgrade]         = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError]     = useState('');
   const [showSubmit, setShowSubmit] = useState(null); // assignment object | null
   const [submitNote, setSubmitNote] = useState('');
   const [showGrade, setShowGrade] = useState(null); // submission object from professor hub
@@ -2999,16 +3000,19 @@ export default function Dashboard() {
               disabled={checkoutLoading}
               onClick={async () => {
                 setCheckoutLoading(true);
+                setCheckoutError('');
                 try {
                   const { data } = await api.post('/stripe/checkout');
                   window.location.href = data.url;
-                } catch {
+                } catch (err) {
+                  setCheckoutError(err.response?.data?.error || 'Something went wrong. Try again.');
                   setCheckoutLoading(false);
                 }
               }}
               style={{ width: '100%', padding: '14px 0', background: BLUE_BTN, border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, cursor: checkoutLoading ? 'default' : 'pointer', opacity: checkoutLoading ? 0.7 : 1, marginBottom: 10 }}>
               {checkoutLoading ? 'Redirecting to checkout…' : 'Upgrade to Analyst →'}
             </button>
+            {checkoutError && <div style={{ textAlign: 'center', fontSize: 12, color: RED, marginBottom: 8 }}>{checkoutError}</div>}
             <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3 }}>Secured by Stripe. Cancel anytime.</div>
           </div>
         </div>
