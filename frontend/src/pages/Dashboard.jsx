@@ -3925,204 +3925,6 @@ export default function Dashboard() {
                 </div>
 
                 </DragSection>
-                <DragSection id="liabilities" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
-                <div style={{ ...CARD, marginBottom: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15 }}>Liabilities</div>
-                    {hasBank && (
-                      <button
-                        onClick={() => setLiabModal({ type: 'student', name: '', balance: '', interest_rate: '', minimum_payment: '', credit_limit: '', due_day: '' })}
-                        style={{ padding: '5px 12px', background: BLUE_BTN, border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                        + Add
-                      </button>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 13, color: TEXT2, marginBottom: liabDemo ? 12 : 20 }}>Outstanding balances across credit cards, loans, and mortgages.</div>
-                  {liabDemo && (
-                    <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 16, display: 'inline-block' }}>
-                      Demo data — connect a bank account to add your own liabilities
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    {(liabilities.credit || []).length > 0 && (
-                      <div>
-                        <div style={{ fontSize: 11, color: TEXT2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Credit Cards</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          {liabilities.credit.map((c, i) => {
-                            const acct = accounts.find(a => a.account_id === c.account_id);
-                            const name = c._name || acct?.name || `Credit Card ${i + 1}`;
-                            const bal = c.balances?.current || 0;
-                            const limit = c.balances?.limit || null;
-                            const util = limit ? Math.round((bal / limit) * 100) : null;
-                            const apr = c.aprs?.find(a => a.apr_type === 'purchase_apr')?.apr_percentage;
-                            const minPmt = c.minimum_payment_amount;
-                            const nextDue = c.next_payment_due_date;
-                            return (
-                              <div key={c.account_id || i} style={{ padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                                  <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(bal)}</div>
-                                    {c._manual && <button onClick={() => setLiabModal({ id: c._id, type: 'credit', name, balance: bal, interest_rate: apr ?? '', minimum_payment: minPmt ?? '', credit_limit: limit ?? '', due_day: '' })} style={{ background: 'transparent', border: 'none', color: TEXT2, fontSize: 11, cursor: 'pointer', padding: 0 }}>Edit</button>}
-                                    {c._manual && <button onClick={() => deleteLiability(c._id)} style={{ background: 'transparent', border: 'none', color: RED, fontSize: 11, cursor: 'pointer', padding: 0 }}>Remove</button>}
-                                  </div>
-                                </div>
-                                {limit && (
-                                  <div style={{ marginBottom: 8 }}>
-                                    <div style={{ height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden' }}>
-                                      <div style={{ height: '100%', width: `${Math.min(util, 100)}%`, background: util > 80 ? RED : util > 50 ? YELLOW : GREEN, borderRadius: 2 }} />
-                                    </div>
-                                    <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{util}% of {fmt(limit)} limit used</div>
-                                  </div>
-                                )}
-                                <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2 }}>
-                                  {apr != null && <span>APR {apr.toFixed(2)}%</span>}
-                                  {minPmt != null && <span>Min payment {fmt(minPmt)}</span>}
-                                  {nextDue && <span>Due {new Date(nextDue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                    {(liabilities.student || []).length > 0 && (
-                      <div>
-                        <div style={{ fontSize: 11, color: TEXT2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Student Loans</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          {liabilities.student.map((s, i) => {
-                            const acct = accounts.find(a => a.account_id === s.account_id);
-                            const name = s._name || acct?.name || `Student Loan ${i + 1}`;
-                            const bal = s.balances?.current || s.outstanding_interest_amount || 0;
-                            const origBal = s.origination_principal_amount;
-                            const pct = origBal ? Math.round((bal / origBal) * 100) : null;
-                            const rate = s.interest_rate_percentage;
-                            const minPmt = s.minimum_payment_amount;
-                            const nextDue = s.next_payment_due_date;
-                            return (
-                              <div key={s.account_id || i} style={{ padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                                  <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(bal)}</div>
-                                    {s._manual && <button onClick={() => setLiabModal({ id: s._id, type: 'student', name, balance: bal, interest_rate: rate ?? '', minimum_payment: minPmt ?? '', credit_limit: '', due_day: '' })} style={{ background: 'transparent', border: 'none', color: TEXT2, fontSize: 11, cursor: 'pointer', padding: 0 }}>Edit</button>}
-                                    {s._manual && <button onClick={() => deleteLiability(s._id)} style={{ background: 'transparent', border: 'none', color: RED, fontSize: 11, cursor: 'pointer', padding: 0 }}>Remove</button>}
-                                  </div>
-                                </div>
-                                {pct != null && (
-                                  <div style={{ marginBottom: 8 }}>
-                                    <div style={{ height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden' }}>
-                                      <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: BLUE, borderRadius: 2 }} />
-                                    </div>
-                                    <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{pct}% of {fmt(origBal)} original balance remaining</div>
-                                  </div>
-                                )}
-                                <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2 }}>
-                                  {rate != null && <span>Rate {rate.toFixed(2)}%</span>}
-                                  {minPmt != null && <span>Min payment {fmt(minPmt)}</span>}
-                                  {nextDue && <span>Due {new Date(nextDue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                    {(liabilities.mortgage || []).length > 0 && (
-                      <div>
-                        <div style={{ fontSize: 11, color: TEXT2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Mortgages</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          {liabilities.mortgage.map((m, i) => {
-                            const acct = accounts.find(a => a.account_id === m.account_id);
-                            const name = m._name || acct?.name || `Mortgage ${i + 1}`;
-                            const bal = m.balances?.current || 0;
-                            const origBal = m.origination_principal_amount;
-                            const pct = origBal ? Math.round((bal / origBal) * 100) : null;
-                            const rate = m.interest_rate?.percentage ?? m.interest_rate_percentage;
-                            const nextPmt = m.next_monthly_payment || m.minimum_payment_amount;
-                            const nextDue = m.next_payment_due_date;
-                            return (
-                              <div key={m.account_id || i} style={{ padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                                  <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(bal)}</div>
-                                    {m._manual && <button onClick={() => setLiabModal({ id: m._id, type: 'mortgage', name, balance: bal, interest_rate: rate ?? '', minimum_payment: nextPmt ?? '', credit_limit: '', due_day: '' })} style={{ background: 'transparent', border: 'none', color: TEXT2, fontSize: 11, cursor: 'pointer', padding: 0 }}>Edit</button>}
-                                    {m._manual && <button onClick={() => deleteLiability(m._id)} style={{ background: 'transparent', border: 'none', color: RED, fontSize: 11, cursor: 'pointer', padding: 0 }}>Remove</button>}
-                                  </div>
-                                </div>
-                                {pct != null && (
-                                  <div style={{ marginBottom: 8 }}>
-                                    <div style={{ height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden' }}>
-                                      <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: BLUE, borderRadius: 2 }} />
-                                    </div>
-                                    <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{pct}% of {fmt(origBal)} remaining</div>
-                                  </div>
-                                )}
-                                <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2 }}>
-                                  {rate != null && <span>Rate {rate.toFixed(2)}%</span>}
-                                  {nextPmt != null && <span>Monthly payment {fmt(nextPmt)}</span>}
-                                  {nextDue && <span>Due {new Date(nextDue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  {!liabDemo && totalLiabilities === 0 && (
-                    <div style={{ padding: '24px 0', textAlign: 'center', color: TEXT2, fontSize: 13 }}>
-                      No liabilities detected.{hasBank ? ' Use + Add to enter one manually.' : ''}
-                    </div>
-                  )}
-                </div>
-                </DragSection>
-                {liabModal && (
-                  <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setLiabModal(null)}>
-                    <div style={{ ...CARD, width: 380, maxWidth: '92vw', padding: 28 }} onClick={e => e.stopPropagation()}>
-                      <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 20 }}>{liabModal.id ? 'Edit' : 'Add'} Liability</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        <div>
-                          <div style={{ fontSize: 12, color: TEXT2, marginBottom: 6 }}>Type</div>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            {['credit','student','mortgage'].map(t => (
-                              <button key={t} onClick={() => setLiabModal(m => ({ ...m, type: t }))}
-                                style={{ flex: 1, padding: '7px 0', borderRadius: 6, border: `1px solid ${liabModal.type === t ? BLUE_BTN : BORDER_C}`, background: liabModal.type === t ? `${BLUE_BTN}22` : 'transparent', color: liabModal.type === t ? BLUE : TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize' }}>
-                                {t === 'credit' ? 'Credit Card' : t === 'student' ? 'Student Loan' : 'Mortgage'}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        {[
-                          { key: 'name',             label: 'Name',              placeholder: liabModal.type === 'credit' ? 'e.g. Chase Freedom' : liabModal.type === 'student' ? 'e.g. Federal Direct Loan' : 'e.g. Home Mortgage' },
-                          { key: 'balance',          label: 'Current Balance ($)', placeholder: '0.00' },
-                          ...(liabModal.type === 'credit' ? [{ key: 'credit_limit', label: 'Credit Limit ($)', placeholder: '5000' }] : []),
-                          { key: 'interest_rate',    label: liabModal.type === 'credit' ? 'APR (%)' : 'Interest Rate (%)', placeholder: '6.5' },
-                          { key: 'minimum_payment',  label: 'Minimum Payment ($)', placeholder: '25' },
-                          { key: 'due_day',          label: 'Due Day of Month',  placeholder: '15' },
-                        ].map(({ key, label, placeholder }) => (
-                          <div key={key}>
-                            <div style={{ fontSize: 12, color: TEXT2, marginBottom: 6 }}>{label}</div>
-                            <input
-                              value={liabModal[key]}
-                              onChange={e => setLiabModal(m => ({ ...m, [key]: e.target.value }))}
-                              placeholder={placeholder}
-                              style={{ width: '100%', padding: '9px 12px', background: DARK, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 13, boxSizing: 'border-box' }}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-                        <button onClick={() => setLiabModal(null)} style={{ flex: 1, padding: '9px 0', background: 'transparent', border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 13, cursor: 'pointer' }}>Cancel</button>
-                        <button onClick={saveLiability} disabled={liabSaving || !liabModal.name || !liabModal.balance}
-                          style={{ flex: 1, padding: '9px 0', background: BLUE_BTN, border: 'none', borderRadius: 6, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: liabSaving ? 0.6 : 1 }}>
-                          {liabSaving ? 'Saving…' : 'Save'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 <DragSection id="health" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
                 <div style={{ ...CARD, marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
@@ -4589,6 +4391,204 @@ export default function Dashboard() {
                         ))}
                       </div>
                     </>
+                  )}
+
+                  {/* ── Liabilities ───────────────────────── */}
+                  <div style={{ ...CARD, marginTop: 24 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>Liabilities</div>
+                      {hasBank && (
+                        <button
+                          onClick={() => setLiabModal({ type: 'student', name: '', balance: '', interest_rate: '', minimum_payment: '', credit_limit: '', due_day: '' })}
+                          style={{ padding: '5px 12px', background: BLUE_BTN, border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                          + Add
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: liabDemo ? 12 : 20 }}>Credit cards, loans, and mortgages.</div>
+                    {liabDemo && (
+                      <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 16, display: 'inline-block' }}>
+                        Demo data — connect a bank account to add your own liabilities
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      {(liabilities.credit || []).length > 0 && (
+                        <div>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Credit Cards</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {liabilities.credit.map((c, i) => {
+                              const acct = accounts.find(a => a.account_id === c.account_id);
+                              const name = c._name || acct?.name || `Credit Card ${i + 1}`;
+                              const bal = c.balances?.current || 0;
+                              const limit = c.balances?.limit || null;
+                              const util = limit ? Math.round((bal / limit) * 100) : null;
+                              const apr = c.aprs?.find(a => a.apr_type === 'purchase_apr')?.apr_percentage;
+                              const minPmt = c.minimum_payment_amount;
+                              const nextDue = c.next_payment_due_date;
+                              return (
+                                <div key={c.account_id || i} style={{ padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                      <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(bal)}</div>
+                                      {c._manual && <button onClick={() => setLiabModal({ id: c._id, type: 'credit', name, balance: bal, interest_rate: apr ?? '', minimum_payment: minPmt ?? '', credit_limit: limit ?? '', due_day: '' })} style={{ background: 'transparent', border: 'none', color: TEXT2, fontSize: 11, cursor: 'pointer', padding: 0 }}>Edit</button>}
+                                      {c._manual && <button onClick={() => deleteLiability(c._id)} style={{ background: 'transparent', border: 'none', color: RED, fontSize: 11, cursor: 'pointer', padding: 0 }}>Remove</button>}
+                                    </div>
+                                  </div>
+                                  {limit && (
+                                    <div style={{ marginBottom: 8 }}>
+                                      <div style={{ height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', width: `${Math.min(util, 100)}%`, background: util > 80 ? RED : util > 50 ? YELLOW : GREEN, borderRadius: 2 }} />
+                                      </div>
+                                      <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{util}% of {fmt(limit)} limit used</div>
+                                    </div>
+                                  )}
+                                  <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2 }}>
+                                    {apr != null && <span>APR {apr.toFixed(2)}%</span>}
+                                    {minPmt != null && <span>Min payment {fmt(minPmt)}</span>}
+                                    {nextDue && <span>Due {new Date(nextDue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {(liabilities.student || []).length > 0 && (
+                        <div>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Student Loans</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {liabilities.student.map((s, i) => {
+                              const acct = accounts.find(a => a.account_id === s.account_id);
+                              const name = s._name || acct?.name || `Student Loan ${i + 1}`;
+                              const bal = s.balances?.current || s.outstanding_interest_amount || 0;
+                              const origBal = s.origination_principal_amount;
+                              const pct = origBal ? Math.round((bal / origBal) * 100) : null;
+                              const rate = s.interest_rate_percentage;
+                              const minPmt = s.minimum_payment_amount;
+                              const nextDue = s.next_payment_due_date;
+                              return (
+                                <div key={s.account_id || i} style={{ padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                      <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(bal)}</div>
+                                      {s._manual && <button onClick={() => setLiabModal({ id: s._id, type: 'student', name, balance: bal, interest_rate: rate ?? '', minimum_payment: minPmt ?? '', credit_limit: '', due_day: '' })} style={{ background: 'transparent', border: 'none', color: TEXT2, fontSize: 11, cursor: 'pointer', padding: 0 }}>Edit</button>}
+                                      {s._manual && <button onClick={() => deleteLiability(s._id)} style={{ background: 'transparent', border: 'none', color: RED, fontSize: 11, cursor: 'pointer', padding: 0 }}>Remove</button>}
+                                    </div>
+                                  </div>
+                                  {pct != null && (
+                                    <div style={{ marginBottom: 8 }}>
+                                      <div style={{ height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: BLUE, borderRadius: 2 }} />
+                                      </div>
+                                      <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{pct}% of {fmt(origBal)} original balance remaining</div>
+                                    </div>
+                                  )}
+                                  <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2 }}>
+                                    {rate != null && <span>Rate {rate.toFixed(2)}%</span>}
+                                    {minPmt != null && <span>Min payment {fmt(minPmt)}</span>}
+                                    {nextDue && <span>Due {new Date(nextDue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {(liabilities.mortgage || []).length > 0 && (
+                        <div>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Mortgages</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {liabilities.mortgage.map((m, i) => {
+                              const acct = accounts.find(a => a.account_id === m.account_id);
+                              const name = m._name || acct?.name || `Mortgage ${i + 1}`;
+                              const bal = m.balances?.current || 0;
+                              const origBal = m.origination_principal_amount;
+                              const pct = origBal ? Math.round((bal / origBal) * 100) : null;
+                              const rate = m.interest_rate?.percentage ?? m.interest_rate_percentage;
+                              const nextPmt = m.next_monthly_payment || m.minimum_payment_amount;
+                              const nextDue = m.next_payment_due_date;
+                              return (
+                                <div key={m.account_id || i} style={{ padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                      <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(bal)}</div>
+                                      {m._manual && <button onClick={() => setLiabModal({ id: m._id, type: 'mortgage', name, balance: bal, interest_rate: rate ?? '', minimum_payment: nextPmt ?? '', credit_limit: '', due_day: '' })} style={{ background: 'transparent', border: 'none', color: TEXT2, fontSize: 11, cursor: 'pointer', padding: 0 }}>Edit</button>}
+                                      {m._manual && <button onClick={() => deleteLiability(m._id)} style={{ background: 'transparent', border: 'none', color: RED, fontSize: 11, cursor: 'pointer', padding: 0 }}>Remove</button>}
+                                    </div>
+                                  </div>
+                                  {pct != null && (
+                                    <div style={{ marginBottom: 8 }}>
+                                      <div style={{ height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: BLUE, borderRadius: 2 }} />
+                                      </div>
+                                      <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{pct}% of {fmt(origBal)} remaining</div>
+                                    </div>
+                                  )}
+                                  <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2 }}>
+                                    {rate != null && <span>Rate {rate.toFixed(2)}%</span>}
+                                    {nextPmt != null && <span>Monthly payment {fmt(nextPmt)}</span>}
+                                    {nextDue && <span>Due {new Date(nextDue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {!liabDemo && totalLiabilities === 0 && (
+                      <div style={{ padding: '24px 0', textAlign: 'center', color: TEXT2, fontSize: 13 }}>
+                        No liabilities detected.{hasBank ? ' Use + Add to enter one manually.' : ''}
+                      </div>
+                    )}
+                  </div>
+                  {liabModal && (
+                    <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setLiabModal(null)}>
+                      <div style={{ ...CARD, width: 380, maxWidth: '92vw', padding: 28 }} onClick={e => e.stopPropagation()}>
+                        <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 20 }}>{liabModal.id ? 'Edit' : 'Add'} Liability</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <div>
+                            <div style={{ fontSize: 12, color: TEXT2, marginBottom: 6 }}>Type</div>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              {['credit','student','mortgage'].map(t => (
+                                <button key={t} onClick={() => setLiabModal(m => ({ ...m, type: t }))}
+                                  style={{ flex: 1, padding: '7px 0', borderRadius: 6, border: `1px solid ${liabModal.type === t ? BLUE_BTN : BORDER_C}`, background: liabModal.type === t ? `${BLUE_BTN}22` : 'transparent', color: liabModal.type === t ? BLUE : TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize' }}>
+                                  {t === 'credit' ? 'Credit Card' : t === 'student' ? 'Student Loan' : 'Mortgage'}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          {[
+                            { key: 'name',            label: 'Name',               placeholder: liabModal.type === 'credit' ? 'e.g. Chase Freedom' : liabModal.type === 'student' ? 'e.g. Federal Direct Loan' : 'e.g. Home Mortgage' },
+                            { key: 'balance',         label: 'Current Balance ($)', placeholder: '0.00' },
+                            ...(liabModal.type === 'credit' ? [{ key: 'credit_limit', label: 'Credit Limit ($)', placeholder: '5000' }] : []),
+                            { key: 'interest_rate',   label: liabModal.type === 'credit' ? 'APR (%)' : 'Interest Rate (%)', placeholder: '6.5' },
+                            { key: 'minimum_payment', label: 'Minimum Payment ($)', placeholder: '25' },
+                            { key: 'due_day',         label: 'Due Day of Month',   placeholder: '15' },
+                          ].map(({ key, label, placeholder }) => (
+                            <div key={key}>
+                              <div style={{ fontSize: 12, color: TEXT2, marginBottom: 6 }}>{label}</div>
+                              <input
+                                value={liabModal[key]}
+                                onChange={e => setLiabModal(m => ({ ...m, [key]: e.target.value }))}
+                                placeholder={placeholder}
+                                style={{ width: '100%', padding: '9px 12px', background: DARK, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 13, boxSizing: 'border-box' }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                          <button onClick={() => setLiabModal(null)} style={{ flex: 1, padding: '9px 0', background: 'transparent', border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 13, cursor: 'pointer' }}>Cancel</button>
+                          <button onClick={saveLiability} disabled={liabSaving || !liabModal.name || !liabModal.balance}
+                            style={{ flex: 1, padding: '9px 0', background: BLUE_BTN, border: 'none', borderRadius: 6, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: liabSaving ? 0.6 : 1 }}>
+                            {liabSaving ? 'Saving…' : 'Save'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   {/* ── Credit Score ──────────────────────── */}

@@ -159,7 +159,7 @@ function getDummyData() {
     credit: [
       {
         account_id: CREDIT,
-        balances: { current: 748.32, limit: 5000.00, iso_currency_code: 'USD' },
+        balances: { current: 124.50, limit: 5000.00, iso_currency_code: 'USD' },
         aprs: [{ apr_type: 'purchase_apr', apr_percentage: 24.99 }],
         minimum_payment_amount: 25.00,
         next_payment_due_date: (() => { const d = new Date(); d.setDate(18); if (d < new Date()) d.setMonth(d.getMonth() + 1); return d.toISOString().split('T')[0]; })(),
@@ -168,10 +168,10 @@ function getDummyData() {
     student: [
       {
         account_id: 'demo_sl_001',
-        balances: { current: 18450.00, iso_currency_code: 'USD' },
-        origination_principal_amount: 27000.00,
+        balances: { current: 2800.00, iso_currency_code: 'USD' },
+        origination_principal_amount: 5500.00,
         interest_rate_percentage: 5.05,
-        minimum_payment_amount: 189.00,
+        minimum_payment_amount: 58.00,
         next_payment_due_date: (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + 1); return d.toISOString().split('T')[0]; })(),
         _name: 'Federal Direct Subsidized Loan',
       },
