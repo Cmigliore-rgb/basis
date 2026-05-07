@@ -2037,6 +2037,18 @@ export default function Dashboard() {
   const [createForm, setCreateForm] = useState({ title: '', description: '', chapter: 'Ch. 1', datasetId: '', points: '100', week: '' });
   const [createAssignCourseId, setCreateAssignCourseId] = useState(null);
   const [viewAs, setViewAs] = useState(null); // null | 'professor' | 'student'
+  const [adminUsers, setAdminUsers] = useState(null);
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
+  const [adminUserSearch, setAdminUserSearch] = useState('');
+  const fetchAdminUsers = async () => {
+    setAdminUsersLoading(true);
+    try { const r = await api.get('/auth/users'); setAdminUsers(r.data.users || []); }
+    catch {} finally { setAdminUsersLoading(false); }
+  };
+  const patchUser = async (id, patch) => {
+    await api.patch(`/auth/users/${id}`, patch);
+    setAdminUsers(prev => prev.map(u => u.id === id ? { ...u, ...patch } : u));
+  };
   const [showInvite, setShowInvite] = useState(false);
   const [inviteSelectedCourse, setInviteSelectedCourse] = useState(null);
   const [profCodes, setProfCodes] = useState([]);
@@ -7311,6 +7323,81 @@ export default function Dashboard() {
                     {viewAs && (
                       <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 8, fontSize: 12, color: TEXT2 }}>
                         Preview mode is active. A banner appears at the top of every panel. <button onClick={() => setViewAs(null)} style={{ background: 'none', border: 'none', color: YELLOW, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Exit preview →</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {isAdmin && (
+                  <div style={{ ...CARD, marginBottom: 16, border: `1px solid rgba(167,139,250,0.25)` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ fontWeight: 700, fontSize: 15 }}>User Management</div>
+                        <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>Admin Only</span>
+                        {adminUsers && <span style={{ fontSize: 11, color: TEXT3 }}>{adminUsers.length} users</span>}
+                      </div>
+                      <button onClick={fetchAdminUsers} disabled={adminUsersLoading}
+                        style={{ padding: '6px 14px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: adminUsersLoading ? 'default' : 'pointer', opacity: adminUsersLoading ? 0.6 : 1 }}>
+                        {adminUsersLoading ? 'Loading…' : adminUsers ? '↻ Refresh' : 'Load Users'}
+                      </button>
+                    </div>
+
+                    {adminUsers && (
+                      <>
+                        <input
+                          value={adminUserSearch}
+                          onChange={e => setAdminUserSearch(e.target.value)}
+                          placeholder="Search by name or email…"
+                          style={{ width: '100%', padding: '8px 12px', background: DARK, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }}
+                        />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: '0', fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', padding: '0 4px 8px', borderBottom: BORDER }}>
+                          <span>Name / Email</span>
+                          <span>Role</span>
+                          <span style={{ textAlign: 'center' }}>Plan</span>
+                          <span style={{ textAlign: 'center' }}>Joined</span>
+                        </div>
+                        <div style={{ maxHeight: 380, overflowY: 'auto' }}>
+                          {adminUsers
+                            .filter(u => {
+                              const q = adminUserSearch.toLowerCase();
+                              return !q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q);
+                            })
+                            .map(u => {
+                              const roleColor = u.role === 'admin' ? '#a78bfa' : u.role === 'professor' ? GREEN : u.role === 'student' ? BLUE : TEXT3;
+                              const isPrem = u.tier === 'premium';
+                              return (
+                                <div key={u.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: 0, alignItems: 'center', padding: '10px 4px', borderBottom: BORDER }}>
+                                  <div>
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{u.name}</div>
+                                    <div style={{ fontSize: 11, color: TEXT2, marginTop: 1 }}>{u.email}</div>
+                                  </div>
+                                  <div style={{ fontSize: 12, color: roleColor, fontWeight: 600, textTransform: 'capitalize' }}>{u.role}</div>
+                                  <div style={{ textAlign: 'center' }}>
+                                    <button
+                                      onClick={() => patchUser(u.id, { tier: isPrem ? 'free' : 'premium' })}
+                                      disabled={u.role === 'admin' || u.role === 'professor'}
+                                      style={{
+                                        padding: '3px 10px', borderRadius: 20, border: 'none', fontSize: 11, fontWeight: 700, cursor: (u.role === 'admin' || u.role === 'professor') ? 'default' : 'pointer',
+                                        background: isPrem ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.06)',
+                                        color: isPrem ? YELLOW : TEXT3,
+                                        opacity: (u.role === 'admin' || u.role === 'professor') ? 0.5 : 1,
+                                      }}>
+                                      {isPrem ? 'Premium' : 'Free'}
+                                    </button>
+                                  </div>
+                                  <div style={{ textAlign: 'center', fontSize: 11, color: TEXT3 }}>
+                                    {new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </>
+                    )}
+
+                    {!adminUsers && (
+                      <div style={{ fontSize: 13, color: TEXT3, textAlign: 'center', padding: '16px 0' }}>
+                        Click "Load Users" to fetch the full user list.
                       </div>
                     )}
                   </div>
