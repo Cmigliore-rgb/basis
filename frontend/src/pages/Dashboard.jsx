@@ -3118,7 +3118,6 @@ export default function Dashboard() {
             <button onClick={() => setShowUpgrade(false)} style={{ position: 'absolute', top: 14, right: 14, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: TEXT2, fontSize: 16, cursor: 'pointer', lineHeight: 1, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
 
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <div style={{ fontSize: 28, marginBottom: 10 }}>⭐</div>
               <div style={{ fontWeight: 800, fontSize: 22, marginBottom: 6 }}>Upgrade to Premium</div>
               <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.6 }}>Connect real accounts, unlock AI insights, and get a complete picture of your finances.</div>
             </div>
@@ -3147,11 +3146,11 @@ export default function Dashboard() {
                 {[
                   'Everything in Free',
                   'Real account connection',
-                  'Financial assistant',
-                  'Live portfolio P&L',
-                  'Market Insights (charts, screener, news)',
-                  'Personalized budget analysis',
                   'Net worth history',
+                  'Personalized budget analysis',
+                  'Live portfolio P&L',
+                  'Financial assistant',
+                  'Market Insights (charts, screener, news)',
                   'Video lessons & walkthroughs',
                   'Practice quizzes',
                   'Downloadable templates',
