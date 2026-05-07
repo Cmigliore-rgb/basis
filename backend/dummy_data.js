@@ -154,7 +154,32 @@ function getDummyData() {
     { account_id: BROKERAGE, security_id: 'demo_sec_schd',  quantity: 22, institution_value: 1738.00, institution_price:  79.00, cost_basis: 1540.00, security: securities.find(s => s.security_id === 'demo_sec_schd')  },
   ];
 
-  return { accounts, transactions, holdings, securities };
+  // ── Liabilities ───────────────────────────────────────────────────────────
+  const liabilities = {
+    credit: [
+      {
+        account_id: CREDIT,
+        balances: { current: 748.32, limit: 5000.00, iso_currency_code: 'USD' },
+        aprs: [{ apr_type: 'purchase_apr', apr_percentage: 24.99 }],
+        minimum_payment_amount: 25.00,
+        next_payment_due_date: (() => { const d = new Date(); d.setDate(18); if (d < new Date()) d.setMonth(d.getMonth() + 1); return d.toISOString().split('T')[0]; })(),
+      },
+    ],
+    student: [
+      {
+        account_id: 'demo_sl_001',
+        balances: { current: 18450.00, iso_currency_code: 'USD' },
+        origination_principal_amount: 27000.00,
+        interest_rate_percentage: 5.05,
+        minimum_payment_amount: 189.00,
+        next_payment_due_date: (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + 1); return d.toISOString().split('T')[0]; })(),
+        _name: 'Federal Direct Subsidized Loan',
+      },
+    ],
+    mortgage: [],
+  };
+
+  return { accounts, transactions, holdings, securities, liabilities };
 }
 
 module.exports = getDummyData;

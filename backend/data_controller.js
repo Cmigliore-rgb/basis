@@ -78,9 +78,46 @@ async function getHoldings(req) {
   return { holdings };
 }
 
+function getManualLiabilities(userId) {
+  return db.prepare('SELECT * FROM manual_liabilities WHERE user_id = ? ORDER BY created_at ASC').all(userId);
+}
+
+function manualToPlaidShape(row) {
+  const base = {
+    account_id: `manual_${row.id}`,
+    _manual: true,
+    _id: row.id,
+    _name: row.name,
+    balances: { current: row.balance, limit: row.credit_limit || null, iso_currency_code: 'USD' },
+    minimum_payment_amount: row.minimum_payment || null,
+    next_payment_due_date: row.due_day ? (() => {
+      const d = new Date();
+      d.setDate(row.due_day);
+      if (d <= new Date()) d.setMonth(d.getMonth() + 1);
+      return d.toISOString().split('T')[0];
+    })() : null,
+  };
+  if (row.type === 'credit') base.aprs = row.interest_rate != null ? [{ apr_type: 'purchase_apr', apr_percentage: row.interest_rate }] : [];
+  if (row.type === 'student') base.interest_rate_percentage = row.interest_rate;
+  if (row.type === 'mortgage') base.interest_rate = { percentage: row.interest_rate };
+  return base;
+}
+
 async function getLiabilities(req) {
   const tokens = getUserTokens(req.user.id);
-  if (!tokens.length) return { credit: [], student: [], mortgage: [], demo: true };
+  const manual = getManualLiabilities(req.user.id);
+  const manualByType = { credit: [], student: [], mortgage: [] };
+  manual.forEach(row => manualByType[row.type]?.push(manualToPlaidShape(row)));
+
+  if (!tokens.length) {
+    const demo = getDummyData().liabilities;
+    return {
+      credit:   [...demo.credit,   ...manualByType.credit],
+      student:  [...demo.student,  ...manualByType.student],
+      mortgage: [...demo.mortgage, ...manualByType.mortgage],
+      demo: true,
+    };
+  }
 
   const results = await Promise.all(
     tokens.map(({ access_token }) =>
@@ -90,11 +127,11 @@ async function getLiabilities(req) {
     )
   );
 
-  const credit   = results.flatMap(r => r?.credit   || []);
-  const student  = results.flatMap(r => r?.student  || []);
-  const mortgage = results.flatMap(r => r?.mortgage || []);
-
-  return { credit, student, mortgage };
+  return {
+    credit:   [...results.flatMap(r => r?.credit   || []), ...manualByType.credit],
+    student:  [...results.flatMap(r => r?.student  || []), ...manualByType.student],
+    mortgage: [...results.flatMap(r => r?.mortgage || []), ...manualByType.mortgage],
+  };
 }
 
 module.exports = { getAccounts, getTransactions, getHoldings, getLiabilities };

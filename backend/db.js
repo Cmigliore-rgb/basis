@@ -116,6 +116,23 @@ try { db.exec("ALTER TABLE submissions ADD COLUMN feedback TEXT DEFAULT ''"); } 
 try { db.exec('ALTER TABLE users ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0'); } catch {}
 try { db.exec('ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0'); } catch {}
 try { db.exec('ALTER TABLE users ADD COLUMN verification_token TEXT'); } catch {}
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS manual_liabilities (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      type TEXT NOT NULL CHECK(type IN ('credit','student','mortgage')),
+      name TEXT NOT NULL,
+      balance REAL NOT NULL DEFAULT 0,
+      interest_rate REAL,
+      minimum_payment REAL,
+      credit_limit REAL,
+      due_day INTEGER,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+} catch {}
 
 // Auto-verify admin and professor accounts
 db.prepare("UPDATE users SET email_verified = 1 WHERE role IN ('admin', 'professor') AND email_verified = 0").run();

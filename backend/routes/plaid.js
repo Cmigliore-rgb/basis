@@ -85,6 +85,55 @@ router.get('/connections', requireAuth, (req, res) => {
   res.json(rows);
 });
 
+// ── Manual liabilities (only when at least one bank is connected) ──────────
+
+function hasConnectedBank(userId) {
+  return db.prepare('SELECT 1 FROM plaid_tokens WHERE user_id = ? LIMIT 1').get(userId) != null;
+}
+
+router.get('/manual-liabilities', requireAuth, (req, res) => {
+  if (!hasConnectedBank(req.user.id)) return res.json({ rows: [] });
+  const rows = db.prepare('SELECT * FROM manual_liabilities WHERE user_id = ? ORDER BY created_at ASC').all(req.user.id);
+  res.json({ rows });
+});
+
+router.post('/manual-liabilities', requireAuth, (req, res) => {
+  if (!hasConnectedBank(req.user.id)) return res.status(403).json({ error: 'Connect a bank account first' });
+  const { type, name, balance, interest_rate, minimum_payment, credit_limit, due_day } = req.body;
+  if (!type || !name || balance == null) return res.status(400).json({ error: 'type, name, and balance are required' });
+  if (!['credit','student','mortgage'].includes(type)) return res.status(400).json({ error: 'Invalid type' });
+  const result = db.prepare(`
+    INSERT INTO manual_liabilities (user_id, type, name, balance, interest_rate, minimum_payment, credit_limit, due_day)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(req.user.id, type, name, Number(balance), interest_rate ?? null, minimum_payment ?? null, credit_limit ?? null, due_day ?? null);
+  res.json({ id: result.lastInsertRowid });
+});
+
+router.patch('/manual-liabilities/:id', requireAuth, (req, res) => {
+  const { name, balance, interest_rate, minimum_payment, credit_limit, due_day } = req.body;
+  const row = db.prepare('SELECT * FROM manual_liabilities WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'Not found' });
+  db.prepare(`
+    UPDATE manual_liabilities
+    SET name = ?, balance = ?, interest_rate = ?, minimum_payment = ?, credit_limit = ?, due_day = ?, updated_at = datetime('now')
+    WHERE id = ? AND user_id = ?
+  `).run(
+    name ?? row.name,
+    balance != null ? Number(balance) : row.balance,
+    interest_rate !== undefined ? interest_rate : row.interest_rate,
+    minimum_payment !== undefined ? minimum_payment : row.minimum_payment,
+    credit_limit !== undefined ? credit_limit : row.credit_limit,
+    due_day !== undefined ? due_day : row.due_day,
+    row.id, req.user.id
+  );
+  res.json({ success: true });
+});
+
+router.delete('/manual-liabilities/:id', requireAuth, (req, res) => {
+  db.prepare('DELETE FROM manual_liabilities WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+  res.json({ success: true });
+});
+
 router.post('/webhook', express.json(), (req, res) => {
   const { webhook_type, webhook_code, item_id } = req.body;
   console.log(`Plaid webhook: ${webhook_type}/${webhook_code} item=${item_id}`);
