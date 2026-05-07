@@ -116,6 +116,7 @@ try { db.exec("ALTER TABLE submissions ADD COLUMN feedback TEXT DEFAULT ''"); } 
 try { db.exec('ALTER TABLE users ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0'); } catch {}
 try { db.exec('ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0'); } catch {}
 try { db.exec('ALTER TABLE users ADD COLUMN verification_token TEXT'); } catch {}
+try { db.exec('ALTER TABLE users ADD COLUMN backup_email TEXT'); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN item_id TEXT'); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN needs_update INTEGER NOT NULL DEFAULT 0'); } catch {}
 try {

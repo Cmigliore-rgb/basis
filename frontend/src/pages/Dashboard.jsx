@@ -1931,6 +1931,9 @@ export default function Dashboard() {
   const [contactMsg, setContactMsg] = useState('');
   const [contactSent, setContactSent] = useState(false);
   const [contactErr, setContactErr] = useState('');
+  const [backupEmail, setBackupEmail] = useState('');
+  const [backupEmailSaved, setBackupEmailSaved] = useState(false);
+  const [backupEmailErr, setBackupEmailErr] = useState('');
   const [profCustomTabs, setProfCustomTabs] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_prof_tabs') || '{}'); } catch { return {}; } });
   const [profCustomContent, setProfCustomContent] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_prof_content') || '{}'); } catch { return {}; } });
   const [showAddTab, setShowAddTab] = useState(false);
@@ -3991,6 +3994,21 @@ export default function Dashboard() {
                     </button>
                   </div>
                 ))}
+
+                {/* Backup email nudge for students without one */}
+                {user && !user.backup_email && ['student', 'user'].includes(user.role) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', background: 'rgba(77,163,255,0.05)', border: '1px solid rgba(77,163,255,0.2)', borderLeft: '3px solid #4da3ff', borderRadius: 10, marginBottom: 16 }}>
+                    <span style={{ fontSize: 20 }}>✉</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>Add a backup email</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Keep access to your account after your student email is deactivated.</div>
+                    </div>
+                    <button onClick={() => setPanel('settings')}
+                      style={{ padding: '7px 14px', background: 'rgba(77,163,255,0.12)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 7, color: '#4da3ff', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                      Add in Settings
+                    </button>
+                  </div>
+                )}
 
                 {canSeeAI && <AdviceBox onGetAdvice={() => getAdvice('overview')} loading={adviceState.overview?.loading} text={adviceState.overview?.text} />}
 
@@ -8091,6 +8109,42 @@ export default function Dashboard() {
                       <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '3px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>{user?.role}</span>
                     </div>
                   </div>
+
+                  {/* Backup email */}
+                  <div style={{ padding: '14px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: TEXT2, marginBottom: 4 }}>Backup Email</div>
+                    <div style={{ fontSize: 12, color: TEXT3, marginBottom: 10, lineHeight: 1.5 }}>
+                      Keep access to your account after your student email is deactivated. Use a personal email you'll always have.
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        type="email"
+                        placeholder={user?.backup_email || 'your@personal-email.com'}
+                        value={backupEmail}
+                        onChange={e => { setBackupEmail(e.target.value); setBackupEmailSaved(false); setBackupEmailErr(''); }}
+                        style={{ flex: 1, padding: '8px 12px', background: MUTED, border: backupEmailErr ? '1px solid rgba(248,113,113,0.5)' : BORDER, borderRadius: 7, color: TEXT, fontSize: 12, outline: 'none', fontFamily: 'inherit' }}
+                      />
+                      <button onClick={async () => {
+                        setBackupEmailErr('');
+                        try {
+                          const { data } = await api.patch('/auth/me', { backup_email: backupEmail.trim() || null });
+                          login(localStorage.getItem('pl_token'), data.user);
+                          setBackupEmailSaved(true);
+                          setBackupEmail('');
+                          setTimeout(() => setBackupEmailSaved(false), 3000);
+                        } catch (err) {
+                          setBackupEmailErr(err.response?.data?.error || 'Failed to save');
+                        }
+                      }} style={{ padding: '8px 14px', background: BLUE_BTN, border: 'none', borderRadius: 7, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        {backupEmailSaved ? 'Saved ✓' : user?.backup_email ? 'Update' : 'Save'}
+                      </button>
+                    </div>
+                    {backupEmailErr && <div style={{ fontSize: 11, color: RED, marginTop: 6 }}>{backupEmailErr}</div>}
+                    {user?.backup_email && !backupEmailSaved && (
+                      <div style={{ fontSize: 11, color: GREEN, marginTop: 6 }}>Current: {user.backup_email}</div>
+                    )}
+                  </div>
+
                   <div style={{ paddingTop: 14, display: 'flex', gap: 8 }}>
                     <button onClick={logout} style={{ padding: '8px 16px', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 7, color: RED, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Sign out</button>
                     <button onClick={async () => {

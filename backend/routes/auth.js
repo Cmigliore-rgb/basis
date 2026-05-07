@@ -30,6 +30,7 @@ const getEnrollments = (userId) =>
 const safeUser = (u, enrollments = []) => ({
   id: u.id, email: u.email, name: u.name, role: u.role, tier: u.tier,
   email_verified: !!u.email_verified, created_at: u.created_at, enrollments,
+  backup_email: u.backup_email || null,
 });
 
 const APP_URL = process.env.FRONTEND_URL || 'https://peakledger.app';
@@ -130,6 +131,23 @@ router.get('/me', requireAuth, (req, res) => {
   res.json({ user: safeUser(user, enrollments) });
 });
 
+// Update own profile (backup email)
+router.patch('/me', requireAuth, (req, res) => {
+  const { backup_email } = req.body;
+  if (backup_email !== undefined) {
+    if (backup_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(backup_email)) {
+      return res.status(400).json({ error: 'Invalid email address' });
+    }
+    if (backup_email && backup_email.toLowerCase() === req.user.email.toLowerCase()) {
+      return res.status(400).json({ error: 'Backup email must be different from your primary email' });
+    }
+    db.prepare('UPDATE users SET backup_email = ? WHERE id = ?').run(backup_email || null, req.user.id);
+  }
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  const enrollments = getEnrollments(req.user.id);
+  res.json({ user: safeUser(user, enrollments) });
+});
+
 // Email verification
 router.get('/verify-email', (req, res) => {
   const { token } = req.query;
@@ -188,6 +206,30 @@ router.post('/enroll', requireAuth, (req, res) => {
   const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
   const enrollments = getEnrollments(req.user.id);
   res.json({ token: sign(updatedUser), user: safeUser(updatedUser, enrollments), enrollments });
+});
+
+// Delete own account — removes all Plaid items, purges all user data
+router.delete('/me', requireAuth, async (req, res) => {
+  const userId = req.user.id;
+  const { plaidClient } = require('../routes/plaid');
+
+  // Remove all Plaid items first (best-effort — don't block on errors)
+  const tokens = db.prepare('SELECT access_token FROM plaid_tokens WHERE user_id = ?').all(userId);
+  await Promise.allSettled(
+    tokens.map(({ access_token }) => plaidClient.itemRemove({ access_token }))
+  );
+
+  // Purge all user data from SQLite
+  db.prepare('DELETE FROM plaid_tokens       WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM manual_liabilities WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM baselines          WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM monthly_actuals    WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM enrollments        WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM submissions        WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM notifications      WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM users              WHERE id = ?').run(userId);
+
+  res.json({ success: true });
 });
 
 // Admin: list all users
