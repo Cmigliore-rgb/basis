@@ -7377,9 +7377,9 @@ export default function Dashboard() {
                         />
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: '0', fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', padding: '0 4px 8px', borderBottom: BORDER }}>
                           <span>Name / Email</span>
-                          <span>Role</span>
+                          <span style={{ textAlign: 'center' }}>Role</span>
                           <span style={{ textAlign: 'center' }}>Plan</span>
-                          <span style={{ textAlign: 'center' }}>Joined</span>
+                          <span style={{ textAlign: 'center', paddingLeft: 24 }}>Joined</span>
                         </div>
                         <div style={{ maxHeight: 380, overflowY: 'auto' }}>
                           {adminUsers
@@ -7396,7 +7396,7 @@ export default function Dashboard() {
                                     <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{u.name}</div>
                                     <div style={{ fontSize: 11, color: TEXT2, marginTop: 1 }}>{u.email}</div>
                                   </div>
-                                  <div style={{ fontSize: 12, color: roleColor, fontWeight: 600, textTransform: 'capitalize' }}>{u.role}</div>
+                                  <div style={{ fontSize: 12, color: roleColor, fontWeight: 600, textTransform: 'capitalize', textAlign: 'center' }}>{u.role}</div>
                                   <div style={{ textAlign: 'center' }}>
                                     <button
                                       onClick={() => patchUser(u.id, { tier: isPrem ? 'free' : 'premium' })}
@@ -7410,7 +7410,7 @@ export default function Dashboard() {
                                       {isPrem ? 'Premium' : 'Free'}
                                     </button>
                                   </div>
-                                  <div style={{ textAlign: 'center', fontSize: 11, color: TEXT3 }}>
+                                  <div style={{ textAlign: 'center', fontSize: 11, color: TEXT3, paddingLeft: 24 }}>
                                     {new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
                                   </div>
                                 </div>
