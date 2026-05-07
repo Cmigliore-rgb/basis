@@ -2,23 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const BG       = '#ffffff';
-const CARD     = '#f8fafc';
-const BORDER   = '#e2e8f0';
-const TEXT     = '#0f172a';
-const TEXT2    = '#64748b';
-const TEXT3    = '#94a3b8';
+const BG       = '#0a0a0a';
+const CARD     = '#111111';
+const BORDER   = 'rgba(255,255,255,0.08)';
+const TEXT     = '#f1f5f9';
+const TEXT2    = '#94a3b8';
+const TEXT3    = '#475569';
 const BLUE     = '#2563eb';
 const BLUE_BTN = '#0066f5';
-const GREEN    = '#16a34a';
-const PURPLE   = '#7c3aed';
-const YELLOW   = '#d97706';
+const GREEN    = '#4ade80';
+const PURPLE   = '#c084fc';
+const YELLOW   = '#fbbf24';
 
 const DOWNLOAD_URL = 'https://github.com/Cmigliore-rgb/basis/releases/download/v1.0.0/PeakLedger.Setup.1.0.0.exe';
 
 const FEATURES = [
   {
-    icon: '◎', color: BLUE,
+    icon: '◎', color: '#60a5fa',
     title: 'Live Financial Dashboard',
     desc: 'Connect your accounts and see your net worth, cash flow, spending breakdowns, and investment portfolio update in real time.',
   },
@@ -38,12 +38,12 @@ const FEATURES = [
     desc: 'S&P 500, sector performance, the fear and greed index, yield curve, and macro indicators all in one panel.',
   },
   {
-    icon: '◉', color: '#dc2626',
+    icon: '◉', color: '#f87171',
     title: 'Tax Planning Tools',
     desc: 'Model federal tax brackets, compare deductions, and estimate your effective rate across different income scenarios.',
   },
   {
-    icon: '⬡', color: '#059669',
+    icon: '⬡', color: '#34d399',
     title: 'Goals and Net Worth Tracking',
     desc: 'Set savings targets, track monthly snapshots, and watch your net worth grow over time with visual progress charts.',
   },
@@ -78,7 +78,7 @@ export default function Landing() {
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
         padding: '0 40px', height: 60,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: scrolled ? 'rgba(255,255,255,0.92)' : 'transparent',
+        background: scrolled ? 'rgba(10,10,10,0.92)' : 'transparent',
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
         borderBottom: scrolled ? `1px solid ${BORDER}` : 'none',
         transition: 'all 0.2s',
@@ -101,10 +101,10 @@ export default function Landing() {
 
       {/* Hero */}
       <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '120px 24px 80px', position: 'relative', overflow: 'hidden' }}>
-        {/* Subtle blue radial glow */}
-        <div style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%, -50%)', width: 700, height: 500, background: 'radial-gradient(ellipse, rgba(37,99,235,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        {/* Blue radial glow */}
+        <div style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%, -50%)', width: 800, height: 600, background: 'radial-gradient(ellipse, rgba(37,99,235,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 20, fontSize: 12, fontWeight: 600, color: BLUE, marginBottom: 28, letterSpacing: '0.3px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 20, fontSize: 12, fontWeight: 600, color: '#60a5fa', marginBottom: 28, letterSpacing: '0.3px' }}>
           Free to use · No credit card required
         </div>
 
@@ -119,11 +119,11 @@ export default function Landing() {
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
           <button onClick={() => navigate('/register')}
-            style={{ padding: '14px 32px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,102,245,0.25)' }}>
+            style={{ padding: '14px 32px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 24px rgba(0,102,245,0.35)' }}>
             Get Started Free
           </button>
           <a href={DOWNLOAD_URL} download
-            style={{ padding: '14px 32px', background: '#fff', color: TEXT, border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 16, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            style={{ padding: '14px 32px', background: CARD, color: TEXT, border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 16, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 18 }}>↓</span> Download for Windows
           </a>
         </div>
@@ -140,7 +140,7 @@ export default function Landing() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
           {FEATURES.map(f => (
             <div key={f.title} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '28px 28px', transition: 'box-shadow 0.2s' }}>
-              <div style={{ width: 44, height: 44, borderRadius: 11, background: `${f.color}12`, border: `1px solid ${f.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: f.color, marginBottom: 18 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 11, background: `${f.color}15`, border: `1px solid ${f.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: f.color, marginBottom: 18 }}>
                 {f.icon}
               </div>
               <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, letterSpacing: '-0.3px', color: TEXT }}>{f.title}</div>
@@ -172,17 +172,17 @@ export default function Landing() {
 
       {/* Download CTA */}
       <section style={{ padding: '80px 40px', borderTop: `1px solid ${BORDER}` }}>
-        <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center', background: '#0f172a', border: `1px solid #1e293b`, borderRadius: 20, padding: '56px 48px' }}>
+        <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center', background: '#0f172a', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 20, padding: '56px 48px', boxShadow: '0 0 60px rgba(37,99,235,0.08)' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#60a5fa', letterSpacing: '1px', marginBottom: 16 }}>DESKTOP APP</div>
           <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 36px)', fontWeight: 800, letterSpacing: '-1px', margin: '0 0 14px', color: '#f1f5f9' }}>Get the desktop app</h2>
           <p style={{ fontSize: 16, color: '#94a3b8', lineHeight: 1.65, marginBottom: 36 }}>
             The Windows desktop app gives you a dedicated window for PeakLedger. Your account stays in sync across the app and the web.
           </p>
           <a href={DOWNLOAD_URL} download
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '14px 32px', background: BLUE_BTN, color: '#fff', borderRadius: 10, fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 14px rgba(0,102,245,0.35)' }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '14px 32px', background: BLUE_BTN, color: '#fff', borderRadius: 10, fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(0,102,245,0.35)' }}>
             <span style={{ fontSize: 20 }}>↓</span> Download for Windows
           </a>
-          <p style={{ marginTop: 16, fontSize: 12, color: '#64748b' }}>
+          <p style={{ marginTop: 16, fontSize: 12, color: '#475569' }}>
             Windows 10 and 11. If Windows shows a security prompt, click "More info" then "Run anyway".
           </p>
         </div>

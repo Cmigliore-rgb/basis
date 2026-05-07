@@ -3,19 +3,16 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
-// Left panel — dark slate, keeps fintech premium feel
 const L_BG    = '#0f172a';
 const L_TEXT  = '#f1f5f9';
 const L_TEXT2 = '#94a3b8';
-const L_BORDER = '1px solid rgba(255,255,255,0.08)';
 
-// Right panel — clean white form
-const R_BG    = '#ffffff';
-const TEXT    = '#0f172a';
-const TEXT2   = '#64748b';
-const TEXT3   = '#94a3b8';
-const BORDER  = '1px solid #e2e8f0';
-const INPUT_BG = '#f8fafc';
+const R_BG    = '#0a0a0a';
+const TEXT    = '#f1f5f9';
+const TEXT2   = '#94a3b8';
+const TEXT3   = '#475569';
+const BORDER  = '1px solid rgba(255,255,255,0.08)';
+const INPUT_BG = '#141414';
 const BLUE    = '#2563eb';
 const BLUE_BTN = '#0066f5';
 const GREEN   = '#16a34a';
@@ -54,7 +51,6 @@ export default function Login() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 64px', background: L_BG, minWidth: 0 }}>
         <div style={{ maxWidth: 440 }}>
 
-          {/* Logo mark + wordmark */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
             <img src="/logo-icon.svg" alt="" style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0 }} />
             <span style={{ fontSize: 26, fontWeight: 700, color: L_TEXT, letterSpacing: '-0.5px' }}>PeakLedger</span>
@@ -83,7 +79,7 @@ export default function Login() {
         </div>
       </div>
 
-      {/* ── Right: white login form ────────────────────────── */}
+      {/* ── Right: dark login form ────────────────────────── */}
       <div style={{ width: 460, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 48px', background: R_BG }}>
         <div style={{ marginBottom: 36 }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: TEXT, letterSpacing: '-0.5px' }}>Welcome back</div>
@@ -92,7 +88,7 @@ export default function Login() {
 
         <form onSubmit={submit}>
           {error && (
-            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: RED, fontSize: 13, marginBottom: 20 }}>
+            <div style={{ background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 8, padding: '10px 14px', color: '#f87171', fontSize: 13, marginBottom: 20 }}>
               {error}
             </div>
           )}

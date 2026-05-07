@@ -3,18 +3,16 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
-// Left panel — dark slate
 const L_BG    = '#0f172a';
 const L_TEXT  = '#f1f5f9';
 const L_TEXT2 = '#94a3b8';
 
-// Right panel — white form
-const R_BG    = '#ffffff';
-const TEXT    = '#0f172a';
-const TEXT2   = '#64748b';
-const TEXT3   = '#94a3b8';
-const BORDER  = '1px solid #e2e8f0';
-const INPUT_BG = '#f8fafc';
+const R_BG    = '#0a0a0a';
+const TEXT    = '#f1f5f9';
+const TEXT2   = '#94a3b8';
+const TEXT3   = '#475569';
+const BORDER  = '1px solid rgba(255,255,255,0.08)';
+const INPUT_BG = '#141414';
 const BLUE    = '#2563eb';
 const BLUE_BTN = '#0066f5';
 const GREEN   = '#16a34a';
@@ -97,7 +95,6 @@ export default function Register() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 64px', background: L_BG, minWidth: 0 }}>
         <div style={{ maxWidth: 440 }}>
 
-          {/* Logo mark + wordmark */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
             <img src="/logo-icon.svg" alt="" style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0 }} />
             <span style={{ fontSize: 26, fontWeight: 700, color: L_TEXT, letterSpacing: '-0.5px' }}>PeakLedger</span>
@@ -126,7 +123,7 @@ export default function Register() {
         </div>
       </div>
 
-      {/* ── Right: white registration form ────────────────── */}
+      {/* ── Right: dark registration form ────────────────── */}
       <div style={{ width: 480, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 48px', background: R_BG, overflowY: 'auto' }}>
         <div style={{ marginBottom: 28 }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: TEXT, letterSpacing: '-0.5px' }}>Create your account</div>
@@ -139,10 +136,10 @@ export default function Register() {
         <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
           {ROLES.map(r => {
             const active = form.role === r.val;
-            const color  = r.val === 'professor' ? '#16a34a' : r.val === 'student' ? '#7c3aed' : '#0066f5';
+            const color  = r.val === 'professor' ? '#4ade80' : r.val === 'student' ? '#c084fc' : '#0066f5';
             return (
               <button key={r.val} type="button" onClick={() => setForm(p => ({ ...p, role: r.val }))}
-                style={{ flex: 1, padding: '10px 8px', borderRadius: 8, border: active ? `1.5px solid ${color}` : BORDER, background: active ? `${color}08` : INPUT_BG, cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
+                style={{ flex: 1, padding: '10px 8px', borderRadius: 8, border: active ? `1.5px solid ${color}` : BORDER, background: active ? `${color}12` : INPUT_BG, cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
                 <div style={{ fontSize: 16, marginBottom: 3 }}>{r.icon}</div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: active ? color : TEXT2 }}>{r.label}</div>
               </button>
@@ -152,7 +149,7 @@ export default function Register() {
 
         <form onSubmit={submit}>
           {error && (
-            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: RED, fontSize: 13, marginBottom: 20 }}>
+            <div style={{ background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 8, padding: '10px 14px', color: '#f87171', fontSize: 13, marginBottom: 20 }}>
               {error}
             </div>
           )}
@@ -167,7 +164,7 @@ export default function Register() {
             <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required autoComplete="email" style={inp} />
           </div>
           {isEdu
-            ? <div style={{ marginBottom: 14, fontSize: 12, color: GREEN, display: 'flex', alignItems: 'center', gap: 5 }}>✓ Student email — you qualify for the student discount</div>
+            ? <div style={{ marginBottom: 14, fontSize: 12, color: '#4ade80', display: 'flex', alignItems: 'center', gap: 5 }}>✓ Student email — you qualify for the student discount</div>
             : <div style={{ marginBottom: 14 }} />
           }
 
@@ -187,16 +184,16 @@ export default function Register() {
                 type="text" placeholder="e.g. B-TERRY-26" value={form.courseCode}
                 onChange={e => setForm(p => ({ ...p, courseCode: e.target.value }))}
                 style={{ ...inp, textTransform: 'uppercase', letterSpacing: '1px',
-                  border: codeState?.course ? '1px solid #86efac' : codeState?.error ? '1px solid #fca5a5' : BORDER }}
+                  border: codeState?.course ? '1px solid rgba(74,222,128,0.5)' : codeState?.error ? '1px solid rgba(248,113,113,0.5)' : BORDER }}
               />
               {codeState?.validating && <div style={{ marginTop: 6, fontSize: 12, color: TEXT3 }}>Checking code…</div>}
               {codeState?.course && (
-                <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 7 }}>
-                  <div style={{ fontSize: 12, color: GREEN, fontWeight: 700, marginBottom: 2 }}>✓ Valid code</div>
+                <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 7 }}>
+                  <div style={{ fontSize: 12, color: '#4ade80', fontWeight: 700, marginBottom: 2 }}>✓ Valid code</div>
                   <div style={{ fontSize: 12, color: TEXT2 }}>{codeState.course.course_name} · {codeState.course.instructor_name} · {codeState.course.semester}</div>
                 </div>
               )}
-              {codeState?.error && <div style={{ marginTop: 6, fontSize: 12, color: RED }}>{codeState.error}</div>}
+              {codeState?.error && <div style={{ marginTop: 6, fontSize: 12, color: '#f87171' }}>{codeState.error}</div>}
             </div>
           )}
 
