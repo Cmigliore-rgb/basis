@@ -3738,12 +3738,12 @@ export default function Dashboard() {
                 <DragSection id="chart" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
                 <div style={{ ...CARD, marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Net Worth History</div>
-                  {snapshots.length < 2 && (
+                  {isDemoData && (
                     <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 12, display: 'inline-block' }}>
-                      {isDemoData ? 'Demo data — connect an account to see your real history' : 'Example — your history builds up day by day'}
+                      Demo data — connect an account to see your real history
                     </div>
                   )}
-                  <NetWorthChart snapshots={snapshots.length >= 2 ? snapshots : DEMO_SNAPSHOTS} />
+                  <NetWorthChart snapshots={!isDemoData && snapshots.length >= 2 ? snapshots : DEMO_SNAPSHOTS} />
                 </div>
 
                 </DragSection>
