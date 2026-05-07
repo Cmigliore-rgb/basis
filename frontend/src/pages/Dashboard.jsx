@@ -4013,7 +4013,7 @@ export default function Dashboard() {
                   <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Net Worth History</div>
                   {isDemoData && (
                     <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 12, display: 'inline-block' }}>
-                      Demo data — connect an account to see your real history
+                      Demo data. Connect an account to see your real history.
                     </div>
                   )}
                   <NetWorthChart snapshots={!isDemoData && snapshots.length >= 2 ? snapshots : DEMO_SNAPSHOTS} />
@@ -4042,7 +4042,7 @@ export default function Dashboard() {
                       <>
                         {display.isDemo && (
                           <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 12, display: 'inline-block' }}>
-                            Demo data — connect an account to see your real baseline
+                            Demo data. Connect an account to see your real baseline.
                           </div>
                         )}
                         <BaselineChart
@@ -4529,7 +4529,7 @@ export default function Dashboard() {
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: liabDemo ? 12 : 20 }}>Credit cards, loans, and mortgages.</div>
                     {liabDemo && (
                       <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 16, display: 'inline-block' }}>
-                        Demo data — connect a bank account to add your own liabilities
+                        Demo data. Connect a bank account to add your own liabilities.
                       </div>
                     )}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
