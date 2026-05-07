@@ -23,9 +23,10 @@ const YELLOW   = '#fbbf24';
 
 const CARD = { background: CARD_BG, border: BORDER, borderRadius: 10, padding: 24 };
 
-function ConnectedAccountsCard() {
+function ConnectedAccountsCard({ onFixConnection }) {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [fixingId, setFixingId] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -43,6 +44,13 @@ function ConnectedAccountsCard() {
     load();
   };
 
+  const handleFix = async (id) => {
+    setFixingId(id);
+    await onFixConnection(id);
+    setFixingId(null);
+    load();
+  };
+
   return (
     <div style={{ ...CARD, marginBottom: 16 }}>
       <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Connected Accounts</div>
@@ -54,18 +62,31 @@ function ConnectedAccountsCard() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {accounts.map(a => (
-            <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: DARK, borderRadius: 8, border: BORDER }}>
+            <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: DARK, borderRadius: 8, border: `1px solid ${a.needs_update ? 'rgba(251,191,36,0.35)' : BORDER_C}` }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{a.institution_name}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{a.institution_name}</div>
+                  {a.needs_update && <span style={{ fontSize: 10, fontWeight: 700, color: YELLOW, background: 'rgba(251,191,36,0.12)', padding: '2px 7px', borderRadius: 4 }}>Needs Reconnect</span>}
+                </div>
                 <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>
                   Connected {new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
               </div>
-              <button
-                onClick={() => disconnect(a.id, a.institution_name)}
-                style={{ padding: '5px 12px', background: 'transparent', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 6, color: RED, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                Disconnect
-              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {a.needs_update && (
+                  <button
+                    onClick={() => handleFix(a.id)}
+                    disabled={fixingId === a.id}
+                    style={{ padding: '5px 12px', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.35)', borderRadius: 6, color: YELLOW, fontSize: 12, fontWeight: 600, cursor: 'pointer', opacity: fixingId === a.id ? 0.6 : 1 }}>
+                    {fixingId === a.id ? 'Opening…' : 'Fix'}
+                  </button>
+                )}
+                <button
+                  onClick={() => disconnect(a.id, a.institution_name)}
+                  style={{ padding: '5px 12px', background: 'transparent', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 6, color: RED, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  Disconnect
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -1883,6 +1904,8 @@ export default function Dashboard() {
   const [liabModal, setLiabModal]   = useState(null); // null | { type, name, balance, interest_rate, minimum_payment, credit_limit, due_day, id? }
   const [liabSaving, setLiabSaving] = useState(false);
   const [hasBank, setHasBank]       = useState(false);
+  const [brokenConnections, setBrokenConnections] = useState([]);
+  const [updatingId, setUpdatingId] = useState(null); // token id currently being re-authed
   const [budget, setBudget] = useState([]);
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1946,6 +1969,52 @@ export default function Dashboard() {
   const getOrder = (key, defaults) => { const s = layoutOrder[key]; if (!s?.length) return defaults; const ss = new Set(s); return [...s.filter(id => defaults.includes(id)), ...defaults.filter(id => !ss.has(id))]; };
   const handleReorder = (key, defaults) => (srcId, tgtId) => { const order = getOrder(key, defaults); const si = order.indexOf(srcId), ti = order.indexOf(tgtId); if (si === -1 || ti === -1 || si === ti) return; const next = [...order]; next.splice(si, 1); next.splice(ti, 0, srcId); setLayoutOrder(prev => ({ ...prev, [key]: next })); };
   const resetLayout = (key) => setLayoutOrder(prev => { const n = { ...prev }; delete n[key]; return n; });
+  const refreshConnections = async () => {
+    try {
+      const r = await api.get('/plaid/connections');
+      setBrokenConnections((r.data || []).filter(c => c.needs_update));
+    } catch {}
+  };
+
+  const openUpdateMode = async (tokenId) => {
+    setUpdatingId(tokenId);
+    try {
+      const r = await api.post('/plaid/create_update_token', { token_id: tokenId });
+      const linkToken = r.data.link_token;
+
+      // Ensure Plaid script is loaded
+      const loadScript = () => new Promise((resolve, reject) => {
+        if (window.Plaid) return resolve();
+        const s = document.createElement('script');
+        s.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js';
+        s.onload = resolve;
+        s.onerror = reject;
+        document.body.appendChild(s);
+      });
+      await loadScript();
+
+      const handler = window.Plaid.create({
+        token: linkToken,
+        onSuccess: async () => {
+          // No token exchange needed — access token is still valid after update mode
+          await api.post(`/plaid/dismiss_update/${tokenId}`);
+          setBrokenConnections(prev => prev.filter(c => c.id !== tokenId));
+          fetchAll();
+        },
+        onExit: () => setUpdatingId(null),
+      });
+      handler.open();
+    } catch (err) {
+      console.error('Update mode error:', err);
+      setUpdatingId(null);
+    }
+  };
+
+  const dismissUpdate = async (tokenId) => {
+    await api.post(`/plaid/dismiss_update/${tokenId}`).catch(() => {});
+    setBrokenConnections(prev => prev.filter(c => c.id !== tokenId));
+  };
+
   const refreshLiabilities = async () => {
     try {
       const r = await api.get('/plaid/liabilities');
@@ -2266,7 +2335,7 @@ export default function Dashboard() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [acc, tellerAcc, txns, tellerTxns, hold, liabRes, news, snaps, limits, goalsRes, marketRes, tickersRes, sp500Res, yieldRes] = await Promise.allSettled([
+      const [acc, tellerAcc, txns, tellerTxns, hold, liabRes, news, snaps, limits, goalsRes, marketRes, tickersRes, sp500Res, yieldRes, connRes] = await Promise.allSettled([
         api.get('/plaid/accounts'),
         api.get('/teller/accounts'),
         api.get('/transactions'),
@@ -2281,6 +2350,7 @@ export default function Dashboard() {
         api.get('/market/tickers'),
         api.get('/market/sp500', { params: { period: '3mo' } }),
         api.get('/market/yield-curve'),
+        api.get('/plaid/connections'),
       ]);
 
       const plaidAccounts = acc.status       === 'fulfilled' ? acc.value.data.accounts            || [] : [];
@@ -2322,6 +2392,9 @@ export default function Dashboard() {
         });
         setLiabDemo(!!ld.demo);
         setHasBank(!ld.demo);
+      }
+      if (connRes.status === 'fulfilled') {
+        setBrokenConnections((connRes.value.data || []).filter(c => c.needs_update));
       }
       if (news.status  === 'fulfilled') setArticles(news.value.data.articles || []);
       if (snaps.status === 'fulfilled') setSnapshots(snaps.value.data.snapshots || []);
@@ -3894,6 +3967,27 @@ export default function Dashboard() {
                     </button>
                   </div>
                 )}
+
+                {brokenConnections.map(conn => (
+                  <div key={conn.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.25)', borderLeft: '3px solid #fbbf24', borderRadius: 10, marginBottom: 16 }}>
+                    <span style={{ fontSize: 20 }}>⚠</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>{conn.institution_name} needs to be reconnected</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Your credentials changed or the session expired. Re-authenticate to restore live data.</div>
+                    </div>
+                    <button
+                      onClick={() => openUpdateMode(conn.id)}
+                      disabled={updatingId === conn.id}
+                      style={{ padding: '7px 14px', background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.35)', borderRadius: 7, color: YELLOW, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', opacity: updatingId === conn.id ? 0.6 : 1 }}>
+                      {updatingId === conn.id ? 'Opening…' : 'Fix Connection'}
+                    </button>
+                    <button
+                      onClick={() => dismissUpdate(conn.id)}
+                      style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 16, cursor: 'pointer', lineHeight: 1, padding: '2px 4px', flexShrink: 0 }}>
+                      ✕
+                    </button>
+                  </div>
+                ))}
 
                 {canSeeAI && <AdviceBox onGetAdvice={() => getAdvice('overview')} loading={adviceState.overview?.loading} text={adviceState.overview?.text} />}
 
@@ -7681,7 +7775,7 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                <ConnectedAccountsCard />
+                <ConnectedAccountsCard onFixConnection={openUpdateMode} />
 
                 <div style={{ ...CARD, marginBottom: 16 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Appearance</div>

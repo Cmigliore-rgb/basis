@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const { PlaidApi, PlaidEnvironments, Configuration, Products, CountryCode } = require('plaid');
 const requireAuth = require('../middleware/requireAuth');
@@ -39,15 +39,39 @@ router.post('/create_link_token', requireAuth, async (req, res) => {
   }
 });
 
+// ── Update mode: create a link token tied to an existing access token ────────
+router.post('/create_update_token', requireAuth, async (req, res) => {
+  const { token_id } = req.body;
+  const row = db.prepare('SELECT access_token FROM plaid_tokens WHERE id = ? AND user_id = ?').get(token_id, req.user.id);
+  if (!row) return res.status(404).json({ error: 'Connection not found' });
+  try {
+    const params = {
+      user: { client_user_id: String(req.user.id) },
+      client_name: 'PeakLedger',
+      access_token: row.access_token,
+      language: 'en',
+      country_codes: [CountryCode.Us],
+      webhook: 'https://peakledger.app/api/plaid/webhook',
+    };
+    if (process.env.PLAID_REDIRECT_URI) params.redirect_uri = process.env.PLAID_REDIRECT_URI;
+    const response = await plaidClient.linkTokenCreate(params);
+    res.json({ link_token: response.data.link_token });
+  } catch (err) {
+    const detail = err.response?.data || err.message;
+    console.error('create_update_token error:', JSON.stringify(detail));
+    res.status(500).json({ error: typeof detail === 'object' ? JSON.stringify(detail) : detail });
+  }
+});
+
 router.post('/exchange_token', requireAuth, async (req, res) => {
   const { public_token, institution_name } = req.body;
   try {
     const response = await plaidClient.itemPublicTokenExchange({ public_token });
-    const access_token = response.data.access_token;
+    const { access_token, item_id } = response.data;
     db.prepare(`
-      INSERT INTO plaid_tokens (user_id, access_token, institution_name)
-      VALUES (?, ?, ?)
-    `).run(req.user.id, access_token, institution_name || 'Unknown');
+      INSERT INTO plaid_tokens (user_id, access_token, institution_name, item_id)
+      VALUES (?, ?, ?, ?)
+    `).run(req.user.id, access_token, institution_name || 'Unknown', item_id);
     res.json({ success: true });
   } catch (err) {
     console.error('exchange_token error:', err.message);
@@ -81,8 +105,14 @@ router.delete('/disconnect/:id', requireAuth, async (req, res) => {
 });
 
 router.get('/connections', requireAuth, (req, res) => {
-  const rows = db.prepare('SELECT id, institution_name, created_at FROM plaid_tokens WHERE user_id = ?').all(req.user.id);
+  const rows = db.prepare('SELECT id, institution_name, created_at, needs_update FROM plaid_tokens WHERE user_id = ?').all(req.user.id);
   res.json(rows);
+});
+
+// ── Dismiss update prompt without re-authenticating ──────────────────────────
+router.post('/dismiss_update/:id', requireAuth, (req, res) => {
+  db.prepare('UPDATE plaid_tokens SET needs_update = 0 WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+  res.json({ success: true });
 });
 
 // ── Manual liabilities (only when at least one bank is connected) ──────────
@@ -139,11 +169,21 @@ router.post('/webhook', express.json(), (req, res) => {
   console.log(`Plaid webhook: ${webhook_type}/${webhook_code} item=${item_id}`);
 
   if (webhook_type === 'TRANSACTIONS' && ['DEFAULT_UPDATE', 'INITIAL_UPDATE', 'HISTORICAL_UPDATE'].includes(webhook_code)) {
-    // New transactions available — logged for now, real-time push can be added later
+    // New transactions available — real-time push can be added later
   }
 
-  if (webhook_type === 'ITEM' && webhook_code === 'ERROR') {
-    console.warn(`Plaid item error for item ${item_id}:`, req.body.error);
+  if (webhook_type === 'ITEM') {
+    // Flag items that need re-authentication
+    if (['ITEM_LOGIN_REQUIRED', 'PENDING_EXPIRATION', 'PENDING_DISCONNECT'].includes(webhook_code)) {
+      db.prepare('UPDATE plaid_tokens SET needs_update = 1 WHERE item_id = ?').run(item_id);
+      console.log(`Item needs re-auth: ${item_id} (${webhook_code})`);
+    }
+    if (webhook_code === 'ERROR') {
+      console.warn(`Plaid item error for item ${item_id}:`, req.body.error);
+      if (req.body.error?.error_code === 'ITEM_LOGIN_REQUIRED') {
+        db.prepare('UPDATE plaid_tokens SET needs_update = 1 WHERE item_id = ?').run(item_id);
+      }
+    }
   }
 
   res.json({ received: true });
