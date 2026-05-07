@@ -120,7 +120,7 @@ router.post('/enroll', requireAuth, (req, res) => {
 // Admin: list all users
 router.get('/users', requireAuth, (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
-  const users = db.prepare('SELECT id, email, name, role, tier, created_at FROM users ORDER BY created_at DESC').all();
+  const users = db.prepare('SELECT id, email, name, role, tier, created_at FROM users WHERE is_demo = 0 OR is_demo IS NULL ORDER BY created_at DESC').all();
   res.json({ users });
 });
 

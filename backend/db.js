@@ -113,6 +113,7 @@ db.prepare(`UPDATE course_codes SET instructor_name = 'Prof. Thomas' WHERE code 
 // Migrate: add grade/feedback to submissions if not already present
 try { db.exec('ALTER TABLE submissions ADD COLUMN grade INTEGER'); } catch {}
 try { db.exec("ALTER TABLE submissions ADD COLUMN feedback TEXT DEFAULT ''"); } catch {}
+try { db.exec('ALTER TABLE users ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0'); } catch {}
 
 // roles: 'admin' | 'professor' | 'student' | 'user'
 // tiers: 'free' | 'premium'
@@ -156,8 +157,9 @@ const DEMO_STUDENTS = [
 ];
 
 DEMO_STUDENTS.forEach(s => {
-  db.prepare(`INSERT OR IGNORE INTO users (email, password_hash, name, role, tier) VALUES (?, ?, ?, 'student', 'free')`).run(s.email, demoHash, s.name);
+  db.prepare(`INSERT OR IGNORE INTO users (email, password_hash, name, role, tier, is_demo) VALUES (?, ?, ?, 'student', 'free', 1)`).run(s.email, demoHash, s.name);
   const u = db.prepare('SELECT id FROM users WHERE email = ?').get(s.email);
+  db.prepare(`UPDATE users SET is_demo = 1 WHERE id = ?`).run(u.id);
   db.prepare(`INSERT OR IGNORE INTO enrollments (user_id, course_code) VALUES (?, 'B-TERRY-26')`).run(u.id);
 });
 

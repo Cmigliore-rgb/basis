@@ -278,6 +278,26 @@ function buildDemoBaseline() {
 }
 const DEMO_BASELINE = buildDemoBaseline();
 
+function buildDemoSnapshots() {
+  // Align with demo accounts: checking $3,240 + savings $5,800 + credit $748 + portfolio $7,832 ≈ $17,620
+  const CURRENT_NW = 17620;
+  const START_NW   = 15540;
+  const DAYS = 30;
+  const now = new Date();
+  const snapshots = [];
+  for (let i = DAYS - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const t = (DAYS - 1 - i) / (DAYS - 1);
+    const base = START_NW + t * (CURRENT_NW - START_NW);
+    const daySeed = d.getDate() * 17 + (d.getMonth() + 1) * 31;
+    const noise = Math.sin(daySeed * 0.7) * 220 + Math.cos(daySeed * 1.3) * 140;
+    snapshots.push({ date: d.toISOString().split('T')[0], value: Math.round(base + noise) });
+  }
+  return snapshots;
+}
+const DEMO_SNAPSHOTS = buildDemoSnapshots();
+
 function BaselineChart({ months, baseline, currentMTD, status, onRefresh, refreshing, isDemo }) {
   const W = 620, H = 180, PAD = { top: 20, right: 16, bottom: 32, left: 68 };
   const innerW = W - PAD.left - PAD.right;
@@ -3716,10 +3736,15 @@ export default function Dashboard() {
 
                 </DragSection>
                 <DragSection id="chart" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
-                {snapshots.length > 0 && (
+                {(snapshots.length > 0 || isDemoData) && (
                   <div style={{ ...CARD, marginBottom: 16 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Net Worth History</div>
-                    <NetWorthChart snapshots={snapshots} />
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Net Worth History</div>
+                    {isDemoData && snapshots.length === 0 && (
+                      <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 12, display: 'inline-block' }}>
+                        Demo data — connect an account to see your real history
+                      </div>
+                    )}
+                    <NetWorthChart snapshots={snapshots.length > 0 ? snapshots : DEMO_SNAPSHOTS} />
                   </div>
                 )}
 
