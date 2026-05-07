@@ -26,6 +26,9 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const refreshUser = () =>
+    api.get('/auth/me').then(r => setUser(r.data.user)).catch(() => {});
+
   const isPremium   = user?.tier === 'premium' || user?.role === 'admin' || user?.role === 'professor';
   const isAdmin     = user?.role === 'admin';
   const isProfessor = user?.role === 'professor' || user?.role === 'admin';
@@ -33,7 +36,7 @@ export function AuthProvider({ children }) {
   const isUser      = user?.role === 'user';
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isPremium, isAdmin, isProfessor, isStudent, isUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, isPremium, isAdmin, isProfessor, isStudent, isUser }}>
       {children}
     </AuthContext.Provider>
   );

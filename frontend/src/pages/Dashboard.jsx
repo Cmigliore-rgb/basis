@@ -1820,7 +1820,7 @@ function DragSection({ id, panel, order, onReorder, children, handleTop = 10 }) 
 }
 
 export default function Dashboard() {
-  const { user, logout, isPremium, isProfessor, isAdmin, isStudent, isUser } = useAuth();
+  const { user, logout, refreshUser, isPremium, isProfessor, isAdmin, isStudent, isUser } = useAuth();
   const [panel, setPanel] = useState(() => localStorage.getItem('pl_panel') || 'overview');
   const [accounts, setAccounts] = useState([]);
   const [isDemoData, setIsDemoData] = useState(false);
@@ -2102,7 +2102,8 @@ export default function Dashboard() {
   const [pushTarget, setPushTarget] = useState({});
   const [submittedAssignments, setSubmittedAssignments] = useState(new Set());
   const [submissionDetails, setSubmissionDetails] = useState({});
-  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showUpgrade, setShowUpgrade]       = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showSubmit, setShowSubmit] = useState(null); // assignment object | null
   const [submitNote, setSubmitNote] = useState('');
   const [showGrade, setShowGrade] = useState(null); // submission object from professor hub
@@ -2135,6 +2136,15 @@ export default function Dashboard() {
     localStorage.setItem('pl_accent', accent);
   }, [accent]);
   useEffect(() => { localStorage.setItem('pl_panel', panel); }, [panel]);
+
+  // Handle return from Stripe checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('upgraded') === '1') {
+      refreshUser();
+      window.history.replaceState({}, '', '/app');
+    }
+  }, []);
   useEffect(() => { localStorage.setItem('pl_layout_order', JSON.stringify(layoutOrder)); }, [layoutOrder]);
   useEffect(() => { localStorage.setItem('pl_calendar', JSON.stringify(calendarEvents)); }, [calendarEvents]);
   useEffect(() => { localStorage.setItem('pl_announcements', JSON.stringify(profAnnouncements)); }, [profAnnouncements]);
@@ -2980,12 +2990,26 @@ export default function Dashboard() {
               </div>
             </div>
 
+            <div style={{ textAlign: 'center', marginBottom: 16 }}>
+              <span style={{ fontSize: 28, fontWeight: 800, color: TEXT }}>{isStudent ? '$5.99' : '$9.99'}</span>
+              <span style={{ fontSize: 14, color: TEXT2 }}>/month</span>
+              {isStudent && <div style={{ fontSize: 12, color: '#4ade80', marginTop: 4 }}>Student discount applied</div>}
+            </div>
             <button
-              onClick={() => { window.open('mailto:connoraltonmigliore@gmail.com?subject=PeakLedger Premium Access', '_blank'); }}
-              style={{ width: '100%', padding: '14px 0', background: BLUE_BTN, border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>
-              Get Premium Access →
+              disabled={checkoutLoading}
+              onClick={async () => {
+                setCheckoutLoading(true);
+                try {
+                  const { data } = await api.post('/stripe/checkout');
+                  window.location.href = data.url;
+                } catch {
+                  setCheckoutLoading(false);
+                }
+              }}
+              style={{ width: '100%', padding: '14px 0', background: BLUE_BTN, border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, cursor: checkoutLoading ? 'default' : 'pointer', opacity: checkoutLoading ? 0.7 : 1, marginBottom: 10 }}>
+              {checkoutLoading ? 'Redirecting to checkout…' : 'Upgrade to Analyst →'}
             </button>
-            <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3 }}>Currently in early access. Reach out to get set up.</div>
+            <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3 }}>Secured by Stripe. Cancel anytime.</div>
           </div>
         </div>
       )}

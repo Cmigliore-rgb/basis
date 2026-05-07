@@ -19,6 +19,7 @@ const submissionsRoutes = require('./routes/submissions');
 const notificationsRoutes = require('./routes/notifications');
 const feedbackRoutes = require('./routes/feedback');
 const baselineRoutes = require('./routes/baseline');
+const stripeRoutes   = require('./routes/stripe');
 const store = require('./store');
 
 const app = express();
@@ -40,6 +41,9 @@ app.use(cors({
   },
   credentials: true,
 }));
+
+// Stripe webhook must be registered before express.json() — needs raw body
+app.use('/api/stripe', stripeRoutes);
 
 app.use(express.json({ limit: '2mb' }));
 
