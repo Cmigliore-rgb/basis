@@ -114,6 +114,11 @@ db.prepare(`UPDATE course_codes SET instructor_name = 'Prof. Thomas' WHERE code 
 try { db.exec('ALTER TABLE submissions ADD COLUMN grade INTEGER'); } catch {}
 try { db.exec("ALTER TABLE submissions ADD COLUMN feedback TEXT DEFAULT ''"); } catch {}
 try { db.exec('ALTER TABLE users ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0'); } catch {}
+try { db.exec('ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0'); } catch {}
+try { db.exec('ALTER TABLE users ADD COLUMN verification_token TEXT'); } catch {}
+
+// Auto-verify admin and professor accounts
+db.prepare("UPDATE users SET email_verified = 1 WHERE role IN ('admin', 'professor') AND email_verified = 0").run();
 
 // roles: 'admin' | 'professor' | 'student' | 'user'
 // tiers: 'free' | 'premium'

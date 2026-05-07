@@ -2138,10 +2138,10 @@ export default function Dashboard() {
   }, [accent]);
   useEffect(() => { localStorage.setItem('pl_panel', panel); }, [panel]);
 
-  // Handle return from Stripe checkout
+  // Handle return from Stripe checkout or email verification
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('upgraded') === '1') {
+    if (params.get('upgraded') === '1' || params.get('verified') === '1') {
       refreshUser();
       window.history.replaceState({}, '', '/app');
     }
@@ -2991,11 +2991,22 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <span style={{ fontSize: 28, fontWeight: 800, color: TEXT }}>{isStudent ? '$5.99' : '$9.99'}</span>
-              <span style={{ fontSize: 14, color: TEXT2 }}>/month</span>
-              {isStudent && <div style={{ fontSize: 12, color: '#4ade80', marginTop: 4 }}>Student discount applied</div>}
-            </div>
+            {(() => {
+              const isEduVerified = user?.email_verified && user?.email?.toLowerCase().endsWith('.edu');
+              const isEduUnverified = !user?.email_verified && user?.email?.toLowerCase().endsWith('.edu');
+              return (
+                <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                  <span style={{ fontSize: 28, fontWeight: 800, color: TEXT }}>{isEduVerified ? '$5.99' : '$9.99'}</span>
+                  <span style={{ fontSize: 14, color: TEXT2 }}>/month</span>
+                  {isEduVerified && <div style={{ fontSize: 12, color: '#4ade80', marginTop: 4 }}>Student discount applied</div>}
+                  {isEduUnverified && (
+                    <div style={{ fontSize: 12, color: YELLOW, marginTop: 4 }}>
+                      Verify your .edu email to unlock $5.99/mo student pricing
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
             <button
               disabled={checkoutLoading}
               onClick={async () => {
@@ -3015,6 +3026,28 @@ export default function Dashboard() {
             {checkoutError && <div style={{ textAlign: 'center', fontSize: 12, color: RED, marginBottom: 8 }}>{checkoutError}</div>}
             <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3 }}>Secured by Stripe. Cancel anytime.</div>
           </div>
+        </div>
+      )}
+
+      {/* ── EMAIL VERIFICATION BANNER ───────────────────── */}
+      {user && !user.email_verified && user.email?.toLowerCase().endsWith('.edu') && (
+        <div style={{ position: 'fixed', bottom: 16, left: isMobile ? 16 : 236, right: 16, zIndex: 150, background: '#1a1200', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 16 }}>✉️</span>
+          <div style={{ flex: 1, fontSize: 13, color: YELLOW, minWidth: 200 }}>
+            Verify your .edu email to unlock $5.99/mo student pricing.
+          </div>
+          <button
+            onClick={async () => {
+              try {
+                await api.post('/auth/resend-verification');
+                alert('Verification email sent — check your inbox.');
+              } catch {
+                alert('Failed to send. Try again shortly.');
+              }
+            }}
+            style={{ padding: '6px 14px', background: YELLOW, color: '#000', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+            Resend Email
+          </button>
         </div>
       )}
 

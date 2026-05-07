@@ -34,7 +34,8 @@ router.post('/checkout', auth, async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
     if (user.tier === 'premium') return res.status(400).json({ error: 'Already premium' });
 
-    const priceId = (user.role === 'student') ? PRICES.student : PRICES.standard;
+    const isEduVerified = user.email_verified && user.email.toLowerCase().endsWith('.edu');
+    const priceId = isEduVerified ? PRICES.student : PRICES.standard;
 
     // Create or retrieve Stripe customer
     let customerId = user.stripe_customer_id;

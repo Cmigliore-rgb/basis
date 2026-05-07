@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const db = require('../db');
 const requireAuth = require('../middleware/requireAuth');
+const { send: sendEmail, isConfigured: emailConfigured } = require('../email');
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').toLowerCase().split(',').map(e => e.trim()).filter(Boolean);
 
@@ -27,8 +29,10 @@ const getEnrollments = (userId) =>
 
 const safeUser = (u, enrollments = []) => ({
   id: u.id, email: u.email, name: u.name, role: u.role, tier: u.tier,
-  created_at: u.created_at, enrollments,
+  email_verified: !!u.email_verified, created_at: u.created_at, enrollments,
 });
+
+const APP_URL = process.env.FRONTEND_URL || 'https://peakledger.app';
 
 // Validate a course code (public — no auth required)
 router.post('/validate-code', (req, res) => {
@@ -57,17 +61,42 @@ router.post('/register', async (req, res) => {
   if (courseRow && role === 'user') role = 'student';
 
   const tier = (role === 'admin' || role === 'professor') ? 'premium' : 'free';
+  const autoVerified = (role === 'admin' || role === 'professor') ? 1 : 0;
+  const verificationToken = autoVerified ? null : crypto.randomBytes(32).toString('hex');
   const password_hash = await bcrypt.hash(password, 12);
 
   try {
     const result = db.prepare(
-      'INSERT INTO users (email, password_hash, name, role, tier) VALUES (?, ?, ?, ?, ?)'
-    ).run(email.toLowerCase(), password_hash, name, role, tier);
+      'INSERT INTO users (email, password_hash, name, role, tier, email_verified, verification_token) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).run(email.toLowerCase(), password_hash, name, role, tier, autoVerified, verificationToken);
 
     const userId = result.lastInsertRowid;
 
     if (courseRow) {
       db.prepare('INSERT OR IGNORE INTO enrollments (user_id, course_code) VALUES (?, ?)').run(userId, courseRow.code);
+    }
+
+    // Send verification email (non-blocking)
+    if (verificationToken && emailConfigured()) {
+      const verifyUrl = `${APP_URL}/api/auth/verify-email?token=${verificationToken}`;
+      sendEmail({
+        to: email.toLowerCase(),
+        subject: 'Verify your PeakLedger email',
+        html: `
+          <div style="font-family:-apple-system,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f172a;border-radius:12px;">
+            <div style="font-size:22px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Verify your email</div>
+            <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;line-height:1.6;">
+              Hi ${name}, click the button below to verify your email and unlock your student discount if you registered with a .edu address.
+            </div>
+            <a href="${verifyUrl}" style="display:inline-block;padding:12px 28px;background:#0066f5;color:#fff;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">
+              Verify Email
+            </a>
+            <div style="margin-top:24px;font-size:12px;color:#475569;">
+              Or copy this link: ${verifyUrl}
+            </div>
+          </div>
+        `,
+      }).catch(err => console.error('Verification email failed:', err.message));
     }
 
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
@@ -99,6 +128,50 @@ router.get('/me', requireAuth, (req, res) => {
   if (!user) return res.status(404).json({ error: 'User not found' });
   const enrollments = getEnrollments(user.id);
   res.json({ user: safeUser(user, enrollments) });
+});
+
+// Email verification
+router.get('/verify-email', (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.redirect(`${APP_URL}/app?verify_error=1`);
+  const user = db.prepare('SELECT * FROM users WHERE verification_token = ?').get(token);
+  if (!user) return res.redirect(`${APP_URL}/app?verify_error=1`);
+  db.prepare('UPDATE users SET email_verified = 1, verification_token = NULL WHERE id = ?').run(user.id);
+  res.redirect(`${APP_URL}/app?verified=1`);
+});
+
+// Resend verification email
+router.post('/resend-verification', requireAuth, async (req, res) => {
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  if (user.email_verified) return res.status(400).json({ error: 'Email already verified' });
+  if (!emailConfigured()) return res.status(500).json({ error: 'Email not configured' });
+
+  const token = crypto.randomBytes(32).toString('hex');
+  db.prepare('UPDATE users SET verification_token = ? WHERE id = ?').run(token, user.id);
+
+  const verifyUrl = `${APP_URL}/api/auth/verify-email?token=${token}`;
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: 'Verify your PeakLedger email',
+      html: `
+        <div style="font-family:-apple-system,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f172a;border-radius:12px;">
+          <div style="font-size:22px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Verify your email</div>
+          <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;line-height:1.6;">
+            Click the button below to verify your email and unlock your student discount.
+          </div>
+          <a href="${verifyUrl}" style="display:inline-block;padding:12px 28px;background:#0066f5;color:#fff;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">
+            Verify Email
+          </a>
+          <div style="margin-top:24px;font-size:12px;color:#475569;">Or copy this link: ${verifyUrl}</div>
+        </div>
+      `,
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to send email' });
+  }
 });
 
 // Enroll authenticated user in a course by code
