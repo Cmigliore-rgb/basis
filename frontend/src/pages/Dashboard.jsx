@@ -2258,7 +2258,7 @@ export default function Dashboard() {
   const [profCodes, setProfCodes] = useState([]);
   const [profStudents, setProfStudents] = useState({});
   const [selectedProfCode, setSelectedProfCode] = useState('');
-  const [newCodeForm, setNewCodeForm] = useState({ code: '', course_id: '', course_name: '', semester: (() => { const d = new Date(); return d.getMonth() < 4 ? `Spring ${d.getFullYear()}` : `Fall ${d.getFullYear()}`; })() });
+  const [newCodeForm, setNewCodeForm] = useState({ code: '', course_id: '', course_name: '', semester: (() => { const d = new Date(); const m = d.getMonth(); const y = d.getFullYear(); return m < 4 ? `Spring ${y}` : m < 6 ? `Summer ${y}` : `Fall ${y}`; })() });
   const [showNewCode, setShowNewCode] = useState(false);
   const [newCodeError, setNewCodeError] = useState('');
   const [eduMode, setEduMode] = useState(() => {
@@ -7112,7 +7112,7 @@ export default function Dashboard() {
                   await api.post('/professor/codes', newCodeForm);
                   const r = await api.get('/professor/dashboard');
                   setProfCodes(r.data.codes || []);
-                  setNewCodeForm({ code: '', course_id: '', course_name: '', semester: (() => { const d = new Date(); return d.getMonth() < 4 ? `Spring ${d.getFullYear()}` : `Fall ${d.getFullYear()}`; })() });
+                  setNewCodeForm({ code: '', course_id: '', course_name: '', semester: (() => { const d = new Date(); const m = d.getMonth(); const y = d.getFullYear(); return m < 4 ? `Spring ${y}` : m < 6 ? `Summer ${y}` : `Fall ${y}`; })() });
                   setShowNewCode(false);
                 } catch (err) {
                   setNewCodeError(err.response?.data?.error || 'Failed to create code');
