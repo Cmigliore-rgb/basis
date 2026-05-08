@@ -1974,6 +1974,7 @@ export default function Dashboard() {
   const [holdingsExpanded, setHoldingsExpanded] = useState(false);
   const [expandedDataset, setExpandedDataset] = useState(null);
   const [sandboxDataset, setSandboxDataset] = useState(null);
+  const [sandboxSource, setSandboxSource]   = useState('edu'); // 'edu' | 'learn'
   const [connectBannerDismissed, setConnectBannerDismissed] = useState(
     () => localStorage.getItem('pl_connect_banner_dismissed') === '1'
   );
@@ -2672,13 +2673,25 @@ export default function Dashboard() {
     if (symbols.length) fetchExtendedData(symbols);
   }, [panel, activeHoldings, fetchExtendedData]);
 
+  const exitSandbox = () => {
+    setSandboxDataset(null);
+    if (sandboxSource === 'learn') {
+      setPanel('learn');
+    } else {
+      setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets');
+    }
+  };
   const SandboxBanner = sandboxDataset ? (
     <div style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, padding: '10px 16px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 12, cursor: 'pointer', padding: '4px 10px', fontWeight: 600 }}>← Datasets</button>
-        <div style={{ fontSize: 12, color: GREEN, fontWeight: 700 }}>◫ Sandbox · {PREBUILT_DATASETS.find(d => d.id === sandboxDataset)?.title} · Education Mode</div>
+        <button onClick={exitSandbox} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 12, cursor: 'pointer', padding: '4px 10px', fontWeight: 600 }}>← {sandboxSource === 'learn' ? 'Learn' : 'Datasets'}</button>
+        <div style={{ fontSize: 12, color: GREEN, fontWeight: 700 }}>
+          {sandboxSource === 'learn'
+            ? `◫ ${PREBUILT_DATASETS.find(d => d.id === sandboxDataset)?.title}`
+            : `◫ Sandbox · ${PREBUILT_DATASETS.find(d => d.id === sandboxDataset)?.title} · Education Mode`}
+        </div>
       </div>
-      <button onClick={() => setSandboxDataset(null)} style={{ background: 'none', border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 11, cursor: 'pointer', padding: '3px 10px' }}>Exit sandbox ×</button>
+      <button onClick={exitSandbox} style={{ background: 'none', border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 11, cursor: 'pointer', padding: '3px 10px' }}>Exit ×</button>
     </div>
   ) : null;
 
@@ -6958,7 +6971,7 @@ export default function Dashboard() {
                                       ))}
                                     </div>
                                     <button
-                                      onClick={() => { setSandboxDataset(item.datasetId); setPanel('edu-sandbox'); }}
+                                      onClick={() => { setSandboxSource('learn'); setSandboxDataset(item.datasetId); setPanel('edu-sandbox'); }}
                                       style={{ width: '100%', padding: '8px 0', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 7, color: ds.color, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                                       Open Interactive Data →
                                     </button>
@@ -9508,10 +9521,10 @@ export default function Dashboard() {
                 return (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                      <button onClick={() => exitSandbox()}
                         style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Time Value of Money</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(249,115,22,0.1)', color: '#f97316' }}>Sandbox · Ch. 7</span>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(249,115,22,0.1)', color: '#f97316' }}>Sandbox · Ch. 7</span>}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Compound growth scenarios: how money grows over time at different rates and contribution levels.
@@ -9701,10 +9714,10 @@ export default function Dashboard() {
                 return (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                      <button onClick={() => exitSandbox()}
                         style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Mortgage vs. Rent</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(234,179,8,0.1)', color: '#eab308' }}>Sandbox · Ch. 6</span>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(234,179,8,0.1)', color: '#eab308' }}>Sandbox · Ch. 6</span>}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Side-by-side cost analysis for buying vs. renting in Athens, GA.
@@ -9919,10 +9932,10 @@ export default function Dashboard() {
                 return (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                      <button onClick={() => exitSandbox()}
                         style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Credit Score & Card Profile</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>Sandbox · Ch. 5</span>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>Sandbox · Ch. 5</span>}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>Credit health analysis: FICO score breakdown, utilization, and paydown impact.</div>
 
@@ -10133,10 +10146,10 @@ export default function Dashboard() {
                 return (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                      <button onClick={() => exitSandbox()}
                         style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Mortgage vs. Rent</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${YELLOW_HOUSING}18`, color: YELLOW_HOUSING }}>Sandbox · Ch. 6</span>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${YELLOW_HOUSING}18`, color: YELLOW_HOUSING }}>Sandbox · Ch. 6</span>}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Rent vs. buy decision analysis: amortization schedule, equity build, and break-even horizon.
@@ -10355,10 +10368,10 @@ export default function Dashboard() {
                 return (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                      <button onClick={() => exitSandbox()}
                         style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Net Worth Snapshot</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(77,163,255,0.12)', color: BLUE }}>Sandbox · Ch. 1</span>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(77,163,255,0.12)', color: BLUE }}>Sandbox · Ch. 1</span>}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Balance sheet for a 22-year-old college senior. Calculate net worth, classify assets and liabilities, and build a paydown plan.
@@ -10527,10 +10540,10 @@ export default function Dashboard() {
                 return (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                      <button onClick={() => exitSandbox()}
                         style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>College Student Monthly Budget</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(34,197,94,0.12)', color: '#22c55e' }}>Sandbox · Ch. 2</span>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(34,197,94,0.12)', color: '#22c55e' }}>Sandbox · Ch. 2</span>}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Monthly income $1,800 · {txns.length} transactions across {cats.length} categories. Identify the deficit and propose a fix.
@@ -10685,10 +10698,10 @@ export default function Dashboard() {
                 return (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-                      <button onClick={() => { setSandboxDataset(null); setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets'); }}
+                      <button onClick={() => exitSandbox()}
                         style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
                       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Portfolio Simulator</h1>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${BLUE}18`, color: BLUE }}>Sandbox · Ch. 7 & 8</span>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${BLUE}18`, color: BLUE }}>Sandbox · Ch. 7 & 8</span>}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Allocate $10,000 across four assets. See how expected return, volatility, and Sharpe ratio change as you adjust the mix.
