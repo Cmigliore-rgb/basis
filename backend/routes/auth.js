@@ -125,7 +125,7 @@ router.post('/login', async (req, res) => {
 });
 
 router.get('/me', requireAuth, (req, res) => {
-  const user = db.prepare('SELECT id, email, name, role, tier, created_at FROM users WHERE id = ?').get(req.user.id);
+  const user = db.prepare('SELECT id, email, name, role, tier, email_verified, backup_email, created_at FROM users WHERE id = ?').get(req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
   const enrollments = getEnrollments(user.id);
   res.json({ user: safeUser(user, enrollments) });
@@ -205,7 +205,12 @@ router.get('/verify-email', (req, res) => {
   if (!token) return res.redirect(`${APP_URL}/app?verify_error=1`);
   const user = db.prepare('SELECT * FROM users WHERE verification_token = ?').get(token);
   if (!user) return res.redirect(`${APP_URL}/app?verify_error=1`);
-  db.prepare('UPDATE users SET email_verified = 1, verification_token = NULL WHERE id = ?').run(user.id);
+  const isEdu = user.email.toLowerCase().endsWith('.edu');
+  if (isEdu && user.role === 'user') {
+    db.prepare('UPDATE users SET email_verified = 1, verification_token = NULL, role = ? WHERE id = ?').run('student', user.id);
+  } else {
+    db.prepare('UPDATE users SET email_verified = 1, verification_token = NULL WHERE id = ?').run(user.id);
+  }
   res.redirect(`${APP_URL}/app?verified=1`);
 });
 
