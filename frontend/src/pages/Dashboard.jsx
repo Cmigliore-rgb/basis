@@ -2240,6 +2240,10 @@ export default function Dashboard() {
   const [adminUsers, setAdminUsers] = useState(null);
   const [adminUsersLoading, setAdminUsersLoading] = useState(false);
   const [adminUserSearch, setAdminUserSearch] = useState('');
+  const [eduReverifyResult, setEduReverifyResult] = useState(null);
+  const [eduReverifyLoading, setEduReverifyLoading] = useState(false);
+  const [eduExpireResult, setEduExpireResult] = useState(null);
+  const [eduExpireLoading, setEduExpireLoading] = useState(false);
   const fetchAdminUsers = async () => {
     setAdminUsersLoading(true);
     try { const r = await api.get('/auth/users'); setAdminUsers(r.data.users || []); }
@@ -7999,6 +8003,52 @@ export default function Dashboard() {
                     {!adminUsers && (
                       <div style={{ fontSize: 13, color: TEXT3, textAlign: 'center', padding: '16px 0' }}>
                         Click "Load Users" to fetch the full user list.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {isAdmin && (
+                  <div style={{ ...CARD, marginBottom: 16, border: `1px solid rgba(167,139,250,0.25)` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>Student Verification</div>
+                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>Admin Only</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>Run annually to re-verify .edu student accounts. Step 1: send emails. Step 2: run 30 days later to expire anyone who didn't re-verify.</div>
+
+                    <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+                      <button
+                        onClick={async () => {
+                          setEduReverifyLoading(true); setEduReverifyResult(null);
+                          try { const r = await api.post('/auth/admin/edu-reverify'); setEduReverifyResult(r.data); }
+                          catch (e) { setEduReverifyResult({ error: e.response?.data?.error || 'Failed' }); }
+                          finally { setEduReverifyLoading(false); }
+                        }}
+                        disabled={eduReverifyLoading}
+                        style={{ flex: 1, padding: '10px 0', background: 'rgba(77,163,255,0.1)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 8, color: BLUE, fontSize: 13, fontWeight: 600, cursor: eduReverifyLoading ? 'default' : 'pointer', opacity: eduReverifyLoading ? 0.6 : 1 }}>
+                        {eduReverifyLoading ? 'Sending…' : '① Send Re-verify Emails'}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          setEduExpireLoading(true); setEduExpireResult(null);
+                          try { const r = await api.post('/auth/admin/edu-expire'); setEduExpireResult(r.data); }
+                          catch (e) { setEduExpireResult({ error: e.response?.data?.error || 'Failed' }); }
+                          finally { setEduExpireLoading(false); }
+                        }}
+                        disabled={eduExpireLoading}
+                        style={{ flex: 1, padding: '10px 0', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 8, color: RED, fontSize: 13, fontWeight: 600, cursor: eduExpireLoading ? 'default' : 'pointer', opacity: eduExpireLoading ? 0.6 : 1 }}>
+                        {eduExpireLoading ? 'Running…' : '② Expire Non-Responders'}
+                      </button>
+                    </div>
+
+                    {eduReverifyResult && (
+                      <div style={{ padding: '10px 14px', background: eduReverifyResult.error ? 'rgba(248,113,113,0.08)' : 'rgba(74,222,128,0.08)', border: `1px solid ${eduReverifyResult.error ? 'rgba(248,113,113,0.25)' : 'rgba(74,222,128,0.25)'}`, borderRadius: 8, fontSize: 12, color: TEXT2, marginBottom: eduExpireResult ? 8 : 0 }}>
+                        {eduReverifyResult.error ? `Error: ${eduReverifyResult.error}` : `Sent ${eduReverifyResult.sent} of ${eduReverifyResult.total} emails${eduReverifyResult.failed ? ` · ${eduReverifyResult.failed} failed` : ''}`}
+                      </div>
+                    )}
+                    {eduExpireResult && (
+                      <div style={{ padding: '10px 14px', background: eduExpireResult.error ? 'rgba(248,113,113,0.08)' : 'rgba(74,222,128,0.08)', border: `1px solid ${eduExpireResult.error ? 'rgba(248,113,113,0.25)' : 'rgba(74,222,128,0.25)'}`, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
+                        {eduExpireResult.error ? `Error: ${eduExpireResult.error}` : `Reverted ${eduExpireResult.reverted} accounts · ${eduExpireResult.stripeUpdated} Stripe subscriptions updated${eduExpireResult.errors?.length ? ` · ${eduExpireResult.errors.length} Stripe errors` : ''}`}
                       </div>
                     )}
                   </div>
