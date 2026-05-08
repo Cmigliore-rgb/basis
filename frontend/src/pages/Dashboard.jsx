@@ -6926,13 +6926,27 @@ export default function Dashboard() {
                               {item.datasetId && (() => {
                                 const ds = PREBUILT_DATASETS.find(d => d.id === item.datasetId);
                                 return ds ? (
-                                  <button
-                                    onClick={() => { setSandboxDataset(item.datasetId); setPanel('edu-sandbox'); }}
-                                    style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 7, color: '#4ade80', fontSize: 12, fontWeight: 600, cursor: 'pointer', width: '100%' }}>
-                                    <span>◫</span>
-                                    <span>Practice with Dataset: {ds.title}</span>
-                                    <span style={{ marginLeft: 'auto', fontSize: 11, color: TEXT3 }}>{ds.subtitle}</span>
-                                  </button>
+                                  <div style={{ marginTop: 14, padding: '14px 16px', background: `${ds.color}08`, border: `1px solid ${ds.color}25`, borderRadius: 10 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                                      <div style={{ fontSize: 11, fontWeight: 700, color: ds.color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Practice Dataset</div>
+                                      <span style={{ fontSize: 10, fontWeight: 600, color: TEXT3, background: DARK, border: BORDER, borderRadius: 10, padding: '2px 8px' }}>{ds.difficulty}</span>
+                                    </div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{ds.title}</div>
+                                    <div style={{ fontSize: 12, color: TEXT2, marginBottom: 10, lineHeight: 1.5 }}>{ds.description}</div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 10 }}>
+                                      {ds.stats.map(([label, value]) => (
+                                        <div key={label} style={{ background: DARK, borderRadius: 6, padding: '7px 10px', border: BORDER }}>
+                                          <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 2 }}>{label}</div>
+                                          <div style={{ fontSize: 13, fontWeight: 700, color: ds.color, fontFamily: 'monospace' }}>{value}</div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                                      {ds.concepts.map(c => (
+                                        <span key={c} style={{ fontSize: 10, padding: '2px 8px', background: `${ds.color}12`, border: `1px solid ${ds.color}30`, borderRadius: 10, color: ds.color, fontWeight: 600 }}>{c}</span>
+                                      ))}
+                                    </div>
+                                  </div>
                                 ) : null;
                               })()}
 
