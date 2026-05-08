@@ -2258,7 +2258,7 @@ export default function Dashboard() {
   const [profCodes, setProfCodes] = useState([]);
   const [profStudents, setProfStudents] = useState({});
   const [selectedProfCode, setSelectedProfCode] = useState('');
-  const [newCodeForm, setNewCodeForm] = useState({ code: '', course_id: '', course_name: '', semester: 'Spring 2026' });
+  const [newCodeForm, setNewCodeForm] = useState({ code: '', course_id: '', course_name: '', semester: (() => { const d = new Date(); return d.getMonth() < 4 ? `Spring ${d.getFullYear()}` : `Fall ${d.getFullYear()}`; })() });
   const [showNewCode, setShowNewCode] = useState(false);
   const [newCodeError, setNewCodeError] = useState('');
   const [eduMode, setEduMode] = useState(() => {
@@ -7112,7 +7112,7 @@ export default function Dashboard() {
                   await api.post('/professor/codes', newCodeForm);
                   const r = await api.get('/professor/dashboard');
                   setProfCodes(r.data.codes || []);
-                  setNewCodeForm({ code: '', course_id: '', course_name: '', semester: 'Spring 2026' });
+                  setNewCodeForm({ code: '', course_id: '', course_name: '', semester: (() => { const d = new Date(); return d.getMonth() < 4 ? `Spring ${d.getFullYear()}` : `Fall ${d.getFullYear()}`; })() });
                   setShowNewCode(false);
                 } catch (err) {
                   setNewCodeError(err.response?.data?.error || 'Failed to create code');
@@ -7173,36 +7173,49 @@ export default function Dashboard() {
 
                   {profHubTab === 'analytics' && <>
                   {/* ── First-run onboarding ── */}
-                  {profCodes.length === 0 && (
-                    <div style={{ ...CARD, marginBottom: 24, border: '1px solid rgba(74,222,128,0.25)', background: 'rgba(74,222,128,0.03)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⊟</div>
-                        <div>
-                          <div style={{ fontSize: 17, fontWeight: 700, color: TEXT }}>Welcome to your Professor Hub</div>
-                          <div style={{ fontSize: 13, color: TEXT2, marginTop: 2 }}>Three steps to get your class running on PeakLedger.</div>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 0, margin: '20px 0' }}>
-                        {[
-                          { num: 1, title: 'Create a course code', desc: 'Choose a short memorable code — like B-FIN-26. Students enter it when they register to enroll in your course.', done: false, color: GREEN },
-                          { num: 2, title: 'Share it with your class', desc: 'Post the code on your syllabus, LMS, or slides. Any student with a .edu email or the code can enroll in under a minute.', done: false, color: BLUE },
-                          { num: 3, title: 'Assign, grade, and track', desc: 'Create assignments, review submissions here in the Hub, return grades with written feedback, and export the class roster to CSV.', done: false, color: '#a78bfa' },
-                        ].map((step, i) => (
-                          <div key={step.num} style={{ display: 'flex', gap: 16, padding: '16px 0', borderTop: i > 0 ? `1px solid ${BORDER_C}` : 'none' }}>
-                            <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${step.color}18`, border: `1px solid ${step.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: step.color, flexShrink: 0 }}>{step.num}</div>
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: TEXT, marginBottom: 3 }}>{step.title}</div>
-                              <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{step.desc}</div>
-                            </div>
+                  {(() => {
+                    const step1Done = profCodes.length > 0;
+                    const step2Done = totalStudents > 0;
+                    const step3Done = totalSubmissions > 0;
+                    if (step1Done && step2Done && step3Done) return null;
+                    return (
+                      <div style={{ ...CARD, marginBottom: 24, border: '1px solid rgba(74,222,128,0.25)', background: 'rgba(74,222,128,0.03)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⊟</div>
+                          <div>
+                            <div style={{ fontSize: 17, fontWeight: 700, color: TEXT }}>Welcome to your Professor Hub</div>
+                            <div style={{ fontSize: 13, color: TEXT2, marginTop: 2 }}>Three steps to get your class running on PeakLedger.</div>
                           </div>
-                        ))}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 0, margin: '20px 0' }}>
+                          {[
+                            { num: 1, title: 'Create a course code', desc: 'Choose a short memorable code — like B-FIN-26. Students enter it when they register to enroll in your course.', done: step1Done, color: GREEN },
+                            { num: 2, title: 'Share it with your class', desc: 'Post the code on your syllabus, LMS, or slides. Any student with a .edu email or the code can enroll in under a minute.', done: step2Done, color: BLUE },
+                            { num: 3, title: 'Assign, grade, and track', desc: 'Create assignments, review submissions here in the Hub, return grades with written feedback, and export the class roster to CSV.', done: step3Done, color: '#a78bfa' },
+                          ].map((step, i) => (
+                            <div key={step.num} style={{ display: 'flex', gap: 16, padding: '16px 0', borderTop: i > 0 ? `1px solid ${BORDER_C}` : 'none', opacity: step.done ? 0.5 : 1 }}>
+                              <div style={{ width: 32, height: 32, borderRadius: '50%', background: step.done ? 'rgba(74,222,128,0.15)' : `${step.color}18`, border: `1px solid ${step.done ? 'rgba(74,222,128,0.4)' : `${step.color}40`}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: step.done ? 16 : 14, fontWeight: 800, color: step.done ? GREEN : step.color, flexShrink: 0 }}>{step.done ? '✓' : step.num}</div>
+                              <div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: step.done ? TEXT2 : TEXT, marginBottom: 3, textDecoration: step.done ? 'line-through' : 'none' }}>{step.title}</div>
+                                <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{step.desc}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {!step1Done && (
+                          <button onClick={() => { setShowNewCode(true); setTimeout(() => document.getElementById('prof-course-codes')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50); }}
+                            style={{ padding: '10px 22px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.4)', borderRadius: 9, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                            + Create Your First Course Code →
+                          </button>
+                        )}
+                        {step1Done && !step2Done && (
+                          <div style={{ fontSize: 13, color: TEXT2, padding: '10px 16px', background: `${BLUE}10`, border: `1px solid ${BLUE}30`, borderRadius: 9 }}>
+                            Share your code <strong style={{ color: GREEN, fontFamily: 'monospace' }}>{profCodes[0]?.code}</strong> with students — post it on your syllabus or LMS and they can enroll in under a minute.
+                          </div>
+                        )}
                       </div>
-                      <button onClick={() => { setShowNewCode(true); setProfHubTab('analytics'); }}
-                        style={{ padding: '10px 22px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.4)', borderRadius: 9, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                        + Create Your First Course Code →
-                      </button>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* ── Analytics ── */}
                   {profCodes.length > 0 && (() => {
@@ -7442,7 +7455,7 @@ export default function Dashboard() {
                   })()}
 
                   {/* Course Codes */}
-                  <div style={{ ...CARD, marginBottom: 24 }}>
+                  <div id="prof-course-codes" style={{ ...CARD, marginBottom: 24 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                       <div style={{ fontWeight: 700, fontSize: 15 }}>Course Codes</div>
                       <button onClick={() => { setShowNewCode(v => !v); setNewCodeError(''); }}
@@ -7506,6 +7519,17 @@ export default function Dashboard() {
                   </>}
 
                   {/* ── ROSTER TAB ── */}
+                  {profHubTab === 'roster' && profCodes.length === 0 && (
+                    <div style={{ ...CARD, textAlign: 'center', padding: '40px 24px' }}>
+                      <div style={{ fontSize: 32, marginBottom: 12 }}>⊟</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>No courses yet</div>
+                      <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>Create a course code first, then your student roster will appear here.</div>
+                      <button onClick={() => { setProfHubTab('analytics'); setShowNewCode(true); setTimeout(() => document.getElementById('prof-course-codes')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50); }}
+                        style={{ padding: '9px 22px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 9, color: GREEN, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                        Create Course Code →
+                      </button>
+                    </div>
+                  )}
                   {profHubTab === 'roster' && profCodes.length > 0 && (() => {
                     const getLetter = (score, maxPts) => { const pct = score / maxPts * 100; if (pct >= 90) return 'A'; if (pct >= 80) return 'B'; if (pct >= 70) return 'C'; if (pct >= 60) return 'D'; return 'F'; };
                     const letterColor = { A: GREEN, B: BLUE, C: YELLOW, D: '#f97316', F: RED };
