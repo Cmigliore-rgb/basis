@@ -2292,7 +2292,7 @@ export default function Dashboard() {
       (user?.enrollments || []).map(e => (e.course_id || '').toLowerCase().replace(/\s+/g, ''))
     );
     const filtered = COURSES.filter(c => ids.has(c.id.toLowerCase()));
-    return filtered.length > 0 ? filtered : COURSES;
+    return filtered;
   })();
   const [eduInnerTab, setEduInnerTab] = useState('content');
   const [contentFolder, setContentFolder] = useState('slides');
@@ -8373,6 +8373,11 @@ export default function Dashboard() {
                     {!selectedCourseId ? (
                       /* ── Overview mode: course list ── */
                       <div style={{ flex: 1, overflow: 'auto', paddingTop: 6 }}>
+                        {enrolledCourses.length === 0 && (
+                          <div style={{ padding: '20px 16px', fontSize: 12, color: TEXT3, lineHeight: 1.6 }}>
+                            No courses yet. Enter a course code from your instructor to get started.
+                          </div>
+                        )}
                         {enrolledCourses.map(c => {
                           const overdueC = effectiveProfessor || isAdmin ? 0 : c.assignments.filter(a => {
                             const due = a.dueDate ? new Date(a.dueDate) : null;
@@ -8477,7 +8482,19 @@ export default function Dashboard() {
                   <div style={{ flex: 1, overflow: 'auto' }}>
 
                     {/* ── OVERVIEW (eLC homepage style) ── */}
-                    {!selectedCourseId && (
+                    {!selectedCourseId && enrolledCourses.length === 0 && !effectiveProfessor && !isAdmin && (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 480, padding: '40px 28px' }}>
+                        <div style={{ fontSize: 44, marginBottom: 16 }}>🎓</div>
+                        <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>No courses yet</div>
+                        <div style={{ fontSize: 13, color: TEXT2, maxWidth: 340, lineHeight: 1.7, marginBottom: 28, textAlign: 'center' }}>
+                          Enter a course code from your instructor to access course materials, assignments, and more.
+                        </div>
+                        <div style={{ width: '100%', maxWidth: 380 }}>
+                          <EduEnrollCard user={user} onEnrolled={() => { refreshUser(); }} />
+                        </div>
+                      </div>
+                    )}
+                    {!selectedCourseId && (enrolledCourses.length > 0 || effectiveProfessor || isAdmin) && (
                       <div style={{ padding: 28 }}>
                         {/* Hero: greeting + semester progress + stats */}
                         <div style={{ ...CARD, marginBottom: 20, padding: '22px 26px', border: '1px solid rgba(74,222,128,0.2)', background: 'rgba(74,222,128,0.025)' }}>
