@@ -2216,6 +2216,7 @@ export default function Dashboard() {
   const [marketView, setMarketView]         = useState('most_actives');
   const [marketViewData, setMarketViewData] = useState([]);
   const [loadingMarketView, setLoadingMarketView] = useState(false);
+  const [marketViewError, setMarketViewError] = useState(false);
   const [customTickers, setCustomTickers]   = useState(() => { try { return JSON.parse(localStorage.getItem('pl_tickers') || '[]'); } catch { return []; } });
   const [customTickerData, setCustomTickerData] = useState([]);
   const [tickerInput, setTickerInput]       = useState('');
@@ -2528,6 +2529,7 @@ export default function Dashboard() {
   // Fetch screener or custom-ticker data when marketView changes
   const fetchMarketView = useCallback(async (view, tickers) => {
     setLoadingMarketView(true);
+    setMarketViewError(false);
     try {
       if (view === 'your_list') {
         if (!tickers.length) { setCustomTickerData([]); return; }
@@ -2539,9 +2541,10 @@ export default function Dashboard() {
         const r = await api.get('/market/screener', { params: { type: view } });
         const quotes = r.data.quotes || [];
         setMarketViewData(quotes);
-        fetchExtendedData(quotes.map(q => q.symbol));
+        if (quotes.length) fetchExtendedData(quotes.map(q => q.symbol));
+        else setMarketViewError(true);
       }
-    } catch (e) { console.error('Market view error:', e); }
+    } catch (e) { console.error('Market view error:', e); setMarketViewError(true); }
     finally { setLoadingMarketView(false); }
   }, [fetchExtendedData]);
 
@@ -6468,7 +6471,12 @@ export default function Dashboard() {
                     if (!rows.length && marketView === 'your_list') return (
                       <div style={{ color: TEXT3, textAlign: 'center', padding: 24, fontSize: 13 }}>Add tickers above to track them here.</div>
                     );
-                    if (!rows.length) return <div style={{ color: TEXT2, textAlign: 'center', padding: 24, fontSize: 13 }}>Loading market data…</div>;
+                    if (!rows.length) return (
+                      <div style={{ textAlign: 'center', padding: 24 }}>
+                        <div style={{ fontSize: 13, color: TEXT2, marginBottom: 12 }}>Market data unavailable. Yahoo Finance may be temporarily unreachable.</div>
+                        <button onClick={() => fetchMarketView(marketView, customTickers)} style={{ padding: '7px 18px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 13, cursor: 'pointer' }}>Retry</button>
+                      </div>
+                    );
                     const pctCell = (val) => {
                       if (val == null) return <span style={{ color: TEXT3, fontSize: 12 }}>—</span>;
                       const up = val >= 0;

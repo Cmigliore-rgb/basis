@@ -51,7 +51,7 @@ router.get('/tickers', async (req, res) => {
     const INDICES = ['^GSPC', '^DJI', '^IXIC', '^RUT'];
     const [indexRes, activeRes] = await Promise.allSettled([
       Promise.allSettled(INDICES.map(s => yahooFinance.quote(s))),
-      yahooFinance.screener({ scrIds: 'most_actives', count: 12, region: 'US', lang: 'en-US' }),
+      yahooFinance.quote(SCREENER_TICKERS.slice(0, 12)),
     ]);
 
     const mapQuote = q => ({
@@ -66,9 +66,8 @@ router.get('/tickers', async (req, res) => {
       ? indexRes.value.map((r, i) => r.status === 'fulfilled' ? mapQuote(r.value) : null).filter(Boolean)
       : [];
 
-    const active = activeRes.status === 'fulfilled' && activeRes.value?.quotes
-      ? activeRes.value.quotes.filter(q => q.symbol && !q.symbol.startsWith('^')).slice(0, 12).map(mapQuote)
-      : [];
+    const activeRaw = activeRes.status === 'fulfilled' ? (Array.isArray(activeRes.value) ? activeRes.value : [activeRes.value]) : [];
+    const active = activeRaw.filter(Boolean).map(mapQuote);
 
     const result = { indices, active };
     console.log(`Tickers: ${indices.length} indices, ${active.length} active stocks`);
@@ -81,7 +80,9 @@ router.get('/tickers', async (req, res) => {
   }
 });
 
-// ── Screener: most active / gainers / losers ──────────────────────────────────
+// ── Screener: most active / gainers / losers (quote-based, screener API broken) ─
+const SCREENER_TICKERS = ['AAPL','MSFT','NVDA','AMZN','GOOGL','TSLA','META','AMD','PLTR','MARA','SMCI','AVGO','NFLX','BABA','INTC','BAC','F','AAL','RIVN','NIO'];
+
 router.get('/screener', async (req, res) => {
   const VALID = ['most_actives', 'day_gainers', 'day_losers'];
   const type  = VALID.includes(req.query.type) ? req.query.type : 'most_actives';
@@ -95,8 +96,12 @@ router.get('/screener', async (req, res) => {
       change: q.regularMarketChange,
       changePct: q.regularMarketChangePercent,
     });
-    const result = await yahooFinance.screener({ scrIds: type, count: 12, region: 'US', lang: 'en-US' });
-    const quotes = (result?.quotes || []).filter(q => q.symbol && !q.symbol.startsWith('^')).slice(0, 12).map(mapQ);
+    const results = await yahooFinance.quote(SCREENER_TICKERS);
+    const all = (Array.isArray(results) ? results : [results]).filter(Boolean).map(mapQ);
+    let quotes;
+    if (type === 'day_gainers') quotes = [...all].sort((a, b) => (b.changePct || 0) - (a.changePct || 0)).slice(0, 12);
+    else if (type === 'day_losers') quotes = [...all].sort((a, b) => (a.changePct || 0) - (b.changePct || 0)).slice(0, 12);
+    else quotes = all.slice(0, 12);
     screenerCache[type] = { data: { quotes }, ts: Date.now() };
     res.json({ quotes });
   } catch (err) {
