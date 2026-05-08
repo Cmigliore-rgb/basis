@@ -6344,26 +6344,7 @@ export default function Dashboard() {
             {/* ── INSIGHTS ──────────────────────────────── */}
             {panel === 'insights' && (
               <div>
-              {!isPremium && (
-                <div style={{ position: 'relative', marginBottom: 24 }}>
-                  <div style={{ position: 'absolute', inset: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                    <div style={{ pointerEvents: 'auto', background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: '36px 40px', textAlign: 'center', maxWidth: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
-                      <div style={{ fontSize: 40, marginBottom: 14 }}>◬</div>
-                      <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Market Insights</div>
-                      <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 28 }}>
-                        Live charts, Fear &amp; Greed index, yield curve, stock screeners, and a real-time news feed.
-                      </div>
-                      <button onClick={() => setShowUpgrade(true)}
-                        style={{ padding: '12px 32px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,102,245,0.35)', width: '100%' }}>
-                        Upgrade to Premium
-                      </button>
-                    </div>
-                  </div>
-                  <div style={{ filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none', height: 220, background: DARK, borderRadius: 12, border: BORDER }} />
-                </div>
-              )}
-              <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
               <div style={{ display: 'flex', gap: 2, background: DARK, borderRadius: 9, padding: 3, width: 'fit-content' }}>
                 {(() => {
                   const _IN_DEF = ['markets', 'news', 'signals', 'options'];
@@ -6407,6 +6388,21 @@ export default function Dashboard() {
                   </div>
                 </div>
 
+                {!isPremium && (
+                  <div style={{ background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: '36px 40px', textAlign: 'center', maxWidth: 400, margin: '0 auto 24px', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
+                    <div style={{ fontSize: 40, marginBottom: 14 }}>◬</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Market Insights</div>
+                    <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 28 }}>
+                      Live charts, Fear &amp; Greed index, yield curve, stock screeners, and a real-time news feed.
+                    </div>
+                    <button onClick={() => setShowUpgrade(true)}
+                      style={{ padding: '12px 32px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,102,245,0.35)', width: '100%' }}>
+                      Upgrade to Premium
+                    </button>
+                  </div>
+                )}
+
+                <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
                 {/* Indices row */}
                 {marketTickers.indices.length > 0 && (
                   <div className="lc" style={{ ...CARD, marginBottom: 16 }}>
@@ -6547,12 +6543,13 @@ export default function Dashboard() {
                     );
                   })()}
                 </div>
+                </div>
               </div>
             )}
 
 
             {insightsTab === 'news' && (
-              <div>
+              <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>News Feed</h1>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -6645,7 +6642,7 @@ export default function Dashboard() {
               );
 
               return (
-                <div>
+                <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
                   {/* Header */}
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
                     <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Signal Engine</h1>
@@ -6840,14 +6837,13 @@ export default function Dashboard() {
             })()}
 
             {insightsTab === 'options' && (
-              <div>
+              <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
                 <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>Options</h1>
                 <OptionsChain />
                 <StraddleBuilder />
               </div>
             )}
 
-              </div>
               </div>
             )}
 
