@@ -6549,7 +6549,7 @@ export default function Dashboard() {
 
 
             {insightsTab === 'news' && (
-              <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
+              <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>News Feed</h1>
                   <div style={{ display: 'flex', gap: 8 }}>
