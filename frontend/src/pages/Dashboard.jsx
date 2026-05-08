@@ -3175,7 +3175,7 @@ export default function Dashboard() {
                   { name: 'NerdWallet',          icon: '🧮', color: GREEN  },
                   { name: 'Khan Academy',        icon: '🎓', color: '#10b981' },
                   { name: 'IRS.gov',             icon: '🏛️', color: RED    },
-                  { name: 'FRED — St. Louis Fed',icon: '📈', color: YELLOW },
+                  { name: 'FRED, St. Louis Fed',icon: '📈', color: YELLOW },
                   { name: 'SEC Investor Ed.',    icon: '⚖️', color: '#a78bfa' },
                 ].map(r => (
                   <div key={r.name} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 10px', background: DARK, borderRadius: 8, border: BORDER }}>
@@ -6983,7 +6983,7 @@ export default function Dashboard() {
                         { name: 'NerdWallet',             url: 'https://www.nerdwallet.com',                                            desc: 'Personal finance comparisons, calculators, and actionable guides for budgeting, credit cards, mortgages, and more.',         color: GREEN,  icon: '🧮' },
                         { name: 'Khan Academy Finance',   url: 'https://www.khanacademy.org/college-careers-more/personal-finance',     desc: 'Free video-based personal finance course covering taxes, interest, credit, insurance, and retirement from scratch.',              color: '#10b981', icon: '🎓' },
                         { name: 'IRS.gov',                url: 'https://www.irs.gov',                                                   desc: 'Official IRS resources: current tax brackets, deduction limits, 401(k) contribution limits, and filing guides.',              color: RED,    icon: '🏛️' },
-                        { name: 'FRED — St. Louis Fed',   url: 'https://fred.stlouisfed.org',                                          desc: 'Federal Reserve economic data: interest rates, inflation, unemployment, GDP, and yield curves. The primary source for macro data.', color: YELLOW, icon: '📈' },
+                        { name: 'FRED, St. Louis Fed',   url: 'https://fred.stlouisfed.org',                                          desc: 'Federal Reserve economic data: interest rates, inflation, unemployment, GDP, and yield curves. The primary source for macro data.', color: YELLOW, icon: '📈' },
                         { name: 'SEC Investor Education', url: 'https://www.investor.gov',                                              desc: 'Compound interest calculators, investment disclosures, broker check tools, and fraud alerts from the SEC.',                    color: '#a78bfa', icon: '⚖️' },
                       ].map(({ name, url, desc, color, icon }) => (
                         <a key={name} href={url} target="_blank" rel="noopener noreferrer"
