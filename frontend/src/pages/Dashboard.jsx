@@ -6646,7 +6646,21 @@ export default function Dashboard() {
               );
 
               return (
-                <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
+                <div>
+                  {!isPremium && (
+                    <div style={{ background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: '36px 40px', textAlign: 'center', maxWidth: 400, margin: '0 auto 24px', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
+                      <div style={{ fontSize: 40, marginBottom: 14 }}>◎</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Signal Engine</div>
+                      <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 28 }}>
+                        Multi-vector news scoring, live ticker heatmaps, and sector contagion analysis.
+                      </div>
+                      <button onClick={() => setShowUpgrade(true)}
+                        style={{ padding: '12px 32px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,102,245,0.35)', width: '100%' }}>
+                        Upgrade to Premium
+                      </button>
+                    </div>
+                  )}
+                  <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
                   {/* Header */}
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
                     <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Signal Engine</h1>
@@ -6836,15 +6850,31 @@ export default function Dashboard() {
                       </div>
                     </>
                   )}
+                  </div>
                 </div>
               );
             })()}
 
             {insightsTab === 'options' && (
-              <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
-                <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>Options</h1>
-                <OptionsChain />
-                <StraddleBuilder />
+              <div>
+                {!isPremium && (
+                  <div style={{ background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: '36px 40px', textAlign: 'center', maxWidth: 400, margin: '0 auto 24px', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
+                    <div style={{ fontSize: 40, marginBottom: 14 }}>◬</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Options</div>
+                    <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 28 }}>
+                      Options chain viewer, implied volatility, and straddle builder for any ticker.
+                    </div>
+                    <button onClick={() => setShowUpgrade(true)}
+                      style={{ padding: '12px 32px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,102,245,0.35)', width: '100%' }}>
+                      Upgrade to Premium
+                    </button>
+                  </div>
+                )}
+                <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
+                  <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>Options</h1>
+                  <OptionsChain />
+                  <StraddleBuilder />
+                </div>
               </div>
             )}
 
