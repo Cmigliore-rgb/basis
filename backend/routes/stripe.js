@@ -34,7 +34,9 @@ router.post('/checkout', auth, async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
     if (user.tier === 'premium') return res.status(400).json({ error: 'Already premium' });
 
-    const isEduVerified = user.email_verified && user.email.toLowerCase().endsWith('.edu');
+    const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+    const eduAge = user.edu_verified_at ? Date.now() - new Date(user.edu_verified_at).getTime() : Infinity;
+    const isEduVerified = user.email_verified && user.email.toLowerCase().endsWith('.edu') && eduAge < ONE_YEAR_MS;
     const priceId = isEduVerified ? PRICES.student : PRICES.standard;
 
     // Create or retrieve Stripe customer

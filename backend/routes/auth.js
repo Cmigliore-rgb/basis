@@ -207,7 +207,9 @@ router.get('/verify-email', (req, res) => {
   if (!user) return res.redirect(`${APP_URL}/app?verify_error=1`);
   const isEdu = user.email.toLowerCase().endsWith('.edu');
   if (isEdu && user.role === 'user') {
-    db.prepare('UPDATE users SET email_verified = 1, verification_token = NULL, role = ? WHERE id = ?').run('student', user.id);
+    db.prepare("UPDATE users SET email_verified = 1, verification_token = NULL, role = 'student', edu_verified_at = datetime('now') WHERE id = ?").run(user.id);
+  } else if (isEdu) {
+    db.prepare("UPDATE users SET email_verified = 1, verification_token = NULL, edu_verified_at = datetime('now'), reverification_sent_at = NULL WHERE id = ?").run(user.id);
   } else {
     db.prepare('UPDATE users SET email_verified = 1, verification_token = NULL WHERE id = ?').run(user.id);
   }
@@ -314,6 +316,89 @@ router.patch('/users/:id', requireAuth, (req, res) => {
   db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
   const user = db.prepare('SELECT id, email, name, role, tier, created_at FROM users WHERE id = ?').get(parseInt(req.params.id));
   res.json({ user: safeUser(user) });
+});
+
+// Admin: send annual re-verification emails to students with expired .edu verification
+router.post('/admin/edu-reverify', requireAuth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+  if (!emailConfigured()) return res.status(500).json({ error: 'Email not configured' });
+
+  const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ').slice(0, 19);
+  const students = db.prepare(`
+    SELECT * FROM users WHERE role = 'student' AND email LIKE '%.edu' AND is_demo = 0
+    AND (edu_verified_at IS NULL OR edu_verified_at < ?)
+    AND (reverification_sent_at IS NULL OR reverification_sent_at < ?)
+  `).all(oneYearAgo, oneYearAgo);
+
+  let sent = 0, failed = 0;
+  for (const student of students) {
+    try {
+      const token = crypto.randomBytes(32).toString('hex');
+      db.prepare("UPDATE users SET verification_token = ?, reverification_sent_at = datetime('now') WHERE id = ?").run(token, student.id);
+      const verifyUrl = `${APP_URL}/api/auth/verify-email?token=${token}`;
+      await sendEmail({
+        to: student.email,
+        subject: 'Re-verify your student status — PeakLedger',
+        html: `
+          <div style="font-family:-apple-system,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f172a;border-radius:12px;">
+            <div style="font-size:22px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Re-verify your student status</div>
+            <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;line-height:1.6;">
+              Your annual student discount verification is due. Click below to confirm your .edu email and keep your student pricing for another year.
+            </div>
+            <a href="${verifyUrl}" style="display:inline-block;padding:12px 28px;background:#0066f5;color:#fff;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">
+              Re-verify Student Status
+            </a>
+            <div style="margin-top:24px;font-size:12px;color:#475569;">If you don't verify within 30 days, your account will revert to standard pricing. Or copy this link: ${verifyUrl}</div>
+          </div>
+        `,
+      });
+      sent++;
+    } catch { failed++; }
+  }
+  res.json({ total: students.length, sent, failed });
+});
+
+// Admin: expire students who didn't re-verify within 30 days and update their Stripe price
+router.post('/admin/edu-expire', requireAuth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ').slice(0, 19);
+  const oneYearAgo   = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ').slice(0, 19);
+
+  const expired = db.prepare(`
+    SELECT * FROM users WHERE role = 'student' AND email LIKE '%.edu' AND is_demo = 0
+    AND reverification_sent_at < ?
+    AND (edu_verified_at IS NULL OR edu_verified_at < ?)
+  `).all(thirtyDaysAgo, oneYearAgo);
+
+  const PRICE_STANDARD = process.env.STRIPE_PRICE_STANDARD;
+  let reverted = 0, stripeUpdated = 0;
+  const errors = [];
+
+  for (const u of expired) {
+    db.prepare("UPDATE users SET role = 'user' WHERE id = ?").run(u.id);
+    reverted++;
+
+    if (u.stripe_subscription_id && PRICE_STANDARD) {
+      try {
+        const Stripe = require('stripe');
+        const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+        const sub = await stripe.subscriptions.retrieve(u.stripe_subscription_id);
+        const itemId = sub.items.data[0]?.id;
+        if (itemId) {
+          await stripe.subscriptions.update(u.stripe_subscription_id, {
+            items: [{ id: itemId, price: PRICE_STANDARD }],
+            proration_behavior: 'none',
+          });
+          stripeUpdated++;
+        }
+      } catch (err) {
+        errors.push({ userId: u.id, email: u.email, error: err.message });
+      }
+    }
+  }
+
+  res.json({ total: expired.length, reverted, stripeUpdated, errors });
 });
 
 module.exports = router;
