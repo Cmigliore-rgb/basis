@@ -8023,18 +8023,17 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Feedback */}
+                {/* Feedback & Support */}
                 {user?.role !== 'admin' && <div style={{ ...CARD, marginBottom: 16 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Send Feedback</div>
-                  <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Suggestions, bugs, or anything on your mind.</div>
-
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Feedback & Support</div>
+                  <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Suggestions, bugs, or questions. We'll reply to {user?.email}.</div>
                   {feedbackSent ? (
-                    <div style={{ padding: '16px', background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, fontSize: 13, color: GREEN, textAlign: 'center' }}>
-                      Thanks for the feedback! ✓
+                    <div style={{ padding: 16, background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, fontSize: 13, color: GREEN, textAlign: 'center' }}>
+                      Message sent. Thanks for reaching out. ✓
                     </div>
                   ) : (
                     <>
-                      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
                         {[1, 2, 3, 4, 5].map(n => (
                           <button key={n} onClick={() => setFeedbackRating(r => r === n ? 0 : n)}
                             style={{ fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', color: feedbackRating >= n ? '#f59e0b' : TEXT3, opacity: feedbackRating >= n ? 1 : 0.4, transition: 'color 0.1s, opacity 0.1s', padding: '0 2px' }}>
@@ -8043,55 +8042,23 @@ export default function Dashboard() {
                         ))}
                         {feedbackRating > 0 && <span style={{ fontSize: 11, color: TEXT3, alignSelf: 'center', marginLeft: 4 }}>{['','Needs work','Could be better','Good','Great','Love it!'][feedbackRating]}</span>}
                       </div>
+                      <input
+                        type="text" placeholder="Subject (optional)" value={contactSubject}
+                        onChange={e => setContactSubject(e.target.value)}
+                        style={{ width: '100%', padding: '10px 12px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 10, fontFamily: 'inherit' }}
+                      />
                       <textarea rows={3} value={feedbackMsg} onChange={e => setFeedbackMsg(e.target.value)}
-                        placeholder="What's working? What's missing? What should we build next?"
+                        placeholder="What's on your mind?"
                         style={{ width: '100%', padding: '10px 12px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.5 }} />
                       <button onClick={async () => {
                         if (!feedbackMsg.trim()) return;
                         try {
-                          await api.post('/feedback', { rating: feedbackRating || null, message: feedbackMsg.trim() });
+                          await api.post('/feedback', { rating: feedbackRating || null, subject: contactSubject.trim() || null, message: feedbackMsg.trim() });
                           setFeedbackSent(true);
-                          setTimeout(() => { setFeedbackSent(false); setFeedbackMsg(''); setFeedbackRating(0); }, 4000);
+                          setTimeout(() => { setFeedbackSent(false); setFeedbackMsg(''); setFeedbackRating(0); setContactSubject(''); }, 4000);
                         } catch {}
                       }} disabled={!feedbackMsg.trim()} style={{ marginTop: 10, padding: '8px 18px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, cursor: feedbackMsg.trim() ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: 600, opacity: feedbackMsg.trim() ? 1 : 0.5 }}>
-                        Submit
-                      </button>
-                    </>
-                  )}
-                </div>}
-
-                {/* Contact Support */}
-                {user?.role !== 'admin' && <div style={{ ...CARD, marginBottom: 16 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Contact Support</div>
-                  <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Have a question or need help? We'll reply to {user?.email}.</div>
-                  {contactSent ? (
-                    <div style={{ padding: 16, background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, fontSize: 13, color: GREEN, textAlign: 'center' }}>
-                      Message sent. We'll be in touch soon. ✓
-                    </div>
-                  ) : (
-                    <>
-                      {contactErr && <div style={{ fontSize: 12, color: RED, marginBottom: 10 }}>{contactErr}</div>}
-                      <input
-                        type="text" placeholder="Subject" value={contactSubject}
-                        onChange={e => setContactSubject(e.target.value)}
-                        style={{ width: '100%', padding: '10px 12px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 10, fontFamily: 'inherit' }}
-                      />
-                      <textarea rows={4} value={contactMsg} onChange={e => setContactMsg(e.target.value)}
-                        placeholder="Describe your issue or question..."
-                        style={{ width: '100%', padding: '10px 12px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.5 }} />
-                      <button onClick={async () => {
-                        if (!contactSubject.trim() || !contactMsg.trim()) return;
-                        setContactErr('');
-                        try {
-                          await api.post('/feedback/contact', { subject: contactSubject.trim(), message: contactMsg.trim() });
-                          setContactSent(true);
-                          setTimeout(() => { setContactSent(false); setContactSubject(''); setContactMsg(''); }, 5000);
-                        } catch (err) {
-                          setContactErr(err.response?.data?.error || 'Failed to send. Try again.');
-                        }
-                      }} disabled={!contactSubject.trim() || !contactMsg.trim()}
-                        style={{ marginTop: 10, padding: '8px 18px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 7, cursor: (contactSubject.trim() && contactMsg.trim()) ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: 600, opacity: (contactSubject.trim() && contactMsg.trim()) ? 1 : 0.5 }}>
-                        Send Message
+                        Send
                       </button>
                     </>
                   )}

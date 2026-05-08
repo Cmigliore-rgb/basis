@@ -1,12 +1,12 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const store = require('../store');
 const requireAuth = require('../middleware/requireAuth');
 const email = require('../email');
 
-// POST /api/feedback
+// POST /api/feedback — save feedback and email support
 router.post('/', requireAuth, async (req, res) => {
-  const { rating, message } = req.body;
+  const { rating, subject, message } = req.body;
   if (!message?.trim()) return res.status(400).json({ error: 'message required' });
 
   const entry = {
@@ -14,6 +14,7 @@ router.post('/', requireAuth, async (req, res) => {
     userId: req.user.id,
     userEmail: req.user.email,
     rating: rating || null,
+    subject: subject?.trim() || null,
     message: message.trim(),
     createdAt: new Date().toISOString(),
   };
@@ -21,18 +22,17 @@ router.post('/', requireAuth, async (req, res) => {
   req.app.locals.feedback = [...(req.app.locals.feedback || []), entry];
   store.save(req.app);
 
-  // Email notification to admin if configured
-  const ADMIN = process.env.ADMIN_EMAILS?.split(',')[0]?.trim();
-  if (ADMIN && email.isConfigured()) {
+  if (email.isConfigured()) {
     const stars = rating ? '★'.repeat(rating) + '☆'.repeat(5 - rating) : 'No rating';
     email.send({
-      to: ADMIN,
-      subject: `PeakLedger Feedback: ${stars}`,
+      to: 'support@peakledger.app',
+      subject: subject?.trim() ? `Feedback: ${subject.trim()}` : `Feedback: ${stars}`,
       html: `<div style="font-family:sans-serif;max-width:520px;padding:24px">
         <h2 style="margin-bottom:8px">New Feedback</h2>
-        <p><strong>From:</strong> ${req.user.email}</p>
+        <p><strong>From:</strong> ${req.user.name} (${req.user.email})</p>
         <p><strong>Rating:</strong> ${stars}</p>
-        <div style="background:#f5f5f5;border-radius:8px;padding:14px 18px;margin:16px 0;font-size:15px;color:#333">${message.trim()}</div>
+        ${subject?.trim() ? `<p><strong>Subject:</strong> ${subject.trim()}</p>` : ''}
+        <div style="background:#f5f5f5;border-radius:8px;padding:14px 18px;margin:16px 0;font-size:15px;color:#333;white-space:pre-wrap">${message.trim()}</div>
       </div>`,
     }).catch(() => {});
   }
@@ -44,30 +44,6 @@ router.post('/', requireAuth, async (req, res) => {
 router.get('/', requireAuth, (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
   res.json({ feedback: req.app.locals.feedback || [] });
-});
-
-// POST /api/feedback/contact — sends message to support@peakledger.app
-router.post('/contact', requireAuth, async (req, res) => {
-  const { subject, message } = req.body;
-  if (!subject?.trim() || !message?.trim()) return res.status(400).json({ error: 'subject and message required' });
-  if (!email.isConfigured()) return res.status(500).json({ error: 'Email not configured' });
-
-  try {
-    await email.send({
-      to: 'support@peakledger.app',
-      subject: `Support: ${subject.trim()}`,
-      html: `<div style="font-family:sans-serif;max-width:520px;padding:24px">
-        <h2 style="margin-bottom:8px">Support Request</h2>
-        <p><strong>From:</strong> ${req.user.name} (${req.user.email})</p>
-        <p><strong>Subject:</strong> ${subject.trim()}</p>
-        <div style="background:#f5f5f5;border-radius:8px;padding:14px 18px;margin:16px 0;font-size:15px;color:#333;white-space:pre-wrap">${message.trim()}</div>
-      </div>`,
-    });
-    res.json({ ok: true });
-  } catch (err) {
-    console.error('Contact email failed:', err.message);
-    res.status(500).json({ error: 'Failed to send message' });
-  }
 });
 
 module.exports = router;
