@@ -6949,11 +6949,16 @@ export default function Dashboard() {
                                         </div>
                                       ))}
                                     </div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 12 }}>
                                       {ds.concepts.map(c => (
                                         <span key={c} style={{ fontSize: 10, padding: '2px 8px', background: `${ds.color}12`, border: `1px solid ${ds.color}30`, borderRadius: 10, color: ds.color, fontWeight: 600 }}>{c}</span>
                                       ))}
                                     </div>
+                                    <button
+                                      onClick={() => { setSandboxDataset(item.datasetId); setPanel('edu-sandbox'); }}
+                                      style={{ width: '100%', padding: '8px 0', background: `${ds.color}18`, border: `1px solid ${ds.color}44`, borderRadius: 7, color: ds.color, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                      Open Interactive Data →
+                                    </button>
                                   </div>
                                 ) : null;
                               })()}
