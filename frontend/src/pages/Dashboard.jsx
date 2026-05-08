@@ -2275,7 +2275,6 @@ export default function Dashboard() {
   const [submittedAssignments, setSubmittedAssignments] = useState(new Set());
   const [submissionDetails, setSubmissionDetails] = useState({});
   const [showUpgrade, setShowUpgrade]         = useState(false);
-  const [showOnboarding, setShowOnboarding]   = useState(() => !localStorage.getItem('pl_onboarded'));
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError]     = useState('');
   const [showSubmit, setShowSubmit] = useState(null); // assignment object | null
@@ -3113,83 +3112,6 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-
-      {/* ── ONBOARDING MODAL ─────────────────────────────── */}
-      {showOnboarding && user && (() => {
-        const dismiss = (goTo) => {
-          localStorage.setItem('pl_onboarded', '1');
-          setShowOnboarding(false);
-          if (goTo) setPanel(goTo);
-        };
-
-        const isStudent   = user.role === 'student';
-        const isProfessor = user.role === 'professor';
-        const isAdmin     = user.role === 'admin';
-
-        const steps = isStudent ? [
-          { icon: '◫', color: '#c084fc', text: 'Complete assignments your professor has set — built around real personal finance decisions.' },
-          { icon: '◎', color: '#60a5fa', text: 'Connect your bank and investment accounts to work with your real financial data.' },
-          { icon: '📚', color: '#4ade80', text: 'Explore the Learn library to build financial literacy at your own pace.' },
-        ] : isProfessor ? [
-          { icon: '⊟', color: '#4ade80', text: 'Create course codes from the Hub and share them with your students to enroll.' },
-          { icon: '◫', color: '#c084fc', text: 'Build assignments tied to real financial decisions your students will work through.' },
-          { icon: '◎', color: '#60a5fa', text: 'Track submissions, return grades, and monitor class progress in real time.' },
-        ] : isAdmin ? [
-          { icon: '◎', color: '#60a5fa', text: 'Manage users, tiers, and roles from the Admin panel.' },
-          { icon: '⊟', color: '#4ade80', text: 'Create and manage course codes for professors.' },
-          { icon: '◈', color: '#fbbf24', text: 'Monitor feedback, submissions, and platform activity.' },
-        ] : [
-          { icon: '◎', color: '#60a5fa', text: 'Connect your bank and investment accounts to see your real net worth and cash flow.' },
-          { icon: '◈', color: '#fbbf24', text: 'Track spending, portfolio performance, and liabilities all in one place.' },
-          { icon: '📚', color: '#4ade80', text: 'Explore the Learn library and market data to build financial knowledge.' },
-        ];
-
-        const primaryLabel = isProfessor ? 'Go to Hub' : isAdmin ? 'Go to Admin' : isStudent ? 'Go to Courses' : 'Connect Account';
-        const primaryPanel = isProfessor ? 'prof-hub' : isAdmin ? 'admin' : isStudent ? 'edu-courses' : null;
-
-        return (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-            <div style={{ position: 'relative', background: CARD_BG, border: `1px solid ${BORDER_C}`, borderRadius: 18, padding: 36, width: '100%', maxWidth: 460, boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
-              <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                <img src="/logo-icon.svg" alt="" style={{ width: 52, height: 52, borderRadius: 12, marginBottom: 16 }} />
-                <div style={{ fontSize: 22, fontWeight: 800, color: TEXT, marginBottom: 8 }}>
-                  Welcome{user.name ? `, ${user.name.split(' ')[0]}` : ''}
-                </div>
-                <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.6 }}>
-                  {isStudent   ? "You're set up as a student. Here's what you can do in PeakLedger." : null}
-                  {isProfessor ? "You're set up as a professor. Here's how PeakLedger works for you." : null}
-                  {isAdmin     ? "You're signed in as an admin. Here's a quick overview." : null}
-                  {!isStudent && !isProfessor && !isAdmin ? "Here's what you can do with PeakLedger." : null}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 28 }}>
-                {steps.map((s, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 9, background: `${s.color}18`, border: `1px solid ${s.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: s.color, flexShrink: 0 }}>
-                      {s.icon}
-                    </div>
-                    <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, paddingTop: 8 }}>{s.text}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={() => dismiss(null)}
-                  style={{ flex: 1, padding: '11px 0', background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER_C}`, borderRadius: 9, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                  Explore on my own
-                </button>
-                <button onClick={() => {
-                  if (primaryPanel) { dismiss(primaryPanel); }
-                  else { dismiss(null); window._plaidLinkHandler?.open(); }
-                }} style={{ flex: 2, padding: '11px 0', background: BLUE_BTN, border: 'none', borderRadius: 9, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                  {primaryLabel} →
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* ── UPGRADE MODAL ───────────────────────────────── */}
       {showUpgrade && (
