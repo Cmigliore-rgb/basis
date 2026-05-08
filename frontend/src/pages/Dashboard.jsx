@@ -999,12 +999,14 @@ const LEARN_CONTENT = [
         summary: 'The total value of what you own minus what you owe.',
         body: 'Net worth is the single most important number in personal finance. Assets include cash, investments, real estate, and vehicles. Liabilities include mortgages, student loans, credit card debt, and car loans. Growing your net worth over time, through earning more, saving more, investing, and reducing debt, is the foundation of financial health.',
         formula: 'Net Worth = Total Assets − Total Liabilities',
-        example: 'You have $15,000 in savings, $30,000 in investments, and $8,000 in credit card debt → Net Worth = $37,000.' },
+        example: 'You have $15,000 in savings, $30,000 in investments, and $8,000 in credit card debt → Net Worth = $37,000.',
+        datasetId: 'ds-net-worth' },
       { id: '503020', title: 'A Simple Budgeting Framework', icon: '📊',
         summary: 'Split spending into needs, wants, and savings. Adjust the ratios to fit your own situation.',
         body: 'A common starting point divides take-home pay into three buckets: Needs (essentials like rent, utilities, groceries, minimum debt payments), Wants (dining out, subscriptions, entertainment, travel), and Savings/Debt payoff (emergency fund, retirement contributions, investments, extra debt payoff). The exact percentages matter far less than the habit of separating these buckets intentionally. Someone in a high cost-of-living city might spend 65% on needs. A recent grad aggressively paying down loans might push savings to 30%. Use the categories as a diagnostic tool, not a grade.',
         formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Savings Rate = <Frac n="Income − Expenses" d="Income" /> × 100</span>,
-        example: 'Income: $5,000/month → $2,500 needs, $1,500 wants, $1,000 savings/investing.' },
+        example: 'Income: $5,000/month → $2,500 needs, $1,500 wants, $1,000 savings/investing.',
+        datasetId: 'ds-budget' },
       { id: 'emergency', title: 'Emergency Fund', icon: '🛡️',
         summary: '3–6 months of expenses in liquid savings as a financial safety net.',
         body: 'An emergency fund prevents you from going into debt when unexpected expenses arise: job loss, medical bills, car repairs. Keep it in a high-yield savings account (HYSA) earning 4–5% APY, not invested in stocks. Once funded, don\'t touch it except for true emergencies. Salaried employees need 3 months; freelancers/variable income need 6+.',
@@ -1014,7 +1016,8 @@ const LEARN_CONTENT = [
         summary: 'A 300–850 score that determines your borrowing rate on everything from apartments to car loans.',
         body: 'Your FICO score has five components: Payment History (35%), so never miss a payment; Amounts Owed (30%), so keep credit utilization below 30%; Length of Credit History (15%), where older accounts help; Credit Mix (10%), where having both revolving and installment credit helps; and New Credit (10%), where hard inquiries temporarily lower your score. A score above 740 unlocks the best rates; below 670 is subprime.',
         formula: 'FICO = f(Payment History 35%, Utilization 30%, Length 15%, Mix 10%, New Credit 10%)',
-        example: 'Your card limit is $5,000 and your balance is $2,200 → utilization = 44%. Paying it to $1,500 drops utilization to 30% and can raise your score 20–40 points in one cycle.' },
+        example: 'Your card limit is $5,000 and your balance is $2,200 → utilization = 44%. Paying it to $1,500 drops utilization to 30% and can raise your score 20–40 points in one cycle.',
+        datasetId: 'ds-credit' },
       { id: 'debt-payoff', title: 'Debt Payoff: Avalanche vs. Snowball', icon: '❄️',
         summary: 'Two proven strategies for eliminating debt: one saves more money, the other builds momentum.',
         body: 'Avalanche method: pay minimums on all debts, put every extra dollar toward the highest-interest debt first. Mathematically optimal, it saves the most in interest. Snowball method: pay minimums on all debts, put every extra dollar toward the smallest balance first. Psychologically powerful, quick wins keep you motivated. Both beat paying randomly. Credit card debt (18–29% APR) is almost always the highest priority regardless of method.',
@@ -1034,7 +1037,8 @@ const LEARN_CONTENT = [
         summary: 'Earning returns on your returns, the most powerful force in personal finance.',
         body: 'Einstein allegedly called compound interest the "eighth wonder of the world." Starting early matters enormously: $10,000 invested at 25 grows to ~$217,000 by 65 at 8% annual return. The same $10,000 invested at 35 grows to only ~$100,000. Time in the market beats timing the market.',
         formula: <span style={{display:'inline-flex',alignItems:'center',gap:3}}>A = P(1 + <Frac n="r" d="n" />)<sup style={{fontSize:11}}>nt</sup></span>,
-        example: '$500/month from age 25 at 8% → $1.74M at 65. Starting at 35 → only $745K. The 10-year delay costs ~$1M.' },
+        example: '$500/month from age 25 at 8% → $1.74M at 65. Starting at 35 → only $745K. The 10-year delay costs ~$1M.',
+        datasetId: 'ds-tvm' },
       { id: 'dca', title: 'Dollar-Cost Averaging', icon: '📅',
         summary: 'Invest a fixed amount on a regular schedule to remove emotion and timing risk from investing.',
         body: 'Dollar-cost averaging (DCA) means investing the same dollar amount at regular intervals (weekly, monthly) regardless of market conditions. When prices are low, your fixed amount buys more shares. When prices are high, it buys fewer. Over time, your average cost per share is lower than if you had tried to time the market. The biggest benefit is behavioral: you can\'t panic-sell if you\'re on autopilot.',
@@ -1044,7 +1048,8 @@ const LEARN_CONTENT = [
         summary: 'How your money is split across different asset classes to balance risk and return.',
         body: 'The classic guideline: subtract your age from 110 to get your stock percentage (the rest in bonds). At 25: 85% stocks, 15% bonds. At 60: 50% stocks, 50% bonds. Stocks offer higher long-term returns but more volatility. Bonds are more stable but lower return. Cash provides safety but loses to inflation over time.',
         formula: 'Stock % ≈ 110 − Age (traditional rule of thumb)',
-        example: 'A 30-year-old might hold 80% stocks (S&P 500 index fund), 15% bonds, 5% cash.' },
+        example: 'A 30-year-old might hold 80% stocks (S&P 500 index fund), 15% bonds, 5% cash.',
+        datasetId: 'ds-portfolio' },
       { id: 'diversification', title: 'Diversification', icon: '🎲',
         summary: 'Spreading investments across assets so one loss doesn\'t sink your portfolio.',
         body: 'Diversification reduces unsystematic risk, the kind specific to one company or sector. A portfolio of 20–30 uncorrelated stocks eliminates most company-specific risk. Index funds provide instant diversification across hundreds or thousands of companies. Geographic diversification (international stocks) reduces country-specific risk.',
@@ -1079,7 +1084,8 @@ const LEARN_CONTENT = [
         summary: 'Buying isn\'t always better. The 5-year rule and price-to-rent ratio tell you when it makes sense.',
         body: 'Buying costs: down payment (3–20%), closing costs (2–5%), property taxes (~1%/yr), maintenance (~1%/yr), insurance. Renting costs: monthly rent + renters insurance (~$15/mo). The Price-to-Rent ratio = home price ÷ annual rent. Below 15: buying likely wins. 15–20: depends on your situation. Above 20: renting is usually cheaper. The 5-year rule: if you\'re not staying 5+ years, transaction costs likely outweigh equity gains.',
         formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Price-to-Rent = <Frac n="Home Price" d="Annual Rent" /> &nbsp;|&nbsp; Break-even ≈ 5 years</span>,
-        example: 'Home: $400,000. Comparable rent: $2,000/mo ($24,000/yr). P/R ratio = 16.7, which is borderline. If you\'re staying 7+ years in a low-inventory market, buying likely wins. If you\'ll move in 3 years, rent.' },
+        example: 'Home: $400,000. Comparable rent: $2,000/mo ($24,000/yr). P/R ratio = 16.7, which is borderline. If you\'re staying 7+ years in a low-inventory market, buying likely wins. If you\'ll move in 3 years, rent.',
+        datasetId: 'ds-housing' },
     ],
   },
   {
@@ -6916,6 +6922,19 @@ export default function Dashboard() {
                               <div style={{ background: EXAMPLE_BG, border: `1px solid var(--example-border, #1a3a6b)`, borderRadius: 7, padding: '10px 14px', fontSize: 12, lineHeight: 1.6, color: TEXT2 }}>
                                 <span style={{ color: BLUE, fontWeight: 600 }}>Example: </span>{item.example}
                               </div>
+
+                              {item.datasetId && (() => {
+                                const ds = PREBUILT_DATASETS.find(d => d.id === item.datasetId);
+                                return ds ? (
+                                  <button
+                                    onClick={() => { setSandboxDataset(item.datasetId); setPanel('edu-sandbox'); }}
+                                    style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 7, color: '#4ade80', fontSize: 12, fontWeight: 600, cursor: 'pointer', width: '100%' }}>
+                                    <span>◫</span>
+                                    <span>Practice with Dataset: {ds.title}</span>
+                                    <span style={{ marginLeft: 'auto', fontSize: 11, color: TEXT3 }}>{ds.subtitle}</span>
+                                  </button>
+                                ) : null;
+                              })()}
 
                               {/* Video section */}
                               {(() => {
