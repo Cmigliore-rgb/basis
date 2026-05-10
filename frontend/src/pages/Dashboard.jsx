@@ -2024,6 +2024,9 @@ export default function Dashboard() {
   const [connectBannerDismissed, setConnectBannerDismissed] = useState(
     () => localStorage.getItem('pl_connect_banner_dismissed') === '1'
   );
+  const [hideEduSection, setHideEduSection] = useState(
+    () => localStorage.getItem('pl_hide_edu') === '1'
+  );
   const [toast, setToast] = useState(null);
   const [layoutOrder, setLayoutOrder] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_layout_order') || '{}'); } catch { return {}; } });
   const getOrder = (key, defaults) => { const s = layoutOrder[key]; if (!s?.length) return defaults; const ss = new Set(s); return [...s.filter(id => defaults.includes(id)), ...defaults.filter(id => !ss.has(id))]; };
@@ -2315,6 +2318,10 @@ export default function Dashboard() {
     return !!(user?.enrollments?.length);
   });
   const switchEduMode = (val) => { localStorage.setItem('pl_edu_mode', String(val)); setEduMode(val); };
+  const EDU_PANELS = new Set(['edu-courses', 'edu-sandbox', 'edu-assignments', 'learn', 'prof-dashboard']);
+  useEffect(() => {
+    if (hideEduSection && EDU_PANELS.has(panel)) { switchEduMode(false); setPanel('overview'); }
+  }, [hideEduSection]);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const enrolledCourses = (() => {
     if (isProfessor || isAdmin) return COURSES;
@@ -2936,13 +2943,19 @@ export default function Dashboard() {
           )}
 
           {/* ── EDUCATION SECTION ── */}
-          {!isUser && (!eduMode ? (
+          {!isUser && !hideEduSection && (!eduMode ? (
             /* Collapsed — single switch pill */
-            <button onClick={() => { switchEduMode(true); setPanel('edu-courses'); }}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', margin: '4px 0', background: 'transparent', border: 'none', color: GREEN, cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: 'left', borderTop: `1px solid ${BORDER_C}`, marginTop: 6, transition: 'all 0.15s' }}>
-              <span style={{ flex: 1, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Education</span>
-              <span style={{ fontSize: 11, fontWeight: 600 }}>Switch →</span>
-            </button>
+            <div style={{ borderTop: `1px solid ${BORDER_C}`, marginTop: 6, display: 'flex', alignItems: 'center' }}>
+              <button onClick={() => { switchEduMode(true); setPanel('edu-courses'); }}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'transparent', border: 'none', color: GREEN, cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: 'left', transition: 'all 0.15s' }}>
+                <span style={{ flex: 1, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Education</span>
+                <span style={{ fontSize: 11, fontWeight: 600 }}>Switch →</span>
+              </button>
+              {isStudent && enrolledCourses.length === 0 && (
+                <button title="Hide Education section" onClick={() => { setHideEduSection(true); localStorage.setItem('pl_hide_edu', '1'); }}
+                  style={{ padding: '8px 10px', background: 'none', border: 'none', color: TEXT3, fontSize: 14, cursor: 'pointer', lineHeight: 1, flexShrink: 0 }}>×</button>
+              )}
+            </div>
           ) : (
             <>
               <div style={{ padding: '12px 20px 6px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: GREEN, borderTop: `1px solid ${BORDER_C}`, marginTop: 6 }}>
@@ -8321,6 +8334,17 @@ export default function Dashboard() {
                       <div style={{ fontSize: 11, color: GREEN, marginTop: 6 }}>Current: {user.backup_email}</div>
                     )}
                   </div>
+
+                  {isStudent && hideEduSection && (
+                    <div style={{ ...CARD, marginTop: 16, border: '1px solid rgba(74,222,128,0.2)', background: 'rgba(74,222,128,0.025)' }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Education Section</div>
+                      <div style={{ fontSize: 13, color: TEXT2, marginBottom: 14 }}>You've hidden the Education section. Restore it to access courses, datasets, and assignments.</div>
+                      <button onClick={() => { setHideEduSection(false); localStorage.removeItem('pl_hide_edu'); }}
+                        style={{ padding: '8px 18px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 7, color: GREEN, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                        Show Education Section
+                      </button>
+                    </div>
+                  )}
 
                   <div style={{ paddingTop: 14, display: 'flex', gap: 8 }}>
                     <button onClick={logout} style={{ padding: '8px 16px', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 7, color: RED, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Sign out</button>
