@@ -2945,17 +2945,11 @@ export default function Dashboard() {
           {/* ── EDUCATION SECTION ── */}
           {!isUser && !hideEduSection && (!eduMode ? (
             /* Collapsed — single switch pill */
-            <div style={{ borderTop: `1px solid ${BORDER_C}`, marginTop: 6, display: 'flex', alignItems: 'center' }}>
-              <button onClick={() => { switchEduMode(true); setPanel('edu-courses'); }}
-                style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'transparent', border: 'none', color: GREEN, cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: 'left', transition: 'all 0.15s' }}>
-                <span style={{ flex: 1, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Education</span>
-                <span style={{ fontSize: 11, fontWeight: 600 }}>Switch →</span>
-              </button>
-              {isStudent && enrolledCourses.length === 0 && (
-                <button title="Hide Education section" onClick={() => { setHideEduSection(true); localStorage.setItem('pl_hide_edu', '1'); }}
-                  style={{ padding: '8px 10px', background: 'none', border: 'none', color: TEXT3, fontSize: 14, cursor: 'pointer', lineHeight: 1, flexShrink: 0 }}>×</button>
-              )}
-            </div>
+            <button onClick={() => { switchEduMode(true); setPanel('edu-courses'); }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', margin: '4px 0', background: 'transparent', border: 'none', color: GREEN, cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: 'left', borderTop: `1px solid ${BORDER_C}`, marginTop: 6, transition: 'all 0.15s' }}>
+              <span style={{ flex: 1, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Education</span>
+              <span style={{ fontSize: 11, fontWeight: 600 }}>Switch →</span>
+            </button>
           ) : (
             <>
               <div style={{ padding: '12px 20px 6px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: GREEN, borderTop: `1px solid ${BORDER_C}`, marginTop: 6 }}>
