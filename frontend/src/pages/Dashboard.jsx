@@ -7900,9 +7900,32 @@ export default function Dashboard() {
                   {[
                     { section: 'finance',   filter: n => n.section === 'finance' && n.key !== 'overview', sectionLabel: 'Personal Finance', sectionColor: TEXT3, toggleColor: BLUE_BTN },
                     { section: 'education', filter: n => n.section === 'education',                       sectionLabel: 'Education Mode',   sectionColor: GREEN,  toggleColor: 'rgba(74,222,128,0.7)' },
-                  ].map(({ filter, sectionLabel, sectionColor, toggleColor }) => (
+                  ].map(({ section, filter, sectionLabel, sectionColor, toggleColor }) => (
                     <div key={sectionLabel}>
                       <div style={{ fontSize: 10, color: sectionColor, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>{sectionLabel}</div>
+                      {/* Education section master toggle — only for unenrolled students */}
+                      {section === 'education' && isStudent && enrolledCourses.length === 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: 15, opacity: hideEduSection ? 0.35 : 1 }}>◫</span>
+                            <div>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: hideEduSection ? TEXT3 : GREEN }}>Education Section</span>
+                              <div style={{ fontSize: 10, color: TEXT3 }}>Show/hide the entire Education area</div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const next = !hideEduSection;
+                              setHideEduSection(next);
+                              if (next) localStorage.setItem('pl_hide_edu', '1');
+                              else localStorage.removeItem('pl_hide_edu');
+                            }}
+                            style={{ width: 42, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', background: hideEduSection ? MUTED : toggleColor, position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
+                          >
+                            <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: hideEduSection ? 3 : 21, transition: 'left 0.18s' }} />
+                          </button>
+                        </div>
+                      )}
                       {NAV.filter(filter).map(n => {
                         const subtabs = PANEL_SUBTABS[n.key];
                         const isExpanded = expandedTabRows.has(n.key);
