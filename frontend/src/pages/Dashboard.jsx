@@ -4107,7 +4107,7 @@ export default function Dashboard() {
                 <div style={{ ...CARD, marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Net Worth History</div>
                   {isDemoData && (
-                    <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 12, display: 'inline-block' }}>
+                    <div style={{ fontSize: 11, color: BLUE, background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 6, padding: '6px 12px', marginBottom: 12, display: 'inline-block' }}>
                       Demo data. Connect an account to see your real history.
                     </div>
                   )}
@@ -4136,7 +4136,7 @@ export default function Dashboard() {
                     return (
                       <>
                         {display.isDemo && (
-                          <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 12, display: 'inline-block' }}>
+                          <div style={{ fontSize: 11, color: BLUE, background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 6, padding: '6px 12px', marginBottom: 12, display: 'inline-block' }}>
                             Demo data. Connect an account to see your real baseline.
                           </div>
                         )}
@@ -4623,7 +4623,7 @@ export default function Dashboard() {
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: liabDemo ? 12 : 20 }}>Credit cards, loans, and mortgages.</div>
                     {liabDemo && (
-                      <div style={{ fontSize: 11, color: TEXT3, background: '#1a1a1a', border: BORDER, borderRadius: 6, padding: '6px 12px', marginBottom: 16, display: 'inline-block' }}>
+                      <div style={{ fontSize: 11, color: BLUE, background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 6, padding: '6px 12px', marginBottom: 16, display: 'inline-block' }}>
                         Demo data. Connect a bank account to add your own liabilities.
                       </div>
                     )}
