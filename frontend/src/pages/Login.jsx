@@ -15,8 +15,9 @@ const BORDER  = '1px solid rgba(255,255,255,0.08)';
 const INPUT_BG = '#141414';
 const BLUE_BTN = '#0066f5';
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const APPLE_CLIENT_ID  = import.meta.env.VITE_APPLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID    = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const APPLE_CLIENT_ID     = import.meta.env.VITE_APPLE_CLIENT_ID;
+const MICROSOFT_CLIENT_ID = import.meta.env.VITE_MICROSOFT_CLIENT_ID;
 
 const FEATURES = [
   { icon: '◎', color: '#60a5fa', label: 'Live financial dashboard',     sub: 'Net worth, spending, and investments in one place.' },
@@ -69,6 +70,26 @@ export default function Login() {
     } finally { setOauthLoading(null); }
   };
 
+  const handleMicrosoft = async () => {
+    if (!window.msal?.PublicClientApplication) return setError('Microsoft Sign-In not available');
+    setError(''); setOauthLoading('microsoft');
+    try {
+      const msalApp = new window.msal.PublicClientApplication({
+        auth: { clientId: MICROSOFT_CLIENT_ID, authority: 'https://login.microsoftonline.com/common', redirectUri: window.location.origin },
+        cache: { cacheLocation: 'sessionStorage', storeAuthStateInCookie: false },
+      });
+      await msalApp.initialize();
+      const result = await msalApp.loginPopup({ scopes: ['openid', 'email', 'profile'] });
+      const { data } = await api.post('/auth/microsoft', { id_token: result.idToken });
+      login(data.token, data.user);
+      navigate('/app');
+    } catch (err) {
+      if (err?.errorCode !== 'user_cancelled') {
+        setError(err?.response?.data?.error || 'Microsoft sign-in failed');
+      }
+    } finally { setOauthLoading(null); }
+  };
+
   const handleApple = async () => {
     if (!window.AppleID?.auth) return setError('Apple Sign-In not available');
     setError(''); setOauthLoading('apple');
@@ -105,7 +126,7 @@ export default function Login() {
     } finally { setLoading(false); }
   };
 
-  const showOAuth = GOOGLE_CLIENT_ID || APPLE_CLIENT_ID;
+  const showOAuth = GOOGLE_CLIENT_ID || APPLE_CLIENT_ID || MICROSOFT_CLIENT_ID;
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
@@ -151,6 +172,20 @@ export default function Login() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
             {GOOGLE_CLIENT_ID && (
               <div ref={googleBtnRef} style={{ width: '100%', minHeight: 44, borderRadius: 8, overflow: 'hidden', opacity: oauthLoading === 'google' ? 0.6 : 1, transition: 'opacity 0.15s' }} />
+            )}
+            {MICROSOFT_CLIENT_ID && (
+              <button onClick={handleMicrosoft} disabled={!!oauthLoading}
+                style={{ width: '100%', padding: '11px 14px', background: '#fff', border: 'none', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: oauthLoading ? 'default' : 'pointer', opacity: oauthLoading === 'microsoft' ? 0.6 : 1, transition: 'opacity 0.15s' }}>
+                <svg width="18" height="18" viewBox="0 0 21 21">
+                  <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
+                  <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
+                  <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
+                  <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
+                </svg>
+                <span style={{ fontSize: 15, fontWeight: 600, color: '#000' }}>
+                  {oauthLoading === 'microsoft' ? 'Signing in…' : 'Sign in with Microsoft'}
+                </span>
+              </button>
             )}
             {APPLE_CLIENT_ID && (
               <button onClick={handleApple} disabled={!!oauthLoading}

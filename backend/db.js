@@ -123,6 +123,7 @@ try { db.exec('ALTER TABLE users ADD COLUMN edu_verified_at TEXT'); } catch {}
 try { db.exec('ALTER TABLE users ADD COLUMN reverification_sent_at TEXT'); } catch {}
 try { db.exec('ALTER TABLE users ADD COLUMN google_id TEXT'); } catch {}
 try { db.exec('ALTER TABLE users ADD COLUMN apple_id TEXT'); } catch {}
+try { db.exec('ALTER TABLE users ADD COLUMN microsoft_id TEXT'); } catch {}
 // Backfill existing verified students with today's date so they get a full year before re-verification
 try { db.exec("UPDATE users SET edu_verified_at = datetime('now') WHERE role = 'student' AND email LIKE '%.edu' AND email_verified = 1 AND edu_verified_at IS NULL"); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN item_id TEXT'); } catch {}

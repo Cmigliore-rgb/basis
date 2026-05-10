@@ -406,6 +406,7 @@ const { createRemoteJWKSet, jwtVerify } = require('jose');
 
 const GOOGLE_JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 const APPLE_JWKS  = createRemoteJWKSet(new URL('https://appleid.apple.com/auth/keys'));
+const MS_JWKS     = createRemoteJWKSet(new URL('https://login.microsoftonline.com/common/discovery/v2.0/keys'));
 
 router.post('/google', async (req, res) => {
   const { credential } = req.body;
@@ -485,6 +486,52 @@ router.post('/apple', async (req, res) => {
   } catch (err) {
     console.error('Apple auth error:', err.message);
     res.status(401).json({ error: 'Invalid Apple token' });
+  }
+});
+
+// ── OAuth: Microsoft ─────────────────────────────────────────────────────────
+router.post('/microsoft', async (req, res) => {
+  const { id_token } = req.body;
+  if (!id_token) return res.status(400).json({ error: 'id_token required' });
+  if (!process.env.MICROSOFT_CLIENT_ID) return res.status(503).json({ error: 'Microsoft Sign-In not configured' });
+
+  try {
+    const { payload } = await jwtVerify(id_token, MS_JWKS, {
+      audience: process.env.MICROSOFT_CLIENT_ID,
+    });
+
+    // Multi-tenant: issuer contains the specific tenant ID
+    if (!payload.iss?.match(/^https:\/\/login\.microsoftonline\.com\/[^/]+\/v2\.0$/)) {
+      return res.status(401).json({ error: 'Invalid token issuer' });
+    }
+
+    const { oid: msId, email, preferred_username, name } = payload;
+    if (!msId) return res.status(400).json({ error: 'No identifier in Microsoft token' });
+    const userEmail = (email || preferred_username || '').toLowerCase();
+
+    let user = db.prepare('SELECT * FROM users WHERE microsoft_id = ?').get(msId);
+    if (!user && userEmail) user = db.prepare('SELECT * FROM users WHERE email = ?').get(userEmail);
+
+    if (user) {
+      if (!user.microsoft_id) {
+        db.prepare('UPDATE users SET microsoft_id = ?, email_verified = 1 WHERE id = ?').run(msId, user.id);
+        user = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+      }
+    } else {
+      const finalEmail = userEmail || `${msId}@microsoft-oauth.local`;
+      const role = userEmail ? inferRole(userEmail) : 'user';
+      const tier = (role === 'admin' || role === 'professor') ? 'premium' : 'free';
+      const result = db.prepare(
+        'INSERT INTO users (email, name, role, tier, email_verified, microsoft_id) VALUES (?, ?, ?, ?, 1, ?)'
+      ).run(finalEmail, name || finalEmail.split('@')[0], role, tier, msId);
+      user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+    }
+
+    const enrollments = getEnrollments(user.id);
+    res.json({ token: sign(user), user: safeUser(user, enrollments) });
+  } catch (err) {
+    console.error('Microsoft auth error:', err.message);
+    res.status(401).json({ error: 'Invalid Microsoft token' });
   }
 });
 
