@@ -1747,6 +1747,8 @@ const DATASET_TARGET_PANEL = {
   'ds-portfolio':  'edu-sandbox',
   'ds-credit':     'edu-sandbox',
   'ds-housing':    'edu-sandbox',
+  'ds-emergency':  'edu-sandbox',
+  'ds-debt':       'edu-sandbox',
 };
 
 const SANDBOX_DATA = (() => {
@@ -1888,6 +1890,32 @@ const SANDBOX_DATA = (() => {
   'ds-housing': {
     rent: 1200, homePrice: 285000, downPct: 0.05, rate: 7.1, termYears: 30,
     propertyTaxRate: 0.012, insurancePerYear: 1800, appreciationRate: 0.03,
+  },
+  'ds-emergency': {
+    monthlyExpenses: 1924,
+    currentSavings: 800,
+    monthlyIncome: 3200,
+    hysaRate: 4.8,
+    checkingRate: 0.01,
+    expenseBreakdown: [
+      { label: 'Rent',          amount: 650 },
+      { label: 'Utilities',     amount: 82  },
+      { label: 'Groceries',     amount: 280 },
+      { label: 'Transportation',amount: 175 },
+      { label: 'Phone',         amount: 45  },
+      { label: 'Subscriptions', amount: 42  },
+      { label: 'Personal',      amount: 310 },
+      { label: 'Other',         amount: 340 },
+    ],
+  },
+  'ds-debt': {
+    extraPayment: 200,
+    debts: [
+      { name: 'Visa Credit Card',  balance: 3500,  apr: 24.0, minPayment: 70  },
+      { name: 'Personal Loan',     balance: 7200,  apr: 18.0, minPayment: 160 },
+      { name: 'Car Loan',          balance: 5800,  apr:  7.2, minPayment: 115 },
+      { name: 'Student Loan',      balance: 3480,  apr:  4.5, minPayment: 40  },
+    ],
   },
   };
 })();
@@ -2206,6 +2234,8 @@ export default function Dashboard() {
   const [tvmYears, setTvmYears] = useState('30');
   const [housingAmort, setHousingAmort] = useState(false);
   const [simAlloc, setSimAlloc] = useState({ VTI: 40, BND: 10, VXUS: 25, SCHD: 25 });
+  const [efExtraSavings, setEfExtraSavings] = useState(200);
+  const [debtStrategy, setDebtStrategy] = useState('avalanche');
   const [housingRate, setHousingRate]     = useState('');
   const [housingDown, setHousingDown]     = useState('');
   const [housingIncome, setHousingIncome] = useState('');
@@ -11003,6 +11033,370 @@ export default function Dashboard() {
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
                             <div style={{ fontSize: 11, fontFamily: 'monospace', color: BLUE, marginBottom: 6, background: `${BLUE}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
                             <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── EMERGENCY FUND BUILDER ────────────────────────────────────
+              if (sandboxDataset === 'ds-emergency') {
+                const { monthlyExpenses = 1924, currentSavings = 800, monthlyIncome = 3200, hysaRate = 4.8, checkingRate = 0.01, expenseBreakdown = [] } = sbD;
+                const target3mo = monthlyExpenses * 3;
+                const target6mo = monthlyExpenses * 6;
+                const gap3mo    = Math.max(0, target3mo - currentSavings);
+                const gap6mo    = Math.max(0, target6mo - currentSavings);
+                const extra     = efExtraSavings;
+                const months3mo = extra > 0 ? Math.ceil(gap3mo / extra) : Infinity;
+                const months6mo = extra > 0 ? Math.ceil(gap6mo / extra) : Infinity;
+                const pct3mo    = Math.min(100, Math.round((currentSavings / target3mo) * 100));
+                const CYAN      = '#06b6d4';
+
+                const hysaAnnual    = (currentSavings + gap3mo / 2) * (hysaRate / 100);
+                const checkAnnual   = (currentSavings + gap3mo / 2) * (checkingRate / 100);
+                const interestDiff  = hysaAnnual - checkAnnual;
+
+                const scheduleRows = [];
+                let bal = currentSavings;
+                for (let m = 1; m <= Math.min(months3mo > 0 && isFinite(months3mo) ? months3mo + 2 : 18, 18); m++) {
+                  const interest = bal * (hysaRate / 100 / 12);
+                  bal += extra + interest;
+                  scheduleRows.push({ month: m, contribution: extra, interest: +interest.toFixed(2), balance: +bal.toFixed(2), reached3: bal >= target3mo, reached6: bal >= target6mo });
+                }
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Emergency Fund Builder</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${CYAN}18`, color: CYAN }}>Sandbox · Ch. 7</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      A 22-year-old with $1,924/month in expenses and only $800 saved. Calculate the savings gap, choose a HYSA, and build a timeline to financial safety.
+                    </div>
+
+                    {/* Hero stats */}
+                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'Monthly Expenses', value: fmt(monthlyExpenses), sub: 'baseline to cover', color: CYAN },
+                        { label: '3-Month Target',   value: fmt(target3mo),       sub: `gap: ${fmt(gap3mo)}`, color: YELLOW },
+                        { label: '6-Month Target',   value: fmt(target6mo),       sub: `gap: ${fmt(gap6mo)}`, color: GREEN  },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '18px 20px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-1px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 3 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Progress toward 3-month goal */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Current Progress — 3-Month Goal</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: TEXT2, marginBottom: 8 }}>
+                        <span>Current savings: <strong style={{ color: TEXT }}>{fmt(currentSavings)}</strong></span>
+                        <span style={{ color: pct3mo >= 100 ? GREEN : YELLOW, fontWeight: 700 }}>{pct3mo}% funded</span>
+                      </div>
+                      <div style={{ height: 12, background: MUTED, borderRadius: 6, overflow: 'hidden', marginBottom: 8 }}>
+                        <div style={{ height: '100%', width: `${pct3mo}%`, background: pct3mo >= 100 ? GREEN : CYAN, borderRadius: 6, transition: 'width 0.4s' }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3 }}>
+                        <span>$0</span>
+                        <span style={{ color: YELLOW }}>3-mo: {fmt(target3mo)}</span>
+                        <span style={{ color: GREEN }}>6-mo: {fmt(target6mo)}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
+                      {/* Expense breakdown */}
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 14 }}>Monthly Expense Breakdown</div>
+                        {expenseBreakdown.map(e => (
+                          <div key={e.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                            <div style={{ fontSize: 13, color: TEXT }}>{e.label}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <div style={{ width: 60, height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${Math.round((e.amount / monthlyExpenses) * 100)}%`, background: CYAN }} />
+                              </div>
+                              <div style={{ fontSize: 12, fontFamily: 'monospace', color: TEXT2, width: 50, textAlign: 'right' }}>{fmt(e.amount)}</div>
+                            </div>
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, fontSize: 13, fontWeight: 700 }}>
+                          <span>Total</span>
+                          <span style={{ fontFamily: 'monospace', color: CYAN }}>{fmt(monthlyExpenses)}</span>
+                        </div>
+                      </div>
+
+                      {/* HYSA vs Checking */}
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>HYSA vs. Checking Account</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Where should you park your emergency fund?</div>
+                        {[
+                          { label: 'High-Yield Savings (HYSA)', rate: hysaRate, annual: hysaAnnual, color: GREEN, badge: '✓ Recommended' },
+                          { label: 'Traditional Checking',       rate: checkingRate, annual: checkAnnual, color: RED, badge: '✗ Avoid' },
+                        ].map(a => (
+                          <div key={a.label} style={{ padding: '12px 14px', background: `${a.color}08`, border: `1px solid ${a.color}25`, borderRadius: 10, marginBottom: 10 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                              <div style={{ fontSize: 13, fontWeight: 600 }}>{a.label}</div>
+                              <span style={{ fontSize: 10, fontWeight: 700, color: a.color }}>{a.badge}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2 }}>
+                              <span>APY: <strong style={{ color: a.color }}>{a.rate}%</strong></span>
+                              <span>Annual interest: <strong style={{ color: TEXT }}>{fmt(a.annual)}</strong></span>
+                            </div>
+                          </div>
+                        ))}
+                        <div style={{ marginTop: 8, padding: '10px 14px', background: `${GREEN}08`, border: `1px solid ${GREEN}22`, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
+                          By choosing a HYSA, you earn <strong style={{ color: GREEN }}>{fmt(interestDiff)} more per year</strong> — money working while you sleep.
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Interactive savings slider */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>How Fast Can You Build It?</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Drag the slider to change your extra monthly savings contribution.</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+                        <input type="range" min={50} max={600} step={25} value={efExtraSavings}
+                          onChange={e => setEfExtraSavings(Number(e.target.value))}
+                          style={{ flex: 1, accentColor: CYAN }} />
+                        <div style={{ fontSize: 18, fontWeight: 800, fontFamily: 'monospace', color: CYAN, minWidth: 80, textAlign: 'right' }}>{fmt(efExtraSavings)}/mo</div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 12 }}>
+                        {[
+                          { label: 'Reach 3-Month Goal', months: months3mo, color: YELLOW },
+                          { label: 'Reach 6-Month Goal', months: months6mo, color: GREEN },
+                        ].map(({ label, months, color }) => (
+                          <div key={label} style={{ padding: '14px 16px', background: `${color}08`, border: `1px solid ${color}25`, borderRadius: 10 }}>
+                            <div style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                            <div style={{ fontSize: 26, fontWeight: 800, fontFamily: 'monospace', color }}>
+                              {isFinite(months) ? `${months} mo` : '—'}
+                            </div>
+                            <div style={{ fontSize: 11, color: TEXT3, marginTop: 3 }}>
+                              {isFinite(months) ? `by ${new Date(Date.now() + months * 30 * 86400000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}` : 'increase savings rate'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Month-by-month schedule */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Month-by-Month Savings Schedule</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Starting balance {fmt(currentSavings)} · {fmt(extra)}/month contribution · {hysaRate}% HYSA APY</div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Month', 'Contribution', 'HYSA Interest', 'Balance', 'Status'].map((h, i) => (
+                                <th key={h} style={{ padding: '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {scheduleRows.map(r => {
+                              const statusColor = r.reached6 ? GREEN : r.reached3 ? YELLOW : TEXT3;
+                              const statusText  = r.reached6 ? '✓ 6-mo funded' : r.reached3 ? '✓ 3-mo funded' : 'Building...';
+                              return (
+                                <tr key={r.month} style={{ borderBottom: `1px solid ${BORDER_C}`, background: r.reached3 && !scheduleRows[r.month - 2]?.reached3 ? `${GREEN}06` : 'transparent' }}>
+                                  <td style={{ padding: '8px 10px', fontWeight: 600 }}>Month {r.month}</td>
+                                  <td style={{ padding: '8px 10px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>+{fmt(r.contribution)}</td>
+                                  <td style={{ padding: '8px 10px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>+{fmt(r.interest)}</td>
+                                  <td style={{ padding: '8px 10px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700 }}>{fmt(r.balance)}</td>
+                                  <td style={{ padding: '8px 10px', textAlign: 'right', fontSize: 11, fontWeight: 700, color: statusColor }}>{statusText}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Key concept */}
+                    <div style={{ ...CARD, background: `${CYAN}06`, border: `1px solid ${CYAN}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: CYAN, marginBottom: 10 }}>The 3–6 Month Rule</div>
+                      <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>
+                        Financial planners recommend 3–6 months of <strong style={{ color: TEXT }}>essential expenses</strong> — not income — in a liquid, FDIC-insured account.
+                        The lower end (3 months) works for those with stable employment and low fixed costs. The upper end (6 months) is appropriate for
+                        variable income, single-income households, or anyone with dependents. Once funded, resist the urge to invest it — liquidity is the point.
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── DEBT PAYOFF: AVALANCHE vs. SNOWBALL ───────────────────────
+              if (sandboxDataset === 'ds-debt') {
+                const { debts: rawDebts = [], extraPayment = 200 } = sbD;
+                const PINK = '#f43f5e';
+
+                const simulatePayoff = (debts, strategy) => {
+                  let accounts = debts.map((d, i) => ({ ...d, id: i, balance: d.balance }));
+                  const extra = extraPayment;
+                  let month = 0;
+                  let totalInterest = 0;
+                  const order = strategy === 'avalanche'
+                    ? [...accounts].sort((a, b) => b.apr - a.apr)
+                    : [...accounts].sort((a, b) => a.balance - b.balance);
+                  const payoffMonths = {};
+
+                  while (accounts.some(a => a.balance > 0) && month < 600) {
+                    month++;
+                    let freed = 0;
+                    accounts = accounts.map(a => {
+                      if (a.balance <= 0) { freed += a.minPayment; return a; }
+                      const interest = a.balance * (a.apr / 100 / 12);
+                      totalInterest += interest;
+                      let newBal = a.balance + interest - a.minPayment;
+                      if (newBal <= 0) { freed += Math.abs(newBal) + a.minPayment; newBal = 0; if (!payoffMonths[a.id]) payoffMonths[a.id] = month; }
+                      return { ...a, balance: newBal };
+                    });
+                    // Apply extra to priority account
+                    const target = order.find(o => accounts[o.id].balance > 0);
+                    if (target) {
+                      const available = extra + freed;
+                      const acct = accounts[target.id];
+                      const applied = Math.min(available, acct.balance);
+                      accounts[target.id] = { ...acct, balance: acct.balance - applied };
+                      if (accounts[target.id].balance <= 0 && !payoffMonths[target.id]) payoffMonths[target.id] = month;
+                    }
+                  }
+                  return { months: month, totalInterest: +totalInterest.toFixed(2), payoffMonths };
+                };
+
+                const avalanche = simulatePayoff(rawDebts, 'avalanche');
+                const snowball  = simulatePayoff(rawDebts, 'snowball');
+                const active    = debtStrategy === 'avalanche' ? avalanche : snowball;
+                const other     = debtStrategy === 'avalanche' ? snowball  : avalanche;
+                const totalDebt = rawDebts.reduce((s, d) => s + d.balance, 0);
+                const totalMin  = rawDebts.reduce((s, d) => s + d.minPayment, 0);
+
+                const debtOrder = debtStrategy === 'avalanche'
+                  ? [...rawDebts].sort((a, b) => b.apr - a.apr)
+                  : [...rawDebts].sort((a, b) => a.balance - b.balance);
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Debt Payoff: Avalanche vs. Snowball</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${PINK}18`, color: PINK }}>Sandbox · Ch. 5</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Four debts totaling {fmt(totalDebt)} with {fmt(extraPayment)}/month extra payments. Compare total interest paid and payoff timeline across both strategies.
+                    </div>
+
+                    {/* Hero: total debt stats */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'Total Debt',     value: fmt(totalDebt),               sub: `${rawDebts.length} accounts`,   color: PINK   },
+                        { label: 'Min Payments',   value: fmt(totalMin) + '/mo',         sub: 'combined minimum',              color: YELLOW },
+                        { label: 'Extra Payment',  value: fmt(extraPayment) + '/mo',     sub: 'accelerator',                   color: BLUE   },
+                        { label: 'Total Monthly',  value: fmt(totalMin + extraPayment) + '/mo', sub: 'total going to debt',    color: TEXT   },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 22, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-0.5px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 3 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Strategy toggle + comparison */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>Strategy Comparison</div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {['avalanche', 'snowball'].map(s => (
+                            <button key={s} onClick={() => setDebtStrategy(s)}
+                              style={{ padding: '6px 16px', borderRadius: 7, border: debtStrategy === s ? `1px solid ${PINK}` : BORDER, background: debtStrategy === s ? `${PINK}18` : 'transparent', color: debtStrategy === s ? PINK : TEXT2, fontSize: 12, fontWeight: 700, cursor: 'pointer', textTransform: 'capitalize', transition: 'all 0.15s' }}>
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 12 }}>
+                        {[
+                          { label: 'Avalanche Method',  data: avalanche, color: PINK,  desc: 'Highest APR first — minimizes total interest' },
+                          { label: 'Snowball Method',   data: snowball,  color: BLUE,  desc: 'Lowest balance first — maximizes motivation' },
+                        ].map(({ label, data, color, desc }) => {
+                          const isActive = (label.toLowerCase().startsWith(debtStrategy));
+                          return (
+                            <div key={label} style={{ padding: '16px 18px', background: `${color}08`, border: `2px solid ${isActive ? color : 'transparent'}`, borderRadius: 12, transition: 'border 0.15s' }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 4 }}>{label}</div>
+                              <div style={{ fontSize: 11, color: TEXT3, marginBottom: 14 }}>{desc}</div>
+                              <div style={{ display: 'flex', gap: 20 }}>
+                                <div>
+                                  <div style={{ fontSize: 10, color: TEXT3, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px', marginBottom: 3 }}>Months</div>
+                                  <div style={{ fontSize: 22, fontWeight: 800, fontFamily: 'monospace', color }}>{data.months}</div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 10, color: TEXT3, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px', marginBottom: 3 }}>Total Interest</div>
+                                  <div style={{ fontSize: 22, fontWeight: 800, fontFamily: 'monospace', color }}>{fmt(data.totalInterest)}</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {avalanche.totalInterest < snowball.totalInterest && (
+                        <div style={{ marginTop: 14, padding: '10px 14px', background: `${GREEN}08`, border: `1px solid ${GREEN}22`, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
+                          Avalanche saves <strong style={{ color: GREEN }}>{fmt(snowball.totalInterest - avalanche.totalInterest)} in interest</strong> and finishes{' '}
+                          <strong style={{ color: GREEN }}>{Math.abs(avalanche.months - snowball.months)} month{Math.abs(avalanche.months - snowball.months) !== 1 ? 's' : ''} {avalanche.months < snowball.months ? 'sooner' : 'later'}</strong> than Snowball.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Payoff order for active strategy */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
+                        Payoff Order — <span style={{ color: debtStrategy === 'avalanche' ? PINK : BLUE, textTransform: 'capitalize' }}>{debtStrategy}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>
+                        {debtStrategy === 'avalanche' ? 'Sorted by APR (highest first) — attack the most expensive debt first.' : 'Sorted by balance (lowest first) — knock out small debts for quick wins.'}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {debtOrder.map((d, idx) => {
+                          const rawIdx = rawDebts.findIndex(r => r.name === d.name);
+                          const mo = active.payoffMonths[rawIdx];
+                          const barPct = Math.min(100, Math.round((d.balance / totalDebt) * 100));
+                          return (
+                            <div key={d.name} style={{ padding: '12px 14px', background: MUTED, border: BORDER, borderRadius: 10 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                  <span style={{ fontSize: 11, fontWeight: 800, color: debtStrategy === 'avalanche' ? PINK : BLUE, background: `${debtStrategy === 'avalanche' ? PINK : BLUE}18`, padding: '2px 8px', borderRadius: 4 }}>#{idx + 1}</span>
+                                  <span style={{ fontSize: 13, fontWeight: 600 }}>{d.name}</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2, fontFamily: 'monospace' }}>
+                                  <span>Balance: <strong style={{ color: PINK }}>{fmt(d.balance)}</strong></span>
+                                  <span>APR: <strong style={{ color: YELLOW }}>{d.apr}%</strong></span>
+                                  <span>Min: {fmt(d.minPayment)}/mo</span>
+                                  {mo && <span style={{ color: GREEN, fontWeight: 700 }}>paid off mo. {mo}</span>}
+                                </div>
+                              </div>
+                              <div style={{ height: 6, background: DARK, borderRadius: 3, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${barPct}%`, background: debtStrategy === 'avalanche' ? PINK : BLUE, opacity: 0.7 }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: `${PINK}06`, border: `1px solid ${PINK}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: PINK, marginBottom: 14 }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Avalanche Method', body: 'Pay minimums on everything, then put all extra toward the highest-APR debt. Mathematically optimal — always minimizes total interest paid. Best if you\'re disciplined and numbers-driven.' },
+                          { term: 'Snowball Method',  body: 'Pay minimums on everything, then attack the smallest balance first. Provides quick "wins" that build momentum and motivation. Best if you struggle with consistency or have many small accounts.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{c.term}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>{c.body}</div>
                           </div>
                         ))}
                       </div>
