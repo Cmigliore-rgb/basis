@@ -401,4 +401,91 @@ router.post('/admin/edu-expire', requireAuth, async (req, res) => {
   res.json({ total: expired.length, reverted, stripeUpdated, errors });
 });
 
+// ── OAuth: Google ─────────────────────────────────────────────────────────────
+const { createRemoteJWKSet, jwtVerify } = require('jose');
+
+const GOOGLE_JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
+const APPLE_JWKS  = createRemoteJWKSet(new URL('https://appleid.apple.com/auth/keys'));
+
+router.post('/google', async (req, res) => {
+  const { credential } = req.body;
+  if (!credential) return res.status(400).json({ error: 'credential required' });
+  if (!process.env.GOOGLE_CLIENT_ID) return res.status(503).json({ error: 'Google Sign-In not configured' });
+
+  try {
+    const { payload } = await jwtVerify(credential, GOOGLE_JWKS, {
+      audience: process.env.GOOGLE_CLIENT_ID,
+      issuer: ['https://accounts.google.com', 'accounts.google.com'],
+    });
+
+    const { sub: googleId, email, name } = payload;
+    if (!email) return res.status(400).json({ error: 'No email in Google token' });
+
+    let user = db.prepare('SELECT * FROM users WHERE google_id = ?').get(googleId);
+    if (!user) user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
+
+    if (user) {
+      if (!user.google_id) {
+        db.prepare('UPDATE users SET google_id = ?, email_verified = 1 WHERE id = ?').run(googleId, user.id);
+        user = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+      }
+    } else {
+      const role = inferRole(email);
+      const tier = (role === 'admin' || role === 'professor') ? 'premium' : 'free';
+      const result = db.prepare(
+        'INSERT INTO users (email, name, role, tier, email_verified, google_id) VALUES (?, ?, ?, ?, 1, ?)'
+      ).run(email.toLowerCase(), name || email.split('@')[0], role, tier, googleId);
+      user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+    }
+
+    const enrollments = getEnrollments(user.id);
+    res.json({ token: sign(user), user: safeUser(user, enrollments) });
+  } catch (err) {
+    console.error('Google auth error:', err.message);
+    res.status(401).json({ error: 'Invalid Google credential' });
+  }
+});
+
+// ── OAuth: Apple ─────────────────────────────────────────────────────────────
+router.post('/apple', async (req, res) => {
+  const { id_token, name } = req.body;
+  if (!id_token) return res.status(400).json({ error: 'id_token required' });
+  if (!process.env.APPLE_CLIENT_ID) return res.status(503).json({ error: 'Apple Sign-In not configured' });
+
+  try {
+    const { payload } = await jwtVerify(id_token, APPLE_JWKS, {
+      audience: process.env.APPLE_CLIENT_ID,
+      issuer: 'https://appleid.apple.com',
+    });
+
+    const { sub: appleId, email } = payload;
+    if (!appleId) return res.status(400).json({ error: 'No subject in Apple token' });
+
+    let user = db.prepare('SELECT * FROM users WHERE apple_id = ?').get(appleId);
+    if (!user && email) user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
+
+    if (user) {
+      if (!user.apple_id) {
+        db.prepare('UPDATE users SET apple_id = ?, email_verified = 1 WHERE id = ?').run(appleId, user.id);
+        user = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+      }
+    } else {
+      const userEmail = email ? email.toLowerCase() : `${appleId}@privaterelay.appleid.com`;
+      const userName  = name || (email ? email.split('@')[0] : 'Apple User');
+      const role = email ? inferRole(email) : 'user';
+      const tier = (role === 'admin' || role === 'professor') ? 'premium' : 'free';
+      const result = db.prepare(
+        'INSERT INTO users (email, name, role, tier, email_verified, apple_id) VALUES (?, ?, ?, ?, 1, ?)'
+      ).run(userEmail, userName, role, tier, appleId);
+      user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+    }
+
+    const enrollments = getEnrollments(user.id);
+    res.json({ token: sign(user), user: safeUser(user, enrollments) });
+  } catch (err) {
+    console.error('Apple auth error:', err.message);
+    res.status(401).json({ error: 'Invalid Apple token' });
+  }
+});
+
 module.exports = router;
