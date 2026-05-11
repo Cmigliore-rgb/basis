@@ -2340,8 +2340,8 @@ export default function Dashboard() {
   const [simAlloc, setSimAlloc] = useState({ VTI: 40, BND: 10, VXUS: 25, SCHD: 25 });
   const [efExtraSavings, setEfExtraSavings] = useState(200);
   const [debtStrategy, setDebtStrategy] = useState('avalanche');
-  const [taxIncome, setTaxIncome] = useState(42000);
   const [taxFilingStatus, setTaxFilingStatus] = useState('single');
+  const [sbTaxIncome, setSbTaxIncome] = useState(42000);
   const [inflAmount, setInflAmount] = useState(10000);
   const [inflRate, setInflRate] = useState(3);
   const [inflYears, setInflYears] = useState(20);
@@ -11638,7 +11638,7 @@ export default function Dashboard() {
                 const isMFJ    = taxFilingStatus === 'mfj';
                 const stdDed   = isMFJ ? 30000 : 15000;
                 const brackets = isMFJ ? B_MFJ : B_SINGLE;
-                const taxable  = Math.max(0, taxIncome - stdDed);
+                const taxable  = Math.max(0, sbTaxIncome - stdDed);
                 let fedTax = 0, marginal = 0.10, prev = 0;
                 const breakdown = [];
                 for (const b of brackets) {
@@ -11651,11 +11651,11 @@ export default function Dashboard() {
                   prev = cap;
                   if (cap >= taxable) break;
                 }
-                const ss        = Math.min(taxIncome, 176100) * 0.062;
-                const medicare  = taxIncome * 0.0145;
+                const ss        = Math.min(sbTaxIncome, 176100) * 0.062;
+                const medicare  = sbTaxIncome * 0.0145;
                 const fica      = ss + medicare;
-                const takeHome  = taxIncome - fedTax - fica;
-                const effRate   = taxIncome > 0 ? fedTax / taxIncome : 0;
+                const takeHome  = sbTaxIncome - fedTax - fica;
+                const effRate   = sbTaxIncome > 0 ? fedTax / sbTaxIncome : 0;
                 return (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
@@ -11681,10 +11681,10 @@ export default function Dashboard() {
                         <div style={{ flex: 1, minWidth: 260 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                             <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Gross Annual Income</div>
-                            <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'monospace', color: ORANGE }}>{fmt(taxIncome)}</div>
+                            <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'monospace', color: ORANGE }}>{fmt(sbTaxIncome)}</div>
                           </div>
-                          <input type="range" min={15000} max={120000} step={1000} value={taxIncome}
-                            onChange={e => setTaxIncome(Number(e.target.value))}
+                          <input type="range" min={15000} max={120000} step={1000} value={sbTaxIncome}
+                            onChange={e => setSbTaxIncome(Number(e.target.value))}
                             style={{ width: '100%', accentColor: ORANGE }} />
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3, marginTop: 4 }}><span>$15,000</span><span>$120,000</span></div>
                         </div>
@@ -11738,7 +11738,7 @@ export default function Dashboard() {
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 14 }}>Where Your Money Goes</div>
                         {[
-                          { label: 'Gross Income',       annual: taxIncome, color: GREEN,  sign: '' },
+                          { label: 'Gross Income',       annual: sbTaxIncome, color: GREEN,  sign: '' },
                           { label: 'Federal Income Tax', annual: fedTax,    color: RED,    sign: '-' },
                           { label: 'Social Security',    annual: ss,        color: YELLOW, sign: '-' },
                           { label: 'Medicare',           annual: medicare,  color: YELLOW, sign: '-' },
