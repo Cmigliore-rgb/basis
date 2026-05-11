@@ -3047,11 +3047,11 @@ export default function Dashboard() {
   }, [canSeeAI]);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: BG, fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 14, color: TEXT }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: BG, fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 14, color: TEXT, overflowX: 'hidden' }}>
 
       {/* ── TOAST ──────────────────────────────────────── */}
       {toast && (
-        <div style={{ position: 'fixed', bottom: isMobile ? 76 : 24, right: isMobile ? 12 : 24, left: isMobile ? 12 : 'auto', zIndex: 9999, background: CARD_BG, border: `1px solid ${toast.color || BORDER_C}`, borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 13, fontWeight: 600, color: TEXT, pointerEvents: 'none' }}>
+        <div style={{ position: 'fixed', bottom: isMobile ? 'calc(76px + env(safe-area-inset-bottom))' : 24, right: isMobile ? 12 : 24, left: isMobile ? 12 : 'auto', zIndex: 9999, background: CARD_BG, border: `1px solid ${toast.color || BORDER_C}`, borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 13, fontWeight: 600, color: TEXT, pointerEvents: 'none' }}>
           <span style={{ color: toast.color || GREEN, fontSize: 16 }}>{toast.icon || '✓'}</span>
           {toast.message}
         </div>
@@ -3117,23 +3117,25 @@ export default function Dashboard() {
 
       {/* ── MOBILE TOP BAR ─────────────────────────────── */}
       {isMobile && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 52, background: SIDE_BG, borderBottom: BORDER, zIndex: 200, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/logo-icon.svg" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
-            <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
-            {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: SIDE_BG, borderBottom: BORDER, zIndex: 200, paddingTop: 'env(safe-area-inset-top)' }}>
+          <div style={{ height: 52, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <img src="/logo-icon.svg" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
+              <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
+              {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
+            </div>
+            <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
+              🔔
+              {inboxNotifs.filter(n => !n.read).length > 0 && (
+                <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, background: RED, borderRadius: 8, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px', border: `2px solid ${SIDE_BG}` }}>
+                  {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
+                </span>
+              )}
+            </button>
+            <button onClick={() => { setPanel('settings'); switchEduMode(false); }} style={{ background: panel === 'settings' ? 'rgba(255,255,255,0.08)' : MUTED, border: panel === 'settings' ? `1px solid ${BORDER_C}` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
+              ⚙
+            </button>
           </div>
-          <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
-            🔔
-            {inboxNotifs.filter(n => !n.read).length > 0 && (
-              <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, background: RED, borderRadius: 8, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px', border: `2px solid ${SIDE_BG}` }}>
-                {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
-              </span>
-            )}
-          </button>
-          <button onClick={() => { setPanel('settings'); switchEduMode(false); }} style={{ background: panel === 'settings' ? 'rgba(255,255,255,0.08)' : MUTED, border: panel === 'settings' ? `1px solid ${BORDER_C}` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
-            ⚙
-          </button>
         </div>
       )}
 
@@ -3284,7 +3286,7 @@ export default function Dashboard() {
 
             {/* More sheet */}
             {showMobileMenu && (
-              <div style={{ position: 'fixed', bottom: 60, left: 0, right: 0, background: CARD_BG, borderTop: BORDER, borderRadius: '16px 16px 0 0', zIndex: 400, paddingBottom: 8 }}>
+              <div style={{ position: 'fixed', bottom: 'calc(60px + env(safe-area-inset-bottom))', left: 0, right: 0, background: CARD_BG, borderTop: BORDER, borderRadius: '16px 16px 0 0', zIndex: 400, paddingBottom: 8 }}>
                 <div style={{ width: 36, height: 4, background: BORDER_C, borderRadius: 2, margin: '10px auto 14px' }} />
 
                 {/* Mode switch */}
@@ -3341,22 +3343,24 @@ export default function Dashboard() {
             )}
 
             {/* Tab bar */}
-            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: 60, background: SIDE_BG, borderTop: BORDER, zIndex: 400, display: 'flex' }}>
-              {mobileTabs.map(t => {
-                const active = isTabActive(t);
-                return (
-                  <button key={t.key} onClick={() => { setPanel(t.key); if (t.edu) switchEduMode(true); else if (t.key !== 'overview') switchEduMode(false); setShowMobileMenu(false); }}
-                    style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: active ? BLUE : TEXT3, cursor: 'pointer', padding: '8px 0', WebkitTapHighlightColor: 'transparent' }}>
-                    <span style={{ fontSize: 20, lineHeight: 1 }}>{t.icon}</span>
-                    <span style={{ fontSize: 9, fontWeight: active ? 700 : 500, letterSpacing: '0.3px' }}>{t.label}</span>
-                  </button>
-                );
-              })}
-              <button onClick={() => setShowMobileMenu(v => !v)}
-                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: showMobileMenu ? BLUE : TEXT3, cursor: 'pointer', padding: '8px 0', WebkitTapHighlightColor: 'transparent' }}>
-                <span style={{ fontSize: 20, lineHeight: 1, letterSpacing: 2 }}>···</span>
-                <span style={{ fontSize: 9, fontWeight: showMobileMenu ? 700 : 500, letterSpacing: '0.3px' }}>More</span>
-              </button>
+            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: SIDE_BG, borderTop: BORDER, zIndex: 400, paddingBottom: 'env(safe-area-inset-bottom)' }}>
+              <div style={{ height: 60, display: 'flex' }}>
+                {mobileTabs.map(t => {
+                  const active = isTabActive(t);
+                  return (
+                    <button key={t.key} onClick={() => { setPanel(t.key); if (t.edu) switchEduMode(true); else if (t.key !== 'overview') switchEduMode(false); setShowMobileMenu(false); }}
+                      style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: active ? BLUE : TEXT3, cursor: 'pointer', padding: '8px 0', WebkitTapHighlightColor: 'transparent' }}>
+                      <span style={{ fontSize: 20, lineHeight: 1 }}>{t.icon}</span>
+                      <span style={{ fontSize: 9, fontWeight: active ? 700 : 500, letterSpacing: '0.3px' }}>{t.label}</span>
+                    </button>
+                  );
+                })}
+                <button onClick={() => setShowMobileMenu(v => !v)}
+                  style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: showMobileMenu ? BLUE : TEXT3, cursor: 'pointer', padding: '8px 0', WebkitTapHighlightColor: 'transparent' }}>
+                  <span style={{ fontSize: 20, lineHeight: 1, letterSpacing: 2 }}>···</span>
+                  <span style={{ fontSize: 9, fontWeight: showMobileMenu ? 700 : 500, letterSpacing: '0.3px' }}>More</span>
+                </button>
+              </div>
             </div>
           </>
         );
@@ -3366,7 +3370,7 @@ export default function Dashboard() {
       {notifPanelOpen && (
         <>
           <div onClick={() => setNotifPanelOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 299 }} />
-          <div style={{ position: 'fixed', left: isMobile ? 0 : 228, right: isMobile ? 0 : 'auto', top: isMobile ? 52 : 64, zIndex: 300, width: isMobile ? '100%' : 340, maxHeight: isMobile ? '70vh' : 480, background: CARD_BG, border: BORDER, borderRadius: isMobile ? '0 0 14px 14px' : 14, boxShadow: '0 16px 48px rgba(0,0,0,0.45)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ position: 'fixed', left: isMobile ? 0 : 228, right: isMobile ? 0 : 'auto', top: isMobile ? 'calc(52px + env(safe-area-inset-top))' : 64, zIndex: 300, width: isMobile ? '100%' : 340, maxHeight: isMobile ? '70vh' : 480, background: CARD_BG, border: BORDER, borderRadius: isMobile ? '0 0 14px 14px' : 14, boxShadow: '0 16px 48px rgba(0,0,0,0.45)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ padding: '14px 16px', borderBottom: `1px solid ${BORDER_C}`, display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ fontWeight: 700, fontSize: 14, flex: 1 }}>Notifications</div>
               {inboxNotifs.some(n => !n.read) && (
@@ -4017,9 +4021,9 @@ export default function Dashboard() {
         );
       })()}
 
-      <main ref={mainRef} style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', paddingTop: isMobile ? 52 : 0 }}>
+      <main ref={mainRef} style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', paddingTop: isMobile ? 'calc(52px + env(safe-area-inset-top))' : 0 }}>
         {panel === 'insights' && <TickerBar indices={marketTickers.indices} active={marketTickers.active} />}
-        <div style={{ flex: 1, padding: isMobile ? '20px 16px 84px' : 32 }}>
+        <div style={{ flex: 1, padding: isMobile ? `20px 16px calc(84px + env(safe-area-inset-bottom))` : 32 }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: TEXT2 }}>
             Syncing your accounts...
@@ -13736,51 +13740,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── MOBILE BOTTOM NAV ──────────────────────────── */}
-      {isMobile && (
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: SIDE_BG, borderTop: BORDER, zIndex: 200, display: 'flex', paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: 4 }}>
-          {!eduMode ? (
-            <>
-              {NAV.filter(n => n.section === 'finance' && !hiddenPanels.has(n.key)).map(({ key, label, icon }) => (
-                <button key={key} onClick={() => { setPanel(key); switchEduMode(false); }}
-                  style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: (panel === key && !eduMode) ? BLUE : TEXT3, fontSize: 10, fontWeight: (panel === key && !eduMode) ? 700 : 400, transition: 'color 0.15s', minWidth: 0 }}>
-                  <span style={{ fontSize: 19, lineHeight: 1 }}>{icon}</span>
-                  <span style={{ fontSize: 9, letterSpacing: '0.2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{label}</span>
-                </button>
-              ))}
-              {!isUser && (
-                <button onClick={() => { switchEduMode(true); setPanel('edu-courses'); }}
-                  style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: TEXT3, fontSize: 10, fontWeight: 400, transition: 'color 0.15s', borderLeft: `1px solid ${BORDER_C}`, minWidth: 0 }}>
-                  <span style={{ fontSize: 19, lineHeight: 1 }}>◫</span>
-                  <span style={{ fontSize: 9, letterSpacing: '0.2px' }}>Education</span>
-                </button>
-              )}
-            </>
-          ) : (
-            <>
-              {NAV.filter(n => n.section === 'education' && !hiddenPanels.has(n.key)).map(({ key, label, icon }) => (
-                <button key={key} onClick={() => { setPanel(key); switchEduMode(true); }}
-                  style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: panel === key ? GREEN : TEXT3, fontSize: 10, fontWeight: panel === key ? 700 : 400, transition: 'color 0.15s', minWidth: 0 }}>
-                  <span style={{ fontSize: 19, lineHeight: 1 }}>{icon}</span>
-                  <span style={{ fontSize: 9, letterSpacing: '0.2px' }}>{label}</span>
-                </button>
-              ))}
-              {effectiveProfessor && (
-                <button onClick={() => { setPanel('prof-dashboard'); switchEduMode(true); }}
-                  style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: panel === 'prof-dashboard' ? GREEN : TEXT3, fontSize: 10, fontWeight: panel === 'prof-dashboard' ? 700 : 400, transition: 'color 0.15s', minWidth: 0 }}>
-                  <span style={{ fontSize: 19, lineHeight: 1 }}>⊟</span>
-                  <span style={{ fontSize: 9, letterSpacing: '0.2px' }}>Prof Hub</span>
-                </button>
-              )}
-              <button onClick={() => { switchEduMode(false); setPanel('overview'); }}
-                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px 8px', background: 'none', border: 'none', cursor: 'pointer', color: TEXT3, fontSize: 10, fontWeight: 400, transition: 'color 0.15s', borderLeft: `1px solid ${BORDER_C}`, minWidth: 0 }}>
-                <span style={{ fontSize: 19, lineHeight: 1 }}>⊞</span>
-                <span style={{ fontSize: 9, letterSpacing: '0.2px' }}>Finance</span>
-              </button>
-            </>
-          )}
-        </div>
-      )}
 
       </main>
     </div>
