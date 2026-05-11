@@ -1114,7 +1114,7 @@ const LEARN_CONTENT = [
       { id: 'diversification', title: 'Diversification', icon: '🎲',
         summary: 'Spreading investments across assets so one loss doesn\'t sink your portfolio.',
         body: 'Diversification reduces unsystematic risk, the kind specific to one company or sector. A portfolio of 20–30 uncorrelated stocks eliminates most company-specific risk. Index funds provide instant diversification across hundreds or thousands of companies. Geographic diversification (international stocks) reduces country-specific risk.',
-        formula: 'σ_portfolio < average(σ_individual) when correlations < 1',
+        formula: <span>σ<sub style={{fontSize:10}}>portfolio</sub> {'<'} avg(σ<sub style={{fontSize:10}}>individual</sub>) when ρ {'<'} 1</span>,
         example: 'Holding only one tech stock is high risk. Holding an S&P 500 index fund means one company\'s bankruptcy barely moves your portfolio.',
         datasetId: 'ds-diversification' },
       { id: 'indices', title: 'Market Indices', icon: '📈',
@@ -11490,7 +11490,7 @@ export default function Dashboard() {
               // ── PORTFOLIO SIMULATOR ───────────────────────────────────────
               if (sandboxDataset === 'ds-portfolio') {
                 const SIM_ASSETS = [
-                  { ticker: 'VTI',  name: 'Vanguard Total Stock Market ETF', type: 'US Equity',   ret: 0.12, vol: 0.15, color: BLUE,      desc: 'Broad exposure to the entire US equity market — ~4,000 stocks.' },
+                  { ticker: 'VTI',  name: 'Vanguard Total Stock Market ETF', type: 'US Equity',   ret: 0.12, vol: 0.15, color: BLUE,      desc: 'Broad exposure to the entire US equity market (~4,000 stocks).' },
                   { ticker: 'BND',  name: 'Vanguard Total Bond Market ETF',  type: 'Bonds',        ret: 0.04, vol: 0.04, color: GREEN,     desc: 'Investment-grade US bonds. Lower return, lower risk, negative correlation to equities.' },
                   { ticker: 'VXUS', name: 'Vanguard Total Intl Stock ETF',   type: 'Intl Equity',  ret: 0.08, vol: 0.17, color: '#a78bfa', desc: 'All world ex-US stocks. Adds geographic diversification.' },
                   { ticker: 'SCHD', name: 'Schwab US Dividend Equity ETF',   type: 'Dividend',     ret: 0.10, vol: 0.12, color: YELLOW,    desc: 'High-quality dividend payers. Defensive tilt, lower volatility than pure growth.' },
@@ -11682,8 +11682,8 @@ export default function Dashboard() {
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: BLUE }}>Key Concepts</div>
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
                         {[
-                          { term: 'Sharpe Ratio', formula: '(E[R] − Rf) / σ', body: 'Measures return per unit of risk. > 1.0 is excellent, 0.5–1.0 is good, < 0.5 is below average. The risk-free rate here is 5% (current T-bill).' },
-                          { term: 'Diversification Benefit', formula: 'σ_weighted − σ_portfolio', body: 'When assets are imperfectly correlated, portfolio volatility is lower than the weighted average of individual volatilities. This is the free lunch of investing.' },
+                          { term: 'Sharpe Ratio', formula: <span>(E[R] - R<sub style={{fontSize:9}}>f</sub>) / σ</span>, body: 'Measures return per unit of risk. > 1.0 is excellent, 0.5–1.0 is good, < 0.5 is below average. The risk-free rate here is 5% (current T-bill).' },
+                          { term: 'Diversification Benefit', formula: <span>σ<sub style={{fontSize:9}}>weighted</sub> - σ<sub style={{fontSize:9}}>portfolio</sub></span>, body: 'When assets are imperfectly correlated, portfolio volatility is lower than the weighted average of individual volatilities. This is the free lunch of investing.' },
                           { term: 'Portfolio Variance', formula: 'Σᵢ Σⱼ wᵢwⱼσᵢσⱼρᵢⱼ', body: 'Variance depends not just on individual volatilities but on how assets co-move. Low or negative ρ (BND vs equities) sharply reduces overall risk.' },
                         ].map(c => (
                           <div key={c.term}>
@@ -12641,7 +12641,7 @@ export default function Dashboard() {
                       {/* Risk breakdown bars */}
                       <div style={{ marginBottom: 14 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                          <span style={{ fontSize: 12, color: RED, fontWeight: 600 }}>Market Risk (systematic — permanent)</span>
+                          <span style={{ fontSize: 12, color: RED, fontWeight: 600 }}>Market Risk (systematic, permanent)</span>
                           <span style={{ fontFamily: 'monospace', fontSize: 12, color: RED }}>{(marketRisk * 100).toFixed(1)}%</span>
                         </div>
                         <div style={{ height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden', marginBottom: 14 }}>
@@ -12707,8 +12707,8 @@ export default function Dashboard() {
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
                         {[
                           { term: 'Unsystematic Risk', formula: 'Company-specific risk', body: 'Risk from a single company or sector. Eliminated by owning many uncorrelated assets. An S&P 500 index fund holder is barely affected when any single company fails.' },
-                          { term: 'Systematic Risk', formula: 'σ_market = σ × √ρ_avg', body: 'Market-wide risk that cannot be diversified away. Recessions, rate hikes, and pandemics hit all stocks simultaneously. The floor you see on the bar above.' },
-                          { term: 'Portfolio Variance', formula: 'σ²_p = σ²/n + (n−1)/n · σ² · ρ', body: 'As n grows, the first term (individual risk) shrinks to zero. What remains is the correlation term: market risk. This is why the curve flattens sharply after 20-30 stocks.' },
+                          { term: 'Systematic Risk', formula: <span>σ<sub style={{fontSize:9}}>market</sub> = σ × √ρ<sub style={{fontSize:9}}>avg</sub></span>, body: 'Market-wide risk that cannot be diversified away. Recessions, rate hikes, and pandemics hit all stocks simultaneously. The floor you see on the bar above.' },
+                          { term: 'Portfolio Variance', formula: <span>σ²<sub style={{fontSize:9}}>p</sub> = σ²/n + (n-1)/n · σ² · ρ</span>, body: 'As n grows, the first term (individual risk) shrinks to zero. What remains is the correlation term: market risk. This is why the curve flattens sharply after 20-30 stocks.' },
                         ].map(c => (
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
