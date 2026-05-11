@@ -690,6 +690,10 @@ At -$80/month you're on pace to spend ~$960 more than you earn this year. Reduci
   overview: `Net worth reached $14,696 this month (+$1,896 vs last month), driven largely by portfolio appreciation. A persistent -$80/month cash flow deficit quietly offsets those gains, adding up to roughly $960/year in structural spending overage.
 
 Three priorities: (1) Close the income-spending gap; even $40/month improvement compounds significantly over time. (2) Emergency fund coverage appears thin relative to your monthly outflows (~1.7 months). (3) Directing any found cash toward high-interest balances first eliminates the fastest-growing drag on net worth.`,
+
+  budgeting: `Food and drink is your top spending category at $520 this month, accounting for 32% of total spend. Dining out jumped 35% compared to last month, adding $69 to an already stretched budget.
+
+At $1,620 in monthly spend against ~$1,270 in average income, you are running a $350 shortfall this month. Two targeted cuts close most of the gap: trimming dining back to last month's level saves $69, and holding entertainment at $85 (vs the current $120) saves another $35. Shopping dropped $140 vs last month, which is directly offsetting some of the overages and is worth maintaining.`,
 };
 
 function AIInsightCard({ isDemoData, demoKey, onGetAdvice, loading, text }) {
@@ -2734,8 +2738,9 @@ export default function Dashboard() {
       overview:    'Give me a concise 3–4 bullet financial health summary and top recommendations based on my accounts, spending, and portfolio.',
       cashflow:    'Analyze my cash flow baseline — income vs spending trends, which months are above or below baseline, and what is driving the largest deficits. Give me 3 specific, actionable steps to improve my monthly net cash flow.',
       banking:     'Analyze my recent transactions and account balances. Give me 3 specific, actionable recommendations to improve my cash management.',
-      investments: 'Review my investment portfolio. Give me 3 specific insights or recommendations about my investment strategy and diversification.',
+      investments: 'Review my investment portfolio. Give me 3 specific insights or recommendations about my investment strategy, diversification, and any concentration risk.',
       budgeting:   'Review my spending by category. Give me 3 actionable recommendations to cut spending or improve my budget this month.',
+      goals:       'Review my savings goals and current progress. Tell me which goals are on track, which are at risk, and what specific monthly savings adjustments would keep each goal on schedule.',
     };
     try {
       const budgetMap = {};
@@ -5269,6 +5274,13 @@ export default function Dashboard() {
                         );
                       })}
                     </div>
+                    <AIInsightCard
+                      isDemoData={isDemoData}
+                      demoKey="budgeting"
+                      onGetAdvice={canSeeAI ? () => getAdvice('budgeting') : undefined}
+                      loading={adviceState.budgeting?.loading}
+                      text={adviceState.budgeting?.text}
+                    />
                   </>
                 ) : (
                   <>
@@ -5797,6 +5809,15 @@ export default function Dashboard() {
                         );
                       })}
                     </div>
+                  )}
+                  {canSeeAI && goals.length > 0 && (
+                    <AIInsightCard
+                      isDemoData={false}
+                      demoKey={null}
+                      onGetAdvice={() => getAdvice('goals')}
+                      loading={adviceState.goals?.loading}
+                      text={adviceState.goals?.text}
+                    />
                   )}
 
                 </div>
@@ -6463,6 +6484,15 @@ export default function Dashboard() {
                     </>
                   )}
                 </div>
+                {canSeeAI && activeHoldings.length > 0 && (
+                  <AIInsightCard
+                    isDemoData={false}
+                    demoKey={null}
+                    onGetAdvice={() => getAdvice('investments')}
+                    loading={adviceState.investments?.loading}
+                    text={adviceState.investments?.text}
+                  />
+                )}
               </div>
             )}
 
