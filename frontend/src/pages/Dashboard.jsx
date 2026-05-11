@@ -691,9 +691,9 @@ The good news: you only need to cut about $81 a month to break even. That's roug
 
 A few things worth focusing on: try to close that $80/month gap even a little at a time. You also have less than 2 months of expenses saved as a safety net, which is lower than the recommended 3 to 6. And if you have any high-interest debt, chipping away at that first will save you the most money over time.`,
 
-  budgeting: `Your biggest expense this month is food and drink at $520, which is about a third of everything you spent. Eating out jumped 35% from last month, adding $69 you were not spending before.
+  budgeting: `Your biggest expense this month is food and drink at $520, which jumped $140 from last month and makes up about a third of everything you spent. That is the main thing to watch.
 
-You are spending $350 more than you earn this month. Cutting dining back to where it was last month gets you $69 of that back. Entertainment also crept up by $35. The bright spot is that shopping dropped $140 from last month, which is a big improvement worth keeping up.`,
+The good news is you are actually ahead this month, spending $180 less than you earned. Entertainment ticked up $35 and transportation rose $30, but shopping came down $20. Pulling food and drink back toward last month would put an extra $140 in your pocket each month.`,
 };
 
 function AIInsightCard({ isDemoData, demoKey, onGetAdvice, loading, text }) {
@@ -5192,7 +5192,7 @@ export default function Dashboard() {
                         { label: expMonths[1].label, total: 1720, topCat: 'dining',          isCurrent: false },
                         { label: expMonths[2].label, total: 1100, topCat: 'food and drink', isCurrent: false },
                         { label: expMonths[3].label, total: 1460, topCat: 'entertainment',  isCurrent: false },
-                        { label: expMonths[4].label, total: 1270, topCat: 'food and drink', isCurrent: false },
+                        { label: expMonths[4].label, total: 1410, topCat: 'food and drink', isCurrent: false },
                         { label: expMonths[5].label, total: 1620, topCat: 'food and drink', isCurrent: true  },
                       ];
                       const display = hasRealExp ? expMonths : MOCK_EXP;
@@ -5400,15 +5400,12 @@ export default function Dashboard() {
                   const thisMonthLabel = now.toLocaleDateString('en-US', { month: 'long' });
                   const lastMonthLabel = new Date(now.getFullYear(), now.getMonth() - 1).toLocaleDateString('en-US', { month: 'long' });
                   const MOCK_TRENDS = [
-                    { cat: 'Food and Drink',  last: 312, curr: 267 },
-                    { cat: 'Dining Out',      last: 198, curr: 267 },
-                    { cat: 'Entertainment',   last: 85,  curr: 120 },
-                    { cat: 'Transportation',  last: 145, curr: 98  },
-                    { cat: 'Groceries',       last: 210, curr: 185 },
-                    { cat: 'Personal Care',   last: 45,  curr: 62  },
-                    { cat: 'Subscriptions',   last: 81,  curr: 81  },
-                    { cat: 'Shopping',        last: 320, curr: 180 },
-                    { cat: 'Utilities',       last: 0,   curr: 28  },
+                    { cat: 'Food and Drink',    last: 380, curr: 520 },
+                    { cat: 'Rent and Utilities', last: 350, curr: 350 },
+                    { cat: 'Shopping',           last: 320, curr: 300 },
+                    { cat: 'Transportation',     last: 160, curr: 190 },
+                    { cat: 'Entertainment',      last: 105, curr: 140 },
+                    { cat: 'Personal Care',      last:  95, curr: 120 },
                   ];
                   const useMockTrends = allCats.length < 3;
                   const trendRows = useMockTrends
