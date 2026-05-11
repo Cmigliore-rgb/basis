@@ -1121,12 +1121,14 @@ const LEARN_CONTENT = [
         summary: 'Benchmarks that track a basket of stocks to measure overall market performance.',
         body: 'The S&P 500 tracks the 500 largest U.S. companies and is the most widely used measure of stock market health. The Dow Jones Industrial Average (DJIA) tracks just 30 large blue-chip companies. The Nasdaq Composite is tech-heavy and includes over 3,000 companies listed on the Nasdaq exchange.',
         formula: 'Index Level = Σ(Price_i × Shares_i) / Divisor   (market-cap weighted)',
-        example: 'If the S&P 500 is up 1.2% today, the average large-cap U.S. stock gained roughly 1.2%.' },
+        example: 'If the S&P 500 is up 1.2% today, the average large-cap U.S. stock gained roughly 1.2%.',
+        datasetId: 'ds-indices' },
       { id: 'bull-bear', title: 'Bull vs. Bear Markets', icon: '🐂',
         summary: 'A bull market rises 20%+ from a recent low; a bear market falls 20%+ from a recent high.',
         body: 'Bull markets are periods of rising prices and investor optimism, typically driven by strong economic growth. Bear markets are prolonged downturns of 20% or more, often linked to recessions. The average bull market lasts ~5 years; the average bear market lasts ~9 months.',
         formula: 'Bull: Price ≥ +20% from recent low   |   Bear: Price ≤ −20% from recent high',
-        example: 'The 2020 COVID crash was a bear market (−34% in 33 days), followed by one of history\'s fastest bull recoveries.' },
+        example: 'The 2020 COVID crash was a bear market (−34% in 33 days), followed by one of history\'s fastest bull recoveries.',
+        datasetId: 'ds-bull-bear' },
       { id: 'feargreed', title: 'Fear & Greed Index', icon: '🌡️',
         summary: 'A CNN composite score (0–100) measuring whether investors are fearful or greedy.',
         body: 'The index combines 7 indicators: stock price momentum, stock price strength, stock price breadth, put/call ratio, junk bond demand, market volatility (VIX), and safe-haven demand. Extreme Fear (0–25) often signals a buying opportunity; Extreme Greed (75–100) may signal overvaluation.',
@@ -1653,6 +1655,22 @@ const PREBUILT_DATASETS = [
     stats: [['Single Stock', '30% vol'], ['S&P 500', '16.4% vol'], ['Risk Eliminated', '~95%']],
     overview: 'Students drag the stock-count slider to watch the risk reduction curve, compare single-stock vs. index volatility, and identify which risks diversification can and cannot eliminate.',
   },
+  {
+    id: 'ds-indices',   title: 'Market Indices Explained',        subtitle: 'Markets · Ch. 8',
+    description: 'Compare how the S&P 500, DJIA, and Nasdaq are built. See why weighting methodology changes which stocks matter most.',
+    category: 'Markets',   color: '#38bdf8',  difficulty: 'Beginner',
+    concepts: ['Market-Cap Weighting', 'Price Weighting', 'Index Composition', 'Benchmark'],
+    stats: [['S&P 500', '500 stocks'], ['DJIA', '30 stocks'], ['Nasdaq', '3,300+ stocks']],
+    overview: 'Students compare market-cap, price-weighted, and equal-weight methodologies on a 5-stock mini-index and see how the choice of weighting changes which companies drive index moves.',
+  },
+  {
+    id: 'ds-bull-bear', title: 'Bull & Bear Market Cycles',       subtitle: 'Markets · Ch. 8',
+    description: 'Explore every major market cycle since 1987. Calculate recovery time from any drawdown and see why staying invested beats timing the market.',
+    category: 'Markets',   color: '#fb923c',  difficulty: 'Beginner',
+    concepts: ['Bull Market', 'Bear Market', 'Drawdown', 'Recovery Time', 'Buy & Hold'],
+    stats: [['Avg Bull Duration', '~5 years'], ['Avg Bear Duration', '~9 months'], ['2020 Recovery', '5 months']],
+    overview: 'Students identify bull and bear phases on a historical cycle table, use the recovery calculator to quantify drawdown math, and compare buy-and-hold returns to missing the market\'s best days.',
+  },
 ];
 
 const MAJOR_ASSIGNMENTS = [
@@ -1845,6 +1863,8 @@ const DATASET_TARGET_PANEL = {
   'ds-inflation':        'edu-sandbox',
   'ds-dca':              'edu-sandbox',
   'ds-diversification':  'edu-sandbox',
+  'ds-indices':          'edu-sandbox',
+  'ds-bull-bear':        'edu-sandbox',
 };
 
 const SANDBOX_DATA = (() => {
@@ -2371,6 +2391,9 @@ export default function Dashboard() {
   const [dcaYears, setDcaYears] = useState(10);
   const [dcaScenario, setDcaScenario] = useState('volatile');
   const [divStocks, setDivStocks] = useState(1);
+  const [indicesMethod, setIndicesMethod] = useState('marketcap');
+  const [bbDrop, setBbDrop] = useState(30);
+  const [bbRecoveryRate, setBbRecoveryRate] = useState(10);
   const [housingRate, setHousingRate]     = useState('');
   const [housingDown, setHousingDown]     = useState('');
   const [housingIncome, setHousingIncome] = useState('');
@@ -12285,6 +12308,368 @@ export default function Dashboard() {
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
                             <div style={{ fontSize: 11, fontFamily: 'monospace', color: DGREEN, marginBottom: 6, background: `${DGREEN}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── MARKET INDICES ─────────────────────────────────────────────────
+              if (sandboxDataset === 'ds-indices') {
+                const CYAN = '#38bdf8';
+                const INDEXES = [
+                  { name: 'S&P 500', stocks: 500, method: 'Market-cap weighted', color: BLUE,  launched: 1957, ytd: 10.5, desc: 'The 500 largest U.S. companies by market cap. The most widely followed benchmark — often what people mean when they say "the market."' },
+                  { name: 'DJIA',    stocks: 30,  method: 'Price weighted',       color: YELLOW, launched: 1896, ytd: 9.4,  desc: '30 blue-chip companies selected by editors at S&P Dow Jones. Oldest U.S. index, but its price-weighting is considered a flaw by most modern analysts.' },
+                  { name: 'Nasdaq Composite', stocks: 3300, method: 'Market-cap weighted', color: '#a78bfa', launched: 1971, ytd: 11.8, desc: 'All stocks listed on the Nasdaq exchange. Heavily tech-weighted (AAPL, MSFT, NVDA, AMZN, GOOGL account for a huge share). More volatile than the S&P 500.' },
+                ];
+                const STOCKS = [
+                  { ticker: 'MEGA',  name: 'Mega Tech Inc.',      price: 185.40, sharesB: 15.8, sector: 'Technology' },
+                  { ticker: 'CLOUD', name: 'Cloud Systems Co.',   price: 142.20, sharesB: 7.2,  sector: 'Technology' },
+                  { ticker: 'SHOP',  name: 'ShopGlobal Corp.',    price: 98.60,  sharesB: 9.5,  sector: 'Consumer' },
+                  { ticker: 'BANK',  name: 'First National Bank', price: 52.30,  sharesB: 6.1,  sector: 'Finance' },
+                  { ticker: 'HLTH',  name: 'HealthFirst Ltd.',    price: 314.80, sharesB: 2.8,  sector: 'Healthcare' },
+                ];
+                const mcaps    = STOCKS.map(s => s.price * s.sharesB);
+                const totalMC  = mcaps.reduce((a, b) => a + b, 0);
+                const priceSum = STOCKS.reduce((a, s) => a + s.price, 0);
+                const weights  = STOCKS.map((s, i) => ({
+                  marketcap: mcaps[i] / totalMC,
+                  price:     s.price / priceSum,
+                  equal:     1 / STOCKS.length,
+                }));
+                const METHOD_LABELS = { marketcap: 'Market-Cap Weighted', price: 'Price Weighted (DJIA style)', equal: 'Equal Weighted' };
+                const HIST = [
+                  { period: '1 Year',  sp: 26.3,  djia: 15.0, nasdaq: 29.6 },
+                  { period: '5 Year',  sp: 14.5,  djia: 10.8, nasdaq: 16.9 },
+                  { period: '10 Year', sp: 12.9,  djia: 10.2, nasdaq: 14.8 },
+                  { period: '20 Year', sp: 10.4,  djia: 9.6,  nasdaq: 12.1 },
+                ];
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Market Indices Explained</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${CYAN}18`, color: CYAN }}>Sandbox · Ch. 8</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Compare how S&P 500, DJIA, and Nasdaq are built, then see how weighting methodology changes which stocks actually move an index.
+                    </div>
+
+                    {/* Index overview cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 14, marginBottom: 24 }}>
+                      {INDEXES.map(idx => (
+                        <div key={idx.name} style={{ ...CARD, borderTop: `3px solid ${idx.color}` }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                            <div style={{ fontSize: 15, fontWeight: 800, color: idx.color }}>{idx.name}</div>
+                            <div style={{ fontSize: 11, color: TEXT3 }}>Est. {idx.launched}</div>
+                          </div>
+                          <div style={{ fontSize: 11, color: TEXT2, marginBottom: 10, lineHeight: 1.5 }}>{idx.desc}</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            {[['Stocks', idx.stocks.toLocaleString()], ['Method', idx.method], ['20-yr avg return', `${idx.ytd}%/yr`]].map(([k, v]) => (
+                              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                                <span style={{ color: TEXT2 }}>{k}</span>
+                                <span style={{ fontWeight: 600 }}>{v}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Mini index builder */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>Mini-Index Weight Builder</div>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {Object.entries(METHOD_LABELS).map(([key, label]) => (
+                            <button key={key} onClick={() => setIndicesMethod(key)}
+                              style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid ${indicesMethod === key ? CYAN : BORDER_C}`, background: indicesMethod === key ? `${CYAN}18` : 'transparent', color: indicesMethod === key ? CYAN : TEXT2, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                              {key === 'marketcap' ? 'Market-Cap' : key === 'price' ? 'Price' : 'Equal'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>{METHOD_LABELS[indicesMethod]} — 5 fictional companies. Toggle the method to see how it reshuffles which stocks drive the index.</div>
+                      {STOCKS.map((s, i) => {
+                        const w = weights[i][indicesMethod];
+                        const mc = mcaps[i];
+                        return (
+                          <div key={s.ticker} style={{ marginBottom: 14 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 13, color: CYAN, minWidth: 42 }}>{s.ticker}</span>
+                                <span style={{ fontSize: 12, color: TEXT2 }}>{s.name}</span>
+                                <span style={{ fontSize: 10, color: TEXT3, background: MUTED, padding: '2px 7px', borderRadius: 10 }}>{s.sector}</span>
+                              </div>
+                              <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                                <span style={{ fontSize: 11, color: TEXT3, fontFamily: 'monospace' }}>Mkt cap ${(mc / 1000).toFixed(1)}T</span>
+                                <span style={{ fontSize: 11, color: TEXT3, fontFamily: 'monospace' }}>Price ${s.price.toFixed(2)}</span>
+                                <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'monospace', color: CYAN, minWidth: 42, textAlign: 'right' }}>{(w * 100).toFixed(1)}%</span>
+                              </div>
+                            </div>
+                            <div style={{ height: 7, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${w * 100}%`, background: CYAN, borderRadius: 4, transition: 'width 0.35s ease' }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div style={{ marginTop: 16, padding: '12px 14px', background: `${CYAN}08`, border: `1px solid ${CYAN}25`, borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>
+                        {indicesMethod === 'marketcap' && <><strong style={{ color: TEXT }}>Market-cap weighted (S&P 500, Nasdaq):</strong> Bigger companies have bigger weight. MEGA ($2.9T market cap) dominates. A 10% move in MEGA moves the index far more than a 10% move in BANK.</>}
+                        {indicesMethod === 'price' && <><strong style={{ color: TEXT }}>Price weighted (DJIA):</strong> The highest-priced stock — HLTH at $314.80 — has the biggest weight even though its market cap is only $881B (less than SHOP). This is widely considered a flaw.</>}
+                        {indicesMethod === 'equal' && <><strong style={{ color: TEXT }}>Equal weighted:</strong> Every stock counts the same regardless of size or price. More exposure to small-cap companies. Higher rebalancing costs. Outperforms in small-cap rallies, underperforms in mega-cap rallies.</>}
+                      </div>
+                    </div>
+
+                    {/* Historical returns */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Historical Annualized Returns</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Approximate annualized total returns (including dividends) as of end of 2024</div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {['Period', 'S&P 500', 'DJIA', 'Nasdaq'].map((h, i) => (
+                              <th key={h} style={{ padding: '7px 12px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {HIST.map(row => (
+                            <tr key={row.period} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                              <td style={{ padding: '10px 12px', fontWeight: 600 }}>{row.period}</td>
+                              <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: BLUE, fontWeight: 700 }}>{row.sp}%</td>
+                              <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: YELLOW }}>{row.djia}%</td>
+                              <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: '#a78bfa' }}>{row.nasdaq}%</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div style={{ marginTop: 10, fontSize: 11, color: TEXT3 }}>Past performance does not guarantee future results. Returns rounded for illustration.</div>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: `${CYAN}06`, border: `1px solid ${CYAN}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: CYAN }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
+                        {[
+                          { term: 'Market-Cap Weighting', formula: 'w_i = (P_i × Shares_i) / Σ(P_j × Shares_j)', body: 'Used by S&P 500 and Nasdaq. Larger companies have more influence. Criticized for letting overvalued mega-caps dominate, but praised for reflecting the actual investable market.' },
+                          { term: 'Price Weighting', formula: 'w_i = P_i / Σ P_j', body: 'Used by the DJIA. A $1 move in any stock moves the index by the same number of points regardless of company size. Widely considered outdated — a stock split can drastically change weight.' },
+                          { term: 'The Divisor', formula: 'Index = Σ(P_i × w_i) / Divisor', body: 'A number maintained by the index to keep values continuous across stock splits, dividends, and composition changes. The S&P 500 divisor is adjusted whenever a company is added or removed.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: CYAN, marginBottom: 6, background: `${CYAN}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── BULL & BEAR MARKETS ─────────────────────────────────────────────
+              if (sandboxDataset === 'ds-bull-bear') {
+                const ORANGE = '#fb923c';
+                const gainNeeded = bbDrop >= 100 ? Infinity : (bbDrop / (100 - bbDrop)) * 100;
+                const yearsToRecover = gainNeeded === Infinity ? Infinity : Math.log(1 + gainNeeded / 100) / Math.log(1 + bbRecoveryRate / 100);
+                const CYCLES = [
+                  { period: '1982–2000', type: 'Bull', change: '+1,749%', duration: '216 mo', note: 'Longest bull run in history. Driven by falling inflation, tech boom, and deregulation.' },
+                  { period: 'Oct 1987',  type: 'Bear', change: '−33.5%',  duration: '3 mo',   note: '"Black Monday" crash. Market lost 22.6% in a single day — the largest single-day % drop ever.' },
+                  { period: '1990–2000', type: 'Bull', change: '+417%',   duration: '113 mo',  note: 'Dot-com bubble expansion. Internet euphoria drove valuations far beyond earnings.' },
+                  { period: '2000–2002', type: 'Bear', change: '−49.1%',  duration: '30 mo',  note: 'Dot-com bust. Recovery took 56 months. Many high-flying tech stocks never recovered.' },
+                  { period: '2002–2007', type: 'Bull', change: '+101%',   duration: '60 mo',  note: 'Housing-led expansion. Credit was cheap and widely available.' },
+                  { period: '2007–2009', type: 'Bear', change: '−56.8%',  duration: '17 mo',  note: 'Financial crisis. The deepest bear since the Great Depression. Recovery took 49 months.' },
+                  { period: '2009–2020', type: 'Bull', change: '+401%',   duration: '132 mo', note: 'Second-longest bull. Fed near-zero rates, QE, and tech growth drove record gains.' },
+                  { period: 'Feb 2020',  type: 'Bear', change: '−33.9%',  duration: '1.1 mo', note: 'COVID crash. Fastest bear market on record. Also the fastest recovery — only 5 months.' },
+                  { period: '2020–2022', type: 'Bull', change: '+114%',   duration: '21 mo',  note: 'Pandemic recovery. Stimulus, low rates, and retail-investing boom fueled rapid gains.' },
+                  { period: '2022',      type: 'Bear', change: '−25.4%',  duration: '9.4 mo', note: 'Rate-hike bear. Fed raised rates from 0% to 5.25%. Tech stocks hardest hit (Nasdaq −33%).' },
+                  { period: '2023–2024', type: 'Bull', change: '+62%',    duration: '24+ mo', note: 'AI-driven rally. Soft landing achieved. S&P 500 hit all-time highs driven by mega-cap tech.' },
+                ];
+                const MISSED_DAYS = [
+                  { label: 'Fully invested', days: 0,  value: 64844,  annualized: 9.8 },
+                  { label: 'Missed 10 best days', days: 10, value: 29708, annualized: 4.7 },
+                  { label: 'Missed 20 best days', days: 20, value: 16052, annualized: 2.3 },
+                  { label: 'Missed 30 best days', days: 30, value: 9341,  annualized: -0.3 },
+                  { label: 'Missed 40 best days', days: 40, value: 5766,  annualized: -2.7 },
+                ];
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Bull & Bear Market Cycles</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${ORANGE}18`, color: ORANGE }}>Sandbox · Ch. 8</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Every major S&P 500 cycle since 1982 — then use the recovery calculator to see the math behind staying invested.
+                    </div>
+
+                    {/* Definition cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 24 }}>
+                      {[
+                        { label: 'Bull Market', icon: '↑', color: GREEN,  def: 'A rise of 20% or more from a recent low. Typically accompanied by strong GDP growth, low unemployment, and rising corporate earnings. Average duration: ~5 years.' },
+                        { label: 'Bear Market', icon: '↓', color: RED,    def: 'A decline of 20% or more from a recent high. Usually triggered by recession fears, rising rates, or financial crises. Average duration: ~9 months.' },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, borderLeft: `4px solid ${m.color}` }}>
+                          <div style={{ display: 'flex', align: 'center', gap: 10, marginBottom: 8 }}>
+                            <span style={{ fontSize: 22, color: m.color, fontWeight: 900 }}>{m.icon}</span>
+                            <span style={{ fontSize: 15, fontWeight: 800, color: m.color }}>{m.label}</span>
+                          </div>
+                          <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{m.def}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Historical cycles table */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>S&P 500 Market Cycles · 1982–2024</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Bull markets defined as +20% from a low; bear markets as −20% from a high</div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Period', 'Phase', 'Change', 'Duration', 'What Happened'].map((h, i) => (
+                                <th key={h} style={{ padding: '7px 12px', textAlign: i === 0 ? 'left' : i < 4 ? 'center' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {CYCLES.map(c => (
+                              <tr key={c.period} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>{c.period}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                                  <span style={{ padding: '3px 10px', borderRadius: 10, fontSize: 11, fontWeight: 700, background: c.type === 'Bull' ? `${GREEN}18` : `${RED}18`, color: c.type === 'Bull' ? GREEN : RED }}>{c.type}</span>
+                                </td>
+                                <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, color: c.type === 'Bull' ? GREEN : RED }}>{c.change}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'monospace', color: TEXT2 }}>{c.duration}</td>
+                                <td style={{ padding: '10px 12px', fontSize: 12, color: TEXT2, lineHeight: 1.4 }}>{c.note}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Recovery calculator */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Drawdown Recovery Calculator</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 20 }}>A loss requires a larger gain to break even — the math is asymmetric and surprises most people.</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <span style={{ fontSize: 12, color: TEXT2, fontWeight: 600 }}>PORTFOLIO DROP</span>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 16, color: RED }}>−{bbDrop}%</span>
+                          </div>
+                          <input type="range" min="10" max="70" step="5" value={bbDrop}
+                            onChange={e => setBbDrop(Number(e.target.value))}
+                            style={{ width: '100%', accentColor: RED, cursor: 'pointer', marginBottom: 6 }} />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3, marginBottom: 20 }}><span>−10%</span><span>−70%</span></div>
+                          <div style={{ fontSize: 12, color: TEXT2, fontWeight: 600, marginBottom: 8 }}>ASSUMED ANNUAL RECOVERY RATE</div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            {[5, 8, 10, 12].map(rate => (
+                              <button key={rate} onClick={() => setBbRecoveryRate(rate)}
+                                style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: `1px solid ${bbRecoveryRate === rate ? GREEN : BORDER_C}`, background: bbRecoveryRate === rate ? `${GREEN}18` : 'transparent', color: bbRecoveryRate === rate ? GREEN : TEXT2, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                {rate}%
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          {[
+                            { label: 'Gain Needed to Break Even', value: gainNeeded === Infinity ? '∞' : `+${gainNeeded.toFixed(1)}%`, color: RED, sub: 'This is why losses hurt more than equivalent gains help.' },
+                            { label: `Years to Recover at ${bbRecoveryRate}%/yr`, value: yearsToRecover === Infinity ? '∞' : `${yearsToRecover.toFixed(1)} yr`, color: GREEN, sub: `At ${bbRecoveryRate}% annualized, compounding does the work.` },
+                          ].map(m => (
+                            <div key={m.label} style={{ ...CARD, padding: '14px 16px' }}>
+                              <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{m.label}</div>
+                              <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'monospace', color: m.color }}>{m.value}</div>
+                              <div style={{ fontSize: 11, color: TEXT3, marginTop: 3 }}>{m.sub}</div>
+                            </div>
+                          ))}
+                          <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>
+                            {bbDrop <= 10 ? 'A 10% correction is normal — happens on average once a year and rarely requires more than a year to recover.' :
+                             bbDrop <= 20 ? 'A 20% bear market threshold. Historically takes 1–3 years to recover depending on economic conditions.' :
+                             bbDrop <= 35 ? 'A significant bear. The 2022 bear was in this range — recovery took about 12 months with a 10%/yr rally.' :
+                             bbDrop <= 50 ? 'Deep bear territory. The 2000–2002 dot-com bust and 2007–2009 financial crisis were in this range.' :
+                             'Extreme drawdown. Only the Great Depression and dot-com bust at their worst approached this territory.'}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 16, overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Drop', 'Gain to Break Even', 'Years at 5%', 'Years at 8%', 'Years at 10%'].map((h, i) => (
+                                <th key={h} style={{ padding: '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[10, 20, 33, 50, 57].map(d => {
+                              const gn = (d / (100 - d)) * 100;
+                              return (
+                                <tr key={d} style={{ borderBottom: `1px solid ${BORDER_C}`, background: d === bbDrop ? `${RED}08` : 'transparent' }}>
+                                  <td style={{ padding: '9px 10px', fontWeight: 700, color: RED }}>−{d}%</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: RED }}>+{gn.toFixed(1)}%</td>
+                                  {[5, 8, 10].map(r => (
+                                    <td key={r} style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>
+                                      {(Math.log(1 + gn / 100) / Math.log(1 + r / 100)).toFixed(1)} yr
+                                    </td>
+                                  ))}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Missed best days */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>The Cost of Trying to Time the Market</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>$10,000 invested in the S&P 500 for 20 years (2003–2022). The best days often happen right in the middle of bear markets.</div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {['Strategy', 'Final Value', 'Annualized Return', 'vs. Buy & Hold'].map((h, i) => (
+                              <th key={h} style={{ padding: '7px 12px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {MISSED_DAYS.map(m => {
+                            const diff = m.value - 64844;
+                            return (
+                              <tr key={m.days} style={{ borderBottom: `1px solid ${BORDER_C}`, background: m.days === 0 ? `${GREEN}06` : 'transparent' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: m.days === 0 ? 700 : 400 }}>{m.label}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: m.days === 0 ? GREEN : m.annualized < 0 ? RED : TEXT }}>${m.value.toLocaleString()}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: m.annualized < 0 ? RED : m.annualized < 5 ? YELLOW : GREEN }}>{m.annualized}%</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: m.days === 0 ? TEXT3 : RED }}>{m.days === 0 ? '—' : `−$${Math.abs(diff).toLocaleString()}`}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                      <div style={{ marginTop: 12, padding: '10px 14px', background: `${GREEN}06`, border: `1px solid ${GREEN}20`, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
+                        Missing just 10 of the best trading days cut the final value by more than half. The problem: you cannot know in advance when those best days will be — they typically happen within weeks of the worst days.
+                      </div>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: `${ORANGE}06`, border: `1px solid ${ORANGE}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: ORANGE }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
+                        {[
+                          { term: 'Drawdown & Recovery', formula: 'Gain to recover = D / (1 − D)', body: 'A 50% loss requires a 100% gain to break even. This asymmetry is why protecting against large losses is more valuable than chasing large gains.' },
+                          { term: 'Correction vs. Bear Market', formula: 'Correction: −10% to −20%  ·  Bear: ≤ −20%', body: 'Corrections (−10 to −20%) happen almost every year and are healthy. True bear markets (−20%+) are rarer, typically tied to recessions, and average about 9 months.' },
+                          { term: 'Time in Market > Timing Market', formula: 'FV = PV × (1 + r)ⁿ', body: 'Missing the 10 best days in 20 years cuts returns by more than half. Those days often come right after the worst days, so market timers who sold during the panic miss the rebound.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: ORANGE, marginBottom: 6, background: `${ORANGE}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
                             <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
                           </div>
                         ))}
