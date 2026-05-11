@@ -16,7 +16,6 @@ const INPUT_BG = '#141414';
 const BLUE_BTN = '#0066f5';
 
 const GOOGLE_CLIENT_ID    = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const APPLE_CLIENT_ID     = import.meta.env.VITE_APPLE_CLIENT_ID;
 const MICROSOFT_CLIENT_ID = import.meta.env.VITE_MICROSOFT_CLIENT_ID;
 
 const FEATURES = [
@@ -94,29 +93,6 @@ export default function Login() {
     const timer = setInterval(() => { if (popup?.closed) { clearInterval(timer); window.removeEventListener('message', handler); setOauthLoading(null); } }, 500);
   };
 
-  const handleApple = async () => {
-    if (!window.AppleID?.auth) return setError('Apple Sign-In not available');
-    setError(''); setOauthLoading('apple');
-    try {
-      window.AppleID.auth.init({
-        clientId: APPLE_CLIENT_ID,
-        scope: 'name email',
-        redirectURI: window.location.origin,
-        usePopup: true,
-      });
-      const response = await window.AppleID.auth.signIn();
-      const id_token = response.authorization?.id_token;
-      const appleUser = response.user;
-      const name = appleUser ? `${appleUser.name?.firstName || ''} ${appleUser.name?.lastName || ''}`.trim() : undefined;
-      const { data } = await api.post('/auth/apple', { id_token, name });
-      login(data.token, data.user);
-      navigate('/app');
-    } catch (err) {
-      if (err?.error !== 'popup_closed_by_user') {
-        setError(err?.response?.data?.error || 'Apple sign-in failed');
-      }
-    } finally { setOauthLoading(null); }
-  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -146,7 +122,7 @@ export default function Login() {
     } finally { setTfLoading(false); }
   };
 
-  const showOAuth = GOOGLE_CLIENT_ID || APPLE_CLIENT_ID || MICROSOFT_CLIENT_ID;
+  const showOAuth = GOOGLE_CLIENT_ID || MICROSOFT_CLIENT_ID;
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
@@ -241,17 +217,6 @@ export default function Login() {
                 </svg>
                 <span style={{ fontSize: 15, fontWeight: 600, color: '#000' }}>
                   {oauthLoading === 'microsoft' ? 'Signing in…' : 'Sign in with Microsoft'}
-                </span>
-              </button>
-            )}
-            {APPLE_CLIENT_ID && (
-              <button onClick={handleApple} disabled={!!oauthLoading}
-                style={{ width: '100%', padding: '11px 14px', background: '#fff', border: 'none', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: oauthLoading ? 'default' : 'pointer', opacity: oauthLoading === 'apple' ? 0.6 : 1, transition: 'opacity 0.15s' }}>
-                <svg width="18" height="18" viewBox="0 0 814 1000" fill="#000">
-                  <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.6-168.3-127.6C36 440.8 0 352.3 0 269.4c0-175.2 114.4-267.7 226.7-267.7 59.8 0 109.6 39.5 147.2 39.5 35.9 0 92.4-42.1 160.3-42.1 25.5 0 108.2 2.6 168.4 74.2z" />
-                </svg>
-                <span style={{ fontSize: 15, fontWeight: 600, color: '#000' }}>
-                  {oauthLoading === 'apple' ? 'Signing in…' : 'Sign in with Apple'}
                 </span>
               </button>
             )}
