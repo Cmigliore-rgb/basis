@@ -1133,17 +1133,20 @@ const LEARN_CONTENT = [
         summary: 'A CNN composite score (0–100) measuring whether investors are fearful or greedy.',
         body: 'The index combines 7 indicators: stock price momentum, stock price strength, stock price breadth, put/call ratio, junk bond demand, market volatility (VIX), and safe-haven demand. Extreme Fear (0–25) often signals a buying opportunity; Extreme Greed (75–100) may signal overvaluation.',
         formula: 'Score = equal-weight avg of 7 signals   |   0–24: Extreme Fear · 25–49: Fear · 50–74: Greed · 75–100: Extreme Greed',
-        example: 'A score of 18 means "Extreme Fear," historically a period where patient investors buy at a discount.' },
+        example: 'A score of 18 means "Extreme Fear," historically a period where patient investors buy at a discount.',
+        datasetId: 'ds-feargreed' },
       { id: 'retirement-accounts', title: 'Roth IRA & 401(k)', icon: '🏦',
         summary: 'Tax-advantaged accounts that are the single most powerful tools for building long-term wealth.',
         body: '401(k): Pre-tax contributions reduce your taxable income today; you pay taxes on withdrawal in retirement. Always contribute at least enough to get the full employer match, since that\'s a 50–100% instant return. Roth IRA: Post-tax contributions; all growth is tax-free forever. 2025 limits: 401(k) = $23,500, IRA = $7,000. The optimal order: 401(k) to match → Roth IRA to max → 401(k) to max.',
         formula: 'After-tax value: Traditional 401k = Balance × (1 − tax rate at withdrawal)  |  Roth IRA = Balance × 1',
-        example: '$6,000/yr in a Roth IRA at 22, growing at 8%, is worth $1.68M tax-free at 65. Same money in a taxable account at 22% cap gains tax → ~$1.31M.' },
+        example: '$6,000/yr in a Roth IRA at 22, growing at 8%, is worth $1.68M tax-free at 65. Same money in a taxable account at 22% cap gains tax → ~$1.31M.',
+        datasetId: 'ds-retirement' },
       { id: 'insurance', title: 'Insurance Basics', icon: '☂️',
         summary: 'Insurance trades a small certain cost (premium) for protection against a large uncertain loss.',
         body: 'Health insurance is critical: one ER visit without coverage can cost $10,000+. Understand your deductible (what you pay before insurance kicks in), copay, and out-of-pocket maximum. Renters insurance covers your belongings if your apartment is robbed or burns, costs about $15/mo, and covers $20,000+ in stuff. Auto insurance: liability is legally required in most states; comprehensive/collision protects your car. Life insurance is only needed if someone depends on your income. Term life (10–30yr fixed premium) is almost always better than whole life for young earners.',
         formula: 'Expected Value of Insurance = (Probability of Loss × Loss Amount) − Premium',
-        example: '30% chance of a $5,000 claim. EV of the loss = $1,500. If the premium is $500/yr, insurance is a good deal. Insurers profit by pooling thousands of policies; you buy peace of mind and catastrophic coverage.' },
+        example: '30% chance of a $5,000 claim. EV of the loss = $1,500. If the premium is $500/yr, insurance is a good deal. Insurers profit by pooling thousands of policies; you buy peace of mind and catastrophic coverage.',
+        datasetId: 'ds-insurance' },
       { id: 'rent-vs-buy', title: 'Renting vs. Buying', icon: '🏠',
         summary: 'Buying isn\'t always better. The 5-year rule and price-to-rent ratio tell you when it makes sense.',
         body: 'Buying costs: down payment (3–20%), closing costs (2–5%), property taxes (~1%/yr), maintenance (~1%/yr), insurance. Renting costs: monthly rent + renters insurance (~$15/mo). The Price-to-Rent ratio = home price ÷ annual rent. Below 15: buying likely wins. 15–20: depends on your situation. Above 20: renting is usually cheaper. The 5-year rule: if you\'re not staying 5+ years, transaction costs likely outweigh equity gains.',
@@ -1671,6 +1674,30 @@ const PREBUILT_DATASETS = [
     stats: [['Avg Bull Duration', '~5 years'], ['Avg Bear Duration', '~9 months'], ['2020 Recovery', '5 months']],
     overview: 'Students identify bull and bear phases on a historical cycle table, use the recovery calculator to quantify drawdown math, and compare buy-and-hold returns to missing the market\'s best days.',
   },
+  {
+    id: 'ds-feargreed',  title: 'Fear & Greed Index',              subtitle: 'Markets · Ch. 8',
+    description: 'Adjust all 7 CNN Fear & Greed indicators and watch the composite score update live. See what extreme scores have historically preceded.',
+    category: 'Markets',   color: '#ef4444',  difficulty: 'Beginner',
+    concepts: ['Market Sentiment', 'Contrarian Investing', 'VIX', 'Put/Call Ratio'],
+    stats: [['Indicators', '7'], ['Extreme Fear avg 1-yr', '+24%'], ['Extreme Greed avg 1-yr', '−2%']],
+    overview: 'Students dial each of the 7 indicators, compute the composite score, and look up how that score zone has historically correlated with forward 12-month S&P 500 returns.',
+  },
+  {
+    id: 'ds-retirement', title: 'Roth IRA & 401(k) Simulator',     subtitle: 'Retirement · Ch. 9',
+    description: 'Compare Traditional 401(k) vs Roth IRA vs taxable investing. See how employer match, tax rates, and starting age change the outcome at 65.',
+    category: 'Retirement', color: '#818cf8', difficulty: 'Intermediate',
+    concepts: ['Tax-Deferred Growth', 'Roth vs Traditional', 'Employer Match', 'Compound Interest'],
+    stats: [['Roth at 22, $6k/yr', '~$2M'], ['Employer match', 'Instant 50–100% return'], ['401(k) limit 2025', '$23,500']],
+    overview: 'Students adjust age, contribution, employer match, and tax rates to see after-tax retirement balances under Traditional 401(k), Roth IRA, and taxable brokerage, with a year-by-year projection table.',
+  },
+  {
+    id: 'ds-insurance',  title: 'Insurance Basics',                 subtitle: 'Risk · Ch. 9',
+    description: 'Use the expected value calculator to decide when insurance makes mathematical sense. Compare premiums, deductibles, and coverage types.',
+    category: 'Risk',      color: '#2dd4bf', difficulty: 'Beginner',
+    concepts: ['Expected Value', 'Premium', 'Deductible', 'Risk Pooling', 'Out-of-Pocket Max'],
+    stats: [['Renters insurance', '$15/mo'], ['Health: 1 ER visit', 'up to $10,000'], ['EV formula', 'P × Loss − Premium']],
+    overview: 'Students run the expected-value calculator to find the break-even premium, compare four insurance types, and work through the deductible tradeoff to find when a higher deductible saves money.',
+  },
 ];
 
 const MAJOR_ASSIGNMENTS = [
@@ -1865,6 +1892,9 @@ const DATASET_TARGET_PANEL = {
   'ds-diversification':  'edu-sandbox',
   'ds-indices':          'edu-sandbox',
   'ds-bull-bear':        'edu-sandbox',
+  'ds-feargreed':        'edu-sandbox',
+  'ds-retirement':       'edu-sandbox',
+  'ds-insurance':        'edu-sandbox',
 };
 
 const SANDBOX_DATA = (() => {
@@ -2394,6 +2424,15 @@ export default function Dashboard() {
   const [indicesMethod, setIndicesMethod] = useState('marketcap');
   const [bbDrop, setBbDrop] = useState(30);
   const [bbRecoveryRate, setBbRecoveryRate] = useState(10);
+  const [fgScores, setFgScores] = useState([50, 50, 50, 50, 50, 50, 50]);
+  const [retAge, setRetAge] = useState(22);
+  const [retContrib, setRetContrib] = useState(6000);
+  const [retMatchPct, setRetMatchPct] = useState(50);
+  const [retTaxNow, setRetTaxNow] = useState(22);
+  const [retTaxRetire, setRetTaxRetire] = useState(22);
+  const [insLossProb, setInsLossProb] = useState(15);
+  const [insLossAmt, setInsLossAmt] = useState(10000);
+  const [insPremiumAmt, setInsPremiumAmt] = useState(600);
   const [housingRate, setHousingRate]     = useState('');
   const [housingDown, setHousingDown]     = useState('');
   const [housingIncome, setHousingIncome] = useState('');
@@ -12670,6 +12709,517 @@ export default function Dashboard() {
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
                             <div style={{ fontSize: 11, fontFamily: 'monospace', color: ORANGE, marginBottom: 6, background: `${ORANGE}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── FEAR & GREED INDEX ─────────────────────────────────────────────
+              if (sandboxDataset === 'ds-feargreed') {
+                const FG_INDICATORS = [
+                  { name: 'Stock Price Momentum',  desc: 'S&P 500 vs its 125-day moving average. Above = bullish momentum.' },
+                  { name: 'Stock Price Strength',  desc: 'NYSE 52-week highs vs 52-week lows. More highs = greed.' },
+                  { name: 'Stock Price Breadth',   desc: 'Volume in rising stocks vs falling stocks (McClellan Summation).' },
+                  { name: 'Put/Call Ratio',        desc: 'Options bets on declines (puts) vs rises (calls). Low ratio = greed.' },
+                  { name: 'Junk Bond Demand',      desc: 'Spread between junk and investment-grade bonds. Tight spread = risk appetite = greed.' },
+                  { name: 'Market Volatility (VIX)', desc: 'The VIX fear gauge. Low volatility = complacency = greed. High VIX = fear.' },
+                  { name: 'Safe Haven Demand',     desc: 'Stocks vs Treasury bonds performance. Stocks outperforming = greed.' },
+                ];
+                const PRESETS = {
+                  fear:    { label: 'Extreme Fear',  values: [5,  8,  10, 12, 8,  5,  3 ], event: 'Similar to March 2020 COVID crash or October 2022 bear market bottom' },
+                  neutral: { label: 'Neutral',       values: [50, 48, 55, 45, 52, 50, 47], event: 'Typical baseline — market neither euphoric nor panicked' },
+                  greed:   { label: 'Extreme Greed', values: [92, 88, 85, 90, 82, 91, 87], event: 'Similar to November 2021 — market peak just before 2022 bear market' },
+                };
+                const composite = Math.round(fgScores.reduce((a, b) => a + b, 0) / fgScores.length);
+                const updateFg = (i, val) => setFgScores(prev => prev.map((v, idx) => idx === i ? val : v));
+                const FG_ZONES = [
+                  { label: 'Extreme Fear',  max: 25,  color: '#ef4444', fwdReturn: '+24%', body: 'Historically the best buying opportunity. Panic selling creates discounts. Buffett: "Be greedy when others are fearful."' },
+                  { label: 'Fear',          max: 45,  color: '#f97316', fwdReturn: '+14%', body: 'Above-average expected returns. Market pessimism is overdone but not extreme.' },
+                  { label: 'Neutral',       max: 55,  color: '#eab308', fwdReturn: '+10%', body: 'Close to the long-run S&P 500 average. No strong contrarian signal in either direction.' },
+                  { label: 'Greed',         max: 75,  color: '#22c55e', fwdReturn: '+6%',  body: 'Below-average expected returns. Elevated valuations and optimism price in a lot of good news.' },
+                  { label: 'Extreme Greed', max: 100, color: '#16a34a', fwdReturn: '−2%',  body: 'Historically the worst time to buy. Euphoria leads to overvaluation. Risk of sharp correction is elevated.' },
+                ];
+                const currentZone = FG_ZONES.find(z => composite <= z.max) || FG_ZONES[FG_ZONES.length - 1];
+                const HIST = [
+                  { date: 'Mar 2009', score: 12, zone: 'Extreme Fear', event: 'Financial crisis bottom',    fwd: '+68%' },
+                  { date: 'Mar 2020', score: 4,  zone: 'Extreme Fear', event: 'COVID crash bottom',        fwd: '+72%' },
+                  { date: 'Oct 2022', score: 7,  zone: 'Extreme Fear', event: 'Rate-hike bear bottom',     fwd: '+22%' },
+                  { date: 'Jan 2018', score: 95, zone: 'Extreme Greed', event: 'Peak before correction',   fwd: '−6%' },
+                  { date: 'Nov 2021', score: 88, zone: 'Extreme Greed', event: 'Market peak before bear',  fwd: '−18%' },
+                  { date: 'Jul 2023', score: 82, zone: 'Extreme Greed', event: 'AI rally peak (short-term)', fwd: '+12%' },
+                ];
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Fear & Greed Index</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>Sandbox · Ch. 8</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Adjust all 7 indicators to build a composite sentiment score, then look up what that reading has historically meant for 12-month returns.
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                      {/* Left: sliders */}
+                      <div style={CARD}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                          <div style={{ fontWeight: 700, fontSize: 14 }}>7 Indicators</div>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            {Object.entries(PRESETS).map(([key, p]) => (
+                              <button key={key} onClick={() => setFgScores(p.values)}
+                                style={{ padding: '4px 10px', borderRadius: 7, border: `1px solid ${BORDER_C}`, background: MUTED, color: TEXT2, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                                {p.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {FG_INDICATORS.map((ind, i) => {
+                          const v = fgScores[i];
+                          const c = v <= 25 ? '#ef4444' : v <= 45 ? '#f97316' : v <= 55 ? '#eab308' : v <= 75 ? '#22c55e' : '#16a34a';
+                          return (
+                            <div key={i} style={{ marginBottom: 14 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                <span style={{ fontSize: 12, fontWeight: 600, color: TEXT }}>{ind.name}</span>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 13, color: c }}>{v}</span>
+                              </div>
+                              <input type="range" min="0" max="100" value={v}
+                                onChange={e => updateFg(i, Number(e.target.value))}
+                                style={{ width: '100%', accentColor: c, cursor: 'pointer', marginBottom: 3 }} />
+                              <div style={{ fontSize: 11, color: TEXT3, lineHeight: 1.4 }}>{ind.desc}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Right: gauge + zone info */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div style={{ ...CARD, borderTop: `3px solid ${currentZone.color}` }}>
+                          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>Composite Score</div>
+                          <FearGreedGauge score={composite} rating={currentZone.label} />
+                        </div>
+                        <div style={{ ...CARD, borderLeft: `4px solid ${currentZone.color}` }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: currentZone.color, marginBottom: 6 }}>{currentZone.label} Zone</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                            <span style={{ fontSize: 12, color: TEXT2 }}>Avg 12-month fwd return</span>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 18, color: currentZone.fwdReturn.startsWith('-') ? RED : GREEN }}>{currentZone.fwdReturn}</span>
+                          </div>
+                          <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{currentZone.body}</div>
+                        </div>
+                        <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: BORDER, fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>
+                          <strong style={{ color: TEXT }}>Note:</strong> This is a contrarian indicator. Extreme readings are most useful as signals, not precise timers. The index tells you about sentiment, not fundamentals. Use it alongside valuation metrics and economic data.
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Zone return table */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Zone vs Forward Returns · Historical Averages</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Average S&P 500 return 12 months after each Fear & Greed reading (approximate, based on data since 2011)</div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {['Zone', 'Score Range', 'Avg 12-mo Return', 'Signal', 'Interpretation'].map((h, i) => (
+                              <th key={h} style={{ padding: '7px 12px', textAlign: i === 0 ? 'left' : i < 3 ? 'center' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {FG_ZONES.map(z => (
+                            <tr key={z.label} style={{ borderBottom: `1px solid ${BORDER_C}`, background: z.label === currentZone.label ? `${z.color}10` : 'transparent' }}>
+                              <td style={{ padding: '10px 12px' }}><span style={{ fontWeight: 700, color: z.color }}>{z.label}</span></td>
+                              <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'monospace', color: TEXT2 }}>{z.max <= 25 ? '0–25' : z.max <= 45 ? '26–45' : z.max <= 55 ? '46–55' : z.max <= 75 ? '56–75' : '76–100'}</td>
+                              <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, color: z.fwdReturn.startsWith('-') ? RED : GREEN }}>{z.fwdReturn}</td>
+                              <td style={{ padding: '10px 12px', fontSize: 11 }}>{z.max <= 25 ? 'Strong Buy' : z.max <= 45 ? 'Mild Buy' : z.max <= 55 ? 'Hold' : z.max <= 75 ? 'Caution' : 'High Risk'}</td>
+                              <td style={{ padding: '10px 12px', fontSize: 11, color: TEXT2 }}>{z.body.split('.')[0]}.</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Historical snapshots */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Notable Historical Readings</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Actual Fear & Greed scores at major market turning points</div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {['Date', 'Score', 'Zone', 'Event', '12-mo Fwd Return'].map((h, i) => (
+                              <th key={h} style={{ padding: '7px 12px', textAlign: i === 0 || i >= 3 ? 'left' : 'center', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {HIST.map(h => {
+                            const zc = h.zone === 'Extreme Fear' ? '#ef4444' : '#16a34a';
+                            return (
+                              <tr key={h.date} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{h.date}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, color: zc }}>{h.score}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'center' }}><span style={{ padding: '2px 8px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: `${zc}18`, color: zc }}>{h.zone}</span></td>
+                                <td style={{ padding: '10px 12px', fontSize: 12, color: TEXT2 }}>{h.event}</td>
+                                <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 700, color: h.fwd.startsWith('-') ? RED : GREEN }}>{h.fwd}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.18)' }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: '#ef4444' }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
+                        {[
+                          { term: 'Contrarian Investing', formula: 'Buy fear, sell greed', body: 'When everyone is panicking, assets are cheap. When everyone is euphoric, assets are expensive. The Fear & Greed Index helps identify these extremes, though it doesn\'t tell you the exact turning point.' },
+                          { term: 'The VIX', formula: 'VIX = implied volatility of S&P 500 options', body: 'The "fear gauge." Spikes above 30 signal panic; readings below 15 signal complacency. A sudden VIX spike is often a buying opportunity. The index is mean-reverting — extreme readings don\'t last long.' },
+                          { term: 'Sentiment vs. Fundamentals', formula: 'Price = Fundamentals + Sentiment', body: 'Short-term prices are driven heavily by sentiment. Long-term prices revert to fundamentals (earnings, growth, rates). The Fear & Greed Index measures sentiment, not value. Use both.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: '#ef4444', marginBottom: 6, background: 'rgba(239,68,68,0.1)', padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── ROTH IRA & 401(k) ──────────────────────────────────────────────
+              if (sandboxDataset === 'ds-retirement') {
+                const INDIGO = '#818cf8';
+                const r8 = 0.08;
+                const years = Math.max(1, 65 - retAge);
+                const fvFactor = ((Math.pow(1 + r8, years) - 1) / r8);
+                const annualMatch = retContrib * (retMatchPct / 100);
+                const fvOwn   = retContrib * fvFactor;
+                const fvTotal = (retContrib + annualMatch) * fvFactor;
+                const rothAfterTax  = fvOwn;
+                const tradAfterTax  = fvTotal * (1 - retTaxRetire / 100);
+                const taxableAfterTax = fvOwn * (1 - 0.15);
+                const matchInstantReturn = retMatchPct;
+                const ACCT_TYPES = [
+                  { label: 'Roth IRA',          value: rothAfterTax,  color: INDIGO, sub: 'No match · Tax-free at withdrawal',       note: '2025 limit: $7,000/yr ($8,000 if 50+). Contributions are post-tax — growth and withdrawals are completely tax-free.' },
+                  { label: '401(k) with Match',  value: tradAfterTax,  color: GREEN,  sub: `${retMatchPct}% match · Taxed at ${retTaxRetire}% in retirement`, note: '2025 limit: $23,500/yr. Pre-tax contributions reduce your taxable income today. Employer match is free money — always take the full match first.' },
+                  { label: 'Taxable Brokerage', value: taxableAfterTax, color: TEXT2, sub: 'No match · 15% long-term cap gains tax',  note: 'No contribution limits, no early withdrawal penalties, but no tax advantages. Use after maxing tax-advantaged accounts.' },
+                ];
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Roth IRA & 401(k) Simulator</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${INDIGO}18`, color: INDIGO }}>Sandbox · Ch. 9</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Adjust age, contribution, employer match, and tax rates to compare three account types at retirement. All projections assume 8% annual return.
+                    </div>
+
+                    {/* Controls */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Your Inputs</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                        <div>
+                          <div style={{ marginBottom: 18 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                              <span style={{ fontSize: 12, color: TEXT2, fontWeight: 600 }}>CURRENT AGE</span>
+                              <span style={{ fontFamily: 'monospace', fontWeight: 800, color: INDIGO }}>{retAge} · {years} years to 65</span>
+                            </div>
+                            <input type="range" min="18" max="45" value={retAge} onChange={e => setRetAge(Number(e.target.value))}
+                              style={{ width: '100%', accentColor: INDIGO, cursor: 'pointer' }} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3, marginTop: 4 }}><span>18</span><span>45</span></div>
+                          </div>
+                          <div style={{ marginBottom: 18 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                              <span style={{ fontSize: 12, color: TEXT2, fontWeight: 600 }}>ANNUAL CONTRIBUTION</span>
+                              <span style={{ fontFamily: 'monospace', fontWeight: 800, color: INDIGO }}>${retContrib.toLocaleString()}/yr</span>
+                            </div>
+                            <input type="range" min="1000" max="20000" step="500" value={retContrib} onChange={e => setRetContrib(Number(e.target.value))}
+                              style={{ width: '100%', accentColor: INDIGO, cursor: 'pointer' }} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3, marginTop: 4 }}><span>$1,000</span><span>$20,000</span></div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 12, color: TEXT2, fontWeight: 600, marginBottom: 8 }}>EMPLOYER MATCH (% of your contribution)</div>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              {[0, 25, 50, 100].map(p => (
+                                <button key={p} onClick={() => setRetMatchPct(p)}
+                                  style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: `1px solid ${retMatchPct === p ? GREEN : BORDER_C}`, background: retMatchPct === p ? `${GREEN}18` : 'transparent', color: retMatchPct === p ? GREEN : TEXT2, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                  {p}%
+                                </button>
+                              ))}
+                            </div>
+                            {retMatchPct > 0 && (
+                              <div style={{ marginTop: 8, padding: '8px 12px', background: `${GREEN}08`, border: `1px solid ${GREEN}20`, borderRadius: 8, fontSize: 12, color: GREEN }}>
+                                +${annualMatch.toLocaleString()}/yr free from employer — an instant {matchInstantReturn}% return on your contribution.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ marginBottom: 18 }}>
+                            <div style={{ fontSize: 12, color: TEXT2, fontWeight: 600, marginBottom: 8 }}>YOUR CURRENT TAX RATE</div>
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                              {[10, 12, 22, 24, 32].map(t => (
+                                <button key={t} onClick={() => setRetTaxNow(t)}
+                                  style={{ flex: 1, minWidth: 40, padding: '7px 0', borderRadius: 8, border: `1px solid ${retTaxNow === t ? INDIGO : BORDER_C}`, background: retTaxNow === t ? `${INDIGO}18` : 'transparent', color: retTaxNow === t ? INDIGO : TEXT2, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                  {t}%
+                                </button>
+                              ))}
+                            </div>
+                            <div style={{ marginTop: 8, fontSize: 11, color: TEXT3 }}>Roth: you pay this rate now and nothing at withdrawal. Traditional: you defer this rate now and pay your retirement rate.</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 12, color: TEXT2, fontWeight: 600, marginBottom: 8 }}>EXPECTED TAX RATE IN RETIREMENT</div>
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                              {[10, 12, 22, 24].map(t => (
+                                <button key={t} onClick={() => setRetTaxRetire(t)}
+                                  style={{ flex: 1, minWidth: 40, padding: '7px 0', borderRadius: 8, border: `1px solid ${retTaxRetire === t ? INDIGO : BORDER_C}`, background: retTaxRetire === t ? `${INDIGO}18` : 'transparent', color: retTaxRetire === t ? INDIGO : TEXT2, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                  {t}%
+                                </button>
+                              ))}
+                            </div>
+                            <div style={{ marginTop: 10, padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>
+                              {retTaxNow < retTaxRetire
+                                ? 'Your tax rate is expected to rise. Roth wins — pay the lower rate now, withdraw tax-free later.'
+                                : retTaxNow > retTaxRetire
+                                ? 'Your tax rate is expected to fall. Traditional may win — defer at the high rate now, pay less in retirement.'
+                                : 'Same tax rate: Roth and Traditional produce equal after-tax results. Roth gets the nod for flexibility (no RMDs, tax-free heirs).'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Account comparison cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 14, marginBottom: 20 }}>
+                      {ACCT_TYPES.map(a => (
+                        <div key={a.label} style={{ ...CARD, borderTop: `3px solid ${a.color}` }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: a.color, marginBottom: 4 }}>{a.label}</div>
+                          <div style={{ fontSize: 30, fontWeight: 800, fontFamily: 'monospace', color: a.color, letterSpacing: '-1px', marginBottom: 4 }}>${Math.round(a.value).toLocaleString()}</div>
+                          <div style={{ fontSize: 11, color: TEXT2, marginBottom: 10 }}>{a.sub}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, lineHeight: 1.5 }}>{a.note}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Year-by-year projection */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Year-by-Year Growth · Roth IRA vs 401(k) with {retMatchPct}% Match</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Assumes 8%/yr return. 401(k) after-tax column applies {retTaxRetire}% retirement tax rate to full balance at each checkpoint.</div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {['Age', 'Years In', 'Total Contributed', 'Roth (tax-free)', '401(k) After-Tax'].map((h, i) => (
+                              <th key={h} style={{ padding: '7px 12px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[5, 10, 15, 20, 25, 30, 35, 40, 43].filter(y => y <= years).map(y => {
+                            const ff = ((Math.pow(1 + r8, y) - 1) / r8);
+                            const roth  = retContrib * ff;
+                            const trad  = (retContrib + annualMatch) * ff * (1 - retTaxRetire / 100);
+                            const contributed = retContrib * y;
+                            return (
+                              <tr key={y} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                <td style={{ padding: '9px 12px', fontWeight: 600 }}>{retAge + y}</td>
+                                <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT2 }}>{y} yr</td>
+                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>${contributed.toLocaleString()}</td>
+                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: 'monospace', color: INDIGO, fontWeight: 700 }}>${Math.round(roth).toLocaleString()}</td>
+                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: 'monospace', color: GREEN, fontWeight: 700 }}>${Math.round(trad).toLocaleString()}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: `${INDIGO}06`, border: `1px solid ${INDIGO}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: INDIGO }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
+                        {[
+                          { term: 'Roth IRA', formula: 'After-tax in → Tax-free growth & withdrawal', body: 'Pay taxes on contributions now. All growth and withdrawals in retirement are tax-free. Best when you expect a higher tax rate later. 2025 limit: $7,000/yr. Income limits apply (phase-out starts at $150K single, $236K married).' },
+                          { term: 'Traditional 401(k)', formula: 'Pre-tax in → Tax-deferred growth → Taxed at withdrawal', body: 'Contributions reduce your taxable income today. Taxes are paid on withdrawal in retirement. Best when you expect a lower tax rate later. 2025 limit: $23,500/yr. Always contribute at least enough to get the full employer match.' },
+                          { term: 'The Optimal Order', formula: '401k to match → Roth IRA max → 401k max → taxable', body: 'Step 1: 401(k) to get the full employer match (free 50–100% return). Step 2: Max Roth IRA ($7K). Step 3: Max 401(k). Step 4: Taxable brokerage. Never leave employer match on the table.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: INDIGO, marginBottom: 6, background: `${INDIGO}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── INSURANCE BASICS ────────────────────────────────────────────────
+              if (sandboxDataset === 'ds-insurance') {
+                const TEAL = '#2dd4bf';
+                const expectedLoss = (insLossProb / 100) * insLossAmt;
+                const evOfInsurance = expectedLoss - insPremiumAmt;
+                const breakEvenProb = (insPremiumAmt / insLossAmt) * 100;
+                const INS_TYPES = [
+                  { type: 'Health',          premium: '$150–400/mo', coverage: 'Unlimited (with deductible/copay)', deductible: '$1,000–$5,000', who: 'Everyone — one ER visit without it can cost $10,000+', color: RED },
+                  { type: 'Renters',         premium: '$15–30/mo',   coverage: '$20,000+ belongings + liability',  deductible: '$500–$1,000',   who: 'All renters. Covers theft, fire, water damage, and liability. Cheapest insurance available.', color: BLUE },
+                  { type: 'Auto (Liability)', premium: '$50–150/mo',  coverage: 'Damage to others',                 deductible: '$0',            who: 'Everyone who drives — legally required in most states.', color: YELLOW },
+                  { type: 'Auto (Full)',      premium: '$100–300/mo', coverage: 'Your car + others',                deductible: '$500–$2,000',   who: 'If your car is worth more than $8,000 (otherwise repair cost > premium savings).', color: YELLOW },
+                  { type: 'Term Life',        premium: '$20–50/mo',   coverage: '$500K–$1M death benefit',          deductible: 'N/A',           who: 'Only if someone depends on your income. Skip if you have no dependents.', color: GREEN },
+                  { type: 'Disability',       premium: '$50–150/mo',  coverage: '60–70% of income if disabled',    deductible: '90-day wait',   who: 'If you have dependents or high fixed expenses. Most overlooked coverage type.', color: '#a78bfa' },
+                ];
+                const DEDUCTIBLE_EX = [
+                  { plan: 'High-Premium Plan',  premium: 1800, deductible: 500 },
+                  { plan: 'Mid Plan',            premium: 1400, deductible: 1500 },
+                  { plan: 'High-Deductible Plan', premium: 900, deductible: 5000 },
+                ];
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Insurance Basics</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${TEAL}18`, color: TEAL }}>Sandbox · Ch. 9</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Use the expected value calculator to find when insurance is worth it, then compare premiums and coverage across the types you actually need.
+                    </div>
+
+                    {/* EV Calculator */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Expected Value Calculator</div>
+                        <div style={{ marginBottom: 18 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <span style={{ fontSize: 12, color: TEXT2, fontWeight: 600 }}>PROBABILITY OF LOSS (/yr)</span>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 800, color: TEAL }}>{insLossProb}%</span>
+                          </div>
+                          <input type="range" min="1" max="50" value={insLossProb} onChange={e => setInsLossProb(Number(e.target.value))}
+                            style={{ width: '100%', accentColor: TEAL, cursor: 'pointer' }} />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3, marginTop: 4 }}><span>1%</span><span>50%</span></div>
+                        </div>
+                        <div style={{ marginBottom: 18 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <span style={{ fontSize: 12, color: TEXT2, fontWeight: 600 }}>POTENTIAL LOSS AMOUNT</span>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 800, color: TEAL }}>${insLossAmt.toLocaleString()}</span>
+                          </div>
+                          <input type="range" min="1000" max="50000" step="1000" value={insLossAmt} onChange={e => setInsLossAmt(Number(e.target.value))}
+                            style={{ width: '100%', accentColor: TEAL, cursor: 'pointer' }} />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3, marginTop: 4 }}><span>$1,000</span><span>$50,000</span></div>
+                        </div>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <span style={{ fontSize: 12, color: TEXT2, fontWeight: 600 }}>ANNUAL PREMIUM</span>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 800, color: TEAL }}>${insPremiumAmt.toLocaleString()}/yr</span>
+                          </div>
+                          <input type="range" min="50" max="5000" step="50" value={insPremiumAmt} onChange={e => setInsPremiumAmt(Number(e.target.value))}
+                            style={{ width: '100%', accentColor: TEAL, cursor: 'pointer' }} />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3, marginTop: 4 }}><span>$50</span><span>$5,000</span></div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {[
+                          { label: 'Expected Annual Loss',     value: `$${Math.round(expectedLoss).toLocaleString()}`, sub: `${insLossProb}% × $${insLossAmt.toLocaleString()}`,          color: RED },
+                          { label: 'Annual Premium',           value: `$${insPremiumAmt.toLocaleString()}`,             sub: 'What you pay regardless of claims',                           color: TEXT2 },
+                          { label: 'Net EV of Insurance',      value: evOfInsurance >= 0 ? `+$${Math.round(evOfInsurance).toLocaleString()}` : `−$${Math.round(Math.abs(evOfInsurance)).toLocaleString()}`, sub: evOfInsurance >= 0 ? 'Insurance saves you money on average' : 'You pay more than expected loss — but coverage still has value', color: evOfInsurance >= 0 ? GREEN : YELLOW },
+                          { label: 'Break-Even Probability',   value: `${breakEvenProb.toFixed(1)}%`,                   sub: `Premium equals expected loss at this probability`,            color: TEAL },
+                        ].map(m => (
+                          <div key={m.label} style={{ ...CARD, padding: '14px 16px' }}>
+                            <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{m.label}</div>
+                            <div style={{ fontSize: 22, fontWeight: 800, fontFamily: 'monospace', color: m.color }}>{m.value}</div>
+                            <div style={{ fontSize: 11, color: TEXT3, marginTop: 3 }}>{m.sub}</div>
+                          </div>
+                        ))}
+                        <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: BORDER, fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>
+                          {evOfInsurance < 0
+                            ? 'Even with a negative EV, insurance is still worth it for large, catastrophic losses. You buy insurance for events that would financially ruin you — not just ones that are statistically likely.'
+                            : 'The premium is less than your expected annual loss — insurance is mathematically a good deal here, before even considering the catastrophic protection.'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Insurance types */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Insurance Types: What You Actually Need</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Roughly ordered by priority for a young adult</div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {['Type', 'Typical Premium', 'Coverage', 'Deductible', 'Who Needs It'].map((h, i) => (
+                              <th key={h} style={{ padding: '7px 12px', textAlign: 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {INS_TYPES.map(ins => (
+                            <tr key={ins.type} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                              <td style={{ padding: '10px 12px', fontWeight: 700, color: ins.color, whiteSpace: 'nowrap' }}>{ins.type}</td>
+                              <td style={{ padding: '10px 12px', fontFamily: 'monospace', color: TEXT2, whiteSpace: 'nowrap' }}>{ins.premium}</td>
+                              <td style={{ padding: '10px 12px', color: TEXT2 }}>{ins.coverage}</td>
+                              <td style={{ padding: '10px 12px', fontFamily: 'monospace', color: TEXT2, whiteSpace: 'nowrap' }}>{ins.deductible}</td>
+                              <td style={{ padding: '10px 12px', fontSize: 11, color: TEXT2 }}>{ins.who}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Deductible tradeoff */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>The Deductible Tradeoff</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Higher deductible = lower annual premium, but you pay more out-of-pocket when a claim hits. Break-even = premium savings / extra deductible.</div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {['Plan', 'Annual Premium', 'Deductible', 'Premium Savings vs High', 'Extra Out-of-Pocket', 'Break-Even (claim-free yr)'].map((h, i) => (
+                              <th key={h} style={{ padding: '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {DEDUCTIBLE_EX.map((d, i) => {
+                            const savings = DEDUCTIBLE_EX[0].premium - d.premium;
+                            const extraDed = d.deductible - DEDUCTIBLE_EX[0].deductible;
+                            const breakEven = savings > 0 ? (extraDed / savings).toFixed(1) : '—';
+                            return (
+                              <tr key={d.plan} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                <td style={{ padding: '9px 10px', fontWeight: 600 }}>{d.plan}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace' }}>${d.premium.toLocaleString()}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace' }}>${d.deductible.toLocaleString()}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: savings > 0 ? GREEN : TEXT3 }}>{savings > 0 ? `$${savings}` : '—'}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: extraDed > 0 ? RED : TEXT3 }}>{extraDed > 0 ? `$${extraDed.toLocaleString()}` : '—'}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: breakEven !== '—' && Number(breakEven) < 5 ? GREEN : TEXT2 }}>{breakEven !== '—' ? `${breakEven} yr` : '—'}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                      <div style={{ marginTop: 12, padding: '10px 14px', background: `${TEAL}06`, border: `1px solid ${TEAL}20`, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
+                        If you go more than 1.7 years without a claim, the High-Deductible Plan saves you money. If you expect frequent claims, the High-Premium Plan costs less overall. Healthy young adults often do better with high-deductible plans paired with an HSA.
+                      </div>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: `${TEAL}06`, border: `1px solid ${TEAL}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: TEAL }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
+                        {[
+                          { term: 'Expected Value of Insurance', formula: 'EV = (P × Loss) − Premium', body: 'If EV is positive, insurance is a good financial deal on average. But even negative-EV insurance makes sense for catastrophic risks — a $500K medical bill could be financially ruinous, making health insurance worth it regardless of EV.' },
+                          { term: 'Risk Pooling', formula: 'Insurer collects premiums · pays claims from the pool', body: 'Insurers collect from thousands of people and pay from the pool. They profit because premiums > expected claims. You benefit by transferring catastrophic risk to the pool for a known, manageable cost.' },
+                          { term: 'Deductible vs Premium', formula: 'Break-even = ΔDeductible / ΔPremium (years)', body: 'The deductible is what you pay before insurance kicks in. A higher deductible lowers your premium. Mathematically you should choose the higher deductible if you expect to go claim-free longer than the break-even period.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: TEAL, marginBottom: 6, background: `${TEAL}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
                             <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
                           </div>
                         ))}
