@@ -682,6 +682,57 @@ function FearGreedGauge({ score, rating }) {
   );
 }
 
+const DEMO_AI = {
+  cashflow: `Your spending exceeded income in 10 of the last 12 months, averaging a −$80/month deficit ($1,350 out vs $1,270 in). The sharpest shortfall was 6 months ago at −$450 — a Q3 seasonal spike. Cash flow briefly turned positive 4 and 3 months ago (+$40 and +$20) before reverting to a deficit.
+
+At −$80/month you're on pace to spend ~$960 more than you earn this year. Reducing monthly spending by just $81 (6%) closes the gap entirely. The seasonal Q3 pattern suggests discretionary categories like dining and entertainment are the primary drivers — those are the easiest to trim without lifestyle impact.`,
+
+  overview: `Net worth reached $14,696 this month (+$1,896 vs last month), driven largely by portfolio appreciation. However, a persistent −$80/month cash flow deficit quietly offsets those gains — roughly $960/year in structural spending overage.
+
+Three priorities: (1) Close the income–spending gap — even $40/month improvement compounds significantly over time. (2) Emergency fund coverage appears thin relative to your monthly outflows (~1.7 months). (3) Directing any found cash toward high-interest balances first eliminates the fastest-growing drag on net worth.`,
+};
+
+function AIInsightCard({ isDemoData, demoKey, onGetAdvice, loading, text }) {
+  const demoText = DEMO_AI[demoKey];
+  if (!demoText && !onGetAdvice) return null;
+  return (
+    <div style={{ marginTop: 16, padding: '14px 16px', background: EXAMPLE_BG, border: `1px solid var(--example-border, #1a3a6b)`, borderRadius: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
+        <span style={{ fontSize: 14, color: BLUE }}>✦</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '0.6px' }}>AI Insight</span>
+        {isDemoData && <span style={{ fontSize: 10, color: TEXT3, marginLeft: 2 }}>· demo</span>}
+      </div>
+      {isDemoData ? (
+        <div style={{ fontSize: 13, lineHeight: 1.7, color: TEXT, whiteSpace: 'pre-wrap' }}>{demoText}</div>
+      ) : (
+        <>
+          {!text && (
+            <button onClick={onGetAdvice} disabled={loading}
+              style={{ padding: '7px 16px', background: 'transparent', color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 7, cursor: loading ? 'default' : 'pointer', fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, opacity: loading ? 0.7 : 1 }}>
+              <span style={{ fontSize: 13 }}>✦</span>
+              {loading ? 'Analyzing…' : 'Analyze my data'}
+            </button>
+          )}
+          {text && (
+            <>
+              <div style={{ fontSize: 13, lineHeight: 1.7, color: TEXT, whiteSpace: 'pre-wrap' }}>{text}</div>
+              <button onClick={onGetAdvice} disabled={loading}
+                style={{ marginTop: 10, padding: '5px 12px', background: 'transparent', color: TEXT3, border: `1px solid ${MUTED}`, borderRadius: 6, cursor: loading ? 'default' : 'pointer', fontSize: 11, fontWeight: 600, opacity: loading ? 0.7 : 1 }}>
+                {loading ? 'Refreshing…' : '↺ Refresh'}
+              </button>
+            </>
+          )}
+        </>
+      )}
+      <div style={{ marginTop: 10, fontSize: 10, color: TEXT3, lineHeight: 1.5, borderTop: `1px solid var(--example-border, #1a3a6b)`, paddingTop: 8 }}>
+        {isDemoData
+          ? 'Connect your accounts to get personalized analysis on your real data.'
+          : 'AI-generated insights are informational only and do not constitute financial advice.'}
+      </div>
+    </div>
+  );
+}
+
 function AdviceBox({ onGetAdvice, loading, text }) {
   return (
     <div style={{ marginTop: 20 }}>
@@ -2398,7 +2449,7 @@ export default function Dashboard() {
 
   const effectiveProfessor = isAdmin && viewAs ? viewAs === 'professor' : isProfessor;
   const effectiveStudent   = isAdmin && viewAs ? viewAs === 'student'   : user?.role === 'student';
-  const canSeeAI           = isAdmin && !viewAs;
+  const canSeeAI           = !isDemoData;
 
   // Lock main panel scrolling while tour is active
   useEffect(() => {
@@ -2680,6 +2731,7 @@ export default function Dashboard() {
     setAdviceState(s => ({ ...s, [panelKey]: { loading: true, text: '' } }));
     const prompts = {
       overview:    'Give me a concise 3–4 bullet financial health summary and top recommendations based on my accounts, spending, and portfolio.',
+      cashflow:    'Analyze my cash flow baseline — income vs spending trends, which months are above or below baseline, and what is driving the largest deficits. Give me 3 specific, actionable steps to improve my monthly net cash flow.',
       banking:     'Analyze my recent transactions and account balances. Give me 3 specific, actionable recommendations to improve my cash management.',
       investments: 'Review my investment portfolio. Give me 3 specific insights or recommendations about my investment strategy and diversification.',
       budgeting:   'Review my spending by category. Give me 3 actionable recommendations to cut spending or improve my budget this month.',
@@ -4091,7 +4143,13 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                {canSeeAI && <AdviceBox onGetAdvice={() => getAdvice('overview')} loading={adviceState.overview?.loading} text={adviceState.overview?.text} />}
+                <AIInsightCard
+                  isDemoData={isDemoData}
+                  demoKey="overview"
+                  onGetAdvice={canSeeAI ? () => getAdvice('overview') : undefined}
+                  loading={adviceState.overview?.loading}
+                  text={adviceState.overview?.text}
+                />
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <DragSection id="stats" panel="overview" order={_ovOrder} onReorder={_ovReorder} handleTop={30}>
@@ -4182,6 +4240,13 @@ export default function Dashboard() {
                             </div>
                           );
                         })()}
+                        <AIInsightCard
+                          isDemoData={!!display.isDemo}
+                          demoKey="cashflow"
+                          onGetAdvice={canSeeAI ? () => getAdvice('cashflow') : undefined}
+                          loading={adviceState.cashflow?.loading}
+                          text={adviceState.cashflow?.text}
+                        />
                       </>
                     );
                   })()}
@@ -4575,7 +4640,7 @@ export default function Dashboard() {
                 <div>
                   <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>Banking</h1>
                   {SandboxBanner}
-                  {canSeeAI && <AdviceBox onGetAdvice={() => getAdvice('banking')} loading={adviceState.banking?.loading} text={adviceState.banking?.text} />}
+                  {canSeeAI && <AIInsightCard isDemoData={false} demoKey={null} onGetAdvice={() => getAdvice('banking')} loading={adviceState.banking?.loading} text={adviceState.banking?.text} />}
                   {activeAccounts.length === 0 ? (
                     <div style={{ ...CARD, textAlign: 'center', padding: 48, color: TEXT2, marginTop: 24 }}>
                       No accounts connected. Use the connect buttons in the sidebar.
