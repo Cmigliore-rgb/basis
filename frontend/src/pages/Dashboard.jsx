@@ -10398,22 +10398,34 @@ export default function Dashboard() {
 
                     <div style={{ ...CARD, marginTop: 20, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, color: TEXT, marginBottom: 14, fontSize: 13 }}>Key Formulas</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
-                        <div style={{ background: DARK, border: BORDER, borderRadius: 8, padding: '14px 18px' }}>
-                          <div style={{ fontSize: 10, color: '#a855f7', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Lump Sum Growth</div>
-                          <div style={{ fontFamily: 'monospace', fontSize: 15, color: TEXT }}>
-                            FV = PV × (1 + r/12)<sup style={{ fontSize: 11 }}>12t</sup>
+                      <div style={{ background: DARK, border: BORDER, borderRadius: 8, padding: '18px 20px', marginBottom: 14 }}>
+                        {/* Growth factor definition */}
+                        <div style={{ marginBottom: 16 }}>
+                          <div style={{ fontSize: 10, color: '#a855f7', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Growth Factor</div>
+                          <div style={{ fontFamily: 'monospace', fontSize: 15, color: TEXT, display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <strong style={{ color: '#a855f7' }}>g</strong>
+                            <span style={{ color: TEXT2 }}>=</span>
+                            <span>(1 + r/12)<sup style={{ fontSize: 11 }}>12t</sup></span>
                           </div>
                         </div>
-                        <div style={{ background: DARK, border: BORDER, borderRadius: 8, padding: '14px 18px' }}>
-                          <div style={{ fontSize: 10, color: '#a855f7', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>With Monthly Contributions</div>
-                          <div style={{ fontFamily: 'monospace', fontSize: 15, color: TEXT }}>
-                            FV = PV × (1 + r/12)<sup style={{ fontSize: 11 }}>12t</sup> + PMT × [(1 + r/12)<sup style={{ fontSize: 11 }}>12t</sup> - 1] / (r/12)
+                        <div style={{ borderTop: BORDER, marginBottom: 16 }} />
+                        {/* Lump sum */}
+                        <div style={{ marginBottom: 14 }}>
+                          <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 7 }}>Lump Sum</div>
+                          <div style={{ fontFamily: 'monospace', fontSize: 14, color: TEXT }}>
+                            FV = PV × <strong style={{ color: '#a855f7' }}>g</strong>
+                          </div>
+                        </div>
+                        {/* With contributions */}
+                        <div>
+                          <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 7 }}>With Monthly Contributions</div>
+                          <div style={{ fontFamily: 'monospace', fontSize: 14, color: TEXT }}>
+                            FV = PV × <strong style={{ color: '#a855f7' }}>g</strong> + PMT × (<strong style={{ color: '#a855f7' }}>g</strong> - 1) / (r/12)
                           </div>
                         </div>
                       </div>
                       <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.8 }}>
-                        <strong style={{ color: TEXT }}>PV</strong> = present value &nbsp;·&nbsp; <strong style={{ color: TEXT }}>PMT</strong> = monthly contribution &nbsp;·&nbsp; <strong style={{ color: TEXT }}>r</strong> = annual rate &nbsp;·&nbsp; <strong style={{ color: TEXT }}>t</strong> = years
+                        <strong style={{ color: TEXT }}>g</strong> = growth factor &nbsp;·&nbsp; <strong style={{ color: TEXT }}>PV</strong> = present value &nbsp;·&nbsp; <strong style={{ color: TEXT }}>PMT</strong> = monthly contribution &nbsp;·&nbsp; <strong style={{ color: TEXT }}>r</strong> = annual rate &nbsp;·&nbsp; <strong style={{ color: TEXT }}>t</strong> = years
                       </div>
                     </div>
 
