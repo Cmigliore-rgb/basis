@@ -1078,7 +1078,7 @@ const LEARN_CONTENT = [
       { id: 'debt-payoff', title: 'Debt Payoff: Avalanche vs. Snowball', icon: '❄️',
         summary: 'Two proven strategies for eliminating debt: one saves more money, the other builds momentum.',
         body: 'Avalanche method: pay minimums on all debts, put every extra dollar toward the highest-interest debt first. Mathematically optimal, it saves the most in interest. Snowball method: pay minimums on all debts, put every extra dollar toward the smallest balance first. Psychologically powerful, quick wins keep you motivated. Both beat paying randomly. Credit card debt (18–29% APR) is almost always the highest priority regardless of method.',
-        formula: 'Avalanche: sort by APR descending   |   Snowball: sort by balance ascending',
+        formula: 'Avalanche: sort by APR descending  ·  Snowball: sort by balance ascending',
         example: 'Debts: $500 credit card at 24%, $3,000 car loan at 6%, $8,000 student loan at 4.5%. Avalanche: attack the credit card first. Snowball: same answer here since the smallest balance is also the highest rate. Avalanche wins when the orders diverge.',
         datasetId: 'ds-debt' },
       { id: 'taxes-101', title: 'Taxes 101', icon: '🧾',
@@ -1090,7 +1090,7 @@ const LEARN_CONTENT = [
       { id: 'inflation', title: 'Inflation & Purchasing Power', icon: '📉',
         summary: 'Inflation erodes the value of cash over time. Your real return is what\'s left after subtracting inflation.',
         body: 'The Consumer Price Index (CPI) measures average price changes across a basket of goods. The Fed targets 2% annual inflation. At 3% inflation, $1,000 today buys what $744 buys in 10 years. This is why holding cash is a losing proposition long-term; it loses purchasing power each year. Real return = nominal return minus inflation. A savings account at 1% when inflation is 3% = −2% real return.',
-        formula: 'Real Return ≈ Nominal Return − Inflation Rate   |   Future Purchasing Power = PV ÷ (1 + i)ⁿ',
+        formula: 'Real Return ≈ Nominal Return − Inflation Rate  ·  Future Purchasing Power = PV ÷ (1 + i)ⁿ',
         example: 'Your HYSA earns 5% APY and inflation is 3.1% → real return ≈ 1.9%. S&P 500 historical nominal return ≈ 10%/yr, real return ≈ 7%/yr after inflation.',
         datasetId: 'ds-inflation' },
       { id: 'compound', title: 'Compound Interest', icon: '🔁',
@@ -1126,19 +1126,19 @@ const LEARN_CONTENT = [
       { id: 'bull-bear', title: 'Bull vs. Bear Markets', icon: '🐂',
         summary: 'A bull market rises 20%+ from a recent low; a bear market falls 20%+ from a recent high.',
         body: 'Bull markets are periods of rising prices and investor optimism, typically driven by strong economic growth. Bear markets are prolonged downturns of 20% or more, often linked to recessions. The average bull market lasts ~5 years; the average bear market lasts ~9 months.',
-        formula: 'Bull: Price ≥ +20% from recent low   |   Bear: Price ≤ −20% from recent high',
+        formula: 'Bull: price ≥ +20% from recent low  ·  Bear: price ≤ −20% from recent high',
         example: 'The 2020 COVID crash was a bear market (−34% in 33 days), followed by one of history\'s fastest bull recoveries.',
         datasetId: 'ds-bull-bear' },
       { id: 'feargreed', title: 'Fear & Greed Index', icon: '🌡️',
         summary: 'A CNN composite score (0–100) measuring whether investors are fearful or greedy.',
         body: 'The index combines 7 indicators: stock price momentum, stock price strength, stock price breadth, put/call ratio, junk bond demand, market volatility (VIX), and safe-haven demand. Extreme Fear (0–25) often signals a buying opportunity; Extreme Greed (75–100) may signal overvaluation.',
-        formula: 'Score = equal-weight avg of 7 signals   |   0–24: Extreme Fear · 25–49: Fear · 50–74: Greed · 75–100: Extreme Greed',
+        formula: 'Score = avg of 7 signals  ·  0–24: Extreme Fear  ·  25–49: Fear  ·  50–74: Greed  ·  75–100: Extreme Greed',
         example: 'A score of 18 means "Extreme Fear," historically a period where patient investors buy at a discount.',
         datasetId: 'ds-feargreed' },
       { id: 'retirement-accounts', title: 'Roth IRA & 401(k)', icon: '🏦',
         summary: 'Tax-advantaged accounts that are the single most powerful tools for building long-term wealth.',
         body: '401(k): Pre-tax contributions reduce your taxable income today; you pay taxes on withdrawal in retirement. Always contribute at least enough to get the full employer match, since that\'s a 50–100% instant return. Roth IRA: Post-tax contributions; all growth is tax-free forever. 2025 limits: 401(k) = $23,500, IRA = $7,000. The optimal order: 401(k) to match → Roth IRA to max → 401(k) to max.',
-        formula: 'After-tax value: Traditional 401k = Balance × (1 − tax rate at withdrawal)  |  Roth IRA = Balance × 1',
+        formula: 'Traditional 401k: Balance × (1 − tax rate at withdrawal)  ·  Roth IRA: Balance (tax-free)',
         example: '$6,000/yr in a Roth IRA at 22, growing at 8%, is worth $1.68M tax-free at 65. Same money in a taxable account at 22% cap gains tax → ~$1.31M.',
         datasetId: 'ds-retirement' },
       { id: 'insurance', title: 'Insurance Basics', icon: '☂️',
@@ -1173,12 +1173,12 @@ const LEARN_CONTENT = [
       { id: 'tenk', title: 'Reading a 10-K', icon: '📑',
         summary: 'The SEC annual report and the most information-dense document a public company produces.',
         body: 'A 10-K has four critical sections: (1) Business, covering what the company does and how it makes money; (2) Risk Factors, management\'s own list of what could go wrong (read these seriously); (3) MD&A (Management Discussion & Analysis), management\'s narrative on results, often more useful than the numbers alone; (4) Financial Statements: income statement, balance sheet, cash flow statement, and footnotes. The footnotes reveal revenue recognition policies, debt covenants, and off-balance-sheet items.',
-        formula: 'Net Income = Revenue − COGS − OpEx − Interest − Taxes   |   FCF = Operating Cash Flow − CapEx',
+        formula: 'Net Income = Revenue − COGS − OpEx − Interest − Taxes  ·  FCF = Operating Cash Flow − CapEx',
         example: 'Apple\'s 10-K risk factors note "dependence on a single supplier for components" and "foreign exchange exposure." These aren\'t boilerplate; analysts model around them.' },
       { id: 'marketcap', title: 'Market Cap & Enterprise Value', icon: '🏢',
         summary: 'Market cap is what equity costs to buy; enterprise value is what the whole business costs.',
         body: 'Market Cap = Share Price × Shares Outstanding. Enterprise Value (EV) = Market Cap + Total Debt − Cash. EV represents the theoretical takeover price, what you\'d pay for the entire business net of cash you\'d receive. EV/EBITDA is the most common valuation multiple because it\'s capital-structure neutral (unlike P/E).',
-        formula: 'EV = Market Cap + Debt − Cash   |   EV/EBITDA = comparable valuation multiple',
+        formula: 'EV = Market Cap + Debt − Cash  ·  EV/EBITDA = comparable valuation multiple',
         example: 'Apple: $3T market cap, ~$100B debt, ~$60B cash → EV ≈ $3.04T. If EBITDA = $135B → EV/EBITDA ≈ 22.5×.' },
       { id: 'fi-pricing', title: 'Bond Pricing & YTM', icon: '💲',
         summary: 'Bond price = present value of all cash flows. YTM is the single rate that explains the price.',
@@ -1203,7 +1203,7 @@ const LEARN_CONTENT = [
       { id: 'calls-puts', title: 'Options: Calls & Puts', icon: '⚖️',
         summary: 'A call gives the right to buy; a put gives the right to sell.',
         body: 'A call option gives you the right (but not obligation) to buy 100 shares of a stock at the strike price before expiration. You buy calls when you expect the stock to rise. A put option gives you the right to sell 100 shares at the strike price; buy puts when you expect a decline or want downside protection. Options are used by portfolio managers to hedge positions and by analysts to imply market expectations.',
-        formula: 'Call Payoff = max(S − K, 0)   |   Put Payoff = max(K − S, 0)   |   Profit = Payoff − Premium',
+        formula: 'Call Payoff = max(S − K, 0)  ·  Put Payoff = max(K − S, 0)  ·  Profit = Payoff − Premium',
         example: 'You buy an AAPL $200 call expiring in 30 days for $3.50 ($350 total). If AAPL hits $215, your call is worth ~$15, a 4x gain.' },
       { id: 'iv', title: 'Implied Volatility', icon: '〰️',
         summary: 'The market\'s forecast of future price movement, derived from option prices.',
@@ -1604,15 +1604,15 @@ const PREBUILT_DATASETS = [
   },
   {
     id: 'ds-debt',       title: 'Debt Payoff: Avalanche vs. Snowball', subtitle: 'Credit · Ch. 5',
-    description: 'Four debts totaling $19,980 — credit card at 24%, personal loan at 18%, car loan at 7.2%, student loan at 4.5% — with $200/month extra to allocate.',
+    description: 'Four debts totaling $19,980: credit card at 24%, personal loan at 18%, car loan at 7.2%, and student loan at 4.5%, with $200/month extra to allocate.',
     category: 'Credit',     color: '#f43f5e',  difficulty: 'Intermediate',
     concepts: ['Avalanche Method', 'Snowball Method', 'APR vs. Balance Priority', 'Total Interest Paid', 'Payoff Timeline'],
     stats: [['Total Debt', '$19,980'], ['Extra/Month', '$200'], ['Accounts', '4']],
-    overview: 'Students run both payoff strategies side by side, calculate total interest paid and months to debt-free under each, and determine when the two methods diverge — and by how much the avalanche saves over the snowball.',
+    overview: 'Students run both payoff strategies side by side, calculate total interest paid and months to debt-free under each, and determine when the two methods diverge and by how much the avalanche saves over the snowball.',
   },
   {
     id: 'ds-emergency',  title: 'Emergency Fund Builder',          subtitle: 'Savings · Ch. 7',
-    description: 'A 22-year-old with $1,924/month in expenses and only $800 in savings — far below the 3-month target of $5,772.',
+    description: 'A 22-year-old with $1,924/month in expenses and only $800 saved, far below the 3-month target of $5,772.',
     category: 'Savings',    color: '#06b6d4',  difficulty: 'Beginner',
     concepts: ['3–6 Month Rule', 'HYSA vs. Checking', 'Monthly Savings Rate', 'Opportunity Cost'],
     stats: [['Monthly Expenses', '$1,924'], ['Current Savings', '$800'], ['3-Mo Target', '$5,772']],
@@ -11518,7 +11518,7 @@ export default function Dashboard() {
 
                 const scheduleRows = [];
                 let bal = currentSavings;
-                for (let m = 1; m <= Math.min(months3mo > 0 && isFinite(months3mo) ? months3mo + 2 : 18, 18); m++) {
+                for (let m = 1; m <= (isFinite(months3mo) ? Math.min(months3mo + 2, 36) : 18); m++) {
                   const interest = bal * (hysaRate / 100 / 12);
                   bal += extra + interest;
                   scheduleRows.push({ month: m, contribution: extra, interest: +interest.toFixed(2), balance: +bal.toFixed(2), reached3: bal >= target3mo, reached6: bal >= target6mo });
@@ -11849,7 +11849,7 @@ export default function Dashboard() {
                       <div style={{ fontWeight: 700, fontSize: 13, color: PINK, marginBottom: 14 }}>Key Concepts</div>
                       <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
                         {[
-                          { term: 'Avalanche Method', body: 'Pay minimums on everything, then put all extra toward the highest-APR debt. Mathematically optimal — always minimizes total interest paid. Best if you\'re disciplined and numbers-driven.' },
+                          { term: 'Avalanche Method', body: 'Pay minimums on everything, then put all extra toward the highest-APR debt. Mathematically optimal: always minimizes total interest paid. Best if you\'re disciplined and numbers-driven.' },
                           { term: 'Snowball Method',  body: 'Pay minimums on everything, then attack the smallest balance first. Provides quick "wins" that build momentum and motivation. Best if you struggle with consistency or have many small accounts.' },
                         ].map(c => (
                           <div key={c.term}>
@@ -12653,7 +12653,7 @@ export default function Dashboard() {
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
                         {[
                           { term: 'Market-Cap Weighting', formula: 'w_i = (P_i × Shares_i) / Σ(P_j × Shares_j)', body: 'Used by S&P 500 and Nasdaq. Larger companies have more influence. Criticized for letting overvalued mega-caps dominate, but praised for reflecting the actual investable market.' },
-                          { term: 'Price Weighting', formula: 'w_i = P_i / Σ P_j', body: 'Used by the DJIA. A $1 move in any stock moves the index by the same number of points regardless of company size. Widely considered outdated — a stock split can drastically change weight.' },
+                          { term: 'Price Weighting', formula: 'w_i = P_i / Σ P_j', body: 'Used by the DJIA. A $1 move in any stock moves the index by the same number of points regardless of company size. Widely considered outdated, since a stock split can drastically change weight.' },
                           { term: 'The Divisor', formula: 'Index = Σ(P_i × w_i) / Divisor', body: 'A number maintained by the index to keep values continuous across stock splits, dividends, and composition changes. The S&P 500 divisor is adjusted whenever a company is added or removed.' },
                         ].map(c => (
                           <div key={c.term}>
@@ -13035,7 +13035,7 @@ export default function Dashboard() {
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
                         {[
                           { term: 'Contrarian Investing', formula: 'Buy fear, sell greed', body: 'When everyone is panicking, assets are cheap. When everyone is euphoric, assets are expensive. The Fear & Greed Index helps identify these extremes, though it doesn\'t tell you the exact turning point.' },
-                          { term: 'The VIX', formula: 'VIX = implied volatility of S&P 500 options', body: 'The "fear gauge." Spikes above 30 signal panic; readings below 15 signal complacency. A sudden VIX spike is often a buying opportunity. The index is mean-reverting — extreme readings don\'t last long.' },
+                          { term: 'The VIX', formula: 'VIX = implied volatility of S&P 500 options', body: 'The "fear gauge." Spikes above 30 signal panic; readings below 15 signal complacency. A sudden VIX spike is often a buying opportunity. The index is mean-reverting, so extreme readings don\'t last long.' },
                           { term: 'Sentiment vs. Fundamentals', formula: 'Price = Fundamentals + Sentiment', body: 'Short-term prices are driven heavily by sentiment. Long-term prices revert to fundamentals (earnings, growth, rates). The Fear & Greed Index measures sentiment, not value. Use both.' },
                         ].map(c => (
                           <div key={c.term}>
@@ -13371,7 +13371,7 @@ export default function Dashboard() {
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: TEAL }}>Key Concepts</div>
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
                         {[
-                          { term: 'Expected Value of Insurance', formula: 'EV = (P × Loss) − Premium', body: 'If EV is positive, insurance is a good financial deal on average. But even negative-EV insurance makes sense for catastrophic risks — a $500K medical bill could be financially ruinous, making health insurance worth it regardless of EV.' },
+                          { term: 'Expected Value of Insurance', formula: 'EV = (P × Loss) − Premium', body: 'If EV is positive, insurance is a good financial deal on average. But even negative-EV insurance makes sense for catastrophic risks: a $500K medical bill could be financially ruinous, making health insurance worth it regardless of EV.' },
                           { term: 'Risk Pooling', formula: 'Insurer collects premiums · pays claims from the pool', body: 'Insurers collect from thousands of people and pay from the pool. They profit because premiums > expected claims. You benefit by transferring catastrophic risk to the pool for a known, manageable cost.' },
                           { term: 'Deductible vs Premium', formula: 'Break-even = ΔDeductible / ΔPremium (years)', body: 'The deductible is what you pay before insurance kicks in. A higher deductible lowers your premium. Mathematically you should choose the higher deductible if you expect to go claim-free longer than the break-even period.' },
                         ].map(c => (
