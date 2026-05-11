@@ -81,7 +81,6 @@ export default function Login() {
         auth: { clientId: MICROSOFT_CLIENT_ID, authority: 'https://login.microsoftonline.com/common', redirectUri: window.location.origin },
         cache: { cacheLocation: 'sessionStorage', storeAuthStateInCookie: false },
       });
-      await msalApp.initialize();
       const result = await msalApp.loginPopup({ scopes: ['openid', 'email', 'profile'] });
       const { data } = await api.post('/auth/microsoft', { id_token: result.idToken });
       login(data.token, data.user);
