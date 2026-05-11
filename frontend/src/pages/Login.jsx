@@ -28,6 +28,12 @@ const FEATURES = [
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
   const [form, setForm]         = useState({ email: '', password: '' });
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
@@ -128,7 +134,7 @@ export default function Login() {
     <div style={{ minHeight: '100vh', display: 'flex', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
 
       {/* ── Left: dark brand panel ─────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 64px', background: L_BG, minWidth: 0 }}>
+      <div style={{ flex: 1, display: isMobile ? 'none' : 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 64px', background: L_BG, minWidth: 0 }}>
         <div style={{ maxWidth: 440 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
             <img src="/logo-icon.svg" alt="" style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0 }} />
@@ -157,7 +163,13 @@ export default function Login() {
       </div>
 
       {/* ── Right: dark login form ────────────────────────── */}
-      <div style={{ width: 460, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 48px', background: R_BG }}>
+      <div style={{ width: isMobile ? '100%' : 460, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: isMobile ? 'flex-start' : 'center', padding: isMobile ? '48px 24px 40px' : '60px 48px', background: R_BG, minHeight: '100vh', overflowY: 'auto' }}>
+        {isMobile && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36 }}>
+            <img src="/logo-icon.svg" alt="" style={{ width: 32, height: 32, borderRadius: 8 }} />
+            <span style={{ fontSize: 20, fontWeight: 700, color: TEXT, letterSpacing: '-0.5px' }}>PeakLedger</span>
+          </div>
+        )}
 
         {/* ── 2FA challenge ── */}
         {twoFactor ? (

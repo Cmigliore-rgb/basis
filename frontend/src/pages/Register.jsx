@@ -42,6 +42,12 @@ const HIGHLIGHTS = [
 export default function Register() {
   const { login } = useAuth();
   const navigate  = useNavigate();
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
   const [form, setForm]           = useState({ name: '', email: '', password: '', role: 'user', courseCode: '' });
   const [error, setError]         = useState('');
   const [loading, setLoading]     = useState(false);
@@ -158,7 +164,7 @@ export default function Register() {
     <div style={{ minHeight: '100vh', display: 'flex', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
 
       {/* ── Left: dark brand panel ─────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 64px', background: L_BG, minWidth: 0 }}>
+      <div style={{ flex: 1, display: isMobile ? 'none' : 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 64px', background: L_BG, minWidth: 0 }}>
         <div style={{ maxWidth: 440 }}>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
@@ -190,7 +196,13 @@ export default function Register() {
       </div>
 
       {/* ── Right: dark registration form ────────────────── */}
-      <div style={{ width: 480, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 48px', background: R_BG, overflowY: 'auto' }}>
+      <div style={{ width: isMobile ? '100%' : 480, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: isMobile ? 'flex-start' : 'center', padding: isMobile ? '48px 24px 40px' : '48px 48px', background: R_BG, overflowY: 'auto', minHeight: '100vh' }}>
+        {isMobile && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
+            <img src="/logo-icon.svg" alt="" style={{ width: 32, height: 32, borderRadius: 8 }} />
+            <span style={{ fontSize: 20, fontWeight: 700, color: TEXT, letterSpacing: '-0.5px' }}>PeakLedger</span>
+          </div>
+        )}
         <div style={{ marginBottom: 28 }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: TEXT, letterSpacing: '-0.5px' }}>Create your account</div>
           <div style={{ fontSize: 14, color: TEXT2, marginTop: 6 }}>
