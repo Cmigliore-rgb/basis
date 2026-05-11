@@ -1103,7 +1103,8 @@ const LEARN_CONTENT = [
         summary: 'Invest a fixed amount on a regular schedule to remove emotion and timing risk from investing.',
         body: 'Dollar-cost averaging (DCA) means investing the same dollar amount at regular intervals (weekly, monthly) regardless of market conditions. When prices are low, your fixed amount buys more shares. When prices are high, it buys fewer. Over time, your average cost per share is lower than if you had tried to time the market. The biggest benefit is behavioral: you can\'t panic-sell if you\'re on autopilot.',
         formula: 'Avg Cost per Share = Total Amount Invested ÷ Total Shares Purchased',
-        example: 'Invest $500/mo in an S&P 500 index fund for 12 months. Month 3 crashes 15%, so you buy 15% more shares that month. Average purchase price ends up lower than the year\'s average price, even with the crash.' },
+        example: 'Invest $500/mo in an S&P 500 index fund for 12 months. Month 3 crashes 15%, so you buy 15% more shares that month. Average purchase price ends up lower than the year\'s average price, even with the crash.',
+        datasetId: 'ds-dca' },
       { id: 'allocation', title: 'Asset Allocation', icon: '🥧',
         summary: 'How your money is split across different asset classes to balance risk and return.',
         body: 'The classic guideline: subtract your age from 110 to get your stock percentage (the rest in bonds). At 25: 85% stocks, 15% bonds. At 60: 50% stocks, 50% bonds. Stocks offer higher long-term returns but more volatility. Bonds are more stable but lower return. Cash provides safety but loses to inflation over time.',
@@ -1114,7 +1115,8 @@ const LEARN_CONTENT = [
         summary: 'Spreading investments across assets so one loss doesn\'t sink your portfolio.',
         body: 'Diversification reduces unsystematic risk, the kind specific to one company or sector. A portfolio of 20–30 uncorrelated stocks eliminates most company-specific risk. Index funds provide instant diversification across hundreds or thousands of companies. Geographic diversification (international stocks) reduces country-specific risk.',
         formula: 'σ_portfolio < average(σ_individual) when correlations < 1',
-        example: 'Holding only one tech stock is high risk. Holding an S&P 500 index fund means one company\'s bankruptcy barely moves your portfolio.' },
+        example: 'Holding only one tech stock is high risk. Holding an S&P 500 index fund means one company\'s bankruptcy barely moves your portfolio.',
+        datasetId: 'ds-diversification' },
       { id: 'indices', title: 'Market Indices', icon: '📈',
         summary: 'Benchmarks that track a basket of stocks to measure overall market performance.',
         body: 'The S&P 500 tracks the 500 largest U.S. companies and is the most widely used measure of stock market health. The Dow Jones Industrial Average (DJIA) tracks just 30 large blue-chip companies. The Nasdaq Composite is tech-heavy and includes over 3,000 companies listed on the Nasdaq exchange.',
@@ -1635,6 +1637,22 @@ const PREBUILT_DATASETS = [
     stats: [['Starting Amount', '$10,000'], ['Inflation Rate', '3%/yr'], ['20-Year Value', '$5,537']],
     overview: 'Students adjust starting amount, inflation rate, and time horizon to watch purchasing power decay in real time, and compare what happens if that money is invested instead.',
   },
+  {
+    id: 'ds-dca',        title: 'Dollar-Cost Averaging',           subtitle: 'Investments · Ch. 8',
+    description: 'Simulate monthly investing vs. lump sum across steady, volatile, and bear-start market scenarios. See how DCA lowers your average cost per share.',
+    category: 'Investing',  color: '#4da3ff',  difficulty: 'Beginner',
+    concepts: ['Average Cost per Share', 'Market Timing', 'Behavioral Finance', 'FV of Annuity'],
+    stats: [['Monthly', '$200'], ['10-Year FV', '$41,040'], ['Bear Start Advantage', '+$308']],
+    overview: 'Students simulate 12 months of DCA purchases across market scenarios, calculate average cost per share vs. lump sum, and project 10-30 year portfolio growth using the annuity formula.',
+  },
+  {
+    id: 'ds-diversification', title: 'Diversification & Risk',    subtitle: 'Investments · Ch. 8',
+    description: 'Watch portfolio volatility fall as you add more stocks. Compare single-stock risk to a sector ETF to a 500-stock index fund.',
+    category: 'Investing',  color: '#4ade80',  difficulty: 'Intermediate',
+    concepts: ['Systematic Risk', 'Unsystematic Risk', 'Correlation', 'Modern Portfolio Theory'],
+    stats: [['Single Stock', '30% vol'], ['S&P 500', '16.4% vol'], ['Risk Eliminated', '~95%']],
+    overview: 'Students drag the stock-count slider to watch the risk reduction curve, compare single-stock vs. index volatility, and identify which risks diversification can and cannot eliminate.',
+  },
 ];
 
 const MAJOR_ASSIGNMENTS = [
@@ -1823,8 +1841,10 @@ const DATASET_TARGET_PANEL = {
   'ds-housing':    'edu-sandbox',
   'ds-emergency':  'edu-sandbox',
   'ds-debt':       'edu-sandbox',
-  'ds-taxes':      'edu-sandbox',
-  'ds-inflation':  'edu-sandbox',
+  'ds-taxes':            'edu-sandbox',
+  'ds-inflation':        'edu-sandbox',
+  'ds-dca':              'edu-sandbox',
+  'ds-diversification':  'edu-sandbox',
 };
 
 const SANDBOX_DATA = (() => {
@@ -2347,6 +2367,10 @@ export default function Dashboard() {
   const [inflAmount, setInflAmount] = useState(10000);
   const [inflRate, setInflRate] = useState(3);
   const [inflYears, setInflYears] = useState(20);
+  const [dcaMonthly, setDcaMonthly] = useState(200);
+  const [dcaYears, setDcaYears] = useState(10);
+  const [dcaScenario, setDcaScenario] = useState('volatile');
+  const [divStocks, setDivStocks] = useState(1);
   const [housingRate, setHousingRate]     = useState('');
   const [housingDown, setHousingDown]     = useState('');
   const [housingIncome, setHousingIncome] = useState('');
@@ -11937,6 +11961,331 @@ export default function Dashboard() {
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{c.term}</div>
                             <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── DOLLAR-COST AVERAGING ─────────────────────────────────────────
+              if (sandboxDataset === 'ds-dca') {
+                const SCENARIOS = {
+                  steady:    { label: 'Steady Growth',     prices: [50, 50.4, 50.8, 51.3, 51.7, 52.1, 52.6, 53.0, 53.5, 53.9, 54.4, 54.9], color: GREEN,     desc: 'Market climbs steadily ~10%/yr. Lump sum wins here since more cash is in the market sooner.' },
+                  volatile:  { label: 'Volatile Market',   prices: [50, 58, 43, 38, 45, 52, 47, 41, 49, 56, 52, 53],                          color: YELLOW,    desc: 'Big swings up and down, ending near the start. DCA buys more shares during dips, lowering average cost.' },
+                  bearStart: { label: 'Bear Then Recovery', prices: [50, 46, 43, 40, 38, 37, 40, 44, 48, 52, 56, 60],                          color: '#f97316', desc: 'Market falls first, then recovers. DCA accumulates cheap shares during the decline and profits most on the rebound.' },
+                };
+                const sc = SCENARIOS[dcaScenario];
+                const prices = sc.prices;
+                const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const minPrice = Math.min(...prices), maxPrice = Math.max(...prices);
+                const cheapThreshold = minPrice + (maxPrice - minPrice) * 0.30;
+                let runShares = 0, runInvested = 0;
+                const rows = prices.map((price, i) => {
+                  const sharesBought = dcaMonthly / price;
+                  runShares += sharesBought; runInvested += dcaMonthly;
+                  return { month: MONTHS[i], price, sharesBought, totalShares: runShares, avgCost: runInvested / runShares, isCheap: price <= cheapThreshold };
+                });
+                const finalPrice = prices[prices.length - 1];
+                const totalInvested = dcaMonthly * 12;
+                const dcaShares = runShares, dcaAvgCost = totalInvested / dcaShares;
+                const dcaFinalValue = dcaShares * finalPrice, dcaGain = dcaFinalValue - totalInvested;
+                const lsShares = totalInvested / prices[0];
+                const lsFinalValue = lsShares * finalPrice, lsGain = lsFinalValue - totalInvested;
+                const r = 0.10 / 12;
+                const longTermFV = dcaMonthly * ((Math.pow(1 + r, dcaYears * 12) - 1) / r);
+                const longTermInvested = dcaMonthly * dcaYears * 12;
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Dollar-Cost Averaging</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${BLUE}18`, color: BLUE }}>Sandbox · Ch. 8</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Invest a fixed amount every month vs. all at once. Watch how consistent buying lowers your average cost per share across different market conditions.
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                      {/* Controls */}
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>Settings</div>
+                        <div style={{ marginBottom: 18 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <span style={{ fontSize: 12, color: TEXT2, fontWeight: 600 }}>MONTHLY INVESTMENT</span>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 700, color: BLUE }}>${dcaMonthly}</span>
+                          </div>
+                          <input type="range" min="50" max="500" step="50" value={dcaMonthly}
+                            onChange={e => setDcaMonthly(Number(e.target.value))}
+                            style={{ width: '100%', accentColor: BLUE, cursor: 'pointer' }} />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3, marginTop: 4 }}><span>$50</span><span>$500</span></div>
+                        </div>
+                        <div style={{ marginBottom: 14 }}>
+                          <div style={{ fontSize: 12, color: TEXT2, fontWeight: 600, marginBottom: 8 }}>MARKET SCENARIO</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {Object.entries(SCENARIOS).map(([key, s]) => (
+                              <button key={key} onClick={() => setDcaScenario(key)}
+                                style={{ padding: '8px 12px', borderRadius: 8, border: `1px solid ${dcaScenario === key ? s.color : BORDER_C}`, background: dcaScenario === key ? `${s.color}15` : 'transparent', color: dcaScenario === key ? s.color : TEXT2, fontSize: 12, fontWeight: dcaScenario === key ? 700 : 400, cursor: 'pointer', textAlign: 'left' }}>
+                                {s.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ padding: '10px 12px', background: `${sc.color}10`, border: `1px solid ${sc.color}30`, borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>
+                          {sc.desc}
+                        </div>
+                      </div>
+
+                      {/* 12-month summary cards */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {[
+                          { label: 'Total Invested (12 mo)', value: `$${totalInvested.toLocaleString()}`, sub: '12 monthly purchases', color: TEXT },
+                          { label: 'DCA Avg Cost / Share', value: `$${dcaAvgCost.toFixed(2)}`, sub: `vs. $${prices[0].toFixed(2)} lump-sum entry price`, color: dcaAvgCost < prices[0] ? GREEN : RED },
+                          { label: 'DCA Final Value', value: `$${dcaFinalValue.toFixed(0)}`, sub: `${dcaGain >= 0 ? '+' : ''}$${Math.abs(dcaGain).toFixed(0)} gain`, color: dcaGain >= 0 ? GREEN : RED },
+                          { label: 'Lump Sum Final Value', value: `$${lsFinalValue.toFixed(0)}`, sub: `${lsGain >= 0 ? '+' : ''}$${Math.abs(lsGain).toFixed(0)} gain`, color: lsGain >= 0 ? GREEN : RED },
+                        ].map(m => (
+                          <div key={m.label} style={{ ...CARD, padding: '14px 16px' }}>
+                            <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{m.label}</div>
+                            <div style={{ fontSize: 22, fontWeight: 800, fontFamily: 'monospace', color: m.color }}>{m.value}</div>
+                            <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Month-by-month table */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Month-by-Month Purchase Log</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Each month you invest ${dcaMonthly}. Highlighted rows are the cheapest months — when DCA buys the most shares.</div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Month', 'Share Price', 'Shares Bought', 'Running Shares', 'Avg Cost'].map((h, i) => (
+                                <th key={h} style={{ padding: '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((row, i) => (
+                              <tr key={i} style={{ borderBottom: `1px solid ${BORDER_C}`, background: row.isCheap ? `${GREEN}08` : 'transparent' }}>
+                                <td style={{ padding: '9px 10px', fontWeight: 500 }}>{row.month}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: row.isCheap ? GREEN : TEXT }}>${row.price.toFixed(2)}{row.isCheap ? ' ↓' : ''}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: row.isCheap ? GREEN : TEXT }}>{row.sharesBought.toFixed(3)}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace' }}>{row.totalShares.toFixed(3)}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: row.avgCost < prices[0] ? GREEN : TEXT2 }}>${row.avgCost.toFixed(2)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Long-term projection */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Long-Term Wealth Building · ${dcaMonthly}/month</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Assuming 10% average annual return (S&P 500 historical average)</div>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                        {[5, 10, 20, 30].map(y => (
+                          <button key={y} onClick={() => setDcaYears(y)}
+                            style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: `1px solid ${dcaYears === y ? BLUE : BORDER_C}`, background: dcaYears === y ? `${BLUE}18` : 'transparent', color: dcaYears === y ? BLUE : TEXT2, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                            {y} yr
+                          </button>
+                        ))}
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12, marginBottom: 16 }}>
+                        {[
+                          { label: 'Total Contributed', value: `$${longTermInvested.toLocaleString()}`, color: TEXT2 },
+                          { label: 'Portfolio Value', value: `$${Math.round(longTermFV).toLocaleString()}`, color: GREEN },
+                          { label: 'Total Gain', value: `+$${Math.round(longTermFV - longTermInvested).toLocaleString()}`, color: GREEN },
+                        ].map(m => (
+                          <div key={m.label} style={{ padding: '14px 16px', background: DARK, borderRadius: 10, border: BORDER }}>
+                            <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>{m.label}</div>
+                            <div style={{ fontSize: 22, fontWeight: 800, fontFamily: 'monospace', color: m.color }}>{m.value}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {['Year', 'Contributed', 'Portfolio Value', 'Gain', 'Multiple'].map((h, i) => (
+                              <th key={h} style={{ padding: '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[1, 5, 10, 20, 30].filter(y => y <= dcaYears).map(yr => {
+                            const inv = dcaMonthly * yr * 12;
+                            const fv  = dcaMonthly * ((Math.pow(1 + r, yr * 12) - 1) / r);
+                            const mult = fv / inv;
+                            return (
+                              <tr key={yr} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                <td style={{ padding: '9px 10px', fontWeight: 600 }}>Year {yr}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>${inv.toLocaleString()}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: BLUE, fontWeight: 700 }}>${Math.round(fv).toLocaleString()}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>+${Math.round(fv - inv).toLocaleString()}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: mult >= 2 ? GREEN : TEXT }}>{mult.toFixed(2)}x</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: `${BLUE}06`, border: `1px solid ${BLUE}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: BLUE }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
+                        {[
+                          { term: 'Average Cost per Share', formula: 'Total $ Invested ÷ Total Shares Bought', body: 'DCA usually achieves a lower average cost than the period\'s average price because you buy more shares when prices are low and fewer when they are high.' },
+                          { term: 'DCA vs. Lump Sum', formula: 'Lump sum wins ~2/3 of the time in rising markets', body: 'Mathematically, lump sum outperforms DCA in a steadily rising market. DCA\'s real value is behavioral: it removes the temptation to time the market and keeps you investing consistently.' },
+                          { term: 'FV of Monthly Contributions', formula: 'FV = PMT × [(1 + r)ⁿ − 1] / r', body: 'PMT = monthly amount, r = monthly rate (annual ÷ 12), n = total months. At 10%/yr for 30 years, every $100/month grows to ~$226,000.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: BLUE, marginBottom: 6, background: `${BLUE}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── DIVERSIFICATION & RISK ────────────────────────────────────────
+              if (sandboxDataset === 'ds-diversification') {
+                const DGREEN = '#4ade80';
+                const singleVol = 0.30, avgCorr = 0.30;
+                const portVol = n => Math.sqrt((singleVol ** 2 / n) + ((n - 1) / n) * singleVol ** 2 * avgCorr);
+                const marketRisk = singleVol * Math.sqrt(avgCorr);
+                const curVol = portVol(divStocks);
+                const unsystRisk = Math.max(0, curVol - marketRisk);
+                const elimPct = Math.round(((singleVol - curVol) / (singleVol - marketRisk)) * 100);
+                const COMPARISONS = [
+                  { label: 'Single Stock',   n: 1,   example: 'e.g. AAPL, TSLA, NVDA',           risk: 'Catastrophic exposure. One bad earnings, lawsuit, or leadership scandal can wipe out 50-80% of value overnight.' },
+                  { label: 'Sector ETF',     n: 25,  example: 'e.g. XLK (Tech), XLE (Energy)',    risk: 'Moderate. Company-specific risk is mostly gone, but the whole sector can fall together (e.g., tech selloff in 2022).' },
+                  { label: 'S&P 500 Index',  n: 500, example: 'e.g. VOO, SPY, IVV',              risk: 'Only market risk remains. Cannot be diversified away — it hits all stocks simultaneously.' },
+                ];
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Diversification & Risk</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${DGREEN}18`, color: DGREEN }}>Sandbox · Ch. 8</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Drag the slider to add more stocks. Watch company-specific risk disappear while market risk stays constant — no matter how many stocks you hold.
+                    </div>
+
+                    {/* Metric cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'Portfolio Volatility', value: `${(curVol * 100).toFixed(1)}%`,      sub: 'annualized std dev',         color: curVol < 0.18 ? GREEN : curVol < 0.24 ? YELLOW : RED },
+                        { label: 'Market Risk',          value: `${(marketRisk * 100).toFixed(1)}%`,  sub: 'cannot be eliminated',       color: RED },
+                        { label: 'Unsystematic Risk',    value: `${(unsystRisk * 100).toFixed(1)}%`,  sub: 'company-specific, removable', color: unsystRisk > 0.05 ? YELLOW : GREEN },
+                        { label: 'Risk Eliminated',      value: `${Math.max(0, elimPct)}%`,           sub: 'vs. single stock',           color: elimPct > 80 ? GREEN : elimPct > 40 ? YELLOW : TEXT2 },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-1px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Slider */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>Stocks in Portfolio</div>
+                        <div style={{ fontFamily: 'monospace', fontSize: 22, fontWeight: 800, color: DGREEN }}>{divStocks}</div>
+                      </div>
+                      <input type="range" min="1" max="30" value={divStocks}
+                        onChange={e => setDivStocks(Number(e.target.value))}
+                        style={{ width: '100%', accentColor: DGREEN, cursor: 'pointer', marginBottom: 6 }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3, marginBottom: 20 }}>
+                        <span>1 stock</span><span>10</span><span>20</span><span>30 stocks</span>
+                      </div>
+
+                      {/* Risk breakdown bars */}
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                          <span style={{ fontSize: 12, color: RED, fontWeight: 600 }}>Market Risk (systematic — permanent)</span>
+                          <span style={{ fontFamily: 'monospace', fontSize: 12, color: RED }}>{(marketRisk * 100).toFixed(1)}%</span>
+                        </div>
+                        <div style={{ height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden', marginBottom: 14 }}>
+                          <div style={{ height: '100%', width: `${(marketRisk / singleVol) * 100}%`, background: RED, borderRadius: 4 }} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                          <span style={{ fontSize: 12, color: YELLOW, fontWeight: 600 }}>Unsystematic Risk (diversifiable)</span>
+                          <span style={{ fontFamily: 'monospace', fontSize: 12, color: unsystRisk > 0.01 ? YELLOW : GREEN }}>{(unsystRisk * 100).toFixed(1)}%</span>
+                        </div>
+                        <div style={{ height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${(unsystRisk / singleVol) * 100}%`, background: YELLOW, borderRadius: 4, transition: 'width 0.3s' }} />
+                        </div>
+                      </div>
+                      <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>
+                        {divStocks === 1 ? 'All risk is company-specific. One bad quarter, scandal, or bankruptcy could wipe out most of your investment.' :
+                         divStocks <= 5 ? 'Some improvement, but you still carry significant company-specific risk across your holdings.' :
+                         divStocks <= 15 ? 'Good progress. Most unsystematic risk is gone, but a few holdings still carry meaningful individual exposure.' :
+                         'Nearly all company-specific risk is eliminated. What remains is market risk — which hits every stock and cannot be diversified away.'}
+                      </div>
+                    </div>
+
+                    {/* Comparison table */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Portfolio Type Comparison</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Assumes 30% average single-stock volatility and 0.30 average pairwise correlation</div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {['Portfolio', 'Stocks', 'Volatility', 'Unsystematic Risk', 'Risk Eliminated'].map((h, i) => (
+                              <th key={h} style={{ padding: '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {COMPARISONS.map(s => {
+                            const vol = portVol(s.n);
+                            const unsyst = Math.max(0, vol - marketRisk);
+                            const elim = Math.round(((singleVol - vol) / (singleVol - marketRisk)) * 100);
+                            return (
+                              <tr key={s.label} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                <td style={{ padding: '10px 10px', fontWeight: 600 }}>{s.label}</td>
+                                <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>{s.n}</td>
+                                <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: vol < 0.18 ? GREEN : vol < 0.24 ? YELLOW : RED }}>{(vol * 100).toFixed(1)}%</td>
+                                <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: unsyst > 0.01 ? YELLOW : GREEN }}>{(unsyst * 100).toFixed(1)}%</td>
+                                <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: elim > 80 ? GREEN : TEXT }}>{elim}%</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {COMPARISONS.map(s => (
+                          <div key={s.label} style={{ fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>
+                            <span style={{ fontWeight: 600, color: TEXT }}>{s.label}</span> ({s.example}): {s.risk}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: `${DGREEN}06`, border: `1px solid ${DGREEN}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: DGREEN }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
+                        {[
+                          { term: 'Unsystematic Risk', formula: 'Company-specific risk', body: 'Risk from a single company or sector. Eliminated by owning many uncorrelated assets. An S&P 500 index fund holder is barely affected when any single company fails.' },
+                          { term: 'Systematic Risk', formula: 'σ_market = σ × √ρ_avg', body: 'Market-wide risk that cannot be diversified away. Recessions, rate hikes, and pandemics hit all stocks simultaneously. The floor you see on the bar above.' },
+                          { term: 'Portfolio Variance', formula: 'σ²_p = σ²/n + (n−1)/n · σ² · ρ', body: 'As n grows, the first term (individual risk) shrinks to zero. What remains is the correlation term: market risk. This is why the curve flattens sharply after 20-30 stocks.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: DGREEN, marginBottom: 6, background: `${DGREEN}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
                           </div>
                         ))}
                       </div>
