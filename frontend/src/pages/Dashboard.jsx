@@ -2395,6 +2395,7 @@ export default function Dashboard() {
     });
   };
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   useEffect(() => {
     const handle = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handle);
@@ -3050,7 +3051,7 @@ export default function Dashboard() {
 
       {/* ── TOAST ──────────────────────────────────────── */}
       {toast && (
-        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, background: CARD_BG, border: `1px solid ${toast.color || BORDER_C}`, borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 13, fontWeight: 600, color: TEXT, pointerEvents: 'none' }}>
+        <div style={{ position: 'fixed', bottom: isMobile ? 76 : 24, right: isMobile ? 12 : 24, left: isMobile ? 12 : 'auto', zIndex: 9999, background: CARD_BG, border: `1px solid ${toast.color || BORDER_C}`, borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', fontSize: 13, fontWeight: 600, color: TEXT, pointerEvents: 'none' }}>
           <span style={{ color: toast.color || GREEN, fontSize: 16 }}>{toast.icon || '✓'}</span>
           {toast.message}
         </div>
@@ -3258,6 +3259,108 @@ export default function Dashboard() {
           </div>
         </div>
       </aside>
+
+      {/* ── MOBILE BOTTOM TAB BAR + MORE SHEET ─────────── */}
+      {isMobile && (() => {
+        const mobileTabs = eduMode ? [
+          { key: 'overview',        label: 'Home',        icon: '⊞', edu: false },
+          { key: 'edu-courses',     label: 'Courses',     icon: '◫', edu: true  },
+          { key: 'edu-assignments', label: 'Work',        icon: '⊟', edu: true  },
+          { key: 'learn',           label: 'Learn',       icon: '✦', edu: true  },
+        ] : [
+          { key: 'overview',        label: 'Home',        icon: '⊞', edu: false },
+          { key: 'cashflow',        label: 'Money',       icon: '⬡', edu: false },
+          { key: 'investments',     label: 'Invest',      icon: '◈', edu: false },
+          { key: 'learn',           label: 'Learn',       icon: '✦', edu: false },
+        ];
+        const isTabActive = (t) => panel === t.key && (t.edu ? eduMode : !eduMode || t.key === 'overview');
+        return (
+          <>
+            {/* More sheet backdrop */}
+            {showMobileMenu && (
+              <div onClick={() => setShowMobileMenu(false)}
+                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 390 }} />
+            )}
+
+            {/* More sheet */}
+            {showMobileMenu && (
+              <div style={{ position: 'fixed', bottom: 60, left: 0, right: 0, background: CARD_BG, borderTop: BORDER, borderRadius: '16px 16px 0 0', zIndex: 400, paddingBottom: 8 }}>
+                <div style={{ width: 36, height: 4, background: BORDER_C, borderRadius: 2, margin: '10px auto 14px' }} />
+
+                {/* Mode switch */}
+                {!hideEduSection && !isUser && (
+                  <button onClick={() => { switchEduMode(!eduMode); setPanel(eduMode ? 'overview' : 'edu-courses'); setShowMobileMenu(false); }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', background: 'none', border: 'none', color: eduMode ? BLUE : GREEN, cursor: 'pointer', fontSize: 14, fontWeight: 600, textAlign: 'left', borderBottom: BORDER }}>
+                    <span style={{ fontSize: 18 }}>{eduMode ? '⊞' : '◫'}</span>
+                    <span>{eduMode ? 'Switch to Finance' : 'Switch to Education'}</span>
+                    <span style={{ marginLeft: 'auto', opacity: 0.5, fontSize: 12 }}>→</span>
+                  </button>
+                )}
+
+                {/* Finance-mode extras */}
+                {!eduMode && (
+                  <button onClick={() => { setPanel('insights'); switchEduMode(false); setShowMobileMenu(false); }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', background: panel === 'insights' ? 'rgba(255,255,255,0.04)' : 'none', border: 'none', color: panel === 'insights' ? TEXT : TEXT2, cursor: 'pointer', fontSize: 14, fontWeight: panel === 'insights' ? 600 : 400, textAlign: 'left' }}>
+                    <span style={{ fontSize: 18 }}>◬</span>
+                    <span>Market Insights</span>
+                  </button>
+                )}
+
+                {/* Education extras */}
+                {eduMode && (
+                  <>
+                    <button onClick={() => { setPanel('edu-sandbox'); switchEduMode(true); setShowMobileMenu(false); }}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', background: panel === 'edu-sandbox' ? 'rgba(255,255,255,0.04)' : 'none', border: 'none', color: panel === 'edu-sandbox' ? TEXT : TEXT2, cursor: 'pointer', fontSize: 14, fontWeight: panel === 'edu-sandbox' ? 600 : 400, textAlign: 'left' }}>
+                      <span style={{ fontSize: 18 }}>◎</span>
+                      <span>Datasets</span>
+                    </button>
+                    {effectiveProfessor && (
+                      <button onClick={() => { setPanel('prof-dashboard'); switchEduMode(true); setShowMobileMenu(false); }}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', background: panel === 'prof-dashboard' ? 'rgba(255,255,255,0.04)' : 'none', border: 'none', color: panel === 'prof-dashboard' ? TEXT : TEXT2, cursor: 'pointer', fontSize: 14, fontWeight: panel === 'prof-dashboard' ? 600 : 400, textAlign: 'left' }}>
+                        <span style={{ fontSize: 18 }}>⊟</span>
+                        <span>Professor Hub</span>
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {/* Settings + Sign out */}
+                <div style={{ borderTop: BORDER, marginTop: 4 }}>
+                  <button onClick={() => { setPanel('settings'); switchEduMode(false); setShowMobileMenu(false); }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', background: 'none', border: 'none', color: TEXT2, cursor: 'pointer', fontSize: 14, textAlign: 'left' }}>
+                    <span style={{ fontSize: 18 }}>⚙</span>
+                    <span>Settings</span>
+                  </button>
+                  <button onClick={logout}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', background: 'none', border: 'none', color: TEXT2, cursor: 'pointer', fontSize: 14, textAlign: 'left' }}>
+                    <span style={{ fontSize: 18 }}>↗</span>
+                    <span>Sign out — {user?.name}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Tab bar */}
+            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: 60, background: SIDE_BG, borderTop: BORDER, zIndex: 400, display: 'flex' }}>
+              {mobileTabs.map(t => {
+                const active = isTabActive(t);
+                return (
+                  <button key={t.key} onClick={() => { setPanel(t.key); if (t.edu) switchEduMode(true); else if (t.key !== 'overview') switchEduMode(false); setShowMobileMenu(false); }}
+                    style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: active ? BLUE : TEXT3, cursor: 'pointer', padding: '8px 0', WebkitTapHighlightColor: 'transparent' }}>
+                    <span style={{ fontSize: 20, lineHeight: 1 }}>{t.icon}</span>
+                    <span style={{ fontSize: 9, fontWeight: active ? 700 : 500, letterSpacing: '0.3px' }}>{t.label}</span>
+                  </button>
+                );
+              })}
+              <button onClick={() => setShowMobileMenu(v => !v)}
+                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: showMobileMenu ? BLUE : TEXT3, cursor: 'pointer', padding: '8px 0', WebkitTapHighlightColor: 'transparent' }}>
+                <span style={{ fontSize: 20, lineHeight: 1, letterSpacing: 2 }}>···</span>
+                <span style={{ fontSize: 9, fontWeight: showMobileMenu ? 700 : 500, letterSpacing: '0.3px' }}>More</span>
+              </button>
+            </div>
+          </>
+        );
+      })()}
 
       {/* ── NOTIFICATION PANEL ─────────────────────────── */}
       {notifPanelOpen && (
