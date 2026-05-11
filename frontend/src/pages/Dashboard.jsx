@@ -11245,8 +11245,8 @@ export default function Dashboard() {
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
                         {[
                           { term: 'Assets vs. Liabilities', body: 'Everything you own (assets) minus everything you owe (liabilities). Assets include cash, savings, investments, and property. Liabilities include loans, credit card balances, and any money owed.' },
-                          { term: 'Net Worth Formula', body: 'Net Worth = Total Assets − Total Liabilities. A positive number means wealth is being built; a negative number means debt outpaces assets — common and normal early in life.' },
-                          { term: 'Personal Balance Sheet', body: 'A snapshot of financial position at a single point in time. Unlike income statements (which show flow), a balance sheet shows stock — what you have and what you owe right now.' },
+                          { term: 'Net Worth Formula', body: 'Net Worth = Total Assets minus Total Liabilities. A positive number means wealth is being built; a negative number means debt outpaces assets, which is common and normal early in life.' },
+                          { term: 'Personal Balance Sheet', body: 'A snapshot of financial position at a single point in time. Unlike income statements (which show flow), a balance sheet shows stock: what you have and what you owe right now.' },
                         ].map(c => (
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{c.term}</div>
@@ -11423,8 +11423,8 @@ export default function Dashboard() {
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
                         {[
                           { term: 'Fixed vs. Variable Expenses', body: 'Fixed expenses stay the same each month (rent, insurance, subscriptions). Variable expenses fluctuate (dining, entertainment, shopping). Fixed costs are harder to cut; variable costs are where most budget savings come from.' },
-                          { term: '50/30/20 Rule', body: 'A budgeting framework allocating 50% of after-tax income to needs, 30% to wants, and 20% to savings and debt repayment. It is a starting point, not a strict rule — adjust based on your income and goals.' },
-                          { term: 'Budget Surplus/Deficit', body: 'Income minus total spending. A surplus should go immediately to savings or debt payoff. A deficit means spending exceeds income — leaving it unaddressed builds debt month over month.' },
+                          { term: '50/30/20 Rule', body: 'A budgeting framework allocating 50% of after-tax income to needs, 30% to wants, and 20% to savings and debt repayment. It is a starting point, not a strict rule; adjust based on your income and goals.' },
+                          { term: 'Budget Surplus/Deficit', body: 'Income minus total spending. A surplus should go immediately to savings or debt payoff. A deficit means spending exceeds income; leaving it unaddressed builds debt month over month.' },
                         ].map(c => (
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{c.term}</div>
@@ -11828,7 +11828,7 @@ export default function Dashboard() {
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: CYAN }}>Key Concepts</div>
                       <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
                         {[
-                          { term: '3-6 Month Rule', body: 'Financial planners recommend 3-6 months of essential expenses — not income — in a liquid, FDIC-insured account. Three months suits stable earners; six months is right for variable income, dependents, or high fixed costs.' },
+                          { term: '3-6 Month Rule', body: 'Financial planners recommend 3-6 months of essential expenses (not income) in a liquid, FDIC-insured account. Three months suits stable earners; six months is right for variable income, dependents, or high fixed costs.' },
                           { term: 'HYSA vs. Checking', body: 'A High-Yield Savings Account earns 4-5% APY vs. 0.01% in typical checking. On a $5,000 emergency fund that difference is roughly $240/year in interest you leave on the table by keeping cash in checking.' },
                           { term: 'Monthly Savings Rate', body: 'The percentage of income set aside each month. Even a small consistent rate builds a fund over time. Automate contributions so savings happen before discretionary spending, not after.' },
                           { term: 'Opportunity Cost', body: 'Not having an emergency fund has a real cost: when an unexpected expense hits, the alternative is high-interest debt. A funded emergency fund avoids forced borrowing at 20-25% APR.' },
