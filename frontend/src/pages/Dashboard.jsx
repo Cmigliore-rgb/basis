@@ -683,52 +683,53 @@ function FearGreedGauge({ score, rating }) {
 }
 
 const DEMO_AI = {
-  cashflow: `Your spending exceeded income in 10 of the last 12 months, averaging a −$80/month deficit ($1,350 out vs $1,270 in). The sharpest shortfall was 6 months ago at −$450 — a Q3 seasonal spike. Cash flow briefly turned positive 4 and 3 months ago (+$40 and +$20) before reverting to a deficit.
+  cashflow: `Your spending exceeded income in 10 of the last 12 months, averaging a -$80/month deficit ($1,350 out vs $1,270 in). The sharpest shortfall was 6 months ago at -$450, a Q3 seasonal spike. Cash flow briefly turned positive 4 and 3 months ago (+$40 and +$20) before reverting to a deficit.
 
-At −$80/month you're on pace to spend ~$960 more than you earn this year. Reducing monthly spending by just $81 (6%) closes the gap entirely. The seasonal Q3 pattern suggests discretionary categories like dining and entertainment are the primary drivers — those are the easiest to trim without lifestyle impact.`,
+At -$80/month you're on pace to spend ~$960 more than you earn this year. Reducing monthly spending by just $81 (6%) closes the gap entirely. The seasonal Q3 pattern suggests discretionary categories like dining and entertainment are the primary drivers; those are the easiest to trim without lifestyle impact.`,
 
-  overview: `Net worth reached $14,696 this month (+$1,896 vs last month), driven largely by portfolio appreciation. However, a persistent −$80/month cash flow deficit quietly offsets those gains — roughly $960/year in structural spending overage.
+  overview: `Net worth reached $14,696 this month (+$1,896 vs last month), driven largely by portfolio appreciation. A persistent -$80/month cash flow deficit quietly offsets those gains, adding up to roughly $960/year in structural spending overage.
 
-Three priorities: (1) Close the income–spending gap — even $40/month improvement compounds significantly over time. (2) Emergency fund coverage appears thin relative to your monthly outflows (~1.7 months). (3) Directing any found cash toward high-interest balances first eliminates the fastest-growing drag on net worth.`,
+Three priorities: (1) Close the income-spending gap; even $40/month improvement compounds significantly over time. (2) Emergency fund coverage appears thin relative to your monthly outflows (~1.7 months). (3) Directing any found cash toward high-interest balances first eliminates the fastest-growing drag on net worth.`,
 };
 
 function AIInsightCard({ isDemoData, demoKey, onGetAdvice, loading, text }) {
+  const [demoRevealed, setDemoRevealed] = React.useState(false);
   const demoText = DEMO_AI[demoKey];
   if (!demoText && !onGetAdvice) return null;
+  const revealed = isDemoData ? demoRevealed : !!text;
+  const displayText = isDemoData ? demoText : text;
   return (
     <div style={{ marginTop: 16, padding: '14px 16px', background: EXAMPLE_BG, border: `1px solid var(--example-border, #1a3a6b)`, borderRadius: 10 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: revealed ? 10 : 0 }}>
         <span style={{ fontSize: 14, color: BLUE }}>✦</span>
         <span style={{ fontSize: 11, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '0.6px' }}>AI Insight</span>
         {isDemoData && <span style={{ fontSize: 10, color: TEXT3, marginLeft: 2 }}>· demo</span>}
+        {!revealed && (
+          <button
+            onClick={isDemoData ? () => setDemoRevealed(true) : onGetAdvice}
+            disabled={loading}
+            style={{ marginLeft: 'auto', padding: '5px 14px', background: 'transparent', color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 7, cursor: loading ? 'default' : 'pointer', fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5, opacity: loading ? 0.7 : 1 }}>
+            <span style={{ fontSize: 12 }}>✦</span>
+            {loading ? 'Analyzing...' : 'Get Insight'}
+          </button>
+        )}
       </div>
-      {isDemoData ? (
-        <div style={{ fontSize: 13, lineHeight: 1.7, color: TEXT, whiteSpace: 'pre-wrap' }}>{demoText}</div>
-      ) : (
+      {revealed && (
         <>
-          {!text && (
+          <div style={{ fontSize: 13, lineHeight: 1.7, color: TEXT, whiteSpace: 'pre-wrap' }}>{displayText}</div>
+          {!isDemoData && (
             <button onClick={onGetAdvice} disabled={loading}
-              style={{ padding: '7px 16px', background: 'transparent', color: BLUE, border: `1px solid ${BLUE}`, borderRadius: 7, cursor: loading ? 'default' : 'pointer', fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, opacity: loading ? 0.7 : 1 }}>
-              <span style={{ fontSize: 13 }}>✦</span>
-              {loading ? 'Analyzing…' : 'Analyze my data'}
+              style={{ marginTop: 10, padding: '5px 12px', background: 'transparent', color: TEXT3, border: `1px solid ${MUTED}`, borderRadius: 6, cursor: loading ? 'default' : 'pointer', fontSize: 11, fontWeight: 600, opacity: loading ? 0.7 : 1 }}>
+              {loading ? 'Refreshing...' : 'Refresh'}
             </button>
           )}
-          {text && (
-            <>
-              <div style={{ fontSize: 13, lineHeight: 1.7, color: TEXT, whiteSpace: 'pre-wrap' }}>{text}</div>
-              <button onClick={onGetAdvice} disabled={loading}
-                style={{ marginTop: 10, padding: '5px 12px', background: 'transparent', color: TEXT3, border: `1px solid ${MUTED}`, borderRadius: 6, cursor: loading ? 'default' : 'pointer', fontSize: 11, fontWeight: 600, opacity: loading ? 0.7 : 1 }}>
-                {loading ? 'Refreshing…' : '↺ Refresh'}
-              </button>
-            </>
-          )}
+          <div style={{ marginTop: 10, fontSize: 10, color: TEXT3, lineHeight: 1.5, borderTop: `1px solid var(--example-border, #1a3a6b)`, paddingTop: 8 }}>
+            {isDemoData
+              ? 'Connect your accounts to get personalized analysis on your real data.'
+              : 'AI-generated insights are informational only and do not constitute financial advice.'}
+          </div>
         </>
       )}
-      <div style={{ marginTop: 10, fontSize: 10, color: TEXT3, lineHeight: 1.5, borderTop: `1px solid var(--example-border, #1a3a6b)`, paddingTop: 8 }}>
-        {isDemoData
-          ? 'Connect your accounts to get personalized analysis on your real data.'
-          : 'AI-generated insights are informational only and do not constitute financial advice.'}
-      </div>
     </div>
   );
 }
