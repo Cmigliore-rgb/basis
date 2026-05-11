@@ -5163,7 +5163,7 @@ export default function Dashboard() {
                             loading={adviceState.budgeting?.loading}
                             text={adviceState.budgeting?.text}
                           />
-                          <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24, marginTop: 20 }}>
                             {[
                               { label: 'Month-to-Date Spend', value: fmt(hasRealExp ? activeMonthlySpend : 1620) },
                               { label: 'Top Category',         value: toTitle(hasRealExp ? (activeBudget[0]?.category?.replace(/_/g, ' ').toLowerCase() || '—') : 'Food and Drink') },
