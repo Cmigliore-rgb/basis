@@ -1617,6 +1617,22 @@ const PREBUILT_DATASETS = [
     stats: [['Home Price', '$285,000'], ['Down Pmt', '5%'], ['Monthly', '$1,938']],
     overview: 'Students build an amortization schedule, calculate DTI ratio, compare 5-year total cost of renting vs. owning, and find the break-even point.',
   },
+  {
+    id: 'ds-taxes',      title: 'Taxes 101',                       subtitle: 'Taxes · Ch. 4',
+    description: 'Interactive 2025 federal income tax calculator. Adjust income and filing status to see bracket-by-bracket tax, effective rate, and monthly take-home pay.',
+    category: 'Taxes',      color: '#f97316',  difficulty: 'Intermediate',
+    concepts: ['Tax Brackets', 'Standard Deduction', 'Effective vs. Marginal Rate', 'FICA'],
+    stats: [['Gross Income', '$42,000'], ['Effective Rate', '7.1%'], ['Take-Home', '$35,786']],
+    overview: 'Students adjust gross income and filing status to watch the bracket math update live, compare effective vs. marginal rates, and model monthly take-home pay.',
+  },
+  {
+    id: 'ds-inflation',  title: 'Inflation & Purchasing Power',    subtitle: 'Macro · Ch. 10',
+    description: 'Watch how inflation shrinks what your money can buy over time and compare the real cost of holding cash vs. investing.',
+    category: 'Macro',      color: '#a78bfa',  difficulty: 'Intermediate',
+    concepts: ['Purchasing Power', 'Rule of 72', 'Real vs. Nominal Value', 'CPI'],
+    stats: [['Starting Amount', '$10,000'], ['Inflation Rate', '3%/yr'], ['20-Year Value', '$5,537']],
+    overview: 'Students adjust starting amount, inflation rate, and time horizon to watch purchasing power decay in real time, and compare what happens if that money is invested instead.',
+  },
 ];
 
 const MAJOR_ASSIGNMENTS = [
@@ -1805,6 +1821,8 @@ const DATASET_TARGET_PANEL = {
   'ds-housing':    'edu-sandbox',
   'ds-emergency':  'edu-sandbox',
   'ds-debt':       'edu-sandbox',
+  'ds-taxes':      'edu-sandbox',
+  'ds-inflation':  'edu-sandbox',
 };
 
 const SANDBOX_DATA = (() => {
@@ -1971,6 +1989,33 @@ const SANDBOX_DATA = (() => {
       { name: 'Personal Loan',     balance: 7200,  apr: 18.0, minPayment: 160 },
       { name: 'Car Loan',          balance: 5800,  apr:  7.2, minPayment: 115 },
       { name: 'Student Loan',      balance: 3480,  apr:  4.5, minPayment: 40  },
+    ],
+  },
+  'ds-taxes': {
+    defaultIncome: 42000,
+    bracketsSingle: [
+      { rate: 0.10, max: 11925  }, { rate: 0.12, max: 48475  },
+      { rate: 0.22, max: 103350 }, { rate: 0.24, max: 197300 },
+      { rate: 0.32, max: 250525 }, { rate: 0.35, max: 626350 },
+      { rate: 0.37, max: Infinity },
+    ],
+    bracketsMFJ: [
+      { rate: 0.10, max: 23850  }, { rate: 0.12, max: 96950  },
+      { rate: 0.22, max: 206700 }, { rate: 0.24, max: 394600 },
+      { rate: 0.32, max: 501050 }, { rate: 0.35, max: 751600 },
+      { rate: 0.37, max: Infinity },
+    ],
+    stdDed: { single: 15000, mfj: 30000 },
+  },
+  'ds-inflation': {
+    defaultAmount: 10000,
+    defaultRate: 3,
+    defaultYears: 20,
+    historicalItems: [
+      { name: 'Coffee (12 oz bag)', price2000: 4.50,  price2024: 10.50 },
+      { name: 'Movie ticket',       price2000: 6.00,  price2024: 14.00 },
+      { name: 'Gas (gallon)',       price2000: 1.50,  price2024: 3.30  },
+      { name: 'Avg 1BR rent/mo',    price2000: 650,   price2024: 1500  },
     ],
   },
   };
@@ -2295,6 +2340,11 @@ export default function Dashboard() {
   const [simAlloc, setSimAlloc] = useState({ VTI: 40, BND: 10, VXUS: 25, SCHD: 25 });
   const [efExtraSavings, setEfExtraSavings] = useState(200);
   const [debtStrategy, setDebtStrategy] = useState('avalanche');
+  const [taxIncome, setTaxIncome] = useState(42000);
+  const [taxFilingStatus, setTaxFilingStatus] = useState('single');
+  const [inflAmount, setInflAmount] = useState(10000);
+  const [inflRate, setInflRate] = useState(3);
+  const [inflYears, setInflYears] = useState(20);
   const [housingRate, setHousingRate]     = useState('');
   const [housingDown, setHousingDown]     = useState('');
   const [housingIncome, setHousingIncome] = useState('');
@@ -11558,6 +11608,332 @@ export default function Dashboard() {
                         {[
                           { term: 'Avalanche Method', body: 'Pay minimums on everything, then put all extra toward the highest-APR debt. Mathematically optimal — always minimizes total interest paid. Best if you\'re disciplined and numbers-driven.' },
                           { term: 'Snowball Method',  body: 'Pay minimums on everything, then attack the smallest balance first. Provides quick "wins" that build momentum and motivation. Best if you struggle with consistency or have many small accounts.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{c.term}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── TAXES 101 ─────────────────────────────────────────────────────
+              if (sandboxDataset === 'ds-taxes') {
+                const ORANGE = '#f97316';
+                const B_SINGLE = [
+                  { rate: 0.10, max: 11925  }, { rate: 0.12, max: 48475  },
+                  { rate: 0.22, max: 103350 }, { rate: 0.24, max: 197300 },
+                  { rate: 0.32, max: 250525 }, { rate: 0.35, max: 626350 },
+                  { rate: 0.37, max: Infinity },
+                ];
+                const B_MFJ = [
+                  { rate: 0.10, max: 23850  }, { rate: 0.12, max: 96950  },
+                  { rate: 0.22, max: 206700 }, { rate: 0.24, max: 394600 },
+                  { rate: 0.32, max: 501050 }, { rate: 0.35, max: 751600 },
+                  { rate: 0.37, max: Infinity },
+                ];
+                const isMFJ    = taxFilingStatus === 'mfj';
+                const stdDed   = isMFJ ? 30000 : 15000;
+                const brackets = isMFJ ? B_MFJ : B_SINGLE;
+                const taxable  = Math.max(0, taxIncome - stdDed);
+                let fedTax = 0, marginal = 0.10, prev = 0;
+                const breakdown = [];
+                for (const b of brackets) {
+                  const cap     = Math.min(b.max === Infinity ? taxable : b.max, taxable);
+                  const inBrkt  = Math.max(0, cap - prev);
+                  const brktTax = inBrkt * b.rate;
+                  breakdown.push({ rate: b.rate, maxLabel: b.max === Infinity ? null : b.max, inBrkt, brktTax });
+                  fedTax += brktTax;
+                  if (inBrkt > 0) marginal = b.rate;
+                  prev = cap;
+                  if (cap >= taxable) break;
+                }
+                const ss        = Math.min(taxIncome, 176100) * 0.062;
+                const medicare  = taxIncome * 0.0145;
+                const fica      = ss + medicare;
+                const takeHome  = taxIncome - fedTax - fica;
+                const effRate   = taxIncome > 0 ? fedTax / taxIncome : 0;
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+                      <button onClick={exitSandbox} style={{ background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, padding: '7px 14px', cursor: 'pointer', fontSize: 13 }}>Back</button>
+                      <div>
+                        <div style={{ fontSize: 20, fontWeight: 700 }}>Taxes 101</div>
+                        <div style={{ fontSize: 12, color: TEXT2 }}>Taxes · Ch. 4 · 2025 Federal Income Tax</div>
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, marginBottom: 16 }}>
+                      <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Filing Status</div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            {[['single', 'Single'], ['mfj', 'Married Filing Jointly']].map(([val, label]) => (
+                              <button key={val} onClick={() => setTaxFilingStatus(val)}
+                                style={{ padding: '8px 16px', borderRadius: 8, border: taxFilingStatus === val ? `1.5px solid ${ORANGE}` : BORDER, background: taxFilingStatus === val ? `${ORANGE}15` : MUTED, color: taxFilingStatus === val ? ORANGE : TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ flex: 1, minWidth: 260 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Gross Annual Income</div>
+                            <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'monospace', color: ORANGE }}>{fmt(taxIncome)}</div>
+                          </div>
+                          <input type="range" min={15000} max={120000} step={1000} value={taxIncome}
+                            onChange={e => setTaxIncome(Number(e.target.value))}
+                            style={{ width: '100%', accentColor: ORANGE }} />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3, marginTop: 4 }}><span>$15,000</span><span>$120,000</span></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 16 }}>
+                      {[
+                        { label: 'Taxable Income',    value: fmt(taxable),   sub: `After $${(stdDed/1000).toFixed(0)}k standard deduction`, color: TEXT  },
+                        { label: 'Federal Tax',       value: fmt(fedTax),    sub: `${(effRate*100).toFixed(1)}% effective rate`,            color: RED   },
+                        { label: 'Annual Take-Home',  value: fmt(takeHome),  sub: `${fmt(takeHome/12)}/month`,                             color: GREEN },
+                      ].map(({ label, value, sub, color }) => (
+                        <div key={label} className="lc" style={CARD}>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
+                          <div style={{ fontSize: 26, fontWeight: 700, margin: '8px 0 4px', letterSpacing: '-0.5px', color }}>{value}</div>
+                          <div style={{ fontSize: 12, color: TEXT2 }}>{sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 16 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 14 }}>Tax Bracket Breakdown</div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Rate', 'Up To', 'In This Bracket', 'Tax Owed'].map(h => (
+                                <th key={h} style={{ padding: '4px 8px', textAlign: h === 'Rate' ? 'left' : 'right', color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', fontSize: 10 }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {breakdown.map((b, i) => (
+                              <tr key={i} style={{ borderBottom: `1px solid ${BORDER_C}`, opacity: b.inBrkt === 0 ? 0.3 : 1 }}>
+                                <td style={{ padding: '7px 8px', fontWeight: 700, color: b.inBrkt > 0 ? ORANGE : TEXT3 }}>{(b.rate*100).toFixed(0)}%</td>
+                                <td style={{ padding: '7px 8px', textAlign: 'right', color: TEXT2, fontSize: 11 }}>{b.maxLabel ? fmt(b.maxLabel) : 'no limit'}</td>
+                                <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace' }}>{b.inBrkt > 0 ? fmt(b.inBrkt) : '-'}</td>
+                                <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600, color: b.inBrkt > 0 ? RED : TEXT3 }}>{b.inBrkt > 0 ? fmt(b.brktTax) : '-'}</td>
+                              </tr>
+                            ))}
+                            <tr style={{ borderTop: BORDER }}>
+                              <td colSpan={3} style={{ padding: '8px 8px', fontWeight: 700 }}>Total Federal Tax</td>
+                              <td style={{ padding: '8px 8px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: RED }}>{fmt(fedTax)}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <div style={{ marginTop: 12, padding: '10px 12px', background: `${ORANGE}10`, borderRadius: 8, border: `1px solid ${ORANGE}25`, fontSize: 12, color: TEXT2 }}>
+                          Marginal rate: <span style={{ color: ORANGE, fontWeight: 700 }}>{(marginal*100).toFixed(0)}%</span>
+                          <span style={{ margin: '0 10px', color: BORDER_C }}>|</span>
+                          Effective rate: <span style={{ color: ORANGE, fontWeight: 700 }}>{(effRate*100).toFixed(1)}%</span>
+                        </div>
+                      </div>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 14 }}>Where Your Money Goes</div>
+                        {[
+                          { label: 'Gross Income',       annual: taxIncome, color: GREEN,  sign: '' },
+                          { label: 'Federal Income Tax', annual: fedTax,    color: RED,    sign: '-' },
+                          { label: 'Social Security',    annual: ss,        color: YELLOW, sign: '-' },
+                          { label: 'Medicare',           annual: medicare,  color: YELLOW, sign: '-' },
+                        ].map(({ label, annual, color, sign }) => (
+                          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                            <span style={{ fontSize: 13, color: TEXT2 }}>{label}</span>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: 13, fontFamily: 'monospace', fontWeight: 600, color }}>{sign}{fmt(annual)}/yr</div>
+                              <div style={{ fontSize: 11, color: TEXT3 }}>{sign}{fmt(annual/12)}/mo</div>
+                            </div>
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, marginTop: 4 }}>
+                          <span style={{ fontSize: 14, fontWeight: 700 }}>Take-Home Pay</span>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: 16, fontFamily: 'monospace', fontWeight: 800, color: GREEN }}>{fmt(takeHome)}/yr</div>
+                            <div style={{ fontSize: 13, fontFamily: 'monospace', color: GREEN }}>{fmt(takeHome/12)}/mo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, background: `${ORANGE}06`, border: `1px solid ${ORANGE}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: ORANGE, marginBottom: 14 }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Marginal Rate', body: `Your top bracket rate is ${(marginal*100).toFixed(0)}%. This only applies to income above that bracket threshold, not all your income. A common mistake is thinking a raise will cost you more in taxes than it earns.` },
+                          { term: 'Effective Rate', body: `Your real average tax rate is ${(effRate*100).toFixed(1)}%. Divide total federal tax by gross income. This is what you actually pay on average across every dollar you earn.` },
+                          { term: 'Standard Deduction', body: `$${(stdDed/1000).toFixed(0)},000 for ${isMFJ ? 'married filing jointly' : 'single filers'} in 2025. Reduces taxable income before brackets are applied. Most people take this over itemizing.` },
+                          { term: 'FICA Taxes', body: `Social Security (6.2%) and Medicare (1.45%) are taken from your paycheck before you see it. Your employer matches these amounts, but your share alone is ${fmt(fica)}/yr.` },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{c.term}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── INFLATION & PURCHASING POWER ──────────────────────────────────
+              if (sandboxDataset === 'ds-inflation') {
+                const PURPLE = '#a78bfa';
+                const realValue   = inflAmount / Math.pow(1 + inflRate / 100, inflYears);
+                const powerLost   = inflAmount - realValue;
+                const rule72      = (72 / inflRate).toFixed(1);
+                const invested    = inflAmount * Math.pow(1.07, inflYears);
+                const investReal  = invested / Math.pow(1 + inflRate / 100, inflYears);
+                const tableSteps  = [];
+                for (let y = 0; y <= inflYears; y += 5) tableSteps.push(y);
+                if (tableSteps[tableSteps.length - 1] !== inflYears) tableSteps.push(inflYears);
+                const HIST = [
+                  { name: 'Coffee (12 oz bag)', price2000: 4.50,  price2024: 10.50 },
+                  { name: 'Movie ticket',        price2000: 6.00,  price2024: 14.00 },
+                  { name: 'Gas (gallon)',         price2000: 1.50,  price2024: 3.30  },
+                  { name: 'Avg 1BR rent/mo',     price2000: 650,   price2024: 1500  },
+                ];
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+                      <button onClick={exitSandbox} style={{ background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, padding: '7px 14px', cursor: 'pointer', fontSize: 13 }}>Back</button>
+                      <div>
+                        <div style={{ fontSize: 20, fontWeight: 700 }}>Inflation & Purchasing Power</div>
+                        <div style={{ fontSize: 12, color: TEXT2 }}>Macro · Ch. 10 · Real vs. Nominal Value</div>
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, marginBottom: 16 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 24 }}>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Starting Amount</div>
+                            <div style={{ fontSize: 18, fontWeight: 800, fontFamily: 'monospace', color: PURPLE }}>{fmt(inflAmount)}</div>
+                          </div>
+                          <input type="range" min={1000} max={50000} step={500} value={inflAmount}
+                            onChange={e => setInflAmount(Number(e.target.value))}
+                            style={{ width: '100%', accentColor: PURPLE }} />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: TEXT3, marginTop: 4 }}><span>$1,000</span><span>$50,000</span></div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Annual Inflation Rate</div>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            {[2, 3, 4, 7].map(r => (
+                              <button key={r} onClick={() => setInflRate(r)}
+                                style={{ flex: 1, padding: '7px 0', borderRadius: 7, border: inflRate === r ? `1.5px solid ${PURPLE}` : BORDER, background: inflRate === r ? `${PURPLE}18` : MUTED, color: inflRate === r ? PURPLE : TEXT2, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                {r}%
+                              </button>
+                            ))}
+                          </div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 8 }}>US avg: ~2.4% (2000-2020) · ~5% (2021-2023)</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Time Horizon</div>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            {[10, 20, 30].map(y => (
+                              <button key={y} onClick={() => setInflYears(y)}
+                                style={{ flex: 1, padding: '7px 0', borderRadius: 7, border: inflYears === y ? `1.5px solid ${PURPLE}` : BORDER, background: inflYears === y ? `${PURPLE}18` : MUTED, color: inflYears === y ? PURPLE : TEXT2, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                {y}yr
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 16 }}>
+                      {[
+                        { label: 'Purchasing Power in ' + inflYears + ' Years', value: fmt(realValue),  sub: `vs. ${fmt(inflAmount)} today`,               color: realValue < inflAmount * 0.5 ? RED : YELLOW },
+                        { label: 'Purchasing Power Lost',                        value: fmt(powerLost),  sub: `${((powerLost/inflAmount)*100).toFixed(0)}% of original value`, color: RED   },
+                        { label: 'Rule of 72',                                   value: `${rule72} yrs`, sub: `to halve purchasing power at ${inflRate}% inflation`,           color: PURPLE },
+                      ].map(({ label, value, sub, color }) => (
+                        <div key={label} className="lc" style={CARD}>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
+                          <div style={{ fontSize: 26, fontWeight: 700, margin: '8px 0 4px', letterSpacing: '-0.5px', color }}>{value}</div>
+                          <div style={{ fontSize: 12, color: TEXT2 }}>{sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 16 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 14 }}>Purchasing Power Over Time</div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Year', 'Value in Today\'s $', 'Lost So Far', '% Remaining'].map(h => (
+                                <th key={h} style={{ padding: '4px 8px', textAlign: h === 'Year' ? 'left' : 'right', fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {tableSteps.map(y => {
+                              const val  = inflAmount / Math.pow(1 + inflRate / 100, y);
+                              const lost = inflAmount - val;
+                              const pct  = (val / inflAmount) * 100;
+                              return (
+                                <tr key={y} style={{ borderBottom: `1px solid ${BORDER_C}`, fontWeight: y === inflYears ? 700 : 400 }}>
+                                  <td style={{ padding: '7px 8px', color: y === inflYears ? PURPLE : TEXT }}>{y === 0 ? 'Today' : `Year ${y}`}</td>
+                                  <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace', color: pct < 50 ? RED : TEXT }}>{fmt(val)}</td>
+                                  <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace', color: RED }}>{y === 0 ? '-' : fmt(lost)}</td>
+                                  <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace', color: pct < 50 ? RED : GREEN }}>{pct.toFixed(1)}%</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div style={CARD}>
+                          <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 14 }}>Real-World Price Changes (2000-2024)</div>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                            <thead>
+                              <tr style={{ borderBottom: BORDER }}>
+                                {['Item', '2000', '2024', 'Change'].map(h => (
+                                  <th key={h} style={{ padding: '4px 8px', textAlign: h === 'Item' ? 'left' : 'right', fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {HIST.map(item => {
+                                const chg = ((item.price2024 - item.price2000) / item.price2000 * 100).toFixed(0);
+                                const isBig = item.price2000 >= 100;
+                                return (
+                                  <tr key={item.name} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                    <td style={{ padding: '7px 8px', color: TEXT2 }}>{item.name}</td>
+                                    <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace' }}>{isBig ? fmt(item.price2000) : `$${item.price2000.toFixed(2)}`}</td>
+                                    <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600 }}>{isBig ? fmt(item.price2024) : `$${item.price2024.toFixed(2)}`}</td>
+                                    <td style={{ padding: '7px 8px', textAlign: 'right', color: RED, fontWeight: 700 }}>+{chg}%</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                        <div style={{ ...CARD, background: `${GREEN}08`, border: `1px solid ${GREEN}25` }}>
+                          <div style={{ fontWeight: 700, fontSize: 13, color: GREEN, marginBottom: 10 }}>What if you invested it instead?</div>
+                          <div style={{ fontSize: 13, color: TEXT2, marginBottom: 12 }}>At 7% average annual return over {inflYears} years:</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <span style={{ fontSize: 13, color: TEXT2 }}>Nominal value</span>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 700, color: GREEN }}>{fmt(invested)}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, borderTop: `1px solid ${GREEN}20` }}>
+                            <span style={{ fontSize: 13, color: TEXT2 }}>Real purchasing power</span>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 700, color: GREEN }}>{fmt(investReal)}</span>
+                          </div>
+                          <div style={{ marginTop: 10, fontSize: 11, color: TEXT3 }}>Compared to {fmt(realValue)} if held as cash</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, background: `${PURPLE}06`, border: `1px solid ${PURPLE}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: PURPLE, marginBottom: 14 }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Purchasing Power', body: 'How much your money can actually buy. Inflation means the same dollar buys less over time. $10,000 today and $10,000 in 20 years are very different amounts in terms of what you can purchase.' },
+                          { term: 'Rule of 72', body: `Divide 72 by the inflation rate to estimate how many years it takes to cut purchasing power in half. At ${inflRate}% inflation, that\'s roughly ${rule72} years.` },
+                          { term: 'Real vs. Nominal Value', body: 'Nominal is the dollar amount. Real adjusts for inflation to show actual purchasing power. A salary raise that matches inflation is effectively no raise at all.' },
+                          { term: 'Why This Matters', body: 'Keeping money in a low-interest account often means losing purchasing power over time. The goal is to earn a return that beats inflation, or your wealth shrinks in real terms.' },
                         ].map(c => (
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{c.term}</div>
