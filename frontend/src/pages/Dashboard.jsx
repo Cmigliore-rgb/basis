@@ -1096,7 +1096,7 @@ const LEARN_CONTENT = [
       { id: 'compound', title: 'Compound Interest', icon: '🔁',
         summary: 'Earning returns on your returns, the most powerful force in personal finance.',
         body: 'Einstein allegedly called compound interest the "eighth wonder of the world." Starting early matters enormously: $10,000 invested at 25 grows to ~$217,000 by 65 at 8% annual return. The same $10,000 invested at 35 grows to only ~$100,000. Time in the market beats timing the market.',
-        formula: <span style={{display:'inline-flex',alignItems:'center',gap:3}}>A = P(1 + <Frac n="r" d="n" />)<sup style={{fontSize:11}}>nt</sup></span>,
+        formula: <span>A = P × (1 + r/n)<sup style={{fontSize:11}}>nt</sup></span>,
         example: '$500/month from age 25 at 8% → $1.74M at 65. Starting at 35 → only $745K. The 10-year delay costs ~$1M.',
         datasetId: 'ds-tvm' },
       { id: 'dca', title: 'Dollar-Cost Averaging', icon: '📅',
@@ -10396,22 +10396,42 @@ export default function Dashboard() {
                       );
                     })()}
 
-                    <div style={{ ...CARD, marginTop: 20, fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>
-                      <div style={{ fontWeight: 700, color: TEXT, marginBottom: 8, fontSize: 13 }}>Key Formula</div>
-                      <div style={{ background: MUTED, padding: '14px 18px', borderRadius: 6, marginBottom: 10, fontSize: 14, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, fontFamily: 'Georgia, serif', color: TEXT, lineHeight: 2.2 }}>
-                        <strong style={{ color: '#a855f7' }}>FV</strong>
-                        <span style={{ color: TEXT2, margin: '0 4px' }}>=</span>
-                        <span>PV · (1 + <Frac n="r" d="12" />)<sup style={{ fontSize: 11 }}>12t</sup></span>
-                        <span style={{ color: TEXT2, margin: '0 6px' }}>+</span>
-                        <span>PMT ·</span>
-                        <Frac
-                          sz={13}
-                          n={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>(1 + <Frac n="r" d="12" sz={11} />)<sup style={{ fontSize: 10 }}>12t</sup><span style={{ margin: '0 3px' }}>− 1</span></span>}
-                          d={<Frac n="r" d="12" sz={11} />}
-                        />
+                    <div style={{ ...CARD, marginTop: 20, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, color: TEXT, marginBottom: 14, fontSize: 13 }}>Key Formulas</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+                        <div style={{ background: DARK, border: BORDER, borderRadius: 8, padding: '14px 18px' }}>
+                          <div style={{ fontSize: 10, color: '#a855f7', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Lump Sum Growth</div>
+                          <div style={{ fontFamily: 'monospace', fontSize: 15, color: TEXT }}>
+                            FV = PV × (1 + r/12)<sup style={{ fontSize: 11 }}>12t</sup>
+                          </div>
+                        </div>
+                        <div style={{ background: DARK, border: BORDER, borderRadius: 8, padding: '14px 18px' }}>
+                          <div style={{ fontSize: 10, color: '#a855f7', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>With Monthly Contributions</div>
+                          <div style={{ fontFamily: 'monospace', fontSize: 15, color: TEXT }}>
+                            FV = PV × (1 + r/12)<sup style={{ fontSize: 11 }}>12t</sup> + PMT × [(1 + r/12)<sup style={{ fontSize: 11 }}>12t</sup> - 1] / (r/12)
+                          </div>
+                        </div>
                       </div>
                       <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.8 }}>
-                        where <strong style={{ color: TEXT }}>PV</strong> = present value &nbsp;·&nbsp; <strong style={{ color: TEXT }}>PMT</strong> = monthly contribution &nbsp;·&nbsp; <strong style={{ color: TEXT }}>r</strong> = annual rate &nbsp;·&nbsp; <strong style={{ color: TEXT }}>t</strong> = years
+                        <strong style={{ color: TEXT }}>PV</strong> = present value &nbsp;·&nbsp; <strong style={{ color: TEXT }}>PMT</strong> = monthly contribution &nbsp;·&nbsp; <strong style={{ color: TEXT }}>r</strong> = annual rate &nbsp;·&nbsp; <strong style={{ color: TEXT }}>t</strong> = years
+                      </div>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: 'rgba(168,85,247,0.04)', border: '1px solid rgba(168,85,247,0.2)' }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: '#a855f7' }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Compound Interest', body: 'Earning returns on your returns. A 7% annual return adds 7% of your growing balance each year, not just your original deposit. This compounding effect is why starting early has such an outsized impact on the final number.' },
+                          { term: 'Future Value (FV)', body: 'What a sum of money today will be worth at a future date, given a rate of return. Plug in your starting balance, monthly contribution, rate, and time horizon to see where you end up.' },
+                          { term: 'Present Value (PV)', body: 'The current worth of a future sum of money, discounted at a given rate. PV is the reverse of FV: it answers how much you need to invest today to reach a specific target in the future.' },
+                          { term: 'Rule of 72', body: 'Divide 72 by the annual return to estimate how many years it takes to double your money. At 6% it doubles in 12 years; at 9% in 8 years. A fast way to compare investment options without a calculator.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{c.term}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -10824,7 +10844,25 @@ export default function Dashboard() {
                         ))}
                       </div>
                       <div style={{ marginTop: 12, fontSize: 12, color: TEXT2 }}>
-                        Payment history is the <strong style={{ color: TEXT }}>single most important factor (35%)</strong> in your FICO score. One missed payment can drop your score by 60–110 points and stays on your report for 7 years.
+                        Payment history is the <strong style={{ color: TEXT }}>single most important factor (35%)</strong> in your FICO score. One missed payment can drop your score by 60-110 points and stays on your report for 7 years.
+                      </div>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, marginTop: 16, background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.18)' }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: '#ef4444' }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Credit Utilization', body: 'The percentage of your available revolving credit currently in use. Calculated per card and in total. Keeping each card below 30% (ideally below 10%) is the fastest lever for improving your score outside of payment history.' },
+                          { term: 'Payment History (35%)', body: 'The single largest FICO factor. One missed payment can drop your score 60-110 points and stays on your report for 7 years. Setting up autopay for at least the minimum eliminates this risk entirely.' },
+                          { term: 'Score Factors', body: 'FICO is built from five factors: payment history (35%), amounts owed (30%), length of credit history (15%), new credit (10%), and credit mix (10%). Utilization and payment history together drive 65% of your score.' },
+                          { term: 'Minimum vs. Full Payment', body: 'Paying only the minimum keeps you current but lets interest compound on the balance. On $1,850 at 26.99% APR, minimums stretch repayment over years and cost hundreds in extra interest. Paying in full each month means zero interest paid.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{c.term}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -11936,8 +11974,8 @@ export default function Dashboard() {
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 12 }}>
                         {[
-                          { label: 'Avalanche Method',  data: avalanche, color: PINK,  desc: 'Highest APR first — minimizes total interest' },
-                          { label: 'Snowball Method',   data: snowball,  color: BLUE,  desc: 'Lowest balance first — maximizes motivation' },
+                          { label: 'Avalanche Method',  data: avalanche, color: PINK,  desc: 'Highest APR first; minimizes total interest' },
+                          { label: 'Snowball Method',   data: snowball,  color: BLUE,  desc: 'Lowest balance first; builds momentum through quick wins' },
                         ].map(({ label, data, color, desc }) => {
                           const isActive = (label.toLowerCase().startsWith(debtStrategy));
                           return (
@@ -11969,10 +12007,10 @@ export default function Dashboard() {
                     {/* Payoff order for active strategy */}
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
-                        Payoff Order — <span style={{ color: debtStrategy === 'avalanche' ? PINK : BLUE, textTransform: 'capitalize' }}>{debtStrategy}</span>
+                        Payoff Order: <span style={{ color: debtStrategy === 'avalanche' ? PINK : BLUE, textTransform: 'capitalize' }}>{debtStrategy}</span>
                       </div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>
-                        {debtStrategy === 'avalanche' ? 'Sorted by APR (highest first) — attack the most expensive debt first.' : 'Sorted by balance (lowest first) — knock out small debts for quick wins.'}
+                        {debtStrategy === 'avalanche' ? 'Sorted by APR (highest first): attack the most expensive debt first.' : 'Sorted by balance (lowest first): knock out small debts for quick wins.'}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         {debtOrder.map((d, idx) => {
