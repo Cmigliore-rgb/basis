@@ -683,17 +683,17 @@ function FearGreedGauge({ score, rating }) {
 }
 
 const DEMO_AI = {
-  cashflow: `Your spending exceeded income in 10 of the last 12 months, averaging a -$80/month deficit ($1,350 out vs $1,270 in). The sharpest shortfall was 6 months ago at -$450, a Q3 seasonal spike. Cash flow briefly turned positive 4 and 3 months ago (+$40 and +$20) before reverting to a deficit.
+  cashflow: `You've spent more than you earned in 10 of the last 12 months, usually by about $80. Your worst month was 6 months ago when you overspent by $450. You had two good months back to back where you actually came out ahead ($40 and $20), but things slipped back after that.
 
-At -$80/month you're on pace to spend ~$960 more than you earn this year. Reducing monthly spending by just $81 (6%) closes the gap entirely. The seasonal Q3 pattern suggests discretionary categories like dining and entertainment are the primary drivers; those are the easiest to trim without lifestyle impact.`,
+The good news: you only need to cut about $81 a month to break even. That's roughly one dinner out or a couple of unused subscriptions. Connect your accounts and we can show you exactly where that money is going.`,
 
-  overview: `Net worth reached $14,696 this month (+$1,896 vs last month), driven largely by portfolio appreciation. A persistent -$80/month cash flow deficit quietly offsets those gains, adding up to roughly $960/year in structural spending overage.
+  overview: `Your net worth is $14,696, up $1,896 from last month. That is solid progress. The thing to watch is that you are spending about $80 more than you earn each month, which adds up to nearly $1,000 a year.
 
-Three priorities: (1) Close the income-spending gap; even $40/month improvement compounds significantly over time. (2) Emergency fund coverage appears thin relative to your monthly outflows (~1.7 months). (3) Directing any found cash toward high-interest balances first eliminates the fastest-growing drag on net worth.`,
+A few things worth focusing on: try to close that $80/month gap even a little at a time. You also have less than 2 months of expenses saved as a safety net, which is lower than the recommended 3 to 6. And if you have any high-interest debt, chipping away at that first will save you the most money over time.`,
 
-  budgeting: `Food and drink is your top spending category at $520 this month, accounting for 32% of total spend. Dining out jumped 35% compared to last month, adding $69 to an already stretched budget.
+  budgeting: `Your biggest expense this month is food and drink at $520, which is about a third of everything you spent. Eating out jumped 35% from last month, adding $69 you were not spending before.
 
-At $1,620 in monthly spend against ~$1,270 in average income, you are running a $350 shortfall this month. Two targeted cuts close most of the gap: trimming dining back to last month's level saves $69, and holding entertainment at $85 (vs the current $120) saves another $35. Shopping dropped $140 vs last month, which is directly offsetting some of the overages and is worth maintaining.`,
+You are spending $350 more than you earn this month. Cutting dining back to where it was last month gets you $69 of that back. Entertainment also crept up by $35. The bright spot is that shopping dropped $140 from last month, which is a big improvement worth keeping up.`,
 };
 
 function AIInsightCard({ isDemoData, demoKey, onGetAdvice, loading, text }) {
