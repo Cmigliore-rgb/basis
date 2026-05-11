@@ -5156,6 +5156,13 @@ export default function Dashboard() {
                               Demo data. Connect accounts to see your real finances.
                             </div>
                           )}
+                          <AIInsightCard
+                            isDemoData={isDemoData}
+                            demoKey="budgeting"
+                            onGetAdvice={canSeeAI ? () => getAdvice('budgeting') : undefined}
+                            loading={adviceState.budgeting?.loading}
+                            text={adviceState.budgeting?.text}
+                          />
                           <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
                             {[
                               { label: 'Month-to-Date Spend', value: fmt(hasRealExp ? activeMonthlySpend : 1620) },
@@ -5274,13 +5281,6 @@ export default function Dashboard() {
                         );
                       })}
                     </div>
-                    <AIInsightCard
-                      isDemoData={isDemoData}
-                      demoKey="budgeting"
-                      onGetAdvice={canSeeAI ? () => getAdvice('budgeting') : undefined}
-                      loading={adviceState.budgeting?.loading}
-                      text={adviceState.budgeting?.text}
-                    />
                   </>
                 ) : (
                   <>
