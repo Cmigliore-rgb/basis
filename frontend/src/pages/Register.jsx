@@ -90,23 +90,28 @@ export default function Register() {
     } finally { setOauthLoading(null); }
   };
 
-  const handleMicrosoft = async () => {
-    if (!window.msal?.PublicClientApplication) return setError('Microsoft Sign-In not available');
+  const handleMicrosoft = () => {
     setError(''); setOauthLoading('microsoft');
-    try {
-      const msalApp = new window.msal.PublicClientApplication({
-        auth: { clientId: MICROSOFT_CLIENT_ID, authority: 'https://login.microsoftonline.com/common', redirectUri: window.location.origin },
-        cache: { cacheLocation: 'sessionStorage', storeAuthStateInCookie: false },
-      });
-      const result = await msalApp.loginPopup({ scopes: ['openid', 'email', 'profile'] });
-      const { data } = await api.post('/auth/microsoft', { id_token: result.idToken });
-      login(data.token, data.user);
-      navigate('/app');
-    } catch (err) {
-      if (err?.errorCode !== 'user_cancelled') {
-        setError(err?.response?.data?.error || 'Microsoft sign-up failed');
-      }
-    } finally { setOauthLoading(null); }
+    const redirectUri = `${window.location.origin}/auth/microsoft/callback`;
+    const nonce = Math.random().toString(36).slice(2);
+    const url = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=id_token&scope=openid%20email%20profile&nonce=${nonce}&redirect_uri=${encodeURIComponent(redirectUri)}&response_mode=fragment`;
+    const popup = window.open(url, 'ms_auth', 'width=480,height=640,scrollbars=yes,resizable=yes');
+    const handler = async (e) => {
+      if (e.origin !== window.location.origin || e.data?.type !== 'ms_auth') return;
+      window.removeEventListener('message', handler);
+      if (e.data.error) { setError(e.data.error); setOauthLoading(null); return; }
+      try {
+        const { data } = await api.post('/auth/microsoft', { id_token: e.data.id_token });
+        login(data.token, data.user);
+        navigate('/app');
+      } catch (err) {
+        setError(err.response?.data?.error || 'Microsoft sign-up failed');
+      } finally { setOauthLoading(null); }
+    };
+    window.addEventListener('message', handler);
+    const timer = setInterval(() => {
+      if (popup?.closed) { clearInterval(timer); window.removeEventListener('message', handler); setOauthLoading(null); }
+    }, 500);
   };
 
   const handleApple = async () => {
