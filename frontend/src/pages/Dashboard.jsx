@@ -2479,8 +2479,13 @@ export default function Dashboard() {
   const [selectedDay, setSelectedDay]       = useState(null);
   const [showCreateAssignment, setShowCreateAssignment] = useState(false);
   const [customAssignments, setCustomAssignments] = useState([]);
+  const [createAssignLoading, setCreateAssignLoading] = useState(false);
+  const [createAssignError, setCreateAssignError] = useState('');
   const [createForm, setCreateForm] = useState({ title: '', description: '', chapter: 'Ch. 1', datasetId: '', points: '100', week: '' });
   const [createAssignCourseId, setCreateAssignCourseId] = useState(null);
+  const [showEditAssignment, setShowEditAssignment] = useState(false);
+  const [editAssignId, setEditAssignId] = useState(null);
+  const [editForm, setEditForm] = useState({ title: '', description: '', chapter: 'Ch. 1', datasetId: '', points: '100', week: '', dueDate: '' });
   const [viewAs, setViewAs] = useState(null); // null | 'professor' | 'student'
   const [adminUsers, setAdminUsers] = useState(null);
   const [adminUsersLoading, setAdminUsersLoading] = useState(false);
@@ -2818,12 +2823,58 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    if (effectiveProfessor) return; // professors load via /professor/assignments
+    const enrollments = user?.enrollments || [];
+    if (!enrollments.length) return;
+    Promise.all(enrollments.map(e => api.get(`/assignments/${e.code}`).catch(() => ({ data: { assignments: [] } }))))
+      .then(results => {
+        const loaded = results.flatMap((r, i) => {
+          const enrollment = enrollments[i];
+          return (r.data.assignments || []).map(a => ({
+            id: a.id,
+            courseId: enrollment.course_id,
+            courseCode: a.course_code,
+            title: a.title,
+            week: a.week || 'TBD',
+            chapter: a.chapter,
+            datasetId: a.dataset_id || null,
+            points: a.points,
+            description: a.description,
+            dueDate: a.due_date || '',
+            status: 'upcoming',
+            custom: true,
+          }));
+        });
+        setCustomAssignments(loaded);
+      });
+  }, [user?.enrollments, effectiveProfessor]);
+
+  useEffect(() => {
     if (!effectiveProfessor) return;
     api.get('/professor/dashboard')
       .then(r => {
         const codes = r.data.codes || [];
         setProfCodes(codes);
         setSelectedProfCode(prev => prev || (codes[0]?.code ?? ''));
+      })
+      .catch(() => {});
+    api.get('/professor/assignments')
+      .then(r => {
+        const loaded = (r.data.assignments || []).map(a => ({
+          id: a.id,
+          courseId: a.course_id,
+          courseCode: a.course_code,
+          title: a.title,
+          week: a.week || 'TBD',
+          chapter: a.chapter,
+          datasetId: a.dataset_id || null,
+          points: a.points,
+          description: a.description,
+          dueDate: a.due_date || '',
+          status: 'upcoming',
+          custom: true,
+        }));
+        setCustomAssignments(loaded);
       })
       .catch(() => {});
   }, [effectiveProfessor]);
@@ -3320,32 +3371,131 @@ export default function Dashboard() {
                 onChange={e => setCreateForm(p => ({ ...p, description: e.target.value }))}
                 style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.5 }} />
             </div>
+            {createAssignError && <div style={{ fontSize: 12, color: '#f87171', marginBottom: 10 }}>{createAssignError}</div>}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => { setShowCreateAssignment(false); setCreateAssignCourseId(null); }} style={{ padding: '10px 18px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button disabled={!createForm.title.trim() || !createAssignCourseId} onClick={() => {
-                setCustomAssignments(prev => [...prev, {
-                  id: `custom-${Date.now()}`,
-                  courseId: createAssignCourseId,
-                  title: createForm.title.trim(),
-                  week: createForm.week || 'TBD',
-                  chapter: createForm.chapter,
-                  datasetId: createForm.datasetId || null,
-                  points: parseInt(createForm.points) || 100,
-                  description: createForm.description,
-                  status: 'upcoming',
-                  custom: true,
-                }]);
-                setCreateForm({ title: '', description: '', chapter: 'Ch. 1', datasetId: '', points: '100', week: '' });
-                setCreateAssignCourseId(null);
-                setShowCreateAssignment(false);
-                setPanel('edu-assignments');
-              }} style={{ padding: '10px 18px', background: createForm.title.trim() && createAssignCourseId ? 'rgba(74,222,128,0.15)' : MUTED, border: createForm.title.trim() && createAssignCourseId ? '1px solid rgba(74,222,128,0.4)' : BORDER, borderRadius: 8, color: createForm.title.trim() && createAssignCourseId ? GREEN : TEXT3, fontSize: 13, fontWeight: 700, cursor: createForm.title.trim() && createAssignCourseId ? 'pointer' : 'default', transition: 'all 0.15s' }}>
-                Create Assignment
+              <button onClick={() => { setShowCreateAssignment(false); setCreateAssignCourseId(null); setCreateAssignError(''); }} style={{ padding: '10px 18px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button disabled={createAssignLoading || !createForm.title.trim() || !createAssignCourseId} onClick={async () => {
+                const courseCode = profCodes.find(c => c.course_id === createAssignCourseId)?.code;
+                if (!courseCode) return;
+                setCreateAssignLoading(true); setCreateAssignError('');
+                try {
+                  const { data } = await api.post('/professor/assignments', {
+                    course_code: courseCode,
+                    title: createForm.title.trim(),
+                    description: createForm.description,
+                    due_date: '',
+                    points: parseInt(createForm.points) || 100,
+                    chapter: createForm.chapter,
+                    dataset_id: createForm.datasetId || '',
+                    week: createForm.week || 'TBD',
+                  });
+                  const a = data.assignment;
+                  setCustomAssignments(prev => [...prev, {
+                    id: a.id,
+                    courseId: a.course_id,
+                    courseCode: a.course_code,
+                    title: a.title,
+                    week: a.week || 'TBD',
+                    chapter: a.chapter,
+                    datasetId: a.dataset_id || null,
+                    points: a.points,
+                    description: a.description,
+                    dueDate: a.due_date || '',
+                    status: 'upcoming',
+                    custom: true,
+                  }]);
+                  setCreateForm({ title: '', description: '', chapter: 'Ch. 1', datasetId: '', points: '100', week: '' });
+                  setCreateAssignCourseId(null);
+                  setShowCreateAssignment(false);
+                  setPanel('edu-assignments');
+                } catch (err) {
+                  setCreateAssignError(err.response?.data?.error || 'Failed to create assignment');
+                } finally { setCreateAssignLoading(false); }
+              }} style={{ padding: '10px 18px', background: createForm.title.trim() && createAssignCourseId ? 'rgba(74,222,128,0.15)' : MUTED, border: createForm.title.trim() && createAssignCourseId ? '1px solid rgba(74,222,128,0.4)' : BORDER, borderRadius: 8, color: createForm.title.trim() && createAssignCourseId ? GREEN : TEXT3, fontSize: 13, fontWeight: 700, cursor: (createAssignLoading || !createForm.title.trim() || !createAssignCourseId) ? 'default' : 'pointer', transition: 'all 0.15s' }}>
+                {createAssignLoading ? 'Creating…' : 'Create Assignment'}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* ── EDIT ASSIGNMENT MODAL ───────────────────────── */}
+      {showEditAssignment && (() => {
+        const target = customAssignments.find(a => a.id === editAssignId);
+        if (!target) return null;
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+            onClick={e => { if (e.target === e.currentTarget) setShowEditAssignment(false); }}>
+            <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, padding: 28, width: '100%', maxWidth: 520, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <div style={{ fontWeight: 700, fontSize: 17 }}>Edit Assignment</div>
+                <button onClick={() => setShowEditAssignment(false)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
+              </div>
+              {[
+                { label: 'Title', key: 'title', type: 'text', placeholder: 'Assignment title' },
+                { label: 'Week', key: 'week', type: 'text', placeholder: 'e.g. Apr 20–26' },
+                { label: 'Due Date', key: 'dueDate', type: 'date', placeholder: '' },
+              ].map(f => (
+                <div key={f.key} style={{ marginBottom: 14 }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{f.label}</label>
+                  <input type={f.type} value={editForm[f.key]} placeholder={f.placeholder}
+                    onChange={e => setEditForm(p => ({ ...p, [f.key]: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+              ))}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Chapter</label>
+                  <select value={editForm.chapter} onChange={e => setEditForm(p => ({ ...p, chapter: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none' }}>
+                    {['Ch. 1','Ch. 2','Ch. 3','Ch. 4','Ch. 5','Ch. 6','Ch. 7','Ch. 8','Ch. 9','Ch. 1–9'].map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Points</label>
+                  <input type="number" min="1" max="1000" value={editForm.points}
+                    onChange={e => setEditForm(p => ({ ...p, points: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Description</label>
+                <textarea rows={3} value={editForm.description}
+                  onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.5 }} />
+              </div>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button onClick={() => setShowEditAssignment(false)} style={{ padding: '10px 18px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <button disabled={!editForm.title.trim()} onClick={async () => {
+                  try {
+                    const { data } = await api.patch(`/professor/assignments/${editAssignId}`, {
+                      title: editForm.title.trim(),
+                      description: editForm.description,
+                      due_date: editForm.dueDate,
+                      points: parseInt(editForm.points) || 100,
+                      chapter: editForm.chapter,
+                      week: editForm.week,
+                    });
+                    const a = data.assignment;
+                    setCustomAssignments(prev => prev.map(x => x.id !== editAssignId ? x : {
+                      ...x,
+                      title: a.title,
+                      description: a.description,
+                      dueDate: a.due_date || '',
+                      points: a.points,
+                      chapter: a.chapter,
+                      week: a.week || 'TBD',
+                    }));
+                    setShowEditAssignment(false);
+                  } catch {}
+                }} style={{ padding: '10px 18px', background: editForm.title.trim() ? 'rgba(74,222,128,0.15)' : MUTED, border: editForm.title.trim() ? '1px solid rgba(74,222,128,0.4)' : BORDER, borderRadius: 8, color: editForm.title.trim() ? GREEN : TEXT3, fontSize: 13, fontWeight: 700, cursor: editForm.title.trim() ? 'pointer' : 'default', transition: 'all 0.15s' }}>
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── LINK CALENDAR MODAL ─────────────────────────── */}
       {showLinkCal && (
@@ -9820,7 +9970,15 @@ export default function Dashboard() {
                                               </div>
                                               <div style={{ fontSize: 11, color: TEXT3 }}>{a.chapter} · {a.points} pts</div>
                                             </div>
-                                            <button onClick={() => setCustomAssignments(prev => prev.filter(x => x.id !== a.id))} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
+                                            <button onClick={() => {
+                                              setEditAssignId(a.id);
+                                              setEditForm({ title: a.title, description: a.description || '', chapter: a.chapter || 'Ch. 1', datasetId: a.datasetId || '', points: String(a.points || 100), week: a.week || '', dueDate: a.dueDate || '' });
+                                              setShowEditAssignment(true);
+                                            }} style={{ background: 'none', border: 'none', color: TEXT2, cursor: 'pointer', fontSize: 12, lineHeight: 1, padding: '2px 6px', flexShrink: 0 }}>Edit</button>
+                                            <button onClick={async () => {
+                                              setCustomAssignments(prev => prev.filter(x => x.id !== a.id));
+                                              try { await api.delete(`/professor/assignments/${a.id}`); } catch {}
+                                            }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
                                           </div>
                                         ))}
                                       </div>

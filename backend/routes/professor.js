@@ -132,6 +132,63 @@ router.delete('/students/:code/:userId', requireAuth, requireProfessor, (req, re
   res.json({ ok: true });
 });
 
+// GET /professor/assignments — all custom assignments created by this professor
+router.get('/assignments', requireAuth, requireProfessor, (req, res) => {
+  const assignments = db.prepare(`
+    SELECT a.*, c.course_id
+    FROM assignments a
+    JOIN course_codes c ON a.course_code = c.code
+    WHERE a.created_by = ?
+    ORDER BY a.created_at ASC
+  `).all(req.user.id);
+  res.json({ assignments });
+});
+
+// POST /professor/assignments — create a new custom assignment
+router.post('/assignments', requireAuth, requireProfessor, (req, res) => {
+  const { course_code, title, description, due_date, points, chapter, dataset_id, week } = req.body;
+  if (!course_code || !title) return res.status(400).json({ error: 'course_code and title are required' });
+  const id = `custom-${Date.now()}`;
+  db.prepare(`
+    INSERT INTO assignments (id, course_code, title, description, due_date, points, chapter, dataset_id, week, created_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, course_code.toUpperCase(), title.trim(), description || '', due_date || '', parseInt(points) || 100, chapter || '', dataset_id || '', week || '', req.user.id);
+  const row = db.prepare('SELECT a.*, c.course_id FROM assignments a JOIN course_codes c ON a.course_code = c.code WHERE a.id = ?').get(id);
+  res.status(201).json({ assignment: row });
+});
+
+// PATCH /professor/assignments/:id — edit a custom assignment
+router.patch('/assignments/:id', requireAuth, requireProfessor, (req, res) => {
+  const { id } = req.params;
+  const existing = db.prepare('SELECT * FROM assignments WHERE id = ? AND created_by = ?').get(id, req.user.id);
+  if (!existing) return res.status(404).json({ error: 'Assignment not found' });
+  const { title, description, due_date, points, chapter, dataset_id, week } = req.body;
+  db.prepare(`
+    UPDATE assignments SET title = ?, description = ?, due_date = ?, points = ?, chapter = ?, dataset_id = ?, week = ?
+    WHERE id = ? AND created_by = ?
+  `).run(
+    title ?? existing.title,
+    description ?? existing.description,
+    due_date ?? existing.due_date,
+    points != null ? parseInt(points) : existing.points,
+    chapter ?? existing.chapter,
+    dataset_id ?? existing.dataset_id,
+    week ?? existing.week,
+    id, req.user.id
+  );
+  const updated = db.prepare('SELECT a.*, c.course_id FROM assignments a JOIN course_codes c ON a.course_code = c.code WHERE a.id = ?').get(id);
+  res.json({ assignment: updated });
+});
+
+// DELETE /professor/assignments/:id — delete a custom assignment
+router.delete('/assignments/:id', requireAuth, requireProfessor, (req, res) => {
+  const { id } = req.params;
+  const existing = db.prepare('SELECT * FROM assignments WHERE id = ? AND created_by = ?').get(id, req.user.id);
+  if (!existing) return res.status(404).json({ error: 'Assignment not found' });
+  db.prepare('DELETE FROM assignments WHERE id = ?').run(id);
+  res.json({ ok: true });
+});
+
 // PATCH /professor/codes/:code/toggle — activate or deactivate a code
 router.patch('/codes/:code/toggle', requireAuth, requireProfessor, (req, res) => {
   const code = req.params.code.toUpperCase();

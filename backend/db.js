@@ -133,6 +133,21 @@ try { db.exec("UPDATE users SET edu_verified_at = datetime('now') WHERE role = '
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN item_id TEXT'); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN needs_update INTEGER NOT NULL DEFAULT 0'); } catch {}
 try {
+  db.exec(`CREATE TABLE IF NOT EXISTS assignments (
+    id TEXT PRIMARY KEY,
+    course_code TEXT NOT NULL REFERENCES course_codes(code),
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    due_date TEXT NOT NULL DEFAULT '',
+    points INTEGER NOT NULL DEFAULT 100,
+    chapter TEXT NOT NULL DEFAULT '',
+    dataset_id TEXT NOT NULL DEFAULT '',
+    week TEXT NOT NULL DEFAULT '',
+    created_by INTEGER NOT NULL REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+} catch {}
+try {
   db.exec(`
     CREATE TABLE IF NOT EXISTS manual_liabilities (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
