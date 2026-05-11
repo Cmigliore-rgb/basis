@@ -11227,7 +11227,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Key formula */}
-                    <div style={{ ...CARD, background: `${BLUE}06`, border: `1px solid ${BLUE}20` }}>
+                    <div style={{ ...CARD, background: `${BLUE}06`, border: `1px solid ${BLUE}20`, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 13, color: BLUE, marginBottom: 10 }}>The Formula</div>
                       <div style={{ fontSize: 16, fontFamily: 'monospace', color: TEXT, marginBottom: 12, padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
                         Net Worth = Total Assets − Total Liabilities
@@ -11236,6 +11236,23 @@ export default function Dashboard() {
                         Assets include anything you own with monetary value: cash, savings, investments, real estate, vehicles.
                         Liabilities include everything you owe: credit cards, student loans, auto loans, mortgages.
                         Growing net worth means either increasing assets, reducing liabilities, or both.
+                      </div>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: `${BLUE}06`, border: `1px solid ${BLUE}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: BLUE }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
+                        {[
+                          { term: 'Assets vs. Liabilities', body: 'Everything you own (assets) minus everything you owe (liabilities). Assets include cash, savings, investments, and property. Liabilities include loans, credit card balances, and any money owed.' },
+                          { term: 'Net Worth Formula', body: 'Net Worth = Total Assets − Total Liabilities. A positive number means wealth is being built; a negative number means debt outpaces assets — common and normal early in life.' },
+                          { term: 'Personal Balance Sheet', body: 'A snapshot of financial position at a single point in time. Unlike income statements (which show flow), a balance sheet shows stock — what you have and what you owe right now.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{c.term}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -11382,7 +11399,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Transaction list */}
-                    <div style={CARD}>
+                    <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>All Transactions This Month</div>
                       <div style={{ maxHeight: 320, overflowY: 'auto' }}>
                         {txns.sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, i) => {
@@ -11397,6 +11414,23 @@ export default function Dashboard() {
                             </div>
                           );
                         })}
+                      </div>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: 'rgba(34,197,94,0.04)', border: '1px solid rgba(34,197,94,0.18)' }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: GREEN }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
+                        {[
+                          { term: 'Fixed vs. Variable Expenses', body: 'Fixed expenses stay the same each month (rent, insurance, subscriptions). Variable expenses fluctuate (dining, entertainment, shopping). Fixed costs are harder to cut; variable costs are where most budget savings come from.' },
+                          { term: '50/30/20 Rule', body: 'A budgeting framework allocating 50% of after-tax income to needs, 30% to wants, and 20% to savings and debt repayment. It is a starting point, not a strict rule — adjust based on your income and goals.' },
+                          { term: 'Budget Surplus/Deficit', body: 'Income minus total spending. A surplus should go immediately to savings or debt payoff. A deficit means spending exceeds income — leaving it unaddressed builds debt month over month.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{c.term}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -11771,8 +11805,9 @@ export default function Dashboard() {
                           </thead>
                           <tbody>
                             {scheduleRows.map(r => {
+                              const statusPct   = Math.min(99, Math.round((r.balance / target3mo) * 100));
                               const statusColor = r.reached6 ? GREEN : r.reached3 ? YELLOW : TEXT3;
-                              const statusText  = r.reached6 ? '✓ 6-mo funded' : r.reached3 ? '✓ 3-mo funded' : 'Building...';
+                              const statusText  = r.reached6 ? '✓ 6-mo funded' : r.reached3 ? '✓ 3-mo funded' : `${statusPct}% funded`;
                               return (
                                 <tr key={r.month} style={{ borderBottom: `1px solid ${BORDER_C}`, background: r.reached3 && !scheduleRows[r.month - 2]?.reached3 ? `${GREEN}06` : 'transparent' }}>
                                   <td style={{ padding: '8px 10px', fontWeight: 600 }}>Month {r.month}</td>
@@ -11788,13 +11823,21 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {/* Key concept */}
+                    {/* Key concepts */}
                     <div style={{ ...CARD, background: `${CYAN}06`, border: `1px solid ${CYAN}20` }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, color: CYAN, marginBottom: 10 }}>The 3–6 Month Rule</div>
-                      <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>
-                        Financial planners recommend 3–6 months of <strong style={{ color: TEXT }}>essential expenses</strong> — not income — in a liquid, FDIC-insured account.
-                        The lower end (3 months) works for those with stable employment and low fixed costs. The upper end (6 months) is appropriate for
-                        variable income, single-income households, or anyone with dependents. Once funded, resist the urge to invest it — liquidity is the point.
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: CYAN }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: '3-6 Month Rule', body: 'Financial planners recommend 3-6 months of essential expenses — not income — in a liquid, FDIC-insured account. Three months suits stable earners; six months is right for variable income, dependents, or high fixed costs.' },
+                          { term: 'HYSA vs. Checking', body: 'A High-Yield Savings Account earns 4-5% APY vs. 0.01% in typical checking. On a $5,000 emergency fund that difference is roughly $240/year in interest you leave on the table by keeping cash in checking.' },
+                          { term: 'Monthly Savings Rate', body: 'The percentage of income set aside each month. Even a small consistent rate builds a fund over time. Automate contributions so savings happen before discretionary spending, not after.' },
+                          { term: 'Opportunity Cost', body: 'Not having an emergency fund has a real cost: when an unexpected expense hits, the alternative is high-interest debt. A funded emergency fund avoids forced borrowing at 20-25% APR.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{c.term}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
