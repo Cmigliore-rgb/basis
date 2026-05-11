@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import api from '../../services/api';
 
 export default function PlaidLink({ onSuccess, locked, onLocked }) {
-  const [linkToken, setLinkToken]     = useState(null);
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState('');
-  const [ready, setReady]             = useState(false);
+  const [linkToken, setLinkToken] = useState(null);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState('');
+  const [ready, setReady]         = useState(false);
   const [showConsent, setShowConsent] = useState(false);
+  const handlerRef = useRef(null);
 
   useEffect(() => {
     if (locked) return;
@@ -21,19 +22,19 @@ export default function PlaidLink({ onSuccess, locked, onLocked }) {
 
   useEffect(() => {
     if (!linkToken) return;
-    const script = document.createElement('script');
-    script.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js';
-    script.onload = () => {
+
+    const init = () => {
       const config = {
         token: linkToken,
         onSuccess: async (public_token, metadata) => {
           setLoading(true);
+          setShowConsent(false);
           try {
             await api.post('/plaid/exchange_token', {
               public_token,
               institution_name: metadata.institution?.name || 'Unknown',
             });
-            if (onSuccess) onSuccess();
+            if (onSuccess) onSuccess(metadata.institution?.name || 'Your bank');
           } catch (err) {
             console.error('Token exchange error:', err);
             setError('Failed to connect account. Please try again.');
@@ -41,24 +42,43 @@ export default function PlaidLink({ onSuccess, locked, onLocked }) {
             setLoading(false);
           }
         },
-        onExit: (err) => { if (err) console.error('Plaid exit:', err); },
+        onExit: (err, metadata) => {
+          if (err) {
+            if (err.error_code === 'INVALID_LINK_TOKEN') {
+              setError('Session expired. Please refresh and try again.');
+            } else if (err.error_code !== 'INSTITUTION_NOT_RESPONDING') {
+              setError(err.display_message || err.error_message || 'Connection cancelled.');
+            }
+          }
+        },
       };
       if (window.location.href.includes('oauth_state_id')) {
         config.receivedRedirectUri = window.location.href;
       }
-      window._plaidLinkHandler = window.Plaid.create(config);
+      handlerRef.current = window.Plaid.create(config);
+      window._plaidLinkHandler = handlerRef.current;
       setReady(true);
       if (window.location.href.includes('oauth_state_id')) {
-        window._plaidLinkHandler.open();
+        handlerRef.current.open();
       }
     };
-    script.onerror = () => setError('Failed to load Plaid. Check your connection.');
-    document.body.appendChild(script);
-    return () => { if (document.body.contains(script)) document.body.removeChild(script); };
+
+    if (window.Plaid) {
+      init();
+    } else {
+      // Script still loading (async attr) — wait for it
+      const onLoad = () => init();
+      const existing = document.querySelector('script[src*="plaid.com/link"]');
+      if (existing) {
+        existing.addEventListener('load', onLoad);
+        return () => existing.removeEventListener('load', onLoad);
+      }
+    }
   }, [linkToken, onSuccess]);
 
   const handleConnectClick = () => {
     if (locked) { onLocked?.(); return; }
+    setError('');
     setShowConsent(true);
   };
 
@@ -72,8 +92,14 @@ export default function PlaidLink({ onSuccess, locked, onLocked }) {
 
   if (error) {
     return (
-      <div style={{ fontSize: 12, color: '#f87171', padding: '8px 4px', lineHeight: 1.4 }}>
-        {error}
+      <div>
+        <div style={{ fontSize: 12, color: '#f87171', padding: '8px 4px', lineHeight: 1.4, marginBottom: 8 }}>
+          {error}
+        </div>
+        <button onClick={() => { setError(''); setReady(false); setLinkToken(null); api.post('/plaid/create_link_token').then(r => setLinkToken(r.data.link_token)).catch(() => {}); }}
+          style={btnStyle('#f87171', 'rgba(248,113,113,0.08)', '1px solid rgba(248,113,113,0.25)', 'pointer')}>
+          Try again
+        </button>
       </div>
     );
   }
@@ -85,7 +111,7 @@ export default function PlaidLink({ onSuccess, locked, onLocked }) {
         disabled={!ready || loading}
         style={btnStyle('#fff', loading ? '#555' : '#0066f5', 'none', (!ready || loading) ? 'not-allowed' : 'pointer', (!ready || loading) ? 0.6 : 1)}
       >
-        {loading ? 'Connecting...' : !ready ? 'Loading...' : '+ Connect Account'}
+        {loading ? 'Connecting…' : !ready ? 'Preparing…' : '+ Connect Account'}
       </button>
 
       {showConsent && (
@@ -109,7 +135,7 @@ export default function PlaidLink({ onSuccess, locked, onLocked }) {
               to securely read your financial data. By connecting, you authorize PeakLedger to access:
             </div>
 
-            <ul style={{ paddingLeft: 18, margin: '0 0 20px', listStyle: 'none' }}>
+            <ul style={{ paddingLeft: 0, margin: '0 0 20px', listStyle: 'none' }}>
               {[
                 'Account balances and names',
                 'Transaction history',
@@ -154,7 +180,7 @@ export default function PlaidLink({ onSuccess, locked, onLocked }) {
                 Cancel
               </button>
               <button
-                onClick={() => { setShowConsent(false); window._plaidLinkHandler?.open(); }}
+                onClick={() => { setShowConsent(false); handlerRef.current?.open(); }}
                 style={{
                   flex: 2, padding: '10px 0',
                   background: '#0066f5', border: 'none',

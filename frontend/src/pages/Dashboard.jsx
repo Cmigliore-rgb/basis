@@ -2396,6 +2396,7 @@ export default function Dashboard() {
   };
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [syncingBank, setSyncingBank] = useState(null); // institution name after connect
   useEffect(() => {
     const handle = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handle);
@@ -3225,7 +3226,7 @@ export default function Dashboard() {
           <div style={{ padding: '10px 14px 4px', display: 'flex', flexDirection: 'column', gap: 7 }}>
             {isAdmin && !viewAs && (
               <div data-tour="connect">
-                <PlaidLink onSuccess={fetchAll} locked={false} onLocked={() => {}} />
+                <PlaidLink onSuccess={(name) => { setSyncingBank(name); fetchAll().finally(() => setSyncingBank(null)); }} locked={false} onLocked={() => {}} />
               </div>
             )}
             {!(isAdmin && !viewAs) && (
@@ -4023,6 +4024,12 @@ export default function Dashboard() {
 
       <main ref={mainRef} style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', paddingTop: isMobile ? 'calc(52px + env(safe-area-inset-top))' : 0 }}>
         {panel === 'insights' && <TickerBar indices={marketTickers.indices} active={marketTickers.active} />}
+        {syncingBank && (
+          <div style={{ background: 'rgba(77,163,255,0.08)', borderBottom: '1px solid rgba(77,163,255,0.2)', padding: '10px 24px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: BLUE }}>
+            <span style={{ display: 'inline-block', width: 14, height: 14, border: `2px solid ${BLUE}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+            Syncing <strong>{syncingBank}</strong> — transactions and balances may take 1–2 minutes to appear.
+          </div>
+        )}
         <div style={{ flex: 1, padding: isMobile ? `20px 16px calc(84px + env(safe-area-inset-bottom))` : 32 }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: TEXT2 }}>
@@ -4031,6 +4038,7 @@ export default function Dashboard() {
         ) : (
           <>
             <style>{`
+              @keyframes spin { to { transform: rotate(360deg); } }
               @keyframes bounce {
                 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
                 30% { transform: translateY(-5px); opacity: 1; }
