@@ -8317,6 +8317,34 @@ export default function Dashboard() {
                     </div>
                   </div>
 
+                  {/* Two-factor authentication */}
+                  <div style={{ padding: '14px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>Two-Factor Authentication</div>
+                        <div style={{ fontSize: 12, color: TEXT3, lineHeight: 1.5 }}>
+                          {user?.two_factor_enabled ? 'A code is emailed to you each time you sign in.' : 'Get a one-time code by email whenever you sign in.'}
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          try {
+                            if (user?.two_factor_enabled) {
+                              await api.post('/auth/2fa/disable');
+                              refreshUser();
+                            } else {
+                              await api.post('/auth/2fa/enable');
+                              refreshUser();
+                            }
+                          } catch {}
+                        }}
+                        style={{ width: 42, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', background: user?.two_factor_enabled ? BLUE_BTN : 'rgba(255,255,255,0.12)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
+                      >
+                        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: user?.two_factor_enabled ? 21 : 3, transition: 'left 0.18s' }} />
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Backup email */}
                   <div style={{ padding: '14px 0', borderBottom: `1px solid ${BORDER_C}` }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: TEXT2, marginBottom: 4 }}>Backup Email</div>

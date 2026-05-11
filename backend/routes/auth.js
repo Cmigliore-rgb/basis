@@ -31,6 +31,7 @@ const safeUser = (u, enrollments = []) => ({
   id: u.id, email: u.email, name: u.name, role: u.role, tier: u.tier,
   email_verified: !!u.email_verified, created_at: u.created_at, enrollments,
   backup_email: u.backup_email || null,
+  two_factor_enabled: !!u.two_factor_enabled,
 });
 
 const APP_URL = process.env.FRONTEND_URL || 'https://peakledger.app';
@@ -117,11 +118,66 @@ router.post('/login', async (req, res) => {
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
   if (!user) return res.status(401).json({ error: 'Invalid email or password' });
 
-  const valid = await bcrypt.compare(password, user.password_hash);
+  const valid = await bcrypt.compare(password, user.password_hash || '');
   if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
+
+  if (user.two_factor_enabled) {
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const codeHash = await bcrypt.hash(code, 10);
+    const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const tempToken = crypto.randomBytes(32).toString('hex');
+    db.prepare('UPDATE users SET two_factor_code = ?, two_factor_expires_at = ?, two_factor_temp_token = ? WHERE id = ?')
+      .run(codeHash, expires, tempToken, user.id);
+    sendEmail({
+      to: user.email,
+      subject: 'Your PeakLedger login code',
+      html: `
+        <div style="font-family:-apple-system,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f172a;border-radius:12px;">
+          <div style="font-size:22px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Your login code</div>
+          <div style="font-size:14px;color:#94a3b8;margin-bottom:28px;line-height:1.6;">
+            Hi ${user.name}, use the code below to complete your sign-in. It expires in 10 minutes.
+          </div>
+          <div style="font-size:40px;font-weight:800;letter-spacing:10px;color:#f1f5f9;background:#1e293b;padding:20px 28px;border-radius:10px;text-align:center;margin-bottom:24px;">
+            ${code}
+          </div>
+          <div style="font-size:12px;color:#475569;">If you didn't try to sign in, you can safely ignore this email.</div>
+        </div>
+      `,
+    }).catch(err => console.error('2FA email failed:', err.message));
+    return res.json({ requiresTwoFactor: true, tempToken });
+  }
 
   const enrollments = getEnrollments(user.id);
   res.json({ token: sign(user), user: safeUser(user, enrollments) });
+});
+
+// ── 2FA: verify code ──────────────────────────────────────────────────────────
+router.post('/verify-2fa', async (req, res) => {
+  const { tempToken, code } = req.body;
+  if (!tempToken || !code) return res.status(400).json({ error: 'tempToken and code are required' });
+
+  const user = db.prepare('SELECT * FROM users WHERE two_factor_temp_token = ?').get(tempToken);
+  if (!user) return res.status(401).json({ error: 'Invalid or expired session' });
+  if (!user.two_factor_expires_at || new Date(user.two_factor_expires_at) < new Date())
+    return res.status(401).json({ error: 'Code expired. Please sign in again.' });
+
+  const valid = await bcrypt.compare(code.trim(), user.two_factor_code || '');
+  if (!valid) return res.status(401).json({ error: 'Incorrect code' });
+
+  db.prepare('UPDATE users SET two_factor_code = NULL, two_factor_expires_at = NULL, two_factor_temp_token = NULL WHERE id = ?').run(user.id);
+  const enrollments = getEnrollments(user.id);
+  res.json({ token: sign(user), user: safeUser(user, enrollments) });
+});
+
+// ── 2FA: enable / disable ─────────────────────────────────────────────────────
+router.post('/2fa/enable', requireAuth, (req, res) => {
+  db.prepare('UPDATE users SET two_factor_enabled = 1 WHERE id = ?').run(req.user.id);
+  res.json({ ok: true });
+});
+
+router.post('/2fa/disable', requireAuth, (req, res) => {
+  db.prepare('UPDATE users SET two_factor_enabled = 0, two_factor_code = NULL, two_factor_expires_at = NULL, two_factor_temp_token = NULL WHERE id = ?').run(req.user.id);
+  res.json({ ok: true });
 });
 
 router.get('/me', requireAuth, (req, res) => {

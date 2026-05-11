@@ -32,7 +32,10 @@ export default function Login() {
   const [form, setForm]         = useState({ email: '', password: '' });
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
-  const [oauthLoading, setOauthLoading] = useState(null); // 'google' | 'apple' | null
+  const [oauthLoading, setOauthLoading] = useState(null);
+  const [twoFactor, setTwoFactor] = useState(null); // { tempToken }
+  const [tfCode, setTfCode]     = useState('');
+  const [tfLoading, setTfLoading] = useState(false);
   const googleBtnRef = useRef(null);
 
   // Initialize Google Sign-In button
@@ -119,11 +122,27 @@ export default function Login() {
     setError(''); setLoading(true);
     try {
       const { data } = await api.post('/auth/login', form);
-      login(data.token, data.user);
-      navigate('/app');
+      if (data.requiresTwoFactor) {
+        setTwoFactor({ tempToken: data.tempToken });
+      } else {
+        login(data.token, data.user);
+        navigate('/app');
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');
     } finally { setLoading(false); }
+  };
+
+  const submitTwoFactor = async (e) => {
+    e.preventDefault();
+    setError(''); setTfLoading(true);
+    try {
+      const { data } = await api.post('/auth/verify-2fa', { tempToken: twoFactor.tempToken, code: tfCode });
+      login(data.token, data.user);
+      navigate('/app');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Verification failed');
+    } finally { setTfLoading(false); }
   };
 
   const showOAuth = GOOGLE_CLIENT_ID || APPLE_CLIENT_ID || MICROSOFT_CLIENT_ID;
@@ -162,6 +181,43 @@ export default function Login() {
 
       {/* ── Right: dark login form ────────────────────────── */}
       <div style={{ width: 460, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 48px', background: R_BG }}>
+
+        {/* ── 2FA challenge ── */}
+        {twoFactor ? (
+          <>
+            <div style={{ marginBottom: 32 }}>
+              <div style={{ fontSize: 24, fontWeight: 700, color: TEXT, letterSpacing: '-0.5px' }}>Check your email</div>
+              <div style={{ fontSize: 14, color: TEXT2, marginTop: 6 }}>We sent a 6-digit code to <strong style={{ color: TEXT }}>{form.email}</strong>. It expires in 10 minutes.</div>
+            </div>
+            <form onSubmit={submitTwoFactor}>
+              {error && (
+                <div style={{ background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 8, padding: '10px 14px', color: '#f87171', fontSize: 13, marginBottom: 20 }}>
+                  {error}
+                </div>
+              )}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>Verification Code</label>
+                <input
+                  type="text" inputMode="numeric" maxLength={6} value={tfCode}
+                  onChange={e => setTfCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="000000" autoFocus
+                  style={{ width: '100%', padding: '14px', background: INPUT_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: TEXT, fontSize: 28, fontWeight: 700, letterSpacing: '10px', textAlign: 'center', outline: 'none', boxSizing: 'border-box', fontFamily: 'monospace' }}
+                />
+              </div>
+              <button type="submit" disabled={tfLoading || tfCode.length < 6}
+                style={{ width: '100%', padding: '13px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 9, fontSize: 15, fontWeight: 700, cursor: (tfLoading || tfCode.length < 6) ? 'default' : 'pointer', opacity: (tfLoading || tfCode.length < 6) ? 0.6 : 1 }}>
+                {tfLoading ? 'Verifying…' : 'Verify'}
+              </button>
+              <div style={{ textAlign: 'center', marginTop: 16 }}>
+                <button type="button" onClick={() => { setTwoFactor(null); setTfCode(''); setError(''); }}
+                  style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 13, cursor: 'pointer' }}>
+                  ← Back to sign in
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+        <>
         <div style={{ marginBottom: 32 }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: TEXT, letterSpacing: '-0.5px' }}>Welcome back</div>
           <div style={{ fontSize: 14, color: TEXT2, marginTop: 6 }}>Sign in to your account</div>
@@ -243,6 +299,8 @@ export default function Login() {
           {' · '}
           <Link to="/terms" style={{ color: TEXT3, textDecoration: 'none' }}>Terms of Service</Link>
         </div>
+        </>
+        )}
       </div>
 
     </div>
