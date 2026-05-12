@@ -724,6 +724,19 @@ function fmtCat(raw) {
   return CATEGORY_LABEL[raw] || raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
+const ACCOUNT_TYPE_LABEL = {
+  depository: 'Bank Account',
+  credit:     'Credit Card',
+  investment: 'Investment',
+  loan:       'Loan',
+  other:      'Other',
+};
+
+function fmtAcctType(subtype, type) {
+  if (subtype) return subtype.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  return ACCOUNT_TYPE_LABEL[type] || (type ? type.replace(/\b\w/g, c => c.toUpperCase()) : '—');
+}
+
 function AIInsightCard({ isDemoData, demoKey, onGetAdvice, loading, text }) {
   const [demoRevealed, setDemoRevealed] = React.useState(false);
   const demoText = DEMO_AI[demoKey];
@@ -5182,12 +5195,12 @@ export default function Dashboard() {
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
                         {[
                           { label: 'Current Balance', value: acct.closed ? '—' : fmt(acct.balances?.current), color: acct.closed ? TEXT3 : TEXT },
-                          { label: 'Account Type', value: acct.subtype || acct.type || '—', color: TEXT2 },
+                          { label: 'Account Type', value: fmtAcctType(acct.subtype, acct.type), color: TEXT2 },
                           { label: 'Institution', value: acct.institution_name || '—', color: BLUE },
                         ].map(({ label, value, color }) => (
                           <div key={label} className="lc" style={CARD}>
                             <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>{label}</div>
-                            <div style={{ fontSize: 20, fontWeight: 700, color, textTransform: 'capitalize' }}>{value}</div>
+                            <div style={{ fontSize: 20, fontWeight: 700, color }}>{value}</div>
                           </div>
                         ))}
                       </div>
@@ -5265,7 +5278,7 @@ export default function Dashboard() {
                             <div style={{ fontWeight: 600, margin: '6px 0 2px', fontSize: 15 }}>{a.name}</div>
                             <div style={{ fontSize: 28, fontWeight: 700, margin: '8px 0 4px', letterSpacing: '-0.5px', color: a.closed ? TEXT3 : TEXT }}>{a.closed ? '—' : fmt(a.balances?.current)}</div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div style={{ fontSize: 12, color: TEXT2, textTransform: 'capitalize' }}>{a.subtype}</div>
+                              <div style={{ fontSize: 12, color: TEXT2 }}>{fmtAcctType(a.subtype, a.type)}</div>
                               <div style={{ fontSize: 11, color: TEXT3 }}>View transactions →</div>
                             </div>
                           </div>

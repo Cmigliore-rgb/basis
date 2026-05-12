@@ -122,15 +122,21 @@ async function getLiabilities(req) {
   const results = await Promise.all(
     tokens.map(({ access_token }) =>
       plaidClient.liabilitiesGet({ access_token })
-        .then(r => r.data.liabilities)
+        .then(r => ({ liabilities: r.data.liabilities, accounts: r.data.accounts || [] }))
         .catch(() => null)
     )
   );
 
+  // Plaid puts balances in the top-level accounts array, not in the liability objects
+  const balanceMap = {};
+  results.forEach(r => {
+    (r?.accounts || []).forEach(a => { balanceMap[a.account_id] = a.balances; });
+  });
+
   return {
-    credit:   [...results.flatMap(r => r?.credit   || []), ...manualByType.credit],
-    student:  [...results.flatMap(r => r?.student  || []), ...manualByType.student],
-    mortgage: [...results.flatMap(r => r?.mortgage || []), ...manualByType.mortgage],
+    credit:   [...results.flatMap(r => (r?.liabilities?.credit   || []).map(c => ({ ...c, balances: balanceMap[c.account_id] || c.balances }))), ...manualByType.credit],
+    student:  [...results.flatMap(r => (r?.liabilities?.student  || []).map(s => ({ ...s, balances: balanceMap[s.account_id] || s.balances }))), ...manualByType.student],
+    mortgage: [...results.flatMap(r => (r?.liabilities?.mortgage || []).map(m => ({ ...m, balances: balanceMap[m.account_id] || m.balances }))), ...manualByType.mortgage],
   };
 }
 
