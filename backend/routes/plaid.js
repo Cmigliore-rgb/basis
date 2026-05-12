@@ -68,6 +68,11 @@ router.post('/exchange_token', requireAuth, async (req, res) => {
   try {
     const response = await plaidClient.itemPublicTokenExchange({ public_token });
     const { access_token, item_id } = response.data;
+
+    // Duplicate item detection — if this item_id is already linked, skip insert
+    const existing = db.prepare('SELECT id FROM plaid_tokens WHERE item_id = ? AND user_id = ?').get(item_id, req.user.id);
+    if (existing) return res.json({ success: true, duplicate: true });
+
     db.prepare(`
       INSERT INTO plaid_tokens (user_id, access_token, institution_name, item_id)
       VALUES (?, ?, ?, ?)
