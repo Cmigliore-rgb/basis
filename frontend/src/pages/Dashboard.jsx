@@ -1164,7 +1164,8 @@ const LEARN_CONTENT = [
         summary: 'A company\'s intrinsic value equals the present value of all its future free cash flows.',
         body: 'Discounted Cash Flow (DCF) is the foundation of fundamental investing. You forecast a company\'s free cash flow (FCF) for 5–10 years, then estimate a terminal value for everything after that. Both are discounted back to today using a discount rate (WACC, the weighted average cost of capital). If the DCF value exceeds the current share price, the stock may be undervalued.',
         formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>V = <span style={{fontSize:11}}>Σ</span><Frac n="FCFₜ" d={<span>(1+r)<sup style={{fontSize:11}}>t</sup></span>} /> + <Frac n="TV" d={<span>(1+r)<sup style={{fontSize:11}}>n</sup></span>} /></span>,
-        example: 'A company with $100M FCF growing 8%/yr, WACC=10%, terminal growth=3%: TV = $100M×1.08⁵×(1.03)/(0.10−0.03). Discount back → total intrinsic value ~$1.8B.' },
+        example: 'A company with $100M FCF growing 8%/yr, WACC=10%, terminal growth=3%: TV = $100M×1.08⁵×(1.03)/(0.10−0.03). Discount back → total intrinsic value ~$1.8B.',
+        datasetId: 'ds-dcf' },
       { id: 'lbo', title: 'LBO Basics', icon: '🏗️',
         summary: 'Acquire a company using mostly debt, then repay it with the target\'s own cash flows.',
         body: 'In a leveraged buyout, a private equity firm acquires a company with 60–80% debt and 20–40% equity. The target\'s operating cash flows service and pay down the debt over 3–7 years. At exit (IPO or sale), the remaining equity, now a larger share of a less-leveraged company, generates the return. LBOs work best on stable, cash-generative businesses with predictable revenues.',
@@ -1184,7 +1185,8 @@ const LEARN_CONTENT = [
         summary: 'Bond price = present value of all cash flows. YTM is the single rate that explains the price.',
         body: 'A bond\'s price equals the sum of all discounted coupon payments plus the discounted par value. YTM (yield to maturity) is the internal rate of return, the single discount rate that makes the PV of cash flows equal to the price. Price and yield move inversely. When YTM > coupon rate → discount bond (price < par). When YTM < coupon rate → premium bond (price > par).',
         formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>P = <span style={{fontSize:11}}>Σ</span><Frac n="C" d={<span>(1+y)<sup style={{fontSize:11}}>t</sup></span>} /> + <Frac n="F" d={<span>(1+y)<sup style={{fontSize:11}}>T</sup></span>} /></span>,
-        example: '$1,000 par, 5% coupon, 10yr, YTM=6%: P = Σ$25/(1.03)ᵗ + $1,000/(1.03)²⁰ = $925.61 (semi-annual, discount bond).' },
+        example: '$1,000 par, 5% coupon, 10yr, YTM=6%: P = Σ$25/(1.03)ᵗ + $1,000/(1.03)²⁰ = $925.61 (semi-annual, discount bond).',
+        datasetId: 'ds-fi-pricing' },
       { id: 'fi-termstructure', title: 'Yield Curve & Term Structure', icon: '📉',
         summary: 'The yield curve plots interest rates across maturities, forming the backbone of fixed income and macro.',
         body: 'Spot rate s(t): the YTM on a zero-coupon bond maturing at time t. Forward rate: the implied rate for a future period, extracted from spot rates via no-arbitrage. The yield curve shape signals economic expectations: normal (upward sloping) = growth expected; inverted = recession signal; flat = uncertainty. Every inversion since 1955 has preceded a recession, making it the most watched macro indicator.',
@@ -1698,6 +1700,22 @@ const PREBUILT_DATASETS = [
     stats: [['Renters insurance', '$15/mo'], ['Health: 1 ER visit', 'up to $10,000'], ['EV formula', 'P × Loss − Premium']],
     overview: 'Students run the expected-value calculator to find the break-even premium, compare four insurance types, and work through the deductible tradeoff to find when a higher deductible saves money.',
   },
+  {
+    id: 'ds-dcf',        title: 'DCF Valuation Model',              subtitle: 'Valuation · Ch. 1',
+    description: 'Build a 5-year DCF for a fictional SaaS company. Adjust FCF, growth rate, WACC, and terminal growth to see how intrinsic value shifts against a $280 market price.',
+    category: 'Valuation',  color: '#8b5cf6',  difficulty: 'Advanced',
+    concepts: ['Free Cash Flow', 'WACC', 'Terminal Value', 'Margin of Safety'],
+    stats: [['Forecast', '5 years'], ['Terminal Growth', '3%'], ['WACC', '10%']],
+    overview: 'Students forecast FCF growth, compute a terminal value using the Gordon Growth Model, discount everything back at WACC, and compare intrinsic value per share to the current market price using a sensitivity table.',
+  },
+  {
+    id: 'ds-fi-pricing',  title: 'Bond Pricing & YTM',              subtitle: 'Fixed Income · Ch. 5',
+    description: 'Price a 10-year semi-annual corporate bond. Adjust coupon rate, YTM, and maturity to see price, premium/discount status, and a full cash flow schedule.',
+    category: 'Fixed Income',  color: '#22d3ee',  difficulty: 'Intermediate',
+    concepts: ['Bond Price', 'YTM', 'Price-Yield Relationship', 'Premium & Discount Bonds'],
+    stats: [['Par Value', '$1,000'], ['Coupon', '5% semi-annual'], ['Maturity', '10 years']],
+    overview: 'Students calculate bond prices at different yields, observe the inverse price-yield relationship, compare current yield to YTM, and read a full coupon payment schedule.',
+  },
 ];
 
 const MAJOR_ASSIGNMENTS = [
@@ -1895,6 +1913,8 @@ const DATASET_TARGET_PANEL = {
   'ds-feargreed':        'edu-sandbox',
   'ds-retirement':       'edu-sandbox',
   'ds-insurance':        'edu-sandbox',
+  'ds-dcf':              'edu-sandbox',
+  'ds-fi-pricing':       'edu-sandbox',
 };
 
 const SANDBOX_DATA = (() => {
@@ -2438,6 +2458,13 @@ export default function Dashboard() {
   const [housingRate, setHousingRate]     = useState('');
   const [housingDown, setHousingDown]     = useState('');
   const [housingIncome, setHousingIncome] = useState('');
+  const [dcfFcf, setDcfFcf]       = useState(100);
+  const [dcfGrowth, setDcfGrowth] = useState(15);
+  const [dcfWacc, setDcfWacc]     = useState(10);
+  const [dcfTg, setDcfTg]         = useState(3);
+  const [bondCoupon, setBondCoupon]     = useState(5);
+  const [bondYtm, setBondYtm]           = useState(6);
+  const [bondMaturity, setBondMaturity] = useState(10);
   const [cashFlowTab, setCashFlowTab] = useState(() => {
     try {
       const h = new Set(JSON.parse(localStorage.getItem('pl_hidden_subtabs') || '[]'));
@@ -13624,6 +13651,358 @@ export default function Dashboard() {
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
                             <div style={{ fontSize: 11, fontFamily: 'monospace', color: TEAL, marginBottom: 6, background: `${TEAL}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── DCF VALUATION ────────────────────────────────────────────────────
+              if (sandboxDataset === 'ds-dcf') {
+                const PURPLE = '#8b5cf6';
+                const NET_DEBT = 200;
+                const SHARES = 50;
+                const CURRENT_PRICE = 280;
+                const growthRate = dcfGrowth / 100;
+                const wacc = dcfWacc / 100;
+                const tg = dcfTg / 100;
+                const fcfRows = [1,2,3,4,5].map(t => {
+                  const fcf = dcfFcf * Math.pow(1 + growthRate, t - 1);
+                  const pv = fcf / Math.pow(1 + wacc, t);
+                  return { t, fcf, pv };
+                });
+                const sumPvFcf = fcfRows.reduce((s, r) => s + r.pv, 0);
+                const fcfYear5 = dcfFcf * Math.pow(1 + growthRate, 4);
+                const tv = wacc > tg ? fcfYear5 * (1 + tg) / (wacc - tg) : 0;
+                const pvTv = tv / Math.pow(1 + wacc, 5);
+                const ev = sumPvFcf + pvTv;
+                const equityValue = ev - NET_DEBT;
+                const intrinsicPerShare = equityValue / SHARES;
+                const upside = ((intrinsicPerShare - CURRENT_PRICE) / CURRENT_PRICE) * 100;
+                const tvPct = ev > 0 ? (pvTv / ev) * 100 : 0;
+                const sensitivityIV = (w, tgr) => {
+                  const wr = w / 100, tr = tgr / 100;
+                  if (wr <= tr) return null;
+                  const fcf5 = dcfFcf * Math.pow(1 + growthRate, 4);
+                  const pvs = [1,2,3,4,5].reduce((s, t) => s + dcfFcf * Math.pow(1 + growthRate, t - 1) / Math.pow(1 + wr, t), 0);
+                  const tvS = fcf5 * (1 + tr) / (wr - tr) / Math.pow(1 + wr, 5);
+                  return (pvs + tvS - NET_DEBT) / SHARES;
+                };
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>DCF Valuation Model</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${PURPLE}18`, color: PURPLE }}>Analyst · Valuation</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Apex SaaS Inc. (fictional) — adjust FCF, growth, and WACC to see how intrinsic value compares to the $280/share market price.
+                    </div>
+
+                    {/* Summary cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'Enterprise Value',       value: `$${(ev / 1000).toFixed(2)}B`,          sub: 'PV(FCF) + PV(TV)',           color: PURPLE },
+                        { label: 'Equity Value',           value: `$${(Math.max(0, equityValue) / 1000).toFixed(2)}B`, sub: `EV − $${NET_DEBT}M net debt`, color: BLUE },
+                        { label: 'Intrinsic Value / Share',value: `$${Math.round(intrinsicPerShare)}`,     sub: `${SHARES}M shares outstanding`, color: intrinsicPerShare > CURRENT_PRICE ? GREEN : RED },
+                        { label: 'Upside / Downside',      value: `${upside >= 0 ? '+' : ''}${upside.toFixed(1)}%`, sub: `vs $${CURRENT_PRICE} market price`, color: upside >= 0 ? GREEN : RED },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 24, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-0.5px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Sliders + FCF table */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Model Assumptions</div>
+                        {[
+                          { label: 'FCF Year 1 ($M)',        value: dcfFcf,    set: setDcfFcf,    min: 20,  max: 300, step: 5,   unit: 'M',  color: PURPLE },
+                          { label: 'FCF Growth Rate (Yr 1–5)', value: dcfGrowth, set: setDcfGrowth, min: 5,   max: 35,  step: 1,   unit: '%',  color: BLUE },
+                          { label: 'WACC',                   value: dcfWacc,   set: setDcfWacc,   min: 6,   max: 18,  step: 0.5, unit: '%',  color: YELLOW },
+                          { label: 'Terminal Growth Rate',    value: dcfTg,     set: setDcfTg,     min: 1,   max: 5,   step: 0.5, unit: '%',  color: GREEN },
+                        ].map(({ label, value, set, min, max, step, unit, color }) => (
+                          <div key={label} style={{ marginBottom: 18 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                              <span style={{ fontSize: 12, color: TEXT2 }}>{label}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color }}>{value}{unit}</span>
+                            </div>
+                            <input type="range" min={min} max={max} step={step} value={value}
+                              onChange={e => set(Number(e.target.value))}
+                              style={{ width: '100%', accentColor: color, cursor: 'pointer' }} />
+                          </div>
+                        ))}
+                        <div style={{ padding: '10px 14px', background: DARK, borderRadius: 8, fontSize: 11, color: TEXT3, lineHeight: 1.6 }}>
+                          Fixed: Net Debt $200M · Shares 50M · Market Price $280/share
+                        </div>
+                      </div>
+
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>5-Year FCF Forecast</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Discounted at WACC = {dcfWacc}%</div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Year', 'FCF ($M)', 'PV ($M)'].map((h, i) => (
+                                <th key={h} style={{ padding: '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {fcfRows.map(row => (
+                              <tr key={row.t} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                <td style={{ padding: '9px 10px', fontWeight: 600 }}>Year {row.t}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: PURPLE }}>${row.fcf.toFixed(1)}M</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: BLUE }}>${row.pv.toFixed(1)}M</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {[
+                            { label: 'PV of FCFs (Yrs 1–5)', value: `$${sumPvFcf.toFixed(1)}M`, color: BLUE },
+                            { label: `Terminal Value (${tvPct.toFixed(0)}% of EV)`, value: `$${(pvTv / 1000).toFixed(2)}B`, color: GREEN },
+                            { label: 'Enterprise Value', value: `$${(ev / 1000).toFixed(2)}B`, color: PURPLE, bold: true },
+                          ].map(row => (
+                            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: DARK, borderRadius: 7, border: row.bold ? `1px solid ${PURPLE}30` : BORDER }}>
+                              <span style={{ fontSize: 12, color: row.bold ? TEXT : TEXT2, fontWeight: row.bold ? 700 : 400 }}>{row.label}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: row.color }}>{row.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sensitivity table */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Intrinsic Value Sensitivity ($  / share)</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>WACC (rows) vs. terminal growth rate (columns) — green = above $280 market price</div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              <th style={{ padding: '7px 12px', textAlign: 'left', fontSize: 11, color: TEXT2, fontWeight: 600 }}>WACC \ TGR</th>
+                              {[1.5, 2, 2.5, 3, 3.5, 4].map(tgr => (
+                                <th key={tgr} style={{ padding: '7px 10px', textAlign: 'center', fontSize: 11, color: Math.abs(tgr - dcfTg) < 0.3 ? PURPLE : TEXT2, fontWeight: Math.abs(tgr - dcfTg) < 0.3 ? 700 : 600 }}>{tgr}%</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[8, 9, 10, 11, 12].map(w => (
+                              <tr key={w} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                <td style={{ padding: '9px 12px', fontWeight: w === Math.round(dcfWacc) ? 700 : 400, color: w === Math.round(dcfWacc) ? PURPLE : TEXT }}>{w}%</td>
+                                {[1.5, 2, 2.5, 3, 3.5, 4].map(tgr => {
+                                  const iv = sensitivityIV(w, tgr);
+                                  const isActive = w === Math.round(dcfWacc) && Math.abs(tgr - dcfTg) < 0.3;
+                                  return (
+                                    <td key={tgr} style={{ padding: '9px 10px', textAlign: 'center', fontFamily: 'monospace', fontWeight: isActive ? 800 : 400, color: iv === null ? TEXT3 : iv > CURRENT_PRICE ? GREEN : RED, background: isActive ? `${PURPLE}12` : 'transparent' }}>
+                                      {iv === null ? 'n/a' : `$${Math.round(iv)}`}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div style={{ marginTop: 10, fontSize: 11, color: TEXT3 }}>Highlighted cell = current assumptions. Green = undervalued vs. $280. Red = overvalued. "n/a" = WACC ≤ TGR (undefined).</div>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: `${PURPLE}06`, border: `1px solid ${PURPLE}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: PURPLE }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Free Cash Flow (FCF)', formula: 'FCF = Operating Cash Flow - CapEx', body: 'The actual cash a business generates after maintaining and growing its asset base. Unlike net income, FCF cannot be manipulated by accounting choices. It is what a company could theoretically pay out to shareholders every year.' },
+                          { term: 'WACC', formula: 'WACC = (E/V) × Re + (D/V) × Rd × (1-T)', body: 'The weighted average cost of capital is the minimum return a company must earn to satisfy all capital providers. A higher WACC means a lower valuation; it discounts future cash flows more aggressively. Even a 1% WACC change can shift intrinsic value by 20-30%.' },
+                          { term: 'Terminal Value', formula: <span>TV = FCF<sub style={{fontSize:9}}>n</sub> × (1+g) / (WACC - g)</span>, body: 'The estimated value of all cash flows beyond the forecast period, using the Gordon Growth Model. Terminal value typically represents 60-80% of total enterprise value in a DCF, making terminal growth the most sensitive assumption in the model.' },
+                          { term: 'Margin of Safety', formula: 'MOS = (Intrinsic Value - Price) / Intrinsic Value', body: 'The discount between a stock\'s intrinsic value and its current market price. Benjamin Graham advocated buying at a 30-50% discount to provide a cushion against modeling errors and unforeseen risks. A wide MOS compensates for DCF sensitivity.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: PURPLE, marginBottom: 6, background: `${PURPLE}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── BOND PRICING & YTM ────────────────────────────────────────────────
+              if (sandboxDataset === 'ds-fi-pricing') {
+                const CYAN_FI = '#22d3ee';
+                const PAR = 1000;
+                const freq = 2;
+                const periods = bondMaturity * freq;
+                const couponPerPeriod = (bondCoupon / 100) * PAR / freq;
+                const ytmPerPeriod = bondYtm / 100 / freq;
+                const pvCoupons = ytmPerPeriod > 0
+                  ? couponPerPeriod * (1 - Math.pow(1 + ytmPerPeriod, -periods)) / ytmPerPeriod
+                  : couponPerPeriod * periods;
+                const pvPar = PAR / Math.pow(1 + ytmPerPeriod, periods);
+                const bondPrice = pvCoupons + pvPar;
+                const currentYield = bondPrice > 0 ? (couponPerPeriod * freq / bondPrice) * 100 : 0;
+                const premiumDiscount = bondPrice - PAR;
+                const isPremium = bondPrice > PAR + 0.5;
+                const isDiscount = bondPrice < PAR - 0.5;
+                const priceAt = (ytm) => {
+                  const ypp = ytm / 100 / freq;
+                  const pvC = ypp > 0 ? couponPerPeriod * (1 - Math.pow(1 + ypp, -periods)) / ypp : couponPerPeriod * periods;
+                  return pvC + PAR / Math.pow(1 + ypp, periods);
+                };
+                const cfRows = [];
+                for (let t = 1; t <= Math.min(periods, 6); t++) {
+                  const cash = couponPerPeriod + (t === periods ? PAR : 0);
+                  cfRows.push({ t, coupon: couponPerPeriod, par: t === periods ? PAR : 0, pv: cash / Math.pow(1 + ytmPerPeriod, t) });
+                }
+                if (periods > 6) {
+                  const cash = couponPerPeriod + PAR;
+                  cfRows.push({ t: periods, coupon: couponPerPeriod, par: PAR, pv: cash / Math.pow(1 + ytmPerPeriod, periods) });
+                }
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Bond Pricing & YTM</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${CYAN_FI}18`, color: CYAN_FI }}>Analyst · Fixed Income</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Price a semi-annual $1,000 par corporate bond. Adjust coupon rate, YTM, and maturity to see price, premium/discount status, and cash flow schedule.
+                    </div>
+
+                    {/* Metric cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'Bond Price',        value: `$${bondPrice.toFixed(2)}`,                                      sub: isPremium ? 'Premium bond' : isDiscount ? 'Discount bond' : 'At par',  color: isPremium ? GREEN : isDiscount ? RED : YELLOW },
+                        { label: 'Premium / Discount', value: `${premiumDiscount >= 0 ? '+' : ''}$${premiumDiscount.toFixed(2)}`, sub: 'vs $1,000 par',              color: premiumDiscount >= 0 ? GREEN : RED },
+                        { label: 'Current Yield',     value: `${currentYield.toFixed(2)}%`,                                   sub: 'Annual coupon / price',         color: CYAN_FI },
+                        { label: 'YTM',               value: `${bondYtm}%`,                                                   sub: 'True annualized return',        color: BLUE },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 24, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-0.5px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Sliders + cash flow table */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Bond Parameters</div>
+                        {[
+                          { label: 'Coupon Rate',       value: bondCoupon,   set: setBondCoupon,   min: 1,  max: 10, step: 0.25, unit: '%', color: CYAN_FI },
+                          { label: 'YTM (Market Rate)', value: bondYtm,      set: setBondYtm,      min: 1,  max: 12, step: 0.25, unit: '%', color: BLUE },
+                          { label: 'Years to Maturity', value: bondMaturity, set: setBondMaturity, min: 1,  max: 30, step: 1,    unit: 'yr', color: YELLOW },
+                        ].map(({ label, value, set, min, max, step, unit, color }) => (
+                          <div key={label} style={{ marginBottom: 18 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                              <span style={{ fontSize: 12, color: TEXT2 }}>{label}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color }}>{value}{unit}</span>
+                            </div>
+                            <input type="range" min={min} max={max} step={step} value={value}
+                              onChange={e => set(Number(e.target.value))}
+                              style={{ width: '100%', accentColor: color, cursor: 'pointer' }} />
+                          </div>
+                        ))}
+                        <div style={{ padding: '12px 14px', background: isPremium ? `${GREEN}08` : isDiscount ? 'rgba(248,113,113,0.08)' : `${YELLOW}08`, border: `1px solid ${isPremium ? GREEN : isDiscount ? RED : YELLOW}25`, borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>
+                          <strong style={{ color: isPremium ? GREEN : isDiscount ? RED : YELLOW }}>
+                            {isPremium ? 'Premium Bond' : isDiscount ? 'Discount Bond' : 'At Par'}:
+                          </strong>{' '}
+                          {isPremium
+                            ? `Coupon (${bondCoupon}%) > YTM (${bondYtm}%) — price above par`
+                            : isDiscount
+                            ? `YTM (${bondYtm}%) > Coupon (${bondCoupon}%) — price below par`
+                            : 'Coupon = YTM — price equals par'}
+                        </div>
+                      </div>
+
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Cash Flow Schedule (semi-annual)</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>{periods} total periods · showing first 6 + final</div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Period', 'Coupon', 'Par', 'PV'].map((h, i) => (
+                                <th key={h} style={{ padding: '6px 8px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {cfRows.map((row, idx) => (
+                              <tr key={row.t} style={{ borderBottom: `1px solid ${BORDER_C}`, background: row.par > 0 ? `${CYAN_FI}06` : 'transparent' }}>
+                                <td style={{ padding: '8px 8px', fontWeight: row.par > 0 ? 700 : 400 }}>{row.t === periods && periods > 6 ? `${row.t} (final)` : row.t}</td>
+                                <td style={{ padding: '8px 8px', textAlign: 'right', fontFamily: 'monospace', color: CYAN_FI }}>${row.coupon.toFixed(2)}</td>
+                                <td style={{ padding: '8px 8px', textAlign: 'right', fontFamily: 'monospace', color: row.par > 0 ? GREEN : TEXT3 }}>{row.par > 0 ? `$${row.par.toFixed(0)}` : '—'}</td>
+                                <td style={{ padding: '8px 8px', textAlign: 'right', fontFamily: 'monospace', color: BLUE }}>${row.pv.toFixed(2)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', padding: '8px 8px', borderTop: BORDER, fontSize: 13, fontWeight: 700 }}>
+                          <span>Total PV = Bond Price</span>
+                          <span style={{ fontFamily: 'monospace', color: isPremium ? GREEN : isDiscount ? RED : YELLOW }}>${bondPrice.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Price-yield sensitivity */}
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Price-Yield Sensitivity</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>How price changes at different market yields (coupon fixed at {bondCoupon}%)</div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {['YTM', 'Bond Price', 'vs. Par', 'vs. Current Price'].map((h, i) => (
+                              <th key={h} style={{ padding: '7px 12px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[bondYtm - 2, bondYtm - 1, bondYtm, bondYtm + 1, bondYtm + 2].filter(y => y > 0).map(ytm => {
+                            const price = priceAt(ytm);
+                            const vsPar = price - PAR;
+                            const vsCurrent = price - bondPrice;
+                            const isCurrentRow = ytm === bondYtm;
+                            return (
+                              <tr key={ytm} style={{ borderBottom: `1px solid ${BORDER_C}`, background: isCurrentRow ? `${CYAN_FI}08` : 'transparent' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: isCurrentRow ? 700 : 400, color: isCurrentRow ? CYAN_FI : TEXT }}>{ytm.toFixed(2)}%{isCurrentRow ? ' ← current' : ''}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontWeight: isCurrentRow ? 700 : 400, color: price > PAR ? GREEN : price < PAR ? RED : YELLOW }}>${price.toFixed(2)}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: vsPar >= 0 ? GREEN : RED }}>{vsPar >= 0 ? '+' : ''}${vsPar.toFixed(2)}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: isCurrentRow ? TEXT3 : vsCurrent >= 0 ? GREEN : RED }}>{isCurrentRow ? '—' : `${vsCurrent >= 0 ? '+' : ''}$${Math.abs(vsCurrent).toFixed(2)}`}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                      <div style={{ marginTop: 10, fontSize: 11, color: TEXT3 }}>
+                        Price and yield move inversely. A +1% rise in market rates changes this bond's price by ${(priceAt(bondYtm + 1) - bondPrice).toFixed(2)} ({((Math.abs(priceAt(bondYtm + 1) - bondPrice) / bondPrice) * 100).toFixed(1)}%).
+                      </div>
+                    </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, background: `${CYAN_FI}06`, border: `1px solid ${CYAN_FI}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: CYAN_FI }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Bond Pricing Formula', formula: <span>P = Σ C/(1+y)<sup style={{fontSize:9}}>t</sup> + F/(1+y)<sup style={{fontSize:9}}>T</sup></span>, body: 'A bond\'s price is the present value of all future cash flows: each coupon payment and the par value at maturity, discounted at the YTM. This is why price and yield are mathematically linked and always move in opposite directions.' },
+                          { term: 'Price-Yield Relationship', formula: 'Price ↑ when YTM ↓  ·  Price ↓ when YTM ↑', body: 'When market rates rise, existing bonds with lower coupons fall in price to remain competitive. When rates fall, existing high-coupon bonds become more valuable. This inverse relationship is the core risk in fixed income investing.' },
+                          { term: 'Current Yield vs. YTM', formula: 'Current Yield = Annual Coupon / Price', body: 'Current yield only captures coupon income relative to price. YTM accounts for coupon income AND the capital gain or loss from buying at a premium or discount and holding to par at maturity. YTM is the better measure of true total return.' },
+                          { term: 'Premium & Discount Bonds', formula: 'Coupon > YTM → Premium  ·  Coupon < YTM → Discount', body: 'A premium bond trades above par because its coupon exceeds what the market demands. A discount bond trades below par to compensate for the lower coupon. Regardless of where a bond trades, it always converges to par at maturity.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: CYAN_FI, marginBottom: 6, background: `${CYAN_FI}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
                             <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
                           </div>
                         ))}
