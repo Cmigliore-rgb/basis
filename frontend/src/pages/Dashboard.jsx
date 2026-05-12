@@ -11329,7 +11329,7 @@ export default function Dashboard() {
                 const netWorth    = totalAssets - totalLiab;
                 const assetPct    = totalAssets > 0 ? Math.round((totalAssets / (totalAssets + totalLiab)) * 100) : 0;
 
-                const typeLabel = { checking: 'Checking', savings: 'Savings', auto: 'Auto Loan', student: 'Student Loan', credit: 'Credit Card', mortgage: 'Mortgage' };
+                const typeLabel = { checking: 'Checking', savings: 'Savings', 'money market': 'Money Market', cd: 'CD', hsa: 'HSA', auto: 'Auto Loan', student: 'Student Loan', credit: 'Credit Card', 'credit card': 'Credit Card', mortgage: 'Mortgage', brokerage: 'Brokerage', ira: 'IRA', roth: 'Roth IRA', '401k': '401(k)', '403b': '403(b)' };
 
                 return (
                   <div>
@@ -11379,7 +11379,7 @@ export default function Dashboard() {
                           <div key={a.account_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
                             <div>
                               <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{a.name}</div>
-                              <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{typeLabel[a.subtype] || a.subtype} · {a.institution_name}</div>
+                              <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{typeLabel[a.subtype] || fmtAcctType(a.subtype, a.type)} · {a.institution_name}</div>
                             </div>
                             <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: GREEN }}>{fmt(a.balances.current)}</div>
                           </div>
@@ -11397,7 +11397,7 @@ export default function Dashboard() {
                           <div key={a.account_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
                             <div>
                               <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{a.name}</div>
-                              <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{typeLabel[a.subtype] || a.subtype} · {a.institution_name}</div>
+                              <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{typeLabel[a.subtype] || fmtAcctType(a.subtype, a.type)} · {a.institution_name}</div>
                             </div>
                             <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: RED }}>{fmt(Math.abs(a.balances.current))}</div>
                           </div>

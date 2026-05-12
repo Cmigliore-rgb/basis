@@ -51,9 +51,16 @@ const TEXT2 = '#94a3b8';
 const TEXT3 = '#475569';
 
 function LogoTile({ inst, onClick, isLoading, disabled }) {
-  const [err, setErr] = useState(false);
+  // Try Plaid logo → clearbit → letter avatar
+  const sources = [
+    inst.plaid_id ? `/api/plaid/institution_logo/${inst.plaid_id}` : null,
+    inst.domain   ? `https://logo.clearbit.com/${inst.domain}` : null,
+  ].filter(Boolean);
+
+  const [srcIdx, setSrcIdx] = useState(0);
   const letter = inst.name.charAt(0).toUpperCase();
   const hue = [...inst.name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) & 0xffff, 0) % 360;
+  const failed = srcIdx >= sources.length;
 
   return (
     <button
@@ -79,12 +86,13 @@ function LogoTile({ inst, onClick, isLoading, disabled }) {
     >
       {isLoading ? (
         <div style={{ fontSize: 11, color: BLUE, fontWeight: 700 }}>Connecting...</div>
-      ) : !err ? (
+      ) : !failed ? (
         <img
-          src={`https://logo.clearbit.com/${inst.domain}`}
+          key={srcIdx}
+          src={sources[srcIdx]}
           alt={inst.name}
-          onError={() => setErr(true)}
-          style={{ maxWidth: '80%', maxHeight: 44, objectFit: 'contain', display: 'block' }}
+          onError={() => setSrcIdx(i => i + 1)}
+          style={{ maxWidth: '82%', maxHeight: 46, objectFit: 'contain', display: 'block' }}
         />
       ) : (
         <div style={{

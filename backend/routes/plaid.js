@@ -133,6 +133,39 @@ router.delete('/disconnect/:id', requireAuth, async (req, res) => {
   res.json({ success: true });
 });
 
+// ── Institution logo proxy (serves Plaid-hosted PNG so frontend doesn't need credentials) ──
+const logoCache = new Map();
+router.get('/institution_logo/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!/^ins_[\w]+$/.test(id)) return res.status(400).end();
+
+  if (logoCache.has(id)) {
+    const { png, ts } = logoCache.get(id);
+    if (Date.now() - ts < 24 * 60 * 60 * 1000) {
+      res.set('Content-Type', 'image/png');
+      res.set('Cache-Control', 'public, max-age=86400');
+      return res.send(png);
+    }
+  }
+
+  try {
+    const { data } = await plaidClient.institutionsGetById({
+      institution_id: id,
+      country_codes: ['US'],
+      options: { include_optional_metadata: true },
+    });
+    const b64 = data.institution.logo;
+    if (!b64) return res.status(404).end();
+    const png = Buffer.from(b64, 'base64');
+    logoCache.set(id, { png, ts: Date.now() });
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(png);
+  } catch {
+    res.status(404).end();
+  }
+});
+
 router.get('/connections', requireAuth, (req, res) => {
   const rows = db.prepare('SELECT id, institution_name, created_at, needs_update FROM plaid_tokens WHERE user_id = ?').all(req.user.id);
   res.json(rows);
