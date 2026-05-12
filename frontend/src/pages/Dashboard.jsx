@@ -696,6 +696,34 @@ A few things worth focusing on: try to close that $80/month gap even a little at
 The good news is you are actually ahead this month, spending $180 less than you earned. Entertainment ticked up $35 and transportation rose $30, but shopping came down $20. Pulling food and drink back toward last month would put an extra $140 in your pocket each month.`,
 };
 
+const CATEGORY_LABEL = {
+  FOOD_AND_DRINK:            'Food & Dining',
+  HOME_IMPROVEMENT:          'Home & Housing',
+  RENT_AND_UTILITIES:        'Rent & Utilities',
+  GENERAL_MERCHANDISE:       'Shopping',
+  TRANSPORTATION:            'Transportation',
+  ENTERTAINMENT:             'Entertainment',
+  PERSONAL_CARE:             'Personal Care',
+  EDUCATION:                 'Education',
+  MEDICAL:                   'Medical',
+  TRAVEL:                    'Travel',
+  LOAN_PAYMENTS:             'Loan Payments',
+  TRANSFER_IN:               'Transfer In',
+  TRANSFER_OUT:              'Transfer Out',
+  INCOME:                    'Income',
+  BANK_FEES:                 'Bank Fees',
+  GOVERNMENT_AND_NON_PROFIT: 'Government & Nonprofit',
+  RECREATION:                'Recreation',
+  SUBSCRIPTION:              'Subscriptions',
+  OTHER:                     'Other',
+  OTHER_PAYMENT:             'Other Payment',
+};
+
+function fmtCat(raw) {
+  if (!raw) return 'Other';
+  return CATEGORY_LABEL[raw] || raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function AIInsightCard({ isDemoData, demoKey, onGetAdvice, loading, text }) {
   const [demoRevealed, setDemoRevealed] = React.useState(false);
   const demoText = DEMO_AI[demoKey];
@@ -2897,7 +2925,7 @@ export default function Dashboard() {
         if (!limit) return;
         const pct = (b.total / limit) * 100;
         if (pct >= notifPrefs.budgetThreshold) {
-          trigger('budget_alert', `Budget alert: ${b.category}`, { category: b.category, spent: fmt(b.total), limit: fmt(limit), pct: Math.round(pct) }, `budget_${b.category}`);
+          trigger('budget_alert', `Budget alert: ${fmtCat(b.category)}`, { category: fmtCat(b.category), spent: fmt(b.total), limit: fmt(limit), pct: Math.round(pct) }, `budget_${b.category}`);
         }
       });
     }
@@ -3068,18 +3096,18 @@ export default function Dashboard() {
   const getAdvice = useCallback(async (panelKey) => {
     setAdviceState(s => ({ ...s, [panelKey]: { loading: true, text: '' } }));
     const prompts = {
-      overview:    'Give me a concise 3–4 bullet financial health summary and top recommendations based on my accounts, spending, and portfolio.',
-      cashflow:    'Analyze my cash flow baseline — income vs spending trends, which months are above or below baseline, and what is driving the largest deficits. Give me 3 specific, actionable steps to improve my monthly net cash flow.',
-      banking:     'Analyze my recent transactions and account balances. Give me 3 specific, actionable recommendations to improve my cash management.',
-      investments: 'Review my investment portfolio. Give me 3 specific insights or recommendations about my investment strategy, diversification, and any concentration risk.',
-      budgeting:   'Review my spending by category. Give me 3 actionable recommendations to cut spending or improve my budget this month.',
-      goals:       'Review my savings goals and current progress. Tell me which goals are on track, which are at risk, and what specific monthly savings adjustments would keep each goal on schedule.',
+      overview:    'Write 2 short friendly paragraphs summarizing my overall financial health based on my accounts, spending, and portfolio. Highlight the most important thing going well and the single most important thing to work on. Sound like a knowledgeable friend, not a financial advisor. Write in plain conversational sentences. No bullet points, no headers, no em dashes.',
+      cashflow:    'Write 2 short friendly paragraphs analyzing my cash flow. Talk about whether my spending is trending above or below my income baseline and what is driving the biggest swings. End with one concrete thing I could do this month to improve my net cash flow. Sound like a knowledgeable friend. No bullet points, no headers, no em dashes.',
+      banking:     'Write 2 short friendly paragraphs about my recent transactions and account balances. Point out any spending patterns worth knowing and one or two practical things I could do. Sound like a knowledgeable friend. No bullet points, no headers, no em dashes.',
+      investments: 'Write 2 short friendly paragraphs reviewing my investment portfolio. Comment on my overall strategy, any concentration risk, and one thing I might consider changing. Sound like a knowledgeable friend. No bullet points, no headers, no em dashes.',
+      budgeting:   'Write 2 short friendly paragraphs reviewing my spending by category this month. Call out my biggest spending area and whether it looks reasonable, then give one practical suggestion to improve. Sound like a knowledgeable friend. No bullet points, no headers, no em dashes.',
+      goals:       'Write 2 short friendly paragraphs about my savings goals. Tell me which ones look on track and which might need attention, and give one concrete tip to stay on schedule. Sound like a knowledgeable friend. No bullet points, no headers, no em dashes.',
     };
     try {
       const budgetMap = {};
-      budget.forEach(b => { budgetMap[b.category] = { spent: b.total, limit: budgetLimits[b.category] }; });
+      budget.forEach(b => { budgetMap[fmtCat(b.category)] = { spent: b.total, limit: budgetLimits[b.category] }; });
       const slimAccounts = accounts.map(a => ({ name: a.name, type: a.type, balance: a.balances?.current ?? a.balance }));
-      const slimTxns = transactions.slice(0, 40).map(t => ({ date: t.date, name: t.merchant_name || t.name, amount: t.amount, category: t.personal_finance_category?.primary || t.category?.[0] }));
+      const slimTxns = transactions.slice(0, 40).map(t => ({ date: t.date, name: t.merchant_name || t.name, amount: t.amount, category: fmtCat(t.personal_finance_category?.primary || t.category?.[0]) }));
       const slimHoldings = holdings.map(h => ({ name: h.security?.name || h.name, ticker: h.security?.ticker_symbol || h.ticker_symbol, value: (h.quantity || 0) * (h.institution_price || 0) }));
       const res = await api.post('/chat', {
         message: prompts[panelKey] || 'Give me financial recommendations based on my data.',
@@ -3155,9 +3183,9 @@ export default function Dashboard() {
     setChatLoading(true);
     try {
       const budgetMap = {};
-      budget.forEach(b => { budgetMap[b.category] = { spent: b.total, limit: budgetLimits[b.category] }; });
+      budget.forEach(b => { budgetMap[fmtCat(b.category)] = { spent: b.total, limit: budgetLimits[b.category] }; });
       const slimAccounts = accounts.map(a => ({ name: a.name, type: a.type, subtype: a.subtype, balance: a.balances?.current ?? a.balance }));
-      const slimTxns     = transactions.slice(0, 40).map(t => ({ date: t.date, name: t.merchant_name || t.name, amount: t.amount, category: t.personal_finance_category?.primary || t.category?.[0] }));
+      const slimTxns     = transactions.slice(0, 40).map(t => ({ date: t.date, name: t.merchant_name || t.name, amount: t.amount, category: fmtCat(t.personal_finance_category?.primary || t.category?.[0]) }));
       const slimHoldings = holdings.map(h => ({ name: h.security?.name || h.name, ticker: h.security?.ticker_symbol || h.ticker_symbol, quantity: h.quantity, price: h.institution_price, value: (h.quantity || 0) * (h.institution_price || 0) }));
       const res = await api.post('/chat', {
         message: text,
@@ -4914,7 +4942,7 @@ export default function Dashboard() {
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
                         <div>
                           <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
-                          <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} · {t.personal_finance_category?.primary || t.category?.[0] || 'Other'}</div>
+                          <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} · {fmtCat(t.personal_finance_category?.primary || t.category?.[0])}</div>
                         </div>
                         <div style={{ fontWeight: 600, color: t.amount > 0 ? RED : GREEN, fontFamily: 'monospace' }}>
                           {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
@@ -5172,7 +5200,7 @@ export default function Dashboard() {
                                 <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
                                   <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(t.date)}</td>
                                   <td style={{ padding: '8px 12px', fontSize: 13, fontWeight: 500 }}>{t.merchant_name || t.name}</td>
-                                  <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12, textTransform: 'capitalize' }}>{(t.personal_finance_category?.primary || t.category?.[0] || '—').replace(/_/g, ' ').toLowerCase()}</td>
+                                  <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12 }}>{fmtCat(t.personal_finance_category?.primary || t.category?.[0]) || '—'}</td>
                                   <td style={{ padding: '8px 12px', fontWeight: 600, color: t.amount > 0 ? RED : GREEN, textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>
                                     {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
                                   </td>
@@ -5431,72 +5459,16 @@ export default function Dashboard() {
                   )}
 
                   {/* ── Credit Score ──────────────────────── */}
-                  {(() => {
-                    const sbCredit = SANDBOX_DATA['ds-credit'];
-                    const score = sbCredit.creditScore;
-                    const scoreLabel = sbCredit.scoreLabel;
-                    const scoreChange = sbCredit.creditScoreChange;
-                    const SCORE_MIN = 300, SCORE_MAX = 850, SCORE_RANGE = 550;
-                    const scoreRanges = [
-                      { label: 'Poor',        min: 300, max: 579, color: '#f87171' },
-                      { label: 'Fair',        min: 580, max: 669, color: '#f97316' },
-                      { label: 'Good',        min: 670, max: 739, color: '#fbbf24' },
-                      { label: 'Very Good',   min: 740, max: 799, color: '#4ade80' },
-                      { label: 'Exceptional', min: 800, max: 850, color: '#4da3ff' },
-                    ];
-                    const activeRange = scoreRanges.find(r => score >= r.min && score <= r.max) || scoreRanges[1];
-                    const CX = 90, CY = 58, R = 52;
-                    const angleDeg = (s) => (1 - (s - SCORE_MIN) / SCORE_RANGE) * 180;
-                    const toXY = (deg, radius) => {
-                      const rad = deg * Math.PI / 180;
-                      return [CX + radius * Math.cos(rad), CY - radius * Math.sin(rad)];
-                    };
-                    const arcPath = (fromScore, toScore, radius) => {
-                      const [px1, py1] = toXY(angleDeg(fromScore), radius);
-                      const [px2, py2] = toXY(angleDeg(toScore), radius);
-                      return `M ${px1},${py1} A ${radius},${radius} 0 0,1 ${px2},${py2}`;
-                    };
-                    const [needleX, needleY] = toXY(angleDeg(score), R - 10);
-                    return (
-                      <div className="lc" style={{ ...CARD, marginTop: 16 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                          <div style={{ fontWeight: 600 }}>Credit Score</div>
-                          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: 'rgba(77,163,255,0.1)', color: BLUE, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Demo</span>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: 20, alignItems: 'center' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <svg viewBox="0 0 180 100" style={{ width: '100%', display: 'block' }}>
-                              <path d={`M ${CX - R},${CY} A ${R},${R} 0 0,1 ${CX + R},${CY}`} fill="none" stroke="#2a2a2a" strokeWidth={10} strokeLinecap="round" />
-                              {scoreRanges.map(z => (
-                                <path key={z.label} d={arcPath(z.min, z.max, R)} fill="none" stroke={z.color} strokeWidth={8} strokeLinecap="butt" />
-                              ))}
-                              <line x1={CX} y1={CY} x2={needleX} y2={needleY} stroke="#f0f0f0" strokeWidth={2} strokeLinecap="round" />
-                              <circle cx={CX} cy={CY} r={4} fill="#f0f0f0" />
-                              <text x={CX} y={CY + 22} textAnchor="middle" fill={activeRange.color} fontSize={22} fontWeight={700}>{score}</text>
-                              <text x={CX} y={CY + 36} textAnchor="middle" fill="#888" fontSize={10}>{scoreLabel}</text>
-                            </svg>
-                          </div>
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                              <span style={{ fontSize: 13, color: TEXT2 }}>Recent change:</span>
-                              <span style={{ fontSize: 13, fontWeight: 700, color: scoreChange < 0 ? RED : GREEN }}>{scoreChange > 0 ? '+' : ''}{scoreChange} pts</span>
-                            </div>
-                            {sbCredit.scoreFactors.slice(0, 4).map(f => (
-                              <div key={f.factor} style={{ marginBottom: 8 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                                  <span style={{ fontSize: 11, color: TEXT2 }}>{f.factor}</span>
-                                  <span style={{ fontSize: 11, fontWeight: 600, color: f.color }}>{f.rating}</span>
-                                </div>
-                                <div style={{ height: 3, background: MUTED, borderRadius: 2 }}>
-                                  <div style={{ height: '100%', width: `${Math.min(f.weight * 3, 100)}%`, background: f.color, borderRadius: 2 }} />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  <div className="lc" style={{ ...CARD, marginTop: 16 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 12 }}>Credit Score</div>
+                    <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.65 }}>
+                      Credit scores aren't accessible through Plaid's API. Check your score for free through your credit card's app or website, or visit{' '}
+                      <a href="https://www.creditkarma.com" target="_blank" rel="noreferrer" style={{ color: BLUE, textDecoration: 'none' }}>Credit Karma</a>
+                      {' '}or{' '}
+                      <a href="https://www.annualcreditreport.com" target="_blank" rel="noreferrer" style={{ color: BLUE, textDecoration: 'none' }}>AnnualCreditReport.com</a>
+                      {' '}for a free report from all three bureaus. The credit score module in the Learn section uses sample data to demonstrate how FICO scoring works.
+                    </div>
+                  </div>
                 </div>
               );
             })()}
@@ -5548,7 +5520,7 @@ export default function Dashboard() {
                     const txns  = activeTxns.filter(t => { const td = new Date(t.date); return td >= start && td <= end && isIncomeTxn(t); });
                     const srcMap = {};
                     txns.forEach(t => {
-                      const c = (t.personal_finance_category?.primary || t.category?.[0] || 'Other').replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+                      const c = fmtCat(t.personal_finance_category?.primary || t.category?.[0]);
                       srcMap[c] = (srcMap[c] || 0) + Math.abs(t.amount);
                     });
                     const topSrc = Object.entries(srcMap).sort((a, b) => b[1] - a[1])[0]?.[0]?.split(' ').slice(0, 2).join(' ') || null;
@@ -5591,7 +5563,7 @@ export default function Dashboard() {
                     activeTxns
                       .filter(t => { const td = new Date(t.date); return td >= mtdStart && td <= mtdEnd && isIncomeTxn(t); })
                       .forEach(t => {
-                        const cat = (t.personal_finance_category?.primary || t.category?.[0] || 'Other').replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+                        const cat = fmtCat(t.personal_finance_category?.primary || t.category?.[0]);
                         sourceMap[cat] = (sourceMap[cat] || 0) + Math.abs(t.amount);
                       });
                     sources = Object.entries(sourceMap).map(([cat, amt]) => ({ cat, amt })).sort((a, b) => b.amt - a.amt);
@@ -5670,7 +5642,7 @@ export default function Dashboard() {
                         const txns  = activeTxns.filter(t => { const td = new Date(t.date); return td >= start && td <= end && t.amount > 0; });
                         const total = txns.reduce((s, t) => s + t.amount, 0);
                         const catMap = {};
-                        txns.forEach(t => { const c = (t.personal_finance_category?.primary || t.category?.[0] || 'Other').replace(/_/g, ' ').toLowerCase(); catMap[c] = (catMap[c] || 0) + t.amount; });
+                        txns.forEach(t => { const c = fmtCat(t.personal_finance_category?.primary || t.category?.[0]); catMap[c] = (catMap[c] || 0) + t.amount; });
                         const topCat = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
                         expMonths.push({ label, total, topCat, isCurrent: i === 0 });
                       }
@@ -5693,7 +5665,6 @@ export default function Dashboard() {
                       const thisExp = display[5], lastExp = display[4];
                       const expDiff = thisExp.total - lastExp.total;
                       const expPct  = lastExp.total > 0 ? (expDiff / lastExp.total) * 100 : null;
-                      const toTitle = s => s.replace(/\b\w/g, c => c.toUpperCase());
                       return (
                         <>
                           {!hasRealExp && (
@@ -5711,7 +5682,7 @@ export default function Dashboard() {
                           <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24, marginTop: 20 }}>
                             {[
                               { label: 'Month-to-Date Spend', value: fmt(hasRealExp ? activeMonthlySpend : 1620) },
-                              { label: 'Top Category',         value: toTitle(hasRealExp ? (activeBudget[0]?.category?.replace(/_/g, ' ').toLowerCase() || '—') : 'Food and Drink') },
+                              { label: 'Top Category',         value: hasRealExp ? (fmtCat(activeBudget[0]?.category) || '—') : 'Food & Dining' },
                               { label: 'Month Change',         value: expPct !== null ? `${expDiff >= 0 ? '+' : ''}${expPct.toFixed(0)}%` : '—', color: expPct !== null ? (expDiff <= 0 ? GREEN : RED) : TEXT2 },
                             ].map(({ label, value, color }) => (
                               <div key={label} className="lc" style={CARD}>
@@ -5781,8 +5752,8 @@ export default function Dashboard() {
                                 onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
                               >
-                                <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>
-                                  {b.category.replace(/_/g, ' ').toLowerCase()}
+                                <span style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>
+                                  {fmtCat(b.category)}
                                 </span>
                               </button>
 
@@ -5903,7 +5874,7 @@ export default function Dashboard() {
                   const useMockTrends = allCats.length < 3;
                   const trendRows = useMockTrends
                     ? MOCK_TRENDS.map(({ cat, last, curr }) => ({ cat, last, curr }))
-                    : allCats.map(cat => ({ cat: cat.replace(/_/g, ' ').toLowerCase(), last: lastSpend[cat] || 0, curr: thisSpend[cat] || 0 }));
+                    : allCats.map(cat => ({ cat: fmtCat(cat), last: lastSpend[cat] || 0, curr: thisSpend[cat] || 0 }));
                   return (
                     <>
                       {(useMockTrends || isDemoData) && (
@@ -5927,7 +5898,7 @@ export default function Dashboard() {
                               const changeColor = diff > 0 ? RED : diff < 0 ? GREEN : TEXT2;
                               return (
                                 <tr key={cat} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                                  <td style={{ padding: '11px 12px', fontWeight: 500, textTransform: 'capitalize', fontSize: 13 }}>{cat}</td>
+                                  <td style={{ padding: '11px 12px', fontWeight: 500, fontSize: 13 }}>{cat}</td>
                                   <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: TEXT2 }}>{last > 0 ? fmt(last) : '—'}</td>
                                   <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{curr > 0 ? fmt(curr) : '—'}</td>
                                   <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: changeColor }}>
