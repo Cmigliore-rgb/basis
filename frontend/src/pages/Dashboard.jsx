@@ -737,6 +737,15 @@ function fmtAcctType(subtype, type) {
   return ACCOUNT_TYPE_LABEL[type] || (type ? type.replace(/\b\w/g, c => c.toUpperCase()) : '—');
 }
 
+function cleanAcctName(name, subtype, type, mask) {
+  if (!name) return fmtAcctType(subtype, type) + (mask ? ` ••••${mask}` : '');
+  // Plaid auto-generates "depository Account 1402" or "credit Account 8760" when real name unavailable
+  if (/^(depository|credit|investment|loan|other)\s+account\s+\d+$/i.test(name.trim())) {
+    return fmtAcctType(subtype, type) + (mask ? ` ••••${mask}` : '');
+  }
+  return name;
+}
+
 function AIInsightCard({ isDemoData, demoKey, onGetAdvice, loading, text }) {
   const [demoRevealed, setDemoRevealed] = React.useState(false);
   const demoText = DEMO_AI[demoKey];
@@ -5270,17 +5279,27 @@ export default function Dashboard() {
                       <div data-tour="banking-accounts" style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 8, marginTop: institutions.length > 1 ? 0 : 24 }}>
                         {visibleAccounts.map(a => (
                           <div key={a.account_id} className="lc" onClick={() => { setSelectedBankAccount(a.account_id); setShowAllTxns(false); }}
-                            style={{ ...CARD, opacity: a.closed ? 0.6 : 1, cursor: 'pointer' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div style={{ fontSize: 11, color: BLUE, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{a.institution_name}</div>
-                              {a.closed && <span style={{ fontSize: 10, fontWeight: 700, color: TEXT3, background: MUTED, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Closed</span>}
+                            style={{ ...CARD, opacity: a.closed ? 0.6 : 1, cursor: 'pointer', padding: '18px 20px' }}>
+                            {/* Row 1: account type pill + closed badge */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: TEXT2, background: MUTED, padding: '3px 9px', borderRadius: 20, letterSpacing: '0.3px' }}>
+                                {fmtAcctType(a.subtype, a.type)}
+                              </span>
+                              {a.closed
+                                ? <span style={{ fontSize: 10, fontWeight: 700, color: TEXT3, background: MUTED, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Closed</span>
+                                : a.mask && <span style={{ fontSize: 11, color: TEXT3 }}>••••{a.mask}</span>
+                              }
                             </div>
-                            <div style={{ fontWeight: 600, margin: '6px 0 2px', fontSize: 15 }}>{a.name}</div>
-                            <div style={{ fontSize: 28, fontWeight: 700, margin: '8px 0 4px', letterSpacing: '-0.5px', color: a.closed ? TEXT3 : TEXT }}>{a.closed ? '—' : fmt(a.balances?.current)}</div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div style={{ fontSize: 12, color: TEXT2 }}>{fmtAcctType(a.subtype, a.type)}</div>
-                              <div style={{ fontSize: 11, color: TEXT3 }}>View transactions →</div>
+                            {/* Row 2: institution name */}
+                            <div style={{ fontSize: 12, color: TEXT2, fontWeight: 500, marginBottom: 4 }}>{a.institution_name}</div>
+                            {/* Row 3: clean account name */}
+                            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10, color: TEXT }}>{cleanAcctName(a.name, a.subtype, a.type, a.mask)}</div>
+                            {/* Row 4: balance */}
+                            <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.5px', color: a.closed ? TEXT3 : TEXT, marginBottom: 14 }}>
+                              {a.closed ? '—' : fmt(a.balances?.current)}
                             </div>
+                            {/* Row 5: view link */}
+                            <div style={{ fontSize: 12, color: BLUE, fontWeight: 600 }}>View transactions →</div>
                           </div>
                         ))}
                       </div>
