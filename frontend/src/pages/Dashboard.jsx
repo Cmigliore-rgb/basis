@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import PlaidLink from '../features/plaid/PlaidLink';
+import ConnectAccountModal from '../features/plaid/ConnectAccountModal';
 
 const BG       = 'var(--bg,       #0f0f0f)';
 const SIDE_BG  = 'var(--side-bg,  #141414)';
@@ -2534,7 +2534,8 @@ export default function Dashboard() {
   };
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [syncingBank, setSyncingBank] = useState(null); // institution name after connect
+  const [syncingBank, setSyncingBank]       = useState(null);
+  const [showConnectModal, setShowConnectModal] = useState(false);
   useEffect(() => {
     const handle = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handle);
@@ -3396,7 +3397,20 @@ export default function Dashboard() {
           <div style={{ padding: '10px 14px 4px', display: 'flex', flexDirection: 'column', gap: 7 }}>
             {isAdmin && !viewAs && (
               <div data-tour="connect">
-                <PlaidLink onSuccess={(name) => { setSyncingBank(name); fetchAll().finally(() => setSyncingBank(null)); }} locked={false} onLocked={() => {}} />
+                <button
+                  onClick={() => setShowConnectModal(true)}
+                  style={{
+                    width: '100%', padding: '9px 0',
+                    background: 'rgba(77,163,255,0.08)',
+                    color: '#4da3ff',
+                    border: '1px solid rgba(77,163,255,0.25)',
+                    borderRadius: 6, cursor: 'pointer',
+                    fontSize: 13, fontWeight: 600,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}
+                >
+                  + Connect Account
+                </button>
               </div>
             )}
             {!(isAdmin && !viewAs) && (
@@ -15453,6 +15467,13 @@ export default function Dashboard() {
 
 
       </main>
+
+      {showConnectModal && (
+        <ConnectAccountModal
+          onSuccess={(name) => { setSyncingBank(name); fetchAll().finally(() => setSyncingBank(null)); }}
+          onClose={() => setShowConnectModal(false)}
+        />
+      )}
     </div>
   );
 }
