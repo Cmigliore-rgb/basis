@@ -135,8 +135,7 @@ export default function ConnectAccountModal({ onSuccess, onClose }) {
     setLinking(inst.id);
     setError('');
     try {
-      const body = inst.plaid_id ? { institution_id: inst.plaid_id } : {};
-      const { data } = await api.post('/plaid/create_link_token', body);
+      const { data } = await api.post('/plaid/create_link_token', {});
 
       const init = () => {
         if (!window.Plaid) {

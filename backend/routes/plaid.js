@@ -17,7 +17,6 @@ const config = new Configuration({
 const plaidClient = new PlaidApi(config);
 
 router.post('/create_link_token', requireAuth, async (req, res) => {
-  const { institution_id } = req.body || {};
   try {
     const params = {
       user: { client_user_id: String(req.user.id) },
@@ -34,7 +33,6 @@ router.post('/create_link_token', requireAuth, async (req, res) => {
         loan:       { account_subtypes: ['student', 'mortgage', 'auto'] },
       },
     };
-    if (institution_id) params.institution_id = institution_id;
     if (process.env.PLAID_REDIRECT_URI) {
       params.redirect_uri = process.env.PLAID_REDIRECT_URI;
     }
