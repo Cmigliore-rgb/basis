@@ -6,7 +6,9 @@ const { getTransactions } = require('../data_controller');
 router.get('/', requireAuth, async (req, res) => {
   try {
     const end   = new Date().toISOString().split('T')[0];
-    const start = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const startDate = new Date();
+    startDate.setFullYear(startDate.getFullYear() - 1);
+    const start = startDate.toISOString().split('T')[0];
     res.json(await getTransactions(req, start, end));
   } catch (err) {
     res.status(500).json({ error: err.message });

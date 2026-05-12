@@ -2348,6 +2348,7 @@ export default function Dashboard() {
   const [learnVideos, setLearnVideos] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_learn_videos') || '{}'); } catch { return {}; } });
   const [yieldCurve, setYieldCurve] = useState({ tenors: [], date: null });
   const [budgetTab, setBudgetTab] = useState('income');
+  const [selectedIncomeMonth, setSelectedIncomeMonth] = useState(0); // 0 = current month, 1 = last month, etc.
   const [showTour, setShowTour] = useState(false);
   const [tourStep, setTourStep] = useState(0);
   const [holdingsExpanded, setHoldingsExpanded] = useState(false);
@@ -2873,13 +2874,19 @@ export default function Dashboard() {
       if (sp500Res.status  === 'fulfilled') setSp500Candles(sp500Res.value.data.candles || []);
       if (yieldRes.status  === 'fulfilled') setYieldCurve(yieldRes.value.data);
 
-      // Fetch baseline (auto-compute if user has tokens but no baseline yet)
+      // Fetch baseline (auto-compute if missing; auto-refresh if stale > 30 days)
       try {
         const blRes = await api.get('/baseline');
         if (blRes.data.baseline) {
           setBaselineData(blRes.data);
+          const computedAt = new Date(blRes.data.baseline.computedAt);
+          const daysSince = (Date.now() - computedAt) / (1000 * 60 * 60 * 24);
+          if (daysSince > 30 && allAccounts.length > 0 && !holdData.demo) {
+            await api.post('/baseline/compute');
+            const blRefresh = await api.get('/baseline');
+            setBaselineData(blRefresh.data);
+          }
         } else if (allAccounts.length > 0 && !holdData.demo) {
-          // Has real accounts but no baseline — compute it
           await api.post('/baseline/compute');
           const blRes2 = await api.get('/baseline');
           setBaselineData(blRes2.data);
@@ -2887,8 +2894,9 @@ export default function Dashboard() {
       } catch {}
 
       // Record today's net worth snapshot
-      // Only sum non-investment accounts to avoid double-counting (portfolio from holdings covers investments)
-      const cash      = allAccounts.filter(a => a.type !== 'investment').reduce((s, a) => s + (a.balances?.current || 0), 0);
+      // Exclude credit-type accounts — their debt is already captured in totalLiab from /liabilities
+      // Exclude investment accounts — portfolio from holdings is the authoritative source
+      const cash      = allAccounts.filter(a => a.type !== 'investment' && a.type !== 'credit').reduce((s, a) => s + (a.balances?.current || 0), 0);
       const portfolio = allHoldings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
       const liabData  = liabRes.status === 'fulfilled' ? liabRes.value.data : {};
       const totalLiab = [
@@ -2897,7 +2905,7 @@ export default function Dashboard() {
         ...(liabData.mortgage || []),
       ].reduce((s, l) => s + (l.balances?.current || 0), 0);
       const nw = cash + portfolio - totalLiab;
-      if (nw > 0) {
+      if (allAccounts.length > 0) {
         api.post('/snapshots', { netWorth: nw }).catch(() => {});
       }
     } finally {
@@ -3143,7 +3151,7 @@ export default function Dashboard() {
     }
   }, [accounts, transactions, holdings, budget, budgetLimits]);
 
-  const totalCash        = accounts.filter(a => !a.closed && a.type !== 'investment').reduce((s, a) => s + (a.balances?.current || 0), 0);
+  const totalCash        = accounts.filter(a => !a.closed && a.type !== 'investment' && a.type !== 'credit').reduce((s, a) => s + (a.balances?.current || 0), 0);
   const totalPortfolio   = holdings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
   const totalLiabilities = [...(liabilities.credit || []), ...(liabilities.student || []), ...(liabilities.mortgage || [])].reduce((s, l) => s + (l.balances?.current || 0), 0);
   const netWorth         = totalCash + totalPortfolio - totalLiabilities;
@@ -5558,6 +5566,7 @@ export default function Dashboard() {
                     return [...INCOME_CATS].some(k => cat.includes(k));
                   };
 
+                  // Build 6 months of real data
                   const realMonths = [];
                   for (let i = 5; i >= 0; i--) {
                     const d     = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -5570,51 +5579,49 @@ export default function Dashboard() {
                       srcMap[c] = (srcMap[c] || 0) + Math.abs(t.amount);
                     });
                     const topSrc = Object.entries(srcMap).sort((a, b) => b[1] - a[1])[0]?.[0]?.split(' ').slice(0, 2).join(' ') || null;
-                    realMonths.push({ total: txns.reduce((s, t) => s + Math.abs(t.amount), 0), topSrc });
+                    realMonths.push({ total: txns.reduce((s, t) => s + Math.abs(t.amount), 0), topSrc, txns });
                   }
                   const hasRealIncome = realMonths.some(m => m.total > 50);
+                  const useReal = hasRealIncome && !isDemoData;
 
                   const MOCK_TOTALS   = [1420, 1850, 1200, 1550, 1350, 1800];
                   const MOCK_TOP_SRCS = ['Wages', 'Financial Aid', 'Wages', 'Wages', 'Wages', 'Wages'];
-                  // This-month sources sum to 1800 (matches MOCK_TOTALS current month)
-                  const MOCK_SOURCES_MTD = [
-                    { cat: 'Wages / Part-time', amt: 1125 },
-                    { cat: 'Financial Aid',      amt: 450  },
-                    { cat: 'Freelance',          amt: 175  },
-                    { cat: 'Interest / Savings', amt: 50   },
-                  ];
-
-                  const useReal = hasRealIncome && !isDemoData;
 
                   const months = [];
                   for (let i = 5; i >= 0; i--) {
                     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                    const label = d.toLocaleDateString('en-US', { month: 'short' });
-                    const total  = useReal ? realMonths[5 - i].total  : MOCK_TOTALS[5 - i];
-                    const topSrc = useReal ? realMonths[5 - i].topSrc : MOCK_TOP_SRCS[5 - i];
-                    months.push({ label, total, topSrc, isCurrent: i === 0 });
+                    const label    = d.toLocaleDateString('en-US', { month: 'short' });
+                    const fullLabel = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    const idx      = 5 - i; // 0=oldest, 5=current
+                    const total    = useReal ? realMonths[idx].total  : MOCK_TOTALS[idx];
+                    const topSrc   = useReal ? realMonths[idx].topSrc : MOCK_TOP_SRCS[idx];
+                    const txns     = useReal ? realMonths[idx].txns   : [];
+                    months.push({ label, fullLabel, total, topSrc, txns, isCurrent: i === 0, monthOffset: i });
                   }
 
-                  const maxAmt = Math.max(...months.map(m => m.total), 1);
-                  const thisM = months[5], lastM = months[4];
-                  const diff = thisM.total - lastM.total;
-                  const pct  = lastM.total > 0 ? (diff / lastM.total) * 100 : null;
+                  const maxAmt  = Math.max(...months.map(m => m.total), 1);
+                  const selIdx  = 5 - selectedIncomeMonth; // selectedIncomeMonth 0=current, 5=oldest
+                  const selMonth = months[selIdx] || months[5];
+                  const thisM   = months[5], lastM = months[4];
+                  const diff    = thisM.total - lastM.total;
+                  const pct     = lastM.total > 0 ? (diff / lastM.total) * 100 : null;
 
-                  // Sources: this month only (consistent with Spending by Category)
+                  // Sources for selected month
                   let sources;
                   if (useReal) {
-                    const mtdStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                    const mtdEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
                     const sourceMap = {};
-                    activeTxns
-                      .filter(t => { const td = new Date(t.date); return td >= mtdStart && td <= mtdEnd && isIncomeTxn(t); })
-                      .forEach(t => {
-                        const cat = fmtCat(t.personal_finance_category?.primary || t.category?.[0]);
-                        sourceMap[cat] = (sourceMap[cat] || 0) + Math.abs(t.amount);
-                      });
+                    selMonth.txns.forEach(t => {
+                      const cat = fmtCat(t.personal_finance_category?.primary || t.category?.[0]);
+                      sourceMap[cat] = (sourceMap[cat] || 0) + Math.abs(t.amount);
+                    });
                     sources = Object.entries(sourceMap).map(([cat, amt]) => ({ cat, amt })).sort((a, b) => b.amt - a.amt);
                   } else {
-                    sources = MOCK_SOURCES_MTD;
+                    sources = [
+                      { cat: 'Wages / Part-time', amt: 1125 },
+                      { cat: 'Financial Aid',      amt: 450  },
+                      { cat: 'Freelance',          amt: 175  },
+                      { cat: 'Interest / Savings', amt: 50   },
+                    ];
                   }
                   const totalIncome = sources.reduce((s, x) => s + x.amt, 0);
 
@@ -5639,37 +5646,64 @@ export default function Dashboard() {
                       </div>
 
                       <div style={{ ...CARD, marginBottom: 16 }}>
-                        <div style={{ fontWeight: 600, marginBottom: 20 }}>Monthly Income: Last 6 Months</div>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Monthly Income: Last 6 Months</div>
+                        <div style={{ fontSize: 11, color: TEXT3, marginBottom: 16 }}>Click a bar to see breakdown</div>
                         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 140 }}>
-                          {months.map((m, i) => (
-                            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                              <div style={{ fontSize: 11, color: m.isCurrent ? TEXT : TEXT2, fontWeight: 600, fontFamily: 'monospace', textAlign: 'center' }}>
-                                {m.total >= 1000 ? `$${(m.total/1000).toFixed(1)}k` : `$${Math.round(m.total)}`}
+                          {months.map((m, i) => {
+                            const isSel = i === selIdx;
+                            return (
+                              <div key={i} onClick={() => setSelectedIncomeMonth(m.monthOffset)}
+                                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+                                <div style={{ fontSize: 11, color: isSel ? GREEN : TEXT2, fontWeight: isSel ? 700 : 500, fontFamily: 'monospace', textAlign: 'center' }}>
+                                  {m.total >= 1000 ? `$${(m.total/1000).toFixed(1)}k` : `$${Math.round(m.total)}`}
+                                </div>
+                                <div style={{ width: '100%', height: `${Math.max(4, (m.total / maxAmt) * 100)}px`, background: isSel ? GREEN : 'rgba(74,222,128,0.3)', borderRadius: '4px 4px 0 0', transition: 'all 0.2s ease', flexShrink: 0, outline: isSel ? `2px solid ${GREEN}` : 'none' }} />
+                                <div style={{ fontSize: 11, color: isSel ? TEXT : TEXT3, fontWeight: isSel ? 700 : 400 }}>{m.label}</div>
                               </div>
-                              <div style={{ width: '100%', height: `${Math.max(4, (m.total / maxAmt) * 100)}px`, background: m.isCurrent ? GREEN : 'rgba(74,222,128,0.35)', borderRadius: '4px 4px 0 0', transition: 'height 0.3s ease', flexShrink: 0 }} />
-                              <div style={{ fontSize: 11, color: m.isCurrent ? TEXT : TEXT3, fontWeight: m.isCurrent ? 600 : 400 }}>{m.label}</div>
-                              {m.topSrc && <div style={{ fontSize: 9, color: TEXT3, textAlign: 'center', lineHeight: 1.2, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.topSrc}</div>}
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
 
                       <div style={CARD}>
-                        <div style={{ fontWeight: 600, marginBottom: 16 }}>Income by Source: This Month</div>
-                        {sources.map(({ cat, amt }, i) => {
-                          const barPct = totalIncome > 0 ? (amt / totalIncome) * 100 : 0;
-                          return (
-                            <div key={i} style={{ marginBottom: 14 }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                                <span style={{ fontSize: 13, fontWeight: 500 }}>{cat}</span>
-                                <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: GREEN }}>{fmt(amt)}</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                          <div style={{ fontWeight: 600 }}>Income: {selMonth.fullLabel}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: GREEN, fontFamily: 'monospace' }}>{fmt(selMonth.total)}</div>
+                        </div>
+                        {sources.length === 0 ? (
+                          <div style={{ color: TEXT2, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>No income recorded this month</div>
+                        ) : (
+                          <>
+                            {sources.map(({ cat, amt }, i) => {
+                              const barPct = totalIncome > 0 ? (amt / totalIncome) * 100 : 0;
+                              return (
+                                <div key={i} style={{ marginBottom: 14 }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                                    <span style={{ fontSize: 13, fontWeight: 500 }}>{cat}</span>
+                                    <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: GREEN }}>{fmt(amt)}</span>
+                                  </div>
+                                  <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', width: `${barPct}%`, background: GREEN, borderRadius: 3, opacity: 0.75 }} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            {useReal && selMonth.txns.length > 0 && (
+                              <div style={{ marginTop: 20, borderTop: `1px solid ${BORDER_C}`, paddingTop: 16 }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 12 }}>Transactions</div>
+                                {selMonth.txns.sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, i) => (
+                                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: i < selMonth.txns.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
+                                    <div>
+                                      <div style={{ fontWeight: 500, fontSize: 13 }}>{t.merchant_name || t.name}</div>
+                                      <div style={{ fontSize: 11, color: TEXT2 }}>{fmtDate(t.date)}</div>
+                                    </div>
+                                    <div style={{ fontWeight: 600, color: GREEN, fontFamily: 'monospace', fontSize: 13 }}>+{fmt(Math.abs(t.amount))}</div>
+                                  </div>
+                                ))}
                               </div>
-                              <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: `${barPct}%`, background: GREEN, borderRadius: 3, opacity: 0.75 }} />
-                              </div>
-                            </div>
-                          );
-                        })}
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                   );

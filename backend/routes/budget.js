@@ -1,25 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const store = require('../store');
+const requireAuth = require('../middleware/requireAuth');
+const db = require('../db');
 
-router.get('/limits', (req, res) => {
-  res.json({ limits: req.app.locals.budgetLimits || {} });
+router.get('/limits', requireAuth, (req, res) => {
+  const rows = db.prepare('SELECT category, amount FROM budget_limits WHERE user_id = ?').all(req.user.id);
+  const limits = Object.fromEntries(rows.map(r => [r.category, r.amount]));
+  res.json({ limits });
 });
 
-router.post('/limits', (req, res) => {
+router.post('/limits', requireAuth, (req, res) => {
   const { category, limit } = req.body;
   if (!category) return res.status(400).json({ error: 'category required' });
 
-  if (!req.app.locals.budgetLimits) req.app.locals.budgetLimits = {};
-
   if (limit === null || limit === undefined || limit === '') {
-    delete req.app.locals.budgetLimits[category];
+    db.prepare('DELETE FROM budget_limits WHERE user_id = ? AND category = ?').run(req.user.id, category);
   } else {
-    req.app.locals.budgetLimits[category] = parseFloat(limit);
+    db.prepare(`
+      INSERT INTO budget_limits (user_id, category, amount) VALUES (?, ?, ?)
+      ON CONFLICT(user_id, category) DO UPDATE SET amount = excluded.amount
+    `).run(req.user.id, category, parseFloat(limit));
   }
 
-  store.save(req.app);
-  res.json({ limits: req.app.locals.budgetLimits });
+  const rows = db.prepare('SELECT category, amount FROM budget_limits WHERE user_id = ?').all(req.user.id);
+  res.json({ limits: Object.fromEntries(rows.map(r => [r.category, r.amount])) });
 });
 
 module.exports = router;

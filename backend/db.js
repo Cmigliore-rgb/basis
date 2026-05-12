@@ -156,6 +156,16 @@ try {
 } catch {}
 try {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS budget_limits (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      category TEXT NOT NULL,
+      amount REAL NOT NULL,
+      PRIMARY KEY (user_id, category)
+    )
+  `);
+} catch {}
+try {
+  db.exec(`
     CREATE TABLE IF NOT EXISTS manual_liabilities (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
