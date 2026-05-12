@@ -322,12 +322,28 @@ router.post('/enroll', requireAuth, (req, res) => {
   res.json({ token: sign(updatedUser), user: safeUser(updatedUser, enrollments), enrollments });
 });
 
-// Delete own account — removes all Plaid items, purges all user data
+// Delete own account — removes all Plaid items, cancels Stripe, purges all user data
 router.delete('/me', requireAuth, async (req, res) => {
   const userId = req.user.id;
   const { plaidClient } = require('../routes/plaid');
 
-  // Remove all Plaid items first (best-effort — don't block on errors)
+  const userRow = db.prepare('SELECT stripe_subscription_id, stripe_customer_id FROM users WHERE id = ?').get(userId);
+
+  // Cancel Stripe subscription and delete customer (best-effort)
+  if (process.env.STRIPE_SECRET_KEY) {
+    try {
+      const Stripe = require('stripe');
+      const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+      if (userRow?.stripe_subscription_id) {
+        await stripe.subscriptions.cancel(userRow.stripe_subscription_id).catch(() => {});
+      }
+      if (userRow?.stripe_customer_id) {
+        await stripe.customers.del(userRow.stripe_customer_id).catch(() => {});
+      }
+    } catch {}
+  }
+
+  // Remove all Plaid items (best-effort)
   const tokens = db.prepare('SELECT access_token FROM plaid_tokens WHERE user_id = ?').all(userId);
   await Promise.allSettled(
     tokens.map(({ access_token }) => plaidClient.itemRemove({ access_token }))
