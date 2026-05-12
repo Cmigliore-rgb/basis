@@ -2349,6 +2349,7 @@ export default function Dashboard() {
   const [yieldCurve, setYieldCurve] = useState({ tenors: [], date: null });
   const [budgetTab, setBudgetTab] = useState('income');
   const [selectedIncomeMonth, setSelectedIncomeMonth] = useState(0); // 0 = current month, 1 = last month, etc.
+  const [selectedExpenseMonth, setSelectedExpenseMonth] = useState(0); // 0 = current month, 1 = last month, etc.
   const [showTour, setShowTour] = useState(false);
   const [tourStep, setTourStep] = useState(0);
   const [holdingsExpanded, setHoldingsExpanded] = useState(false);
@@ -5709,220 +5710,225 @@ export default function Dashboard() {
                   );
                 })()}
 
-                {budgetTab === 'spending' && (!selectedCategory ? (
-                  <>
-                    {(() => {
-                      const now = new Date();
-                      const expMonths = [];
-                      for (let i = 5; i >= 0; i--) {
-                        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                        const start = new Date(d.getFullYear(), d.getMonth(), 1);
-                        const end   = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
-                        const label = d.toLocaleDateString('en-US', { month: 'short' });
-                        const txns  = activeTxns.filter(t => { const td = new Date(t.date); return td >= start && td <= end && t.amount > 0; });
-                        const total = txns.reduce((s, t) => s + t.amount, 0);
-                        const catMap = {};
-                        txns.forEach(t => { const c = fmtCat(t.personal_finance_category?.primary || t.category?.[0]); catMap[c] = (catMap[c] || 0) + t.amount; });
-                        const topCat = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
-                        expMonths.push({ label, total, topCat, isCurrent: i === 0 });
-                      }
-                      const hasRealIncomeCheck = activeTxns.some(t => {
-                        if (t.amount >= 0) return false;
-                        const cat = (t.personal_finance_category?.primary || t.category?.[0] || '').toLowerCase().replace(/_/g, ' ');
-                        return ['income','payroll','wages','salary','deposit','financial aid'].some(k => cat.includes(k)) && Math.abs(t.amount) > 50;
-                      });
-                      const hasRealExp = hasRealIncomeCheck && expMonths.some(m => m.total > 20);
-                      const MOCK_EXP = [
-                        { label: expMonths[0].label, total: 1340, topCat: 'food and drink', isCurrent: false },
-                        { label: expMonths[1].label, total: 1720, topCat: 'dining',          isCurrent: false },
-                        { label: expMonths[2].label, total: 1100, topCat: 'food and drink', isCurrent: false },
-                        { label: expMonths[3].label, total: 1460, topCat: 'entertainment',  isCurrent: false },
-                        { label: expMonths[4].label, total: 1410, topCat: 'food and drink', isCurrent: false },
-                        { label: expMonths[5].label, total: 1620, topCat: 'food and drink', isCurrent: true  },
-                      ];
-                      const display = hasRealExp ? expMonths : MOCK_EXP;
-                      const maxExp = Math.max(...display.map(m => m.total), 1);
-                      const thisExp = display[5], lastExp = display[4];
-                      const expDiff = thisExp.total - lastExp.total;
-                      const expPct  = lastExp.total > 0 ? (expDiff / lastExp.total) * 100 : null;
-                      return (
-                        <>
-                          {!hasRealExp && (
-                            <div style={{ padding: '9px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, fontSize: 12, color: BLUE, marginBottom: 16, marginTop: 4 }}>
-                              Demo data. Connect accounts to see your real finances.
-                            </div>
-                          )}
-                          <AIInsightCard
-                            isDemoData={isDemoData}
-                            demoKey="budgeting"
-                            onGetAdvice={canSeeAI ? () => getAdvice('budgeting') : undefined}
-                            loading={adviceState.budgeting?.loading}
-                            text={adviceState.budgeting?.text}
-                          />
-                          <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24, marginTop: 20 }}>
-                            {[
-                              { label: 'Month-to-Date Spend', value: fmt(hasRealExp ? activeMonthlySpend : 1620) },
-                              { label: 'Top Category',         value: hasRealExp ? (fmtCat(activeBudget[0]?.category) || '—') : 'Food & Dining' },
-                              { label: 'Month Change',         value: expPct !== null ? `${expDiff >= 0 ? '+' : ''}${expPct.toFixed(0)}%` : '—', color: expPct !== null ? (expDiff <= 0 ? GREEN : RED) : TEXT2 },
-                            ].map(({ label, value, color }) => (
-                              <div key={label} className="lc" style={CARD}>
-                                <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-                                <div style={{ fontSize: 28, fontWeight: 700, marginTop: 8, letterSpacing: '-0.5px', color: color || TEXT }}>{value}</div>
-                              </div>
-                            ))}
-                          </div>
-                          <div style={{ ...CARD, marginBottom: 16 }}>
-                            <div style={{ fontWeight: 600, marginBottom: 20 }}>Monthly Expenses: Last 6 Months</div>
-                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 140 }}>
-                              {display.map((m, i) => (
-                                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                                  <div style={{ fontSize: 11, color: m.isCurrent ? TEXT : TEXT2, fontWeight: 600, fontFamily: 'monospace', textAlign: 'center' }}>
-                                    {m.total >= 1000 ? `$${(m.total/1000).toFixed(1)}k` : `$${Math.round(m.total)}`}
-                                  </div>
-                                  <div style={{ width: '100%', height: `${Math.max(4, (m.total / maxExp) * 100)}px`, background: m.isCurrent ? RED : 'rgba(248,113,113,0.35)', borderRadius: '4px 4px 0 0', transition: 'height 0.3s ease', flexShrink: 0 }} />
-                                  <div style={{ fontSize: 11, color: m.isCurrent ? TEXT : TEXT3, fontWeight: m.isCurrent ? 600 : 400 }}>{m.label}</div>
-                                  {m.topCat && <div style={{ fontSize: 9, color: TEXT3, textAlign: 'center', lineHeight: 1.2, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{m.topCat}</div>}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </>
-                      );
-                    })()}
+                {budgetTab === 'spending' && (() => {
+                  const now = new Date();
+                  const expMonths = [];
+                  for (let i = 5; i >= 0; i--) {
+                    const d     = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const start = new Date(d.getFullYear(), d.getMonth(), 1);
+                    const end   = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+                    const label     = d.toLocaleDateString('en-US', { month: 'short' });
+                    const fullLabel = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    const txns  = activeTxns.filter(t => { const td = new Date(t.date); return td >= start && td <= end && t.amount > 0; });
+                    const total = txns.reduce((s, t) => s + t.amount, 0);
+                    const catMap = {};
+                    txns.forEach(t => { const c = fmtCat(t.personal_finance_category?.primary || t.category?.[0]); catMap[c] = (catMap[c] || 0) + t.amount; });
+                    const topCat = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+                    expMonths.push({ label, fullLabel, total, topCat, txns, isCurrent: i === 0, monthOffset: i });
+                  }
+                  const hasRealIncomeCheck = activeTxns.some(t => {
+                    if (t.amount >= 0) return false;
+                    const cat = (t.personal_finance_category?.primary || t.category?.[0] || '').toLowerCase().replace(/_/g, ' ');
+                    return ['income','payroll','wages','salary','deposit','financial aid'].some(k => cat.includes(k)) && Math.abs(t.amount) > 50;
+                  });
+                  const hasRealExp = hasRealIncomeCheck && expMonths.some(m => m.total > 20);
+                  const MOCK_EXP = [
+                    { label: expMonths[0].label, fullLabel: expMonths[0].fullLabel, total: 1340, topCat: 'Food & Dining', txns: [], isCurrent: false, monthOffset: 5 },
+                    { label: expMonths[1].label, fullLabel: expMonths[1].fullLabel, total: 1720, topCat: 'Food & Dining', txns: [], isCurrent: false, monthOffset: 4 },
+                    { label: expMonths[2].label, fullLabel: expMonths[2].fullLabel, total: 1100, topCat: 'Food & Dining', txns: [], isCurrent: false, monthOffset: 3 },
+                    { label: expMonths[3].label, fullLabel: expMonths[3].fullLabel, total: 1460, topCat: 'Entertainment', txns: [], isCurrent: false, monthOffset: 2 },
+                    { label: expMonths[4].label, fullLabel: expMonths[4].fullLabel, total: 1410, topCat: 'Food & Dining', txns: [], isCurrent: false, monthOffset: 1 },
+                    { label: expMonths[5].label, fullLabel: expMonths[5].fullLabel, total: 1620, topCat: 'Food & Dining', txns: [], isCurrent: true,  monthOffset: 0 },
+                  ];
+                  const display   = hasRealExp ? expMonths : MOCK_EXP;
+                  const maxExp    = Math.max(...display.map(m => m.total), 1);
+                  const thisExp   = display[5], lastExp = display[4];
+                  const expDiff   = thisExp.total - lastExp.total;
+                  const expPct    = lastExp.total > 0 ? (expDiff / lastExp.total) * 100 : null;
+                  const selExpIdx = 5 - selectedExpenseMonth;
+                  const selExp    = display[selExpIdx] || display[5];
 
-                    <div className="lc" style={CARD}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                        <div style={{ fontWeight: 600 }}>Spending by Category: This Month</div>
-                        <div style={{ fontSize: 12, color: TEXT2 }}>Click name to see transactions · Click amount to set limit</div>
+                  let displayBudget;
+                  if (!hasRealExp || selectedExpenseMonth === 0) {
+                    displayBudget = activeBudget;
+                  } else {
+                    const catTotals = {};
+                    selExp.txns.forEach(t => {
+                      const cat = t.personal_finance_category?.primary || t.category?.[0] || 'Other';
+                      catTotals[cat] = (catTotals[cat] || 0) + t.amount;
+                    });
+                    displayBudget = Object.entries(catTotals)
+                      .map(([category, total]) => ({ category, total: Math.round(total * 100) / 100 }))
+                      .sort((a, b) => b.total - a.total);
+                  }
+
+                  if (selectedCategory) {
+                    const selStart = new Date(now.getFullYear(), now.getMonth() - selectedExpenseMonth, 1);
+                    const selEnd   = new Date(now.getFullYear(), now.getMonth() - selectedExpenseMonth + 1, 0, 23, 59, 59);
+                    const selLabel = selStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    const catTxns  = activeTxns.filter(t => {
+                      const cat = t.personal_finance_category?.primary || t.category?.[0] || 'Other';
+                      const td  = new Date(t.date);
+                      return cat === selectedCategory && t.amount > 0 && td >= selStart && td <= selEnd;
+                    });
+                    const total = catTxns.reduce((s, t) => s + t.amount, 0);
+                    const limit = budgetLimits[selectedCategory];
+                    return (
+                      <>
+                        <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
+                          {[
+                            { label: 'Total Spent', value: fmt(total) },
+                            { label: 'Transactions', value: catTxns.length },
+                            { label: 'Budget Limit', value: limit ? fmt(limit) : 'Not set' },
+                          ].map(({ label, value }) => (
+                            <div key={label} className="lc" style={CARD}>
+                              <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
+                              <div style={{ fontSize: 28, fontWeight: 700, marginTop: 8, letterSpacing: '-0.5px' }}>{value}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="lc" style={CARD}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <div style={{ fontWeight: 600 }}>{fmtCat(selectedCategory)}</div>
+                            <div style={{ fontSize: 12, color: TEXT2 }}>{selLabel}</div>
+                          </div>
+                          {catTxns.length === 0 ? (
+                            <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>No transactions for this period</div>
+                          ) : catTxns.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, i) => (
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < catTxns.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
+                              <div>
+                                <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
+                                <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)}</div>
+                              </div>
+                              <div style={{ fontWeight: 600, color: RED, fontFamily: 'monospace' }}>
+                                -{fmt(Math.abs(t.amount))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    );
+                  }
+
+                  return (
+                    <>
+                      {!hasRealExp && (
+                        <div style={{ padding: '9px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, fontSize: 12, color: BLUE, marginBottom: 16, marginTop: 4 }}>
+                          Demo data. Connect accounts to see your real finances.
+                        </div>
+                      )}
+                      <AIInsightCard
+                        isDemoData={isDemoData}
+                        demoKey="budgeting"
+                        onGetAdvice={canSeeAI ? () => getAdvice('budgeting') : undefined}
+                        loading={adviceState.budgeting?.loading}
+                        text={adviceState.budgeting?.text}
+                      />
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24, marginTop: 20 }}>
+                        {[
+                          { label: 'Month-to-Date Spend', value: fmt(hasRealExp ? activeMonthlySpend : 1620) },
+                          { label: 'Top Category',         value: hasRealExp ? (fmtCat(activeBudget[0]?.category) || '—') : 'Food & Dining' },
+                          { label: 'Month Change',         value: expPct !== null ? `${expDiff >= 0 ? '+' : ''}${expPct.toFixed(0)}%` : '—', color: expPct !== null ? (expDiff <= 0 ? GREEN : RED) : TEXT2 },
+                        ].map(({ label, value, color }) => (
+                          <div key={label} className="lc" style={CARD}>
+                            <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
+                            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 8, letterSpacing: '-0.5px', color: color || TEXT }}>{value}</div>
+                          </div>
+                        ))}
                       </div>
-
-                      {activeBudget.length === 0 ? (() => {
-                        const MOCK_CATS = [
-                          { category: 'food and drink',     total: 520 },
-                          { category: 'rent and utilities', total: 350 },
-                          { category: 'shopping',           total: 300 },
-                          { category: 'transportation',     total: 190 },
-                          { category: 'entertainment',      total: 140 },
-                          { category: 'personal care',      total: 120 },
-                        ];
-                        const mockMax = MOCK_CATS[0].total;
-                        return MOCK_CATS.map((b, i) => (
-                          <div key={i} style={{ marginBottom: 20 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                              <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>{b.category}</span>
-                              <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: TEXT }}>{fmt(b.total)}</span>
-                            </div>
-                            <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${(b.total / mockMax) * 100}%`, background: BLUE_BTN, borderRadius: 3, opacity: 0.6, transition: 'width 0.3s ease' }} />
-                            </div>
-                          </div>
-                        ));
-                      })() : activeBudget.map((b, i) => {
-                        const limit = budgetLimits[b.category];
-                        const pct   = limit ? Math.min((b.total / limit) * 100, 100) : null;
-                        const over  = limit && b.total > limit;
-                        const warn  = limit && pct >= 80 && !over;
-                        const barColor = over ? RED : warn ? YELLOW : BLUE_BTN;
-                        const isEditing = editingLimit === b.category;
-
-                        return (
-                          <div key={i} style={{ marginBottom: 20 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                              <button
-                                onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
-                              >
-                                <span style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>
-                                  {fmtCat(b.category)}
-                                </span>
-                              </button>
-
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: over ? RED : TEXT }}>
-                                  {fmt(b.total)}{limit && !isEditing ? ` / ${fmt(limit)}` : ''}
-                                </span>
-                                {isEditing ? (
-                                  <>
-                                    <input
-                                      autoFocus
-                                      value={limitInput}
-                                      onChange={e => setLimitInput(e.target.value)}
-                                      onKeyDown={e => {
-                                        if (e.key === 'Enter') saveLimit(b.category, limitInput);
-                                        if (e.key === 'Escape') { setEditingLimit(null); setLimitInput(''); }
-                                      }}
-                                      placeholder="Monthly limit $"
-                                      style={{ width: 120, padding: '4px 8px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, outline: 'none' }}
-                                    />
-                                    <button onClick={() => saveLimit(b.category, limitInput)} style={{ padding: '4px 10px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Save</button>
-                                    {limit && <button onClick={() => saveLimit(b.category, '')} style={{ padding: '4px 8px', background: MUTED, color: RED, border: BORDER, borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Remove</button>}
-                                    <button onClick={() => { setEditingLimit(null); setLimitInput(''); }} style={{ padding: '4px 8px', background: 'none', color: TEXT2, border: 'none', cursor: 'pointer', fontSize: 12 }}>Cancel</button>
-                                  </>
-                                ) : (
-                                  <button
-                                    onClick={() => { setEditingLimit(b.category); setLimitInput(limit ? String(limit) : ''); }}
-                                    style={{ padding: '3px 9px', background: MUTED, border: BORDER, borderRadius: 6, color: limit ? TEXT2 : BLUE, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
-                                  >
-                                    {limit ? 'Edit limit' : '+ Set limit'}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${pct !== null ? pct : Math.min((b.total / (activeBudget[0]?.total || 1)) * 100, 100)}%`, background: barColor, borderRadius: 3, transition: 'width 0.3s ease' }} />
-                            </div>
-                            {over && <div style={{ fontSize: 11, color: RED, marginTop: 4 }}>Over budget by {fmt(b.total - limit)}</div>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {(() => {
-                      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-                      const catTxns = activeTxns.filter(t => {
-                        const cat = t.personal_finance_category?.primary || t.category?.[0] || 'Other';
-                        return cat === selectedCategory && t.amount > 0 && new Date(t.date) >= monthStart;
-                      });
-                      const total = catTxns.reduce((s, t) => s + t.amount, 0);
-                      const limit = budgetLimits[selectedCategory];
-                      return (
-                        <>
-                          <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
-                            {[
-                              { label: 'Total Spent', value: fmt(total) },
-                              { label: 'Transactions', value: catTxns.length },
-                              { label: 'Budget Limit', value: limit ? fmt(limit) : 'Not set' },
-                            ].map(({ label, value }) => (
-                              <div key={label} className="lc" style={CARD}>
-                                <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-                                <div style={{ fontSize: 28, fontWeight: 700, marginTop: 8, letterSpacing: '-0.5px' }}>{value}</div>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="lc" style={CARD}>
-                            <div style={{ fontWeight: 600, marginBottom: 16 }}>Transactions this month</div>
-                            {catTxns.length === 0 ? (
-                              <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>No transactions this month</div>
-                            ) : catTxns.map((t, i) => (
-                              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < catTxns.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
-                                <div>
-                                  <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
-                                  <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)}</div>
+                      <div style={{ ...CARD, marginBottom: 16 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Monthly Expenses: Last 6 Months</div>
+                        <div style={{ fontSize: 11, color: TEXT3, marginBottom: 16 }}>Click a bar to see breakdown</div>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 140 }}>
+                          {display.map((m, i) => {
+                            const isSel = i === selExpIdx;
+                            return (
+                              <div key={i} onClick={() => setSelectedExpenseMonth(m.monthOffset)}
+                                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+                                <div style={{ fontSize: 11, color: isSel ? RED : TEXT2, fontWeight: isSel ? 700 : 500, fontFamily: 'monospace', textAlign: 'center' }}>
+                                  {m.total >= 1000 ? `$${(m.total/1000).toFixed(1)}k` : `$${Math.round(m.total)}`}
                                 </div>
-                                <div style={{ fontWeight: 600, color: RED, fontFamily: 'monospace' }}>
-                                  −{fmt(Math.abs(t.amount))}
+                                <div style={{ width: '100%', height: `${Math.max(4, (m.total / maxExp) * 100)}px`, background: isSel ? RED : 'rgba(248,113,113,0.3)', borderRadius: '4px 4px 0 0', transition: 'all 0.2s ease', flexShrink: 0, outline: isSel ? `2px solid ${RED}` : 'none' }} />
+                                <div style={{ fontSize: 11, color: isSel ? TEXT : TEXT3, fontWeight: isSel ? 700 : 400 }}>{m.label}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="lc" style={CARD}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                          <div>
+                            <div style={{ fontWeight: 600 }}>Spending by Category</div>
+                            <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>{selExp.fullLabel}</div>
+                          </div>
+                          <div style={{ fontSize: 12, color: TEXT2 }}>Click a category to see transactions</div>
+                        </div>
+                        {displayBudget.length === 0 ? (
+                          [
+                            { category: 'food and drink',     total: 520 },
+                            { category: 'rent and utilities', total: 350 },
+                            { category: 'shopping',           total: 300 },
+                            { category: 'transportation',     total: 190 },
+                            { category: 'entertainment',      total: 140 },
+                            { category: 'personal care',      total: 120 },
+                          ].map((b, i) => (
+                            <div key={i} style={{ marginBottom: 20 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>{b.category}</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: TEXT }}>{fmt(b.total)}</span>
+                              </div>
+                              <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${(b.total / 520) * 100}%`, background: BLUE_BTN, borderRadius: 3, opacity: 0.6 }} />
+                              </div>
+                            </div>
+                          ))
+                        ) : displayBudget.map((b, i) => {
+                          const limit    = budgetLimits[b.category];
+                          const pct      = limit ? Math.min((b.total / limit) * 100, 100) : null;
+                          const over     = limit && b.total > limit;
+                          const warn     = limit && pct >= 80 && !over;
+                          const barColor = over ? RED : warn ? YELLOW : BLUE_BTN;
+                          const isEditing = editingLimit === b.category;
+                          return (
+                            <div key={i} style={{ marginBottom: 20 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                <button onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+                                  <span style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{fmtCat(b.category)}</span>
+                                </button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                  <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: over ? RED : TEXT }}>
+                                    {fmt(b.total)}{limit && !isEditing ? ` / ${fmt(limit)}` : ''}
+                                  </span>
+                                  {isEditing ? (
+                                    <>
+                                      <input autoFocus value={limitInput} onChange={e => setLimitInput(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') saveLimit(b.category, limitInput); if (e.key === 'Escape') { setEditingLimit(null); setLimitInput(''); } }}
+                                        placeholder="Monthly limit $"
+                                        style={{ width: 120, padding: '4px 8px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, outline: 'none' }} />
+                                      <button onClick={() => saveLimit(b.category, limitInput)} style={{ padding: '4px 10px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Save</button>
+                                      {limit && <button onClick={() => saveLimit(b.category, '')} style={{ padding: '4px 8px', background: MUTED, color: RED, border: BORDER, borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Remove</button>}
+                                      <button onClick={() => { setEditingLimit(null); setLimitInput(''); }} style={{ padding: '4px 8px', background: 'none', color: TEXT2, border: 'none', cursor: 'pointer', fontSize: 12 }}>Cancel</button>
+                                    </>
+                                  ) : (
+                                    <button onClick={() => { setEditingLimit(b.category); setLimitInput(limit ? String(limit) : ''); }}
+                                      style={{ padding: '3px 9px', background: MUTED, border: BORDER, borderRadius: 6, color: limit ? TEXT2 : BLUE, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                                      {limit ? 'Edit limit' : '+ Set limit'}
+                                    </button>
+                                  )}
                                 </div>
                               </div>
-                            ))}
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </>
-                ))}
+                              <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${pct !== null ? pct : Math.min((b.total / (displayBudget[0]?.total || 1)) * 100, 100)}%`, background: barColor, borderRadius: 3, transition: 'width 0.3s ease' }} />
+                              </div>
+                              {over && <div style={{ fontSize: 11, color: RED, marginTop: 4 }}>Over budget by {fmt(b.total - limit)}</div>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  );
+                })()}
 
                 {budgetTab === 'trends' && (() => {
                   const now = new Date();

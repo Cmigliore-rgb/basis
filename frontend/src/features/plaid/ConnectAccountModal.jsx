@@ -139,6 +139,11 @@ export default function ConnectAccountModal({ onSuccess, onClose }) {
       const { data } = await api.post('/plaid/create_link_token', body);
 
       const init = () => {
+        if (!window.Plaid) {
+          setError('Plaid failed to load. Please refresh the page and try again.');
+          setLinking(null);
+          return;
+        }
         const config = {
           token: data.link_token,
           onSuccess: async (public_token, metadata) => {
@@ -181,11 +186,19 @@ export default function ConnectAccountModal({ onSuccess, onClose }) {
       if (window.Plaid) {
         init();
       } else {
-        const existing = document.querySelector('script[src*="plaid.com/link"]');
-        if (existing) existing.addEventListener('load', init);
+        // Script may have already fired its load event — inject a fresh copy
+        const script = document.createElement('script');
+        script.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js';
+        script.onload = init;
+        script.onerror = () => {
+          setError('Could not load Plaid. Check your internet connection and try again.');
+          setLinking(null);
+        };
+        document.head.appendChild(script);
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not initialize connection.');
+      const msg = err.response?.data?.error;
+      setError(typeof msg === 'string' ? msg : 'Could not initialize connection. Please try again.');
       setLinking(null);
     }
   };
