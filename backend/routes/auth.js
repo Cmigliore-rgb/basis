@@ -350,14 +350,15 @@ router.delete('/me', requireAuth, async (req, res) => {
   );
 
   // Purge all user data from SQLite
-  db.prepare('DELETE FROM plaid_tokens       WHERE user_id = ?').run(userId);
-  db.prepare('DELETE FROM manual_liabilities WHERE user_id = ?').run(userId);
-  db.prepare('DELETE FROM baselines          WHERE user_id = ?').run(userId);
-  db.prepare('DELETE FROM monthly_actuals    WHERE user_id = ?').run(userId);
-  db.prepare('DELETE FROM enrollments        WHERE user_id = ?').run(userId);
-  db.prepare('DELETE FROM submissions        WHERE user_id = ?').run(userId);
-  db.prepare('DELETE FROM notifications      WHERE user_id = ?').run(userId);
-  db.prepare('DELETE FROM users              WHERE id = ?').run(userId);
+  db.prepare('DELETE FROM plaid_tokens          WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM manual_liabilities    WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM baselines             WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM monthly_actuals       WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM enrollments           WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM submissions           WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM notifications         WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM net_worth_snapshots   WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM users                 WHERE id = ?').run(userId);
 
   res.json({ success: true });
 });

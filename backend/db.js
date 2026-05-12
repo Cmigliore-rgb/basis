@@ -132,6 +132,13 @@ try { db.exec('ALTER TABLE users ADD COLUMN two_factor_temp_token TEXT'); } catc
 try { db.exec("UPDATE users SET edu_verified_at = datetime('now') WHERE role = 'student' AND email LIKE '%.edu' AND email_verified = 1 AND edu_verified_at IS NULL"); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN item_id TEXT'); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN needs_update INTEGER NOT NULL DEFAULT 0'); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS net_worth_snapshots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  value REAL NOT NULL,
+  UNIQUE(user_id, date)
+)`); } catch {}
 try {
   db.exec(`CREATE TABLE IF NOT EXISTS assignments (
     id TEXT PRIMARY KEY,
