@@ -10639,6 +10639,25 @@ export default function Dashboard() {
                         where <strong style={{ color: TEXT }}>M</strong> = monthly payment &nbsp;·&nbsp; <strong style={{ color: TEXT }}>P</strong> = loan principal &nbsp;·&nbsp; <strong style={{ color: TEXT }}>r</strong> = monthly rate &nbsp;·&nbsp; <strong style={{ color: TEXT }}>n</strong> = number of payments
                       </div>
                     </div>
+
+                    {/* Key concepts */}
+                    <div style={{ ...CARD, marginTop: 20, background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.20)' }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: '#eab308' }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Price-to-Rent Ratio', formula: 'P/R = Home Price / Annual Rent', body: 'Below 15: buying likely wins. 15-20: depends on your timeline and market. Above 20: renting is usually cheaper. At $285,000 with $1,200/mo rent ($14,400/yr), P/R = 19.8, right on the borderline.' },
+                          { term: 'Amortization', formula: <span>M = P · r(1+r)<sup style={{fontSize:9}}>n</sup> / [(1+r)<sup style={{fontSize:9}}>n</sup> - 1]</span>, body: 'Early payments are mostly interest; equity builds slowly at first, then accelerates. In year 1 of this mortgage, roughly 80% of each payment goes to interest, not principal.' },
+                          { term: 'DTI (Debt-to-Income)', formula: 'DTI = Monthly Debt / Gross Monthly Income', body: 'Lenders use two limits: front-end DTI (housing only) should stay below 28%, and back-end DTI (all debt) below 36-43%. Exceeding these makes qualifying for a mortgage difficult regardless of credit score.' },
+                          { term: 'The 5-Year Rule', formula: 'Stay 5+ years for buying to win', body: 'Closing costs (2-5%) and selling costs (agent fees 5-6%) are a large upfront hurdle. If you stay fewer than 5 years, you typically won\'t build enough equity to cover those costs. The longer you hold, the more buying outperforms renting.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: '#eab308', marginBottom: 6, background: 'rgba(234,179,8,0.10)', padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 );
               }
