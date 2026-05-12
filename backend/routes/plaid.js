@@ -72,6 +72,15 @@ router.post('/create_update_token', requireAuth, async (req, res) => {
 router.post('/exchange_token', requireAuth, async (req, res) => {
   const { public_token, institution_name } = req.body;
   try {
+    // Rate limit: max 3 new connections per user per 24 hours
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const recentCount = db.prepare(
+      "SELECT COUNT(*) as cnt FROM plaid_tokens WHERE user_id = ? AND created_at > ?"
+    ).get(req.user.id, oneDayAgo)?.cnt || 0;
+    if (recentCount >= 3) {
+      return res.status(429).json({ error: 'Too many accounts connected in the past 24 hours. Please try again later.' });
+    }
+
     const response = await plaidClient.itemPublicTokenExchange({ public_token });
     const { access_token, item_id, request_id } = response.data;
     console.log(`[Plaid exchange_token] item_id=${item_id} request_id=${request_id}`);
