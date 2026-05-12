@@ -11,10 +11,11 @@ try {
   });
 } catch (e) { console.warn('yahoo-finance2 init failed:', e.message); }
 
-const CACHE = { FG: 15 * 60 * 1000, TICKERS: 2 * 60 * 1000, CHART: 10 * 60 * 1000, YIELD: 60 * 60 * 1000 };
+const CACHE = { FG: 15 * 60 * 1000, TICKERS: 2 * 60 * 1000, CHART: 10 * 60 * 1000, YIELD: 60 * 60 * 1000, SCREENER: 5 * 60 * 1000 };
 let fgCache         = { data: null, ts: 0 };
 let tickersCache    = { data: null, ts: 0 };
 let yieldCurveCache = { data: null, ts: 0 };
+let trendingCache   = { data: null, ts: 0 };
 const chartCache    = {};
 const screenerCache = {};
 const quotesCache   = {};
@@ -49,9 +50,10 @@ router.get('/tickers', async (req, res) => {
   if (!yahooFinance) return res.json({ indices: [], active: [] });
   try {
     const INDICES = ['^GSPC', '^DJI', '^IXIC', '^RUT'];
+    const trending = await getTrendingTickers();
     const [indexRes, activeRes] = await Promise.allSettled([
       Promise.allSettled(INDICES.map(s => yahooFinance.quote(s))),
-      yahooFinance.quote(SCREENER_TICKERS.slice(0, 12)),
+      yahooFinance.quote(trending.slice(0, 12)),
     ]);
 
     const mapQuote = q => ({
@@ -80,15 +82,30 @@ router.get('/tickers', async (req, res) => {
   }
 });
 
-// ── Screener: most active / gainers / losers (quote-based, screener API broken) ─
-const SCREENER_TICKERS = ['AAPL','MSFT','NVDA','AMZN','GOOGL','TSLA','META','AMD','PLTR','MARA','SMCI','AVGO','NFLX','BABA','INTC','BAC','F','AAL','RIVN','NIO'];
+// ── Screener: most active / gainers / losers ──────────────────────────────────
+const FALLBACK_TICKERS = ['AAPL','MSFT','NVDA','AMZN','GOOGL','TSLA','META','AMD','PLTR','MARA','SMCI','AVGO','NFLX','BABA','INTC','BAC','F','AAL','RIVN','NIO','JPM','GS','WMT','DIS','PYPL'];
+
+async function getTrendingTickers() {
+  if (trendingCache.data && Date.now() - trendingCache.ts < CACHE.SCREENER) return trendingCache.data;
+  try {
+    const r = await yahooFinance.trendingSymbols('US');
+    const syms = (r.quotes || []).map(q => q.symbol).filter(Boolean).slice(0, 30);
+    const tickers = syms.length >= 10 ? syms : FALLBACK_TICKERS;
+    trendingCache = { data: tickers, ts: Date.now() };
+    return tickers;
+  } catch {
+    trendingCache = { data: FALLBACK_TICKERS, ts: Date.now() };
+    return FALLBACK_TICKERS;
+  }
+}
 
 router.get('/screener', async (req, res) => {
   const VALID = ['most_actives', 'day_gainers', 'day_losers'];
   const type  = VALID.includes(req.query.type) ? req.query.type : 'most_actives';
-  if (screenerCache[type] && Date.now() - screenerCache[type].ts < CACHE.TICKERS) return res.json(screenerCache[type].data);
+  if (screenerCache[type] && Date.now() - screenerCache[type].ts < CACHE.SCREENER) return res.json(screenerCache[type].data);
   if (!yahooFinance) return res.json({ quotes: [] });
   try {
+    const tickers = await getTrendingTickers();
     const mapQ = q => ({
       symbol: q.symbol,
       name: q.shortName || q.symbol,
@@ -96,8 +113,8 @@ router.get('/screener', async (req, res) => {
       change: q.regularMarketChange,
       changePct: q.regularMarketChangePercent,
     });
-    const results = await yahooFinance.quote(SCREENER_TICKERS);
-    const all = (Array.isArray(results) ? results : [results]).filter(Boolean).map(mapQ);
+    const results = await yahooFinance.quote(tickers);
+    const all = (Array.isArray(results) ? results : [results]).filter(Boolean).filter(q => q.regularMarketPrice).map(mapQ);
     let quotes;
     if (type === 'day_gainers') quotes = [...all].sort((a, b) => (b.changePct || 0) - (a.changePct || 0)).slice(0, 12);
     else if (type === 'day_losers') quotes = [...all].sort((a, b) => (a.changePct || 0) - (b.changePct || 0)).slice(0, 12);
