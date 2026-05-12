@@ -5331,7 +5331,7 @@ export default function Dashboard() {
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             {liabilities.credit.map((c, i) => {
                               const acct = accounts.find(a => a.account_id === c.account_id);
-                              const name = c._name || acct?.name || `Credit Card ${i + 1}`;
+                              const name = c._name || (acct ? cleanAcctName(acct.name, acct.subtype, acct.type, acct.mask) : `Credit Card ${i + 1}`);
                               const bal = c.balances?.current || 0;
                               const limit = c.balances?.limit || null;
                               const util = limit ? Math.round((bal / limit) * 100) : null;
@@ -5373,7 +5373,7 @@ export default function Dashboard() {
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             {liabilities.student.map((s, i) => {
                               const acct = accounts.find(a => a.account_id === s.account_id);
-                              const name = s._name || acct?.name || `Student Loan ${i + 1}`;
+                              const name = s._name || (acct ? cleanAcctName(acct.name, acct.subtype, acct.type, acct.mask) : `Student Loan ${i + 1}`);
                               const bal = s.balances?.current || s.outstanding_interest_amount || 0;
                               const origBal = s.origination_principal_amount;
                               const pct = origBal ? Math.round((bal / origBal) * 100) : null;
@@ -5415,7 +5415,7 @@ export default function Dashboard() {
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             {liabilities.mortgage.map((m, i) => {
                               const acct = accounts.find(a => a.account_id === m.account_id);
-                              const name = m._name || acct?.name || `Mortgage ${i + 1}`;
+                              const name = m._name || (acct ? cleanAcctName(acct.name, acct.subtype, acct.type, acct.mask) : `Mortgage ${i + 1}`);
                               const bal = m.balances?.current || 0;
                               const origBal = m.origination_principal_amount;
                               const pct = origBal ? Math.round((bal / origBal) * 100) : null;
