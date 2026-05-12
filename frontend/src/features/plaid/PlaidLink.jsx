@@ -52,7 +52,12 @@ export default function PlaidLink({ onSuccess, locked, onLocked }) {
           }
         },
         onEvent: (eventName, metadata) => {
-          console.log('[Plaid Link event]', eventName, metadata?.institution_name || '', metadata?.error_code || '');
+          console.log('[Plaid Link event]', eventName, {
+            institution_name: metadata?.institution_name,
+            link_session_id:  metadata?.link_session_id,
+            request_id:       metadata?.request_id,
+            error_code:       metadata?.error_code,
+          });
         },
       };
       if (window.location.href.includes('oauth_state_id')) {
