@@ -1120,7 +1120,7 @@ const LEARN_CONTENT = [
       { id: 'indices', title: 'Market Indices', icon: '📈',
         summary: 'Benchmarks that track a basket of stocks to measure overall market performance.',
         body: 'The S&P 500 tracks the 500 largest U.S. companies and is the most widely used measure of stock market health. The Dow Jones Industrial Average (DJIA) tracks just 30 large blue-chip companies. The Nasdaq Composite is tech-heavy and includes over 3,000 companies listed on the Nasdaq exchange.',
-        formula: 'Index Level = Σ(Price_i × Shares_i) / Divisor   (market-cap weighted)',
+        formula: <span>Index Level = Σ(Price<sub style={{fontSize:10}}>i</sub> × Shares<sub style={{fontSize:10}}>i</sub>) / Divisor (market-cap weighted)</span>,
         example: 'If the S&P 500 is up 1.2% today, the average large-cap U.S. stock gained roughly 1.2%.',
         datasetId: 'ds-indices' },
       { id: 'bull-bear', title: 'Bull vs. Bear Markets', icon: '🐂',
@@ -12860,9 +12860,9 @@ export default function Dashboard() {
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: CYAN }}>Key Concepts</div>
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16 }}>
                         {[
-                          { term: 'Market-Cap Weighting', formula: 'w_i = (P_i × Shares_i) / Σ(P_j × Shares_j)', body: 'Used by S&P 500 and Nasdaq. Larger companies have more influence. Criticized for letting overvalued mega-caps dominate, but praised for reflecting the actual investable market.' },
-                          { term: 'Price Weighting', formula: 'w_i = P_i / Σ P_j', body: 'Used by the DJIA. A $1 move in any stock moves the index by the same number of points regardless of company size. Widely considered outdated, since a stock split can drastically change weight.' },
-                          { term: 'The Divisor', formula: 'Index = Σ(P_i × w_i) / Divisor', body: 'A number maintained by the index to keep values continuous across stock splits, dividends, and composition changes. The S&P 500 divisor is adjusted whenever a company is added or removed.' },
+                          { term: 'Market-Cap Weighting', formula: <span>w<sub style={{fontSize:9}}>i</sub> = (P<sub style={{fontSize:9}}>i</sub> × Shares<sub style={{fontSize:9}}>i</sub>) / Σ(P<sub style={{fontSize:9}}>j</sub> × Shares<sub style={{fontSize:9}}>j</sub>)</span>, body: 'Used by S&P 500 and Nasdaq. Larger companies have more influence. Criticized for letting overvalued mega-caps dominate, but praised for reflecting the actual investable market.' },
+                          { term: 'Price Weighting', formula: <span>w<sub style={{fontSize:9}}>i</sub> = P<sub style={{fontSize:9}}>i</sub> / Σ P<sub style={{fontSize:9}}>j</sub></span>, body: 'Used by the DJIA. A $1 move in any stock moves the index by the same number of points regardless of company size. Widely considered outdated, since a stock split can drastically change weight.' },
+                          { term: 'The Divisor', formula: <span>Index = Σ(P<sub style={{fontSize:9}}>i</sub> × w<sub style={{fontSize:9}}>i</sub>) / Divisor</span>, body: 'A number maintained by the index to keep values continuous across stock splits, dividends, and composition changes. The S&P 500 divisor is adjusted whenever a company is added or removed.' },
                         ].map(c => (
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
