@@ -51,6 +51,9 @@ export default function PlaidLink({ onSuccess, locked, onLocked }) {
             }
           }
         },
+        onEvent: (eventName, metadata) => {
+          console.log('[Plaid Link event]', eventName, metadata?.institution_name || '', metadata?.error_code || '');
+        },
       };
       if (window.location.href.includes('oauth_state_id')) {
         config.receivedRedirectUri = window.location.href;

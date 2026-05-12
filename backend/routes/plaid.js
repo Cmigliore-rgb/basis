@@ -26,6 +26,12 @@ router.post('/create_link_token', requireAuth, async (req, res) => {
       country_codes: [CountryCode.Us],
       language: 'en',
       webhook: 'https://peakledger.app/api/plaid/webhook',
+      account_filters: {
+        depository: { account_subtypes: ['checking', 'savings'] },
+        credit:     { account_subtypes: ['credit card'] },
+        investment: { account_subtypes: ['brokerage', 'ira', 'roth', '401k'] },
+        loan:       { account_subtypes: ['student', 'mortgage', 'auto'] },
+      },
     };
     if (process.env.PLAID_REDIRECT_URI) {
       params.redirect_uri = process.env.PLAID_REDIRECT_URI;
