@@ -1170,17 +1170,20 @@ const LEARN_CONTENT = [
         summary: 'Acquire a company using mostly debt, then repay it with the target\'s own cash flows.',
         body: 'In a leveraged buyout, a private equity firm acquires a company with 60–80% debt and 20–40% equity. The target\'s operating cash flows service and pay down the debt over 3–7 years. At exit (IPO or sale), the remaining equity, now a larger share of a less-leveraged company, generates the return. LBOs work best on stable, cash-generative businesses with predictable revenues.',
         formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>MOIC = <Frac n="Exit Equity Value" d="Equity Invested" /> <span style={{margin:'0 6px',opacity:0.4}}>|</span> IRR = rate where NPV = 0</span>,
-        example: 'PE firm buys a company for $500M (80% debt, $100M equity). Sells it 5yrs later for $900M with $300M debt remaining → exit equity = $600M. MOIC = 6×, IRR ≈ 43%.' },
+        example: 'PE firm buys a company for $500M (80% debt, $100M equity). Sells it 5yrs later for $900M with $300M debt remaining → exit equity = $600M. MOIC = 6×, IRR ≈ 43%.',
+        datasetId: 'ds-lbo' },
       { id: 'tenk', title: 'Reading a 10-K', icon: '📑',
         summary: 'The SEC annual report and the most information-dense document a public company produces.',
         body: 'A 10-K has four critical sections: (1) Business, covering what the company does and how it makes money; (2) Risk Factors, management\'s own list of what could go wrong (read these seriously); (3) MD&A (Management Discussion & Analysis), management\'s narrative on results, often more useful than the numbers alone; (4) Financial Statements: income statement, balance sheet, cash flow statement, and footnotes. The footnotes reveal revenue recognition policies, debt covenants, and off-balance-sheet items.',
         formula: 'Net Income = Revenue − COGS − OpEx − Interest − Taxes  ·  FCF = Operating Cash Flow − CapEx',
-        example: 'Apple\'s 10-K risk factors note "dependence on a single supplier for components" and "foreign exchange exposure." These aren\'t boilerplate; analysts model around them.' },
+        example: 'Apple\'s 10-K risk factors note "dependence on a single supplier for components" and "foreign exchange exposure." These aren\'t boilerplate; analysts model around them.',
+        datasetId: 'ds-tenk' },
       { id: 'marketcap', title: 'Market Cap & Enterprise Value', icon: '🏢',
         summary: 'Market cap is what equity costs to buy; enterprise value is what the whole business costs.',
         body: 'Market Cap = Share Price × Shares Outstanding. Enterprise Value (EV) = Market Cap + Total Debt − Cash. EV represents the theoretical takeover price, what you\'d pay for the entire business net of cash you\'d receive. EV/EBITDA is the most common valuation multiple because it\'s capital-structure neutral (unlike P/E).',
         formula: 'EV = Market Cap + Debt − Cash  ·  EV/EBITDA = comparable valuation multiple',
-        example: 'Apple: $3T market cap, ~$100B debt, ~$60B cash → EV ≈ $3.04T. If EBITDA = $135B → EV/EBITDA ≈ 22.5×.' },
+        example: 'Apple: $3T market cap, ~$100B debt, ~$60B cash → EV ≈ $3.04T. If EBITDA = $135B → EV/EBITDA ≈ 22.5×.',
+        datasetId: 'ds-marketcap' },
       { id: 'fi-pricing', title: 'Bond Pricing & YTM', icon: '💲',
         summary: 'Bond price = present value of all cash flows. YTM is the single rate that explains the price.',
         body: 'A bond\'s price equals the sum of all discounted coupon payments plus the discounted par value. YTM (yield to maturity) is the internal rate of return, the single discount rate that makes the PV of cash flows equal to the price. Price and yield move inversely. When YTM > coupon rate → discount bond (price < par). When YTM < coupon rate → premium bond (price > par).',
@@ -1191,32 +1194,38 @@ const LEARN_CONTENT = [
         summary: 'The yield curve plots interest rates across maturities, forming the backbone of fixed income and macro.',
         body: 'Spot rate s(t): the YTM on a zero-coupon bond maturing at time t. Forward rate: the implied rate for a future period, extracted from spot rates via no-arbitrage. The yield curve shape signals economic expectations: normal (upward sloping) = growth expected; inverted = recession signal; flat = uncertainty. Every inversion since 1955 has preceded a recession, making it the most watched macro indicator.',
         formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:3}}>f(t₁,t₂) = [<Frac n={<span>(1+s₂)<sup style={{fontSize:10}}>t₂</sup></span>} d={<span>(1+s₁)<sup style={{fontSize:10}}>t₁</sup></span>} />]<sup style={{fontSize:10,verticalAlign:'super'}}><Frac n="1" d="t₂−t₁" sz={9}/></sup> − 1</span>,
-        example: '2yr spot=4%, 3yr spot=4.5% → implied 1yr forward rate starting in year 2 ≈ 5.5%. The market is pricing in rate increases.' },
+        example: '2yr spot=4%, 3yr spot=4.5% → implied 1yr forward rate starting in year 2 ≈ 5.5%. The market is pricing in rate increases.',
+        datasetId: 'ds-fi-termstructure' },
       { id: 'fi-duration', title: 'Duration & DV01', icon: '⚖️',
         summary: 'How sensitive is a bond\'s price to interest rate changes?',
         body: 'Macaulay Duration D_mac: weighted average time to receive cash flows (in years). Modified Duration D_mod: % price change per 1% (100bp) parallel shift in yields. DV01 (Dollar Value of 01): dollar price change per 1bp move, the standard trader risk measure. Convexity accounts for the curvature of the price-yield relationship; long bonds have positive convexity, meaning they gain more when rates fall than they lose when rates rise.',
         formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4,rowGap:6}}>D<sub>mod</sub> = <Frac n="D_mac" d="1+y" /> <span style={{margin:'0 6px',opacity:0.4}}>|</span> DV01 = D<sub>mod</sub> × P × 0.0001</span>,
-        example: 'Bond with D_mod=7, price=$950, DV01=$0.665. If yields rise 50bps → ΔP ≈ −7×0.005×$950 = −$33.25.' },
+        example: 'Bond with D_mod=7, price=$950, DV01=$0.665. If yields rise 50bps → ΔP ≈ −7×0.005×$950 = −$33.25.',
+        datasetId: 'ds-fi-duration' },
       { id: 'fi-credit', title: 'Credit Risk & Spreads', icon: '⚠️',
         summary: 'The yield premium a bond pays above Treasuries as compensation for default risk.',
         body: 'Credit spread: the yield premium over a risk-free Treasury of the same maturity. Credit ratings (AAA→D) assess default probability; investment grade is BBB- and above. Probability of Default (PD) and Loss Given Default (LGD = 1 − recovery rate R) drive spread. CDS (Credit Default Swaps): insurance-like contracts where the protection buyer pays a periodic spread and receives par if the issuer defaults.',
         formula: 'Credit Spread ≈ PD × LGD = PD × (1 − R)',
-        example: 'BBB bond: PD=1.5%/yr, recovery=40% → spread ≈ 1.5%×60% = 90bps. If Treasuries yield 4.5%, the bond yields ≈ 5.4%.' },
+        example: 'BBB bond: PD=1.5%/yr, recovery=40% → spread ≈ 1.5%×60% = 90bps. If Treasuries yield 4.5%, the bond yields ≈ 5.4%.',
+        datasetId: 'ds-fi-credit' },
       { id: 'calls-puts', title: 'Options: Calls & Puts', icon: '⚖️',
         summary: 'A call gives the right to buy; a put gives the right to sell.',
         body: 'A call option gives you the right (but not obligation) to buy 100 shares of a stock at the strike price before expiration. You buy calls when you expect the stock to rise. A put option gives you the right to sell 100 shares at the strike price; buy puts when you expect a decline or want downside protection. Options are used by portfolio managers to hedge positions and by analysts to imply market expectations.',
         formula: 'Call Payoff = max(S − K, 0)  ·  Put Payoff = max(K − S, 0)  ·  Profit = Payoff − Premium',
-        example: 'You buy an AAPL $200 call expiring in 30 days for $3.50 ($350 total). If AAPL hits $215, your call is worth ~$15, a 4x gain.' },
+        example: 'You buy an AAPL $200 call expiring in 30 days for $3.50 ($350 total). If AAPL hits $215, your call is worth ~$15, a 4x gain.',
+        datasetId: 'ds-calls-puts' },
       { id: 'iv', title: 'Implied Volatility', icon: '〰️',
         summary: 'The market\'s forecast of future price movement, derived from option prices.',
         body: 'IV is derived from the market price of an option using the Black-Scholes model, specifically what\'s implied by what people are willing to pay. High IV means the market expects big moves; options are expensive. Low IV means calm expectations; options are cheap. IV spikes before earnings announcements and major events. The VIX tracks implied volatility on the S&P 500 and is widely known as the market\'s fear gauge.',
         formula: 'IV is extracted from option price by solving Black-Scholes for σ',
-        example: 'AAPL IV of 28% means the market expects AAPL to move ±28% over the next year, or roughly ±1.8% per week.' },
+        example: 'AAPL IV of 28% means the market expects AAPL to move ±28% over the next year, or roughly ±1.8% per week.',
+        datasetId: 'ds-iv' },
       { id: 'delta', title: 'Option Greeks: Delta & Gamma', icon: 'Δ',
         summary: 'Delta measures directional exposure; gamma measures how fast delta changes.',
         body: 'Delta (Δ): how much the option price moves per $1 move in the stock. Ranges 0–1 for calls, 0 to −1 for puts. A 0.50 delta call approximates a 50% chance of expiring in the money. Gamma (Γ): rate of change of delta per $1 stock move. It peaks near ATM and near expiration, where options positions become most volatile.',
         formula: <span style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',gap:4}}>Δ = N(d₁) &nbsp;|&nbsp; Γ = <Frac n="N′(d₁)" d="S · σ · √T" /></span>,
-        example: 'AAPL call: Δ=0.45, Γ=0.05. Stock rises $5 → option gains ~$2.25 and delta moves to ~0.70. Now you\'re more exposed.' },
+        example: 'AAPL call: Δ=0.45, Γ=0.05. Stock rises $5 → option gains ~$2.25 and delta moves to ~0.70. Now you\'re more exposed.',
+        datasetId: 'ds-delta' },
     ],
   },
 ];
@@ -1709,6 +1718,78 @@ const PREBUILT_DATASETS = [
     overview: 'Students forecast FCF growth, compute a terminal value using the Gordon Growth Model, discount everything back at WACC, and compare intrinsic value per share to the current market price using a sensitivity table.',
   },
   {
+    id: 'ds-lbo',        title: 'LBO Model',                           subtitle: 'Private Equity · Ch. 2',
+    description: 'Model a leveraged buyout of Retail Chain Co. Adjust entry multiple, leverage, EBITDA growth, exit multiple, and hold period to see MOIC and IRR.',
+    category: 'Valuation',  color: '#f97316',  difficulty: 'Advanced',
+    concepts: ['MOIC', 'IRR', 'Leverage', 'Entry & Exit Multiples'],
+    stats: [['Entry EV', '$800M'], ['Leverage', '70% debt'], ['Hold Period', '5 years']],
+    overview: 'Students model a PE acquisition: set leverage, project EBITDA growth, watch debt pay down over time, then calculate exit equity, MOIC, and IRR.',
+  },
+  {
+    id: 'ds-tenk',       title: 'Reading a 10-K',                      subtitle: 'Financial Statements · Ch. 3',
+    description: 'Analyze three years of financials for Nexus Software Inc. (fictional). Calculate margins, FCF, and valuation multiples from raw income statement and balance sheet data.',
+    category: 'Accounting',  color: '#a78bfa',  difficulty: 'Intermediate',
+    concepts: ['Gross Margin', 'EBITDA', 'FCF vs Net Income', 'EV/EBITDA'],
+    stats: [['Revenue (Yr 3)', '$1.12B'], ['EBITDA Margin', '29.7%'], ['FCF', '$162M']],
+    overview: 'Students read a three-year income statement, compute key margins and ratios, and build valuation multiples at different assumed share prices.',
+  },
+  {
+    id: 'ds-marketcap',  title: 'Market Cap & Enterprise Value',        subtitle: 'Valuation · Ch. 1',
+    description: 'Compare four fictional companies with the same EBITDA but different capital structures. See why EV/EBITDA is capital-structure neutral while P/E is not.',
+    category: 'Valuation',  color: '#34d399',  difficulty: 'Beginner',
+    concepts: ['Enterprise Value', 'EV/EBITDA', 'Net Debt', 'Capital Structure'],
+    stats: [['Companies', '4'], ['EBITDA each', '$500M'], ['Multiples', 'EV/EBITDA, P/E']],
+    overview: 'Students compute EV from market cap, debt, and cash for four companies, compare EV/EBITDA vs P/E, and see why capital structure distorts P/E comparisons.',
+  },
+  {
+    id: 'ds-fi-termstructure', title: 'Yield Curve & Term Structure',   subtitle: 'Fixed Income · Ch. 6',
+    description: 'Toggle between normal, inverted, flat, and humped yield curves. Compute implied forward rates and understand what each shape signals about the economy.',
+    category: 'Fixed Income',  color: '#fb7185',  difficulty: 'Intermediate',
+    concepts: ['Spot Rate', 'Forward Rate', 'Inverted Curve', 'Recession Signal'],
+    stats: [['Maturities', '10 points'], ['Shapes', '4 scenarios'], ['2y10y Spread', 'live']],
+    overview: 'Students explore four yield curve shapes, compute forward rates from spot rates, and interpret the 2y/10y spread as a leading economic indicator.',
+  },
+  {
+    id: 'ds-fi-duration', title: 'Duration & DV01',                     subtitle: 'Fixed Income · Ch. 7',
+    description: 'Calculate Macaulay duration, modified duration, and DV01 for a bond. Adjust coupon, yield, and maturity to see how interest rate sensitivity changes.',
+    category: 'Fixed Income',  color: '#fbbf24',  difficulty: 'Intermediate',
+    concepts: ['Macaulay Duration', 'Modified Duration', 'DV01', 'Convexity'],
+    stats: [['Duration range', '1–25 yr'], ['DV01', 'per $1M'], ['Rate shift', '±100bps']],
+    overview: 'Students compute duration and DV01, see how they change with maturity and coupon, and calculate the dollar impact of parallel rate shifts.',
+  },
+  {
+    id: 'ds-fi-credit',  title: 'Credit Risk & Spreads',                subtitle: 'Fixed Income · Ch. 8',
+    description: 'Use the PD × LGD framework to explain credit spreads. Compare AAA through CCC bonds and build a yield from its risk-free and credit components.',
+    category: 'Fixed Income',  color: '#f87171',  difficulty: 'Intermediate',
+    concepts: ['Credit Spread', 'PD', 'LGD', 'Recovery Rate'],
+    stats: [['Rating buckets', '6'], ['Spread range', '4bp–900bp'], ['Formula', 'PD × LGD']],
+    overview: 'Students use probability of default and loss given default to derive credit spreads, compare across rating categories, and decompose a bond yield into risk-free and credit components.',
+  },
+  {
+    id: 'ds-calls-puts', title: 'Options: Calls & Puts',                subtitle: 'Derivatives · Ch. 9',
+    description: 'Build payoff diagrams for long calls and puts. Adjust strike, premium, and stock price at expiry to see profit/loss, breakeven, and max gain/loss.',
+    category: 'Derivatives',  color: '#4ade80',  difficulty: 'Beginner',
+    concepts: ['Call Payoff', 'Put Payoff', 'Breakeven', 'Max Loss = Premium'],
+    stats: [['Strike', '$100'], ['Premiums', 'adjustable'], ['Payoff points', '15']],
+    overview: 'Students compute call and put payoffs across a range of expiry prices, identify breakevens, and contrast the asymmetric risk/reward profile of long options.',
+  },
+  {
+    id: 'ds-iv',         title: 'Implied Volatility & Black-Scholes',   subtitle: 'Derivatives · Ch. 10',
+    description: 'Price a call and put using Black-Scholes. Adjust volatility, time, and moneyness to see how IV drives option premium and compare IV to historical vol.',
+    category: 'Derivatives',  color: '#818cf8',  difficulty: 'Advanced',
+    concepts: ['Black-Scholes', 'Implied Volatility', 'VIX', 'Volatility Smile'],
+    stats: [['Model', 'Black-Scholes'], ['Greeks shown', 'Δ, Γ, Θ'], ['IV range', '10–80%']],
+    overview: 'Students price calls and puts using Black-Scholes, explore how each input affects the premium, and learn why IV is a forward-looking measure distinct from historical volatility.',
+  },
+  {
+    id: 'ds-delta',      title: 'Option Greeks: Delta & Gamma',         subtitle: 'Derivatives · Ch. 11',
+    description: 'Visualize how delta and gamma evolve as the underlying price moves. See delta hedging in action and understand why gamma risk spikes near ATM and at expiry.',
+    category: 'Derivatives',  color: '#c084fc',  difficulty: 'Advanced',
+    concepts: ['Delta', 'Gamma', 'Delta Hedging', 'ATM vs ITM vs OTM'],
+    stats: [['Delta range', '0–1'], ['Gamma peaks', 'at ATM'], ['Sweep', '20 price points']],
+    overview: 'Students observe delta and gamma across a range of stock prices, understand delta as a probability proxy, and calculate the cost of delta-hedging a position.',
+  },
+  {
     id: 'ds-fi-pricing',  title: 'Bond Pricing & YTM',              subtitle: 'Fixed Income · Ch. 5',
     description: 'Price a 10-year semi-annual corporate bond. Adjust coupon rate, YTM, and maturity to see price, premium/discount status, and a full cash flow schedule.',
     category: 'Fixed Income',  color: '#22d3ee',  difficulty: 'Intermediate',
@@ -1915,6 +1996,15 @@ const DATASET_TARGET_PANEL = {
   'ds-insurance':        'edu-sandbox',
   'ds-dcf':              'edu-sandbox',
   'ds-fi-pricing':       'edu-sandbox',
+  'ds-lbo':              'edu-sandbox',
+  'ds-tenk':             'edu-sandbox',
+  'ds-marketcap':        'edu-sandbox',
+  'ds-fi-termstructure': 'edu-sandbox',
+  'ds-fi-duration':      'edu-sandbox',
+  'ds-fi-credit':        'edu-sandbox',
+  'ds-calls-puts':       'edu-sandbox',
+  'ds-iv':               'edu-sandbox',
+  'ds-delta':            'edu-sandbox',
 };
 
 const SANDBOX_DATA = (() => {
@@ -2465,6 +2555,31 @@ export default function Dashboard() {
   const [bondCoupon, setBondCoupon]     = useState(5);
   const [bondYtm, setBondYtm]           = useState(6);
   const [bondMaturity, setBondMaturity] = useState(10);
+  const [lboEbitda, setLboEbitda]           = useState(100);
+  const [lboEntryMult, setLboEntryMult]     = useState(8);
+  const [lboDebtPct, setLboDebtPct]         = useState(70);
+  const [lboEbitdaGrowth, setLboEbitdaGrowth] = useState(10);
+  const [lboExitMult, setLboExitMult]       = useState(10);
+  const [lboHoldYears, setLboHoldYears]     = useState(5);
+  const [tenkYear, setTenkYear]             = useState(3);
+  const [ycShape, setYcShape]               = useState('normal');
+  const [durCoupon, setDurCoupon]           = useState(5);
+  const [durYtm, setDurYtm]                 = useState(6);
+  const [durMaturity, setDurMaturity]       = useState(10);
+  const [crPd, setCrPd]                     = useState(2);
+  const [crLgd, setCrLgd]                   = useState(40);
+  const [crRfr, setCrRfr]                   = useState(4.5);
+  const [optStrike, setOptStrike]           = useState(100);
+  const [optCallPrem, setOptCallPrem]       = useState(5);
+  const [optPutPrem, setOptPutPrem]         = useState(4);
+  const [bsUnderlying, setBsUnderlying]     = useState(100);
+  const [bsStrike, setBsStrike]             = useState(100);
+  const [bsVol, setBsVol]                   = useState(25);
+  const [bsTime, setBsTime]                 = useState(3);
+  const [bsRfr, setBsRfr]                   = useState(5);
+  const [greekStrike, setGreekStrike]       = useState(100);
+  const [greekVol, setGreekVol]             = useState(25);
+  const [greekTime, setGreekTime]           = useState(3);
   const [cashFlowTab, setCashFlowTab] = useState(() => {
     try {
       const h = new Set(JSON.parse(localStorage.getItem('pl_hidden_subtabs') || '[]'));
@@ -14003,6 +14118,1113 @@ export default function Dashboard() {
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
                             <div style={{ fontSize: 11, fontFamily: 'monospace', color: CYAN_FI, marginBottom: 6, background: `${CYAN_FI}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── LBO MODEL ────────────────────────────────────────────────────────
+              if (sandboxDataset === 'ds-lbo') {
+                const ORANGE = '#f97316';
+                const INT_RATE = 0.08;
+                const entryEV = lboEbitda * lboEntryMult;
+                const entryDebt = entryEV * (lboDebtPct / 100);
+                const entryEquity = entryEV - entryDebt;
+                const lboRows = [];
+                let debt = entryDebt;
+                for (let y = 1; y <= lboHoldYears; y++) {
+                  const ebitda = lboEbitda * Math.pow(1 + lboEbitdaGrowth / 100, y);
+                  const interest = debt * INT_RATE;
+                  const fcf = Math.max(0, ebitda * 0.45 - interest);
+                  const paydown = Math.min(fcf, debt);
+                  debt = Math.max(0, debt - paydown);
+                  const exitEV = y === lboHoldYears ? ebitda * lboExitMult : null;
+                  const exitEquity = exitEV !== null ? Math.max(0, exitEV - debt) : null;
+                  lboRows.push({ y, ebitda, interest, fcf, paydown, debtEnd: debt, exitEV, exitEquity });
+                }
+                const finalRow = lboRows[lboRows.length - 1];
+                const exitEV = lboEbitda * Math.pow(1 + lboEbitdaGrowth / 100, lboHoldYears) * lboExitMult;
+                const exitEquity = Math.max(0, exitEV - finalRow.debtEnd);
+                const moic = entryEquity > 0 ? exitEquity / entryEquity : 0;
+                const irr = entryEquity > 0 && moic > 0 ? (Math.pow(moic, 1 / lboHoldYears) - 1) * 100 : 0;
+                const moicColor = moic >= 3 ? GREEN : moic >= 2 ? YELLOW : RED;
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>LBO Model</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${ORANGE}18`, color: ORANGE }}>Analyst · Private Equity</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Retail Chain Co. (fictional) — adjust entry multiple, leverage, EBITDA growth, exit multiple, and hold period to see returns.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'Entry EV',      value: `$${(entryEV/1000).toFixed(1)}B`,     sub: `${lboEntryMult}× EBITDA`,          color: ORANGE },
+                        { label: 'Entry Equity',  value: `$${(entryEquity/1000).toFixed(2)}B`, sub: `${100-lboDebtPct}% of entry EV`,   color: BLUE },
+                        { label: 'MOIC',          value: `${moic.toFixed(2)}×`,                sub: `exit equity / entry equity`,       color: moicColor },
+                        { label: 'IRR',           value: `${irr.toFixed(1)}%`,                 sub: `annualized over ${lboHoldYears}yr`, color: irr >= 20 ? GREEN : irr >= 15 ? YELLOW : RED },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 24, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-0.5px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Deal Assumptions</div>
+                        {[
+                          { label: 'EBITDA ($M)',         value: lboEbitda,       set: setLboEbitda,       min: 50,  max: 300, step: 10,  unit: 'M',  color: ORANGE },
+                          { label: 'Entry EV/EBITDA',     value: lboEntryMult,    set: setLboEntryMult,    min: 5,   max: 15,  step: 0.5, unit: '×',  color: BLUE },
+                          { label: 'Leverage (Debt %)',   value: lboDebtPct,      set: setLboDebtPct,      min: 40,  max: 85,  step: 5,   unit: '%',  color: RED },
+                          { label: 'EBITDA Growth/yr',    value: lboEbitdaGrowth, set: setLboEbitdaGrowth, min: 2,   max: 25,  step: 1,   unit: '%',  color: GREEN },
+                          { label: 'Exit EV/EBITDA',      value: lboExitMult,     set: setLboExitMult,     min: 6,   max: 15,  step: 0.5, unit: '×',  color: YELLOW },
+                          { label: 'Hold Period (yrs)',   value: lboHoldYears,    set: setLboHoldYears,    min: 3,   max: 7,   step: 1,   unit: 'yr', color: BLUE },
+                        ].map(({ label, value, set, min, max, step, unit, color }) => (
+                          <div key={label} style={{ marginBottom: 14 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                              <span style={{ fontSize: 12, color: TEXT2 }}>{label}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color }}>{value}{unit}</span>
+                            </div>
+                            <input type="range" min={min} max={max} step={step} value={value} onChange={e => set(Number(e.target.value))} style={{ width: '100%', accentColor: color, cursor: 'pointer' }} />
+                          </div>
+                        ))}
+                      </div>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Annual Debt Paydown</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>8% interest on debt · FCF = EBITDA × 45% − interest</div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Year', 'EBITDA', 'FCF', 'Debt Paydown', 'Debt Remaining'].map((h, i) => (
+                                <th key={h} style={{ padding: '6px 8px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.3px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {lboRows.map(row => (
+                              <tr key={row.y} style={{ borderBottom: `1px solid ${BORDER_C}`, background: row.y === lboHoldYears ? `${ORANGE}06` : 'transparent' }}>
+                                <td style={{ padding: '8px 8px', fontWeight: row.y === lboHoldYears ? 700 : 400 }}>Yr {row.y}</td>
+                                <td style={{ padding: '8px 8px', textAlign: 'right', fontFamily: 'monospace', color: ORANGE }}>${row.ebitda.toFixed(0)}M</td>
+                                <td style={{ padding: '8px 8px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>${row.fcf.toFixed(0)}M</td>
+                                <td style={{ padding: '8px 8px', textAlign: 'right', fontFamily: 'monospace', color: BLUE }}>${row.paydown.toFixed(0)}M</td>
+                                <td style={{ padding: '8px 8px', textAlign: 'right', fontFamily: 'monospace', color: row.debtEnd < entryDebt * 0.5 ? GREEN : RED }}>${row.debtEnd.toFixed(0)}M</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {[
+                            { label: 'Exit EV', value: `$${(exitEV/1000).toFixed(2)}B`, color: ORANGE },
+                            { label: 'Remaining Debt at Exit', value: `$${(finalRow.debtEnd/1000).toFixed(2)}B`, color: RED },
+                            { label: 'Exit Equity', value: `$${(exitEquity/1000).toFixed(2)}B`, color: GREEN, bold: true },
+                          ].map(row => (
+                            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: DARK, borderRadius: 7, border: row.bold ? `1px solid ${GREEN}30` : BORDER }}>
+                              <span style={{ fontSize: 12, color: row.bold ? TEXT : TEXT2, fontWeight: row.bold ? 700 : 400 }}>{row.label}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: row.color }}>{row.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, background: `${ORANGE}06`, border: `1px solid ${ORANGE}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: ORANGE }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'MOIC (Multiple on Invested Capital)', formula: 'MOIC = Exit Equity / Entry Equity', body: 'The total return multiple on the equity check written at entry. A 3× MOIC means PE tripled its money. Buyout funds typically target 2.5-3.5× over 5 years. MOIC ignores time; a 3× in 3 years is far better than a 3× in 7 years.' },
+                          { term: 'IRR (Internal Rate of Return)', formula: 'IRR = MOIC^(1/years) - 1', body: 'The annualized return on invested capital. Accounts for time, unlike MOIC. PE funds typically target 20-25%+ IRR. IRR is sensitive to hold period: a 3× MOIC in 3 years = 44% IRR; the same return in 7 years = only 17% IRR.' },
+                          { term: 'Leverage & Debt Paydown', formula: 'Entry Equity = Entry EV × (1 - Debt %)', body: 'Using 70% debt means the PE firm only needs 30 cents of equity per dollar of company purchased. As the company generates FCF and pays down debt, equity value grows even if EV stays flat. This is the financial engineering core of an LBO.' },
+                          { term: 'Entry vs. Exit Multiple', formula: 'Return from multiple expansion = (Exit − Entry) × EBITDA', body: 'LBO returns come from three sources: EBITDA growth, debt paydown, and multiple expansion (buying cheap, selling expensive). Multiple expansion is the riskiest — it depends on market conditions at exit, not operating performance.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: ORANGE, marginBottom: 6, background: `${ORANGE}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── READING A 10-K ────────────────────────────────────────────────────
+              if (sandboxDataset === 'ds-tenk') {
+                const VIOLET = '#a78bfa';
+                const IS = [
+                  { year: 1, rev: 800,  cogs: 320, opex: 280, da: 50, interest: 30, tax: 30,  ni: 90,  ocf: 130, capex: 55 },
+                  { year: 2, rev: 960,  cogs: 375, opex: 315, da: 58, interest: 28, tax: 44,  ni: 131, ocf: 189, capex: 65 },
+                  { year: 3, rev: 1120, cogs: 425, opex: 350, da: 65, interest: 25, tax: 61,  ni: 182, ocf: 247, capex: 85 },
+                ];
+                const row = IS[tenkYear - 1];
+                const prev = IS[tenkYear - 2] || null;
+                const ebitda = row.rev - row.cogs - row.opex;
+                const fcf = row.ocf - row.capex;
+                const grossMargin = ((row.rev - row.cogs) / row.rev * 100).toFixed(1);
+                const ebitdaMargin = (ebitda / row.rev * 100).toFixed(1);
+                const netMargin = (row.ni / row.rev * 100).toFixed(1);
+                const fcfConversion = (fcf / row.ni * 100).toFixed(0);
+                const revGrowth = prev ? ((row.rev - prev.rev) / prev.rev * 100).toFixed(1) : '—';
+                const niGrowth = prev ? ((row.ni - prev.ni) / prev.ni * 100).toFixed(1) : '—';
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Reading a 10-K</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${VIOLET}18`, color: VIOLET }}>Analyst · Accounting</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20, marginLeft: 2 }}>
+                      Nexus Software Inc. (fictional) — 3-year financials. Toggle the year to see how margins and ratios evolve.
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                      {[1, 2, 3].map(y => (
+                        <button key={y} onClick={() => setTenkYear(y)} style={{ padding: '7px 20px', borderRadius: 8, border: `1px solid ${tenkYear === y ? VIOLET : BORDER_C}`, background: tenkYear === y ? `${VIOLET}18` : 'transparent', color: tenkYear === y ? VIOLET : TEXT2, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Year {y}</button>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'Revenue',      value: `$${row.rev}M`,         sub: prev ? `${revGrowth}% YoY growth` : 'Base year', color: VIOLET },
+                        { label: 'EBITDA Margin', value: `${ebitdaMargin}%`,    sub: `$${ebitda}M EBITDA`,             color: BLUE },
+                        { label: 'Net Margin',   value: `${netMargin}%`,         sub: `$${row.ni}M net income`,        color: GREEN },
+                        { label: 'FCF',          value: `$${fcf}M`,              sub: `${fcfConversion}% of net income`, color: fcf > 0 ? GREEN : RED },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 24, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-0.5px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>Income Statement ($M)</div>
+                        {[
+                          { label: 'Revenue',             value: row.rev,              color: VIOLET, indent: 0 },
+                          { label: '(–) COGS',            value: -row.cogs,            color: RED,    indent: 1 },
+                          { label: 'Gross Profit',        value: row.rev - row.cogs,   color: TEXT,   indent: 0, bold: true },
+                          { label: '(–) OpEx',            value: -row.opex,            color: RED,    indent: 1 },
+                          { label: 'EBITDA',              value: ebitda,               color: BLUE,   indent: 0, bold: true },
+                          { label: '(–) D&A',             value: -row.da,              color: TEXT2,  indent: 1 },
+                          { label: '(–) Interest',        value: -row.interest,        color: TEXT2,  indent: 1 },
+                          { label: '(–) Taxes',           value: -row.tax,             color: TEXT2,  indent: 1 },
+                          { label: 'Net Income',          value: row.ni,               color: GREEN,  indent: 0, bold: true },
+                        ].map(item => (
+                          <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: item.bold ? `1px solid ${BORDER_C}` : 'none', marginLeft: item.indent * 14 }}>
+                            <span style={{ fontSize: 12, color: item.bold ? TEXT : TEXT2, fontWeight: item.bold ? 700 : 400 }}>{item.label}</span>
+                            <span style={{ fontSize: 12, fontFamily: 'monospace', fontWeight: item.bold ? 700 : 400, color: item.color }}>{item.value >= 0 ? '' : ''}{item.value > 0 ? `$${item.value}` : `($${Math.abs(item.value)})`}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div style={CARD}>
+                          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Margin Profile</div>
+                          {[
+                            { label: 'Gross Margin', pct: parseFloat(grossMargin), color: VIOLET },
+                            { label: 'EBITDA Margin', pct: parseFloat(ebitdaMargin), color: BLUE },
+                            { label: 'Net Margin', pct: parseFloat(netMargin), color: GREEN },
+                            { label: 'FCF Margin', pct: +(fcf / row.rev * 100).toFixed(1), color: YELLOW },
+                          ].map(m => (
+                            <div key={m.label} style={{ marginBottom: 12 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
+                                <span style={{ color: TEXT2 }}>{m.label}</span>
+                                <span style={{ fontWeight: 700, fontFamily: 'monospace', color: m.color }}>{m.pct}%</span>
+                              </div>
+                              <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${m.pct}%`, background: m.color, borderRadius: 3 }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={CARD}>
+                          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>3-Year Trend</div>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                            <thead>
+                              <tr style={{ borderBottom: BORDER }}>
+                                {['Metric', 'Yr 1', 'Yr 2', 'Yr 3'].map((h, i) => (
+                                  <th key={h} style={{ padding: '5px 8px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600 }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {[
+                                { label: 'Revenue ($M)', vals: IS.map(r => r.rev) },
+                                { label: 'EBITDA ($M)', vals: IS.map(r => r.rev - r.cogs - r.opex) },
+                                { label: 'Net Income ($M)', vals: IS.map(r => r.ni) },
+                                { label: 'FCF ($M)', vals: IS.map(r => r.ocf - r.capex) },
+                              ].map(item => (
+                                <tr key={item.label} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                  <td style={{ padding: '8px 8px', color: TEXT2, fontSize: 11 }}>{item.label}</td>
+                                  {item.vals.map((v, i) => (
+                                    <td key={i} style={{ padding: '8px 8px', textAlign: 'right', fontFamily: 'monospace', color: i + 1 === tenkYear ? VIOLET : TEXT, fontWeight: i + 1 === tenkYear ? 700 : 400 }}>{v}</td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, background: `${VIOLET}06`, border: `1px solid ${VIOLET}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: VIOLET }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Gross Margin', formula: 'Gross Margin = (Revenue - COGS) / Revenue', body: 'The percentage of revenue remaining after direct production costs. A high gross margin means the business earns a lot per unit sold before paying overhead. SaaS companies often run 70-80% gross margins; retailers run 20-30%.' },
+                          { term: 'EBITDA', formula: 'EBITDA = Revenue - COGS - OpEx', body: 'Earnings before interest, taxes, depreciation, and amortization. A proxy for operating cash generation. Widely used in valuation multiples (EV/EBITDA) because it excludes financing decisions and non-cash charges, making companies more comparable.' },
+                          { term: 'FCF vs. Net Income', formula: 'FCF = Operating Cash Flow - CapEx', body: 'Net income can be inflated by aggressive revenue recognition or depressed by non-cash charges. FCF is harder to manipulate: it represents actual cash generated. Analysts watch FCF conversion (FCF/Net Income); anything above 100% is exceptional.' },
+                          { term: 'Operating Leverage', formula: 'Fixed costs amplify margin expansion as revenue grows', body: 'When a large portion of costs are fixed (R&D, rent, salaries), every incremental dollar of revenue flows through to profit at a very high margin. This is why software companies can see dramatic margin expansion during growth phases.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: VIOLET, marginBottom: 6, background: `${VIOLET}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── MARKET CAP & ENTERPRISE VALUE ─────────────────────────────────────
+              if (sandboxDataset === 'ds-marketcap') {
+                const EMERALD = '#34d399';
+                const COMPANIES = [
+                  { name: 'TechCo',   ebitda: 500, ni: 180, mktcap: 6000, debt: 200,  cash: 800,  shares: 100 },
+                  { name: 'ManufCo',  ebitda: 500, ni: 195, mktcap: 3500, debt: 1200, cash: 100,  shares: 150 },
+                  { name: 'RetailCo', ebitda: 500, ni: 190, mktcap: 4200, debt: 0,    cash: 200,  shares: 120 },
+                  { name: 'HealthCo', ebitda: 500, ni: 183, mktcap: 5500, debt: 800,  cash: 400,  shares: 90  },
+                ];
+                const withEV = COMPANIES.map(c => ({ ...c, ev: c.mktcap + c.debt - c.cash, evEbitda: (c.mktcap + c.debt - c.cash) / c.ebitda, pe: c.mktcap / c.ni, price: (c.mktcap / c.shares).toFixed(2) }));
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Market Cap & Enterprise Value</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${EMERALD}18`, color: EMERALD }}>Analyst · Valuation</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Four fictional companies with the same $500M EBITDA but different capital structures. See why EV/EBITDA is a better comparison than P/E.
+                    </div>
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Comparable Company Analysis</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>All four companies have identical $500M EBITDA. Capital structure drives the EV and multiple differences.</div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Company', 'Mkt Cap', 'Debt', 'Cash', 'EV', 'EV/EBITDA', 'P/E', 'Price/Share'].map((h, i) => (
+                                <th key={h} style={{ padding: '7px 12px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {withEV.map((c, idx) => {
+                              const colors = [BLUE, YELLOW, EMERALD, '#f472b6'];
+                              return (
+                                <tr key={c.name} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                  <td style={{ padding: '10px 12px', fontWeight: 700, color: colors[idx] }}>{c.name}</td>
+                                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace' }}>${(c.mktcap/1000).toFixed(1)}B</td>
+                                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: c.debt > 0 ? RED : TEXT3 }}>{c.debt > 0 ? `$${(c.debt/1000).toFixed(1)}B` : '—'}</td>
+                                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>${(c.cash/1000).toFixed(1)}B</td>
+                                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: EMERALD }}>${(c.ev/1000).toFixed(1)}B</td>
+                                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: EMERALD, fontWeight: 700 }}>{c.evEbitda.toFixed(1)}×</td>
+                                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>{c.pe.toFixed(1)}×</td>
+                                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>${c.price}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>EV Bridge: How EV Is Built</div>
+                        {withEV.map((c, idx) => {
+                          const colors = [BLUE, YELLOW, EMERALD, '#f472b6'];
+                          return (
+                            <div key={c.name} style={{ marginBottom: 16 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
+                                <span style={{ fontWeight: 700, color: colors[idx] }}>{c.name}</span>
+                                <span style={{ fontFamily: 'monospace', color: EMERALD, fontWeight: 700 }}>EV ${(c.ev/1000).toFixed(1)}B</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: TEXT2 }}>
+                                <span style={{ background: BLUE, color: '#fff', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>MktCap ${(c.mktcap/1000).toFixed(1)}B</span>
+                                {c.debt > 0 && <span style={{ background: RED, color: '#fff', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>+Debt ${(c.debt/1000).toFixed(1)}B</span>}
+                                {c.cash > 0 && <span style={{ background: GREEN, color: '#fff', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>-Cash ${(c.cash/1000).toFixed(1)}B</span>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>EV/EBITDA vs. P/E</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Same EBITDA, same earnings — but P/E varies wildly due to capital structure</div>
+                        {withEV.map((c, idx) => {
+                          const colors = [BLUE, YELLOW, EMERALD, '#f472b6'];
+                          return (
+                            <div key={c.name} style={{ marginBottom: 14 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                                <span style={{ fontWeight: 600, color: colors[idx] }}>{c.name}</span>
+                                <span style={{ fontSize: 11, color: TEXT3 }}>EV/EBITDA {c.evEbitda.toFixed(1)}× · P/E {c.pe.toFixed(1)}×</span>
+                              </div>
+                              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                <div style={{ flex: 1, height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: `${Math.min(c.evEbitda / 15 * 100, 100)}%`, background: EMERALD, borderRadius: 4 }} />
+                                </div>
+                                <div style={{ flex: 1, height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: `${Math.min(c.pe / 35 * 100, 100)}%`, background: colors[idx], borderRadius: 4 }} />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <div style={{ marginTop: 14, padding: '10px 14px', background: `${EMERALD}08`, border: `1px solid ${EMERALD}25`, borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>
+                          EV/EBITDA clusters around 8-12× for all four companies. P/E ranges from 18× to 33× — not because of earnings, but because of leverage and cash. This is why analysts use EV/EBITDA for cross-company comparisons.
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, background: `${EMERALD}06`, border: `1px solid ${EMERALD}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: EMERALD }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Enterprise Value', formula: 'EV = Market Cap + Debt - Cash', body: 'EV is the total cost to acquire a business: buy all the equity (market cap), assume all debt, and collect all cash. It represents the theoretical takeover price and is capital-structure neutral, making it the right numerator for EBITDA-based multiples.' },
+                          { term: 'EV/EBITDA', formula: 'EV/EBITDA = Enterprise Value / EBITDA', body: 'The most widely used valuation multiple in M&A because it excludes financing decisions (interest, taxes) and non-cash charges (D&A). Allows apples-to-apples comparison between a highly levered company and an unleveraged one. Typical ranges: 8-12× for industrials, 15-25× for software.' },
+                          { term: 'Why P/E Is Distorted', formula: 'P/E = Market Cap / Net Income', body: 'Net income is after interest payments, so a highly levered company shows lower net income and a lower P/E for the same operating performance. P/E penalizes debt even when leverage is strategic. This is why PE firms and M&A advisors almost never use P/E as the primary valuation metric.' },
+                          { term: 'Net Debt', formula: 'Net Debt = Total Debt - Cash & Equivalents', body: 'The net financial obligation of a company. A company with $1B debt and $1.2B cash is a net cash company (negative net debt). Net debt is what gets bridged between EV and equity value in M&A transactions — a key concept in fairness opinions and LBO models.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: EMERALD, marginBottom: 6, background: `${EMERALD}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── YIELD CURVE & TERM STRUCTURE ──────────────────────────────────────
+              if (sandboxDataset === 'ds-fi-termstructure') {
+                const ROSE = '#fb7185';
+                const TENORS = ['3M', '6M', '1Y', '2Y', '3Y', '5Y', '7Y', '10Y', '20Y', '30Y'];
+                const TENOR_T = [0.25, 0.5, 1, 2, 3, 5, 7, 10, 20, 30];
+                const CURVES = {
+                  normal:   [4.5, 4.7, 4.8, 4.6, 4.5, 4.4, 4.5, 4.6, 4.8, 5.0],
+                  inverted: [5.4, 5.3, 5.2, 4.8, 4.5, 4.2, 4.1, 4.0, 4.0, 4.0],
+                  flat:     [4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5],
+                  humped:   [3.5, 3.8, 4.5, 5.0, 5.2, 5.0, 4.8, 4.5, 4.3, 4.2],
+                };
+                const CURVE_CONTEXT = {
+                  normal:   'A normal (upward-sloping) curve signals healthy growth expectations. Investors demand more yield for longer maturities to compensate for uncertainty over time. This is the most common shape historically.',
+                  inverted: 'An inverted curve (short > long rates) is the most reliable recession predictor. Every U.S. recession since 1955 was preceded by an inversion. The Fed hiking short-term rates while long-term growth expectations fall is the typical driver.',
+                  flat:     'A flat curve signals uncertainty. The market sees little difference between short and long-term growth prospects. Often a transition phase between normal and inverted curves.',
+                  humped:   'A humped (bell-shaped) curve is rare. Medium-term rates are highest, suggesting expectations for near-term rate hikes that eventually normalize. Often seen during late-cycle Fed tightening.',
+                };
+                const rates = CURVES[ycShape];
+                const spread2y10y = (rates[7] - rates[3]).toFixed(2);
+                const fwdRate = (t1idx, t2idx) => {
+                  const s1 = rates[t1idx] / 100, s2 = rates[t2idx] / 100;
+                  const t1 = TENOR_T[t1idx], t2 = TENOR_T[t2idx];
+                  if (t2 <= t1) return null;
+                  return ((Math.pow(1 + s2, t2) / Math.pow(1 + s1, t1)) ** (1 / (t2 - t1)) - 1) * 100;
+                };
+                const maxRate = Math.max(...rates);
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Yield Curve & Term Structure</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${ROSE}18`, color: ROSE }}>Analyst · Fixed Income</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20, marginLeft: 2 }}>
+                      Toggle between yield curve shapes and see what each signals about economic expectations.
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                      {[['normal', 'Normal'], ['inverted', 'Inverted'], ['flat', 'Flat'], ['humped', 'Humped']].map(([key, label]) => (
+                        <button key={key} onClick={() => setYcShape(key)} style={{ padding: '7px 18px', borderRadius: 8, border: `1px solid ${ycShape === key ? ROSE : BORDER_C}`, background: ycShape === key ? `${ROSE}18` : 'transparent', color: ycShape === key ? ROSE : TEXT2, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>{label}</button>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: '2Y Rate',        value: `${rates[3]}%`,         sub: 'short-end anchor', color: ROSE },
+                        { label: '10Y Rate',       value: `${rates[7]}%`,         sub: 'long-end benchmark', color: BLUE },
+                        { label: '2Y/10Y Spread',  value: `${spread2y10y >= 0 ? '+' : ''}${spread2y10y}%`, sub: parseFloat(spread2y10y) < 0 ? 'Inverted — recession watch' : 'Positive — normal slope', color: parseFloat(spread2y10y) < 0 ? RED : GREEN },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-1px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>Yield Curve ({ycShape.charAt(0).toUpperCase() + ycShape.slice(1)})</div>
+                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 120, marginBottom: 8 }}>
+                        {rates.map((r, i) => (
+                          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                            <span style={{ fontSize: 10, fontFamily: 'monospace', color: ROSE, fontWeight: 700 }}>{r}%</span>
+                            <div style={{ width: '100%', height: `${(r / maxRate) * 90}px`, background: `linear-gradient(to top, ${ROSE}, ${ROSE}80)`, borderRadius: '3px 3px 0 0', transition: 'height 0.3s ease' }} />
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {TENORS.map((t, i) => (
+                          <div key={i} style={{ flex: 1, textAlign: 'center', fontSize: 10, color: TEXT3 }}>{t}</div>
+                        ))}
+                      </div>
+                      <div style={{ marginTop: 14, padding: '10px 14px', background: ycShape === 'inverted' ? 'rgba(248,113,113,0.06)' : `${ROSE}06`, border: `1px solid ${ycShape === 'inverted' ? RED : ROSE}20`, borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>
+                        {CURVE_CONTEXT[ycShape]}
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, marginBottom: 20 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Implied Forward Rates</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Forward rates extracted from spot rates via no-arbitrage: f(t₁, t₂) = [(1+s₂)^t₂ / (1+s₁)^t₁]^(1/(t₂-t₁)) - 1</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                        {[
+                          [0, 3, '3M→2Y'],  [3, 7, '2Y→10Y'], [0, 7, '3M→10Y'],
+                          [3, 9, '2Y→30Y'], [7, 9, '10Y→30Y'], [2, 7, '1Y→10Y'],
+                        ].map(([i1, i2, label]) => {
+                          const fwd = fwdRate(i1, i2);
+                          return (
+                            <div key={label} style={{ background: DARK, borderRadius: 8, padding: '10px 12px', border: BORDER }}>
+                              <div style={{ fontSize: 11, color: TEXT3, marginBottom: 4 }}>{label} fwd rate</div>
+                              <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'monospace', color: fwd !== null ? (fwd > rates[i2] ? GREEN : fwd < rates[i2] ? RED : YELLOW) : TEXT3 }}>
+                                {fwd !== null ? `${fwd.toFixed(2)}%` : 'n/a'}
+                              </div>
+                              <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>spot {rates[i2]}% at {TENORS[i2]}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, background: `${ROSE}06`, border: `1px solid ${ROSE}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: ROSE }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Spot Rate', formula: 's(t) = YTM of a zero-coupon bond maturing at t', body: 'The current market yield for a bond that pays nothing until maturity. Spot rates are the building blocks of the yield curve. Each point on the curve is a spot rate for that specific maturity, not an average of rates.' },
+                          { term: 'Forward Rate', formula: <span>f(t₁,t₂) = [(1+s₂)<sup style={{fontSize:9}}>t₂</sup>/(1+s₁)<sup style={{fontSize:9}}>t₁</sup>]<sup style={{fontSize:9}}>1/(t₂-t₁)</sup> - 1</span>, body: 'The implied rate the market is pricing in for a future period. Extracted from spot rates via no-arbitrage. If the forward rate from 2Y to 10Y is above the 10Y spot, the market expects rates to rise. Forward rates are the market\'s best guess at future policy.' },
+                          { term: '2Y/10Y Spread', formula: '2Y/10Y Spread = 10Y Rate - 2Y Rate', body: 'The most-watched yield curve signal. When the 2Y rate exceeds the 10Y rate (negative spread), the curve is inverted. Every U.S. recession since 1955 has been preceded by a 2Y/10Y inversion, typically by 6-18 months. It inverted before 2001, 2008, 2020, and again in 2022-2023.' },
+                          { term: 'Curve Shapes & Economics', formula: 'Normal → Flat → Inverted → Recession → Recovery', body: 'The lifecycle: a normal curve flattens as the Fed hikes rates, then inverts, signaling recession expectations. As the recession hits and the Fed cuts, the curve re-steepens sharply. Bull steepeners (long rates rise) and bear steepeners (short rates fall) are distinct macro regimes that affect bond portfolio strategy differently.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: ROSE, marginBottom: 6, background: `${ROSE}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── DURATION & DV01 ────────────────────────────────────────────────────
+              if (sandboxDataset === 'ds-fi-duration') {
+                const AMBER = '#fbbf24';
+                const freq = 2;
+                const periods = durMaturity * freq;
+                const cpp = (durCoupon / 100) * 1000 / freq;
+                const ypp = durYtm / 100 / freq;
+                const pvCpn = ypp > 0 ? cpp * (1 - Math.pow(1 + ypp, -periods)) / ypp : cpp * periods;
+                const pvPar = 1000 / Math.pow(1 + ypp, periods);
+                const price = pvCpn + pvPar;
+                let macD = 0;
+                for (let t = 1; t <= periods; t++) {
+                  const cf = cpp + (t === periods ? 1000 : 0);
+                  const pv = cf / Math.pow(1 + ypp, t);
+                  macD += (t / freq) * pv;
+                }
+                macD = macD / price;
+                const modD = macD / (1 + ypp);
+                const dv01 = modD * price * 0.0001;
+                const priceChange100 = -(modD * price * 0.01);
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Duration & DV01</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${AMBER}18`, color: AMBER }}>Analyst · Fixed Income</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Adjust coupon, yield, and maturity to see how interest rate sensitivity changes. All calculations on a $1,000 par semi-annual bond.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'Bond Price',         value: `$${price.toFixed(2)}`,    sub: price > 1000 ? 'Premium' : price < 1000 ? 'Discount' : 'At par', color: price > 1000 ? GREEN : price < 1000 ? RED : YELLOW },
+                        { label: 'Macaulay Duration',  value: `${macD.toFixed(2)} yr`,   sub: 'Weighted avg time to CF',   color: AMBER },
+                        { label: 'Modified Duration',  value: `${modD.toFixed(2)}`,      sub: '% price change per 100bps', color: BLUE },
+                        { label: 'DV01',               value: `$${dv01.toFixed(3)}`,     sub: 'Per $1,000 face, per 1bp',  color: AMBER },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 22, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-0.5px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Bond Parameters</div>
+                        {[
+                          { label: 'Coupon Rate',       value: durCoupon,   set: setDurCoupon,   min: 1,  max: 10, step: 0.25, unit: '%', color: AMBER },
+                          { label: 'YTM',               value: durYtm,      set: setDurYtm,      min: 1,  max: 12, step: 0.25, unit: '%', color: BLUE },
+                          { label: 'Years to Maturity', value: durMaturity, set: setDurMaturity, min: 1,  max: 30, step: 1,    unit: 'yr', color: YELLOW },
+                        ].map(({ label, value, set, min, max, step, unit, color }) => (
+                          <div key={label} style={{ marginBottom: 20 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                              <span style={{ fontSize: 12, color: TEXT2 }}>{label}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color }}>{value}{unit}</span>
+                            </div>
+                            <input type="range" min={min} max={max} step={step} value={value} onChange={e => set(Number(e.target.value))} style={{ width: '100%', accentColor: color, cursor: 'pointer' }} />
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                          {[
+                            { label: '+100bps rate shock', value: `${priceChange100 >= 0 ? '+' : ''}$${priceChange100.toFixed(2)}`, color: priceChange100 >= 0 ? GREEN : RED },
+                            { label: '-100bps rate shock', value: `+$${(-priceChange100).toFixed(2)}`, color: GREEN },
+                            { label: 'DV01 per $1M face', value: `$${(dv01 * 1000).toFixed(0)}`, color: AMBER },
+                          ].map(row => (
+                            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', background: DARK, borderRadius: 7, border: BORDER }}>
+                              <span style={{ fontSize: 12, color: TEXT2 }}>{row.label}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: row.color }}>{row.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Duration Drivers</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>How Macaulay duration changes when you adjust each input</div>
+                        {[
+                          { label: 'Longer maturity', effect: 'increases', reason: 'Cash flows arrive later on average' },
+                          { label: 'Lower coupon', effect: 'increases', reason: 'More weight on distant par payment' },
+                          { label: 'Lower YTM', effect: 'increases', reason: 'Far-off cash flows are discounted less' },
+                          { label: 'Zero-coupon bond', effect: 'equals maturity', reason: 'Only one cash flow at maturity' },
+                        ].map(item => (
+                          <div key={item.label} style={{ marginBottom: 12, padding: '10px 12px', background: DARK, borderRadius: 8, border: BORDER }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                              <span style={{ fontSize: 12, fontWeight: 600, color: TEXT }}>{item.label}</span>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: item.effect === 'increases' ? RED : item.effect === 'equals maturity' ? AMBER : GREEN }}>Duration {item.effect}</span>
+                            </div>
+                            <div style={{ fontSize: 11, color: TEXT3 }}>{item.reason}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, background: `${AMBER}06`, border: `1px solid ${AMBER}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: AMBER }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Macaulay Duration', formula: 'D_mac = Σ [t × PV(CF_t)] / Price', body: 'The weighted average time (in years) until you receive the bond\'s cash flows, where weights are the present value of each cash flow. A 5-year Macaulay duration means you recover your money, on average, in 5 years. Zero-coupon bonds always have duration = maturity.' },
+                          { term: 'Modified Duration', formula: 'D_mod = D_mac / (1 + y/freq)', body: 'The approximate percentage price change per 1% (100bp) parallel shift in yields. A D_mod of 7 means the bond price falls roughly 7% if rates rise 1%. This is the primary rate sensitivity measure used by fixed income traders and portfolio managers.' },
+                          { term: 'DV01 (Dollar Value of 01)', formula: 'DV01 = D_mod × Price × 0.0001', body: 'The dollar price change per 1 basis point (0.01%) move in yield. Standard risk measure for bond traders. A DV01 of $0.65 means a 1bp rate move changes the bond price by $0.65 per $1,000 face. Used to size hedges: long $10M of a bond with DV01=0.65 → $6,500 per bp.' },
+                          { term: 'Convexity', formula: 'Price change ≈ -D_mod × Δy + ½ × Convexity × Δy²', body: 'Duration predicts a linear price-yield relationship, but the actual curve is convex (bowed). Convexity is the second-order correction. Positive convexity means bonds gain more when rates fall than they lose when rates rise by the same amount. Long bonds and callable bonds have different convexity profiles.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: AMBER, marginBottom: 6, background: `${AMBER}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── CREDIT RISK & SPREADS ─────────────────────────────────────────────
+              if (sandboxDataset === 'ds-fi-credit') {
+                const CR_RED = '#f87171';
+                const expectedLoss = (crPd / 100) * (crLgd / 100) * 100;
+                const creditSpread = expectedLoss;
+                const bondYield = crRfr + creditSpread;
+                const RATINGS = [
+                  { rating: 'AAA', pd: 0.01, lgd: 40, example: 'US Treasury (implicit)', color: '#4ade80' },
+                  { rating: 'AA',  pd: 0.03, lgd: 40, example: 'Microsoft, J&J',         color: '#86efac' },
+                  { rating: 'A',   pd: 0.08, lgd: 40, example: 'Apple, Berkshire',        color: YELLOW },
+                  { rating: 'BBB', pd: 0.20, lgd: 45, example: 'AT&T, Ford (IG floor)',   color: '#fb923c' },
+                  { rating: 'BB',  pd: 1.50, lgd: 50, example: 'Ford (prev), Carnival',   color: RED },
+                  { rating: 'B',   pd: 5.00, lgd: 55, example: 'Highly leveraged LBO',    color: '#f43f5e' },
+                  { rating: 'CCC', pd: 15.0, lgd: 65, example: 'Distressed, near default',color: '#be123c' },
+                ];
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Credit Risk & Spreads</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${CR_RED}18`, color: CR_RED }}>Analyst · Fixed Income</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Use the PD × LGD framework to derive credit spreads. Build a bond yield from its risk-free and credit components.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'Expected Loss', value: `${expectedLoss.toFixed(0)}bps`, sub: 'PD × LGD',              color: CR_RED },
+                        { label: 'Credit Spread',  value: `${creditSpread.toFixed(0)}bps`, sub: '≈ expected loss',       color: YELLOW },
+                        { label: 'Risk-Free Rate', value: `${crRfr}%`,                    sub: 'Treasury benchmark',    color: BLUE },
+                        { label: 'Bond Yield',     value: `${bondYield.toFixed(2)}%`,     sub: 'Risk-free + spread',    color: GREEN },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 24, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-0.5px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Credit Parameters</div>
+                        {[
+                          { label: 'Probability of Default (PD)', value: crPd,  set: setCrPd,  min: 0.01, max: 20,  step: 0.25, unit: '%',  color: CR_RED },
+                          { label: 'Loss Given Default (LGD)',     value: crLgd, set: setCrLgd, min: 10,   max: 80,  step: 5,    unit: '%',  color: YELLOW },
+                          { label: 'Risk-Free Rate',               value: crRfr, set: setCrRfr, min: 1,    max: 7,   step: 0.25, unit: '%',  color: BLUE },
+                        ].map(({ label, value, set, min, max, step, unit, color }) => (
+                          <div key={label} style={{ marginBottom: 20 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                              <span style={{ fontSize: 12, color: TEXT2 }}>{label}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color }}>{value}{unit}</span>
+                            </div>
+                            <input type="range" min={min} max={max} step={step} value={value} onChange={e => set(Number(e.target.value))} style={{ width: '100%', accentColor: color, cursor: 'pointer' }} />
+                          </div>
+                        ))}
+                        <div style={{ padding: '12px 14px', background: DARK, borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.7, border: BORDER }}>
+                          <div><strong style={{ color: TEXT }}>Recovery Rate</strong> = 1 − LGD = {(100 - crLgd).toFixed(0)}%</div>
+                          <div><strong style={{ color: TEXT }}>Expected Loss</strong> = {crPd}% × {crLgd}% = {expectedLoss.toFixed(1)}bps/yr</div>
+                          <div><strong style={{ color: TEXT }}>Bond Yield</strong> = {crRfr}% + {creditSpread.toFixed(1)}bps = {bondYield.toFixed(2)}%</div>
+                        </div>
+                      </div>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Rating Scale & Spread Benchmarks</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Typical 1-year PD and credit spreads by rating category</div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: BORDER }}>
+                              {['Rating', 'PD', 'LGD', 'Spread (bps)', 'Example'].map((h, i) => (
+                                <th key={h} style={{ padding: '6px 8px', textAlign: i === 0 ? 'left' : 'right', fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {RATINGS.map(r => {
+                              const spread = (r.pd / 100) * (r.lgd / 100) * 10000;
+                              const isSelected = Math.abs(crPd - r.pd) < 0.1 && Math.abs(crLgd - r.lgd) < 5;
+                              return (
+                                <tr key={r.rating} style={{ borderBottom: `1px solid ${BORDER_C}`, background: isSelected ? `${r.color}12` : 'transparent' }}>
+                                  <td style={{ padding: '7px 8px', fontWeight: 800, color: r.color }}>{r.rating}</td>
+                                  <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>{r.pd}%</td>
+                                  <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>{r.lgd}%</td>
+                                  <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: r.color }}>{spread.toFixed(0)}</td>
+                                  <td style={{ padding: '7px 8px', textAlign: 'right', fontSize: 11, color: TEXT3 }}>{r.example}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        <div style={{ marginTop: 10, fontSize: 11, color: TEXT3 }}>Investment Grade (IG): AAA–BBB. High Yield (HY): BB and below. The BBB/BB line is the "fallen angel" threshold.</div>
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, background: `${CR_RED}06`, border: `1px solid ${CR_RED}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: CR_RED }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Credit Spread', formula: 'Spread ≈ PD × LGD = PD × (1 - Recovery)', body: 'The yield premium a bond pays above a risk-free Treasury of the same maturity. Compensates investors for default risk. In practice, spreads also include liquidity risk and a risk premium, so actual spreads often exceed pure expected loss.' },
+                          { term: 'PD & LGD', formula: 'Expected Loss = PD × LGD per year', body: 'Probability of Default (PD): the likelihood the issuer fails to pay within a given period. Loss Given Default (LGD): the fraction of the bond\'s value lost if default occurs. Recovery rate = 1 - LGD. Senior secured bonds typically recover 60-70%; subordinated bonds recover 10-30%.' },
+                          { term: 'IG vs. High Yield', formula: 'IG: BBB- and above  ·  HY: BB+ and below', body: 'Investment-grade bonds are held by pension funds, insurance companies, and money-market funds. High-yield (junk) bonds carry higher default risk but offer higher coupons. Many institutional investors face regulatory restrictions that prohibit holding HY, creating an "index cliff" at the BBB/BB border.' },
+                          { term: 'CDS Spread', formula: 'CDS Spread ≈ Bond Yield - Risk-Free Rate', body: 'Credit Default Swaps are insurance-like contracts on bond default. The CDS spread is the annual premium paid for protection. It closely tracks but can diverge from the bond spread due to basis risk. CDS markets are often more liquid than the underlying bonds and provide a cleaner read on credit risk.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: CR_RED, marginBottom: 6, background: `${CR_RED}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── OPTIONS: CALLS & PUTS ─────────────────────────────────────────────
+              if (sandboxDataset === 'ds-calls-puts') {
+                const OPT_GREEN = '#4ade80';
+                const callBreakeven = optStrike + optCallPrem;
+                const putBreakeven = optStrike - optPutPrem;
+                const PRICES = [70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 135, 140].map(p => ({
+                  price: p,
+                  callPayoff: Math.max(p - optStrike, 0),
+                  callProfit: Math.max(p - optStrike, 0) - optCallPrem,
+                  putPayoff: Math.max(optStrike - p, 0),
+                  putProfit: Math.max(optStrike - p, 0) - optPutPrem,
+                }));
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Options: Calls & Puts</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${OPT_GREEN}18`, color: OPT_GREEN }}>Analyst · Derivatives</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Build payoff diagrams for long calls and puts. Adjust strike and premium to see profit/loss at any stock price at expiry.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'Strike Price',     value: `$${optStrike}`,      sub: 'Call & put strike',         color: OPT_GREEN },
+                        { label: 'Call Breakeven',   value: `$${callBreakeven}`,  sub: `Strike + $${optCallPrem} premium`, color: BLUE },
+                        { label: 'Put Breakeven',    value: `$${putBreakeven}`,   sub: `Strike - $${optPutPrem} premium`,  color: RED },
+                        { label: 'Max Loss (Both)',  value: `$${Math.max(optCallPrem, optPutPrem)}`, sub: 'Premium paid (per share)', color: YELLOW },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 24, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-0.5px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16, marginBottom: 20 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Option Parameters</div>
+                        {[
+                          { label: 'Strike Price ($)',    value: optStrike,   set: setOptStrike,   min: 80,  max: 130, step: 5,    unit: '',  color: OPT_GREEN },
+                          { label: 'Call Premium ($)',    value: optCallPrem, set: setOptCallPrem, min: 0.5, max: 20,  step: 0.5,  unit: '',  color: BLUE },
+                          { label: 'Put Premium ($)',     value: optPutPrem,  set: setOptPutPrem,  min: 0.5, max: 20,  step: 0.5,  unit: '',  color: RED },
+                        ].map(({ label, value, set, min, max, step, unit, color }) => (
+                          <div key={label} style={{ marginBottom: 20 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                              <span style={{ fontSize: 12, color: TEXT2 }}>{label}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color }}>${value}</span>
+                            </div>
+                            <input type="range" min={min} max={max} step={step} value={value} onChange={e => set(Number(e.target.value))} style={{ width: '100%', accentColor: color, cursor: 'pointer' }} />
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {[
+                            { label: 'Call: max gain', value: 'Unlimited', color: BLUE },
+                            { label: 'Call: max loss', value: `$${optCallPrem}/share`, color: RED },
+                            { label: 'Put: max gain', value: `$${putBreakeven > 0 ? putBreakeven : 0}/share`, color: BLUE },
+                            { label: 'Put: max loss', value: `$${optPutPrem}/share`, color: RED },
+                          ].map(row => (
+                            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 10px', background: DARK, borderRadius: 6, border: BORDER }}>
+                              <span style={{ fontSize: 11, color: TEXT2 }}>{row.label}</span>
+                              <span style={{ fontSize: 12, fontWeight: 700, fontFamily: 'monospace', color: row.color }}>{row.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Payoff at Expiry</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Profit/loss per share at different stock prices at expiration</div>
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                            <thead>
+                              <tr style={{ borderBottom: BORDER }}>
+                                {['Stock Price', 'Call Payoff', 'Call Profit', 'Put Payoff', 'Put Profit'].map((h, i) => (
+                                  <th key={h} style={{ padding: '6px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.3px' }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {PRICES.map(row => {
+                                const isAtm = row.price === optStrike;
+                                return (
+                                  <tr key={row.price} style={{ borderBottom: `1px solid ${BORDER_C}`, background: isAtm ? `${OPT_GREEN}06` : 'transparent' }}>
+                                    <td style={{ padding: '7px 10px', fontWeight: isAtm ? 700 : 400, color: isAtm ? OPT_GREEN : TEXT }}>
+                                      ${row.price}{isAtm ? ' (ATM)' : ''}
+                                    </td>
+                                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', color: row.callPayoff > 0 ? BLUE : TEXT3 }}>${row.callPayoff.toFixed(2)}</td>
+                                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', color: row.callProfit > 0 ? GREEN : row.callProfit < 0 ? RED : TEXT3 }}>{row.callProfit >= 0 ? '+' : ''}${row.callProfit.toFixed(2)}</td>
+                                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', color: row.putPayoff > 0 ? '#f472b6' : TEXT3 }}>${row.putPayoff.toFixed(2)}</td>
+                                    <td style={{ padding: '7px 10px', textAlign: 'right', fontFamily: 'monospace', color: row.putProfit > 0 ? GREEN : row.putProfit < 0 ? RED : TEXT3 }}>{row.putProfit >= 0 ? '+' : ''}${row.putProfit.toFixed(2)}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, background: `${OPT_GREEN}06`, border: `1px solid ${OPT_GREEN}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: OPT_GREEN }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Call Payoff', formula: 'max(S - K, 0) - Premium', body: 'A call profits when the stock exceeds the strike. Below the strike, the option expires worthless and you lose only the premium. Above the breakeven (K + premium), profit is unlimited. This asymmetric payoff is the core value of options as a hedging and speculation tool.' },
+                          { term: 'Put Payoff', formula: 'max(K - S, 0) - Premium', body: 'A put profits when the stock falls below the strike. It is the classic portfolio hedge: as your stock portfolio falls, your puts gain. Max gain is limited to the strike price (if the stock goes to zero). Max loss is the premium paid.' },
+                          { term: 'Breakeven & Intrinsic Value', formula: 'Call BE = K + Premium  ·  Put BE = K - Premium', body: 'Intrinsic value is max(S-K, 0) for calls — what you\'d receive exercising right now. Time value = option price - intrinsic value. At expiry, there is no time value. The breakeven is the price where intrinsic value exactly covers the premium paid.' },
+                          { term: 'Long vs. Short Options', formula: 'Long = pay premium, right not obligation. Short = collect premium, obligation to perform.', body: 'Long options have unlimited upside (calls) or capped upside (puts) with max loss = premium. Short options (selling calls/puts) collect the premium but take on obligation: a short call has unlimited loss if the stock surges; a short put has large loss if the stock collapses.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: OPT_GREEN, marginBottom: 6, background: `${OPT_GREEN}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── IMPLIED VOLATILITY & BLACK-SCHOLES ────────────────────────────────
+              if (sandboxDataset === 'ds-iv') {
+                const INDIGO = '#818cf8';
+                const T = bsTime / 12;
+                const r = bsRfr / 100;
+                const sigma = bsVol / 100;
+                const normCDF = (x) => {
+                  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+                  const sign = x < 0 ? -1 : 1;
+                  const ax = Math.abs(x);
+                  const t2 = 1 / (1 + p * ax);
+                  const poly = ((((a5*t2+a4)*t2+a3)*t2+a2)*t2+a1)*t2;
+                  return 0.5 * (1 + sign * (1 - poly * Math.exp(-ax*ax/2)));
+                };
+                const S = bsUnderlying, K = bsStrike;
+                const d1 = T > 0 && sigma > 0 ? (Math.log(S/K) + (r + sigma*sigma/2)*T) / (sigma*Math.sqrt(T)) : 0;
+                const d2 = d1 - sigma*Math.sqrt(T);
+                const callPrice = S*normCDF(d1) - K*Math.exp(-r*T)*normCDF(d2);
+                const putPrice  = K*Math.exp(-r*T)*normCDF(-d2) - S*normCDF(-d1);
+                const delta = normCDF(d1);
+                const nd1 = Math.exp(-d1*d1/2)/Math.sqrt(2*Math.PI);
+                const gamma = nd1 / (S * sigma * Math.sqrt(T));
+                const theta = (-(S*nd1*sigma)/(2*Math.sqrt(T)) - r*K*Math.exp(-r*T)*normCDF(d2)) / 365;
+                const IV_PRESETS = [
+                  { label: 'Low IV (calm market)',  vol: 15, example: 'Index ETF, quiet period' },
+                  { label: 'Normal IV',             vol: 25, example: 'Large-cap stock' },
+                  { label: 'High IV (pre-earnings)', vol: 50, example: 'AAPL before earnings' },
+                  { label: 'Extreme IV (crisis)',    vol: 80, example: 'VIX >40 level' },
+                ];
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Implied Volatility & Black-Scholes</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${INDIGO}18`, color: INDIGO }}>Analyst · Derivatives</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Price a European call and put using Black-Scholes. Adjust volatility, time, and moneyness to see how IV drives option premium.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'Call Price',   value: `$${callPrice.toFixed(2)}`,  sub: `Δ = ${delta.toFixed(3)}`,        color: BLUE },
+                        { label: 'Put Price',    value: `$${putPrice.toFixed(2)}`,   sub: `Δ = ${(delta-1).toFixed(3)}`,    color: RED },
+                        { label: 'Implied Vol',  value: `${bsVol}%`,                sub: 'σ input (annualized)',            color: INDIGO },
+                        { label: 'Gamma',        value: gamma.toFixed(4),           sub: 'Δ change per $1 stock move',     color: YELLOW },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 24, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-0.5px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Black-Scholes Inputs</div>
+                        {[
+                          { label: 'Underlying Price (S)', value: bsUnderlying, set: setBsUnderlying, min: 60,  max: 150, step: 1,    unit: '$',  color: INDIGO },
+                          { label: 'Strike Price (K)',      value: bsStrike,     set: setBsStrike,     min: 60,  max: 150, step: 1,    unit: '$',  color: BLUE },
+                          { label: 'Implied Volatility',    value: bsVol,        set: setBsVol,        min: 5,   max: 100, step: 1,    unit: '%',  color: INDIGO },
+                          { label: 'Time to Expiry',        value: bsTime,       set: setBsTime,       min: 0.5, max: 24,  step: 0.5,  unit: 'mo', color: YELLOW },
+                          { label: 'Risk-Free Rate',        value: bsRfr,        set: setBsRfr,        min: 0,   max: 10,  step: 0.25, unit: '%',  color: GREEN },
+                        ].map(({ label, value, set, min, max, step, unit, color }) => (
+                          <div key={label} style={{ marginBottom: 14 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                              <span style={{ fontSize: 12, color: TEXT2 }}>{label}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color }}>{unit === '$' ? `$${value}` : `${value}${unit}`}</span>
+                            </div>
+                            <input type="range" min={min} max={max} step={step} value={value} onChange={e => set(Number(e.target.value))} style={{ width: '100%', accentColor: color, cursor: 'pointer' }} />
+                          </div>
+                        ))}
+                        <div style={{ marginTop: 8, padding: '10px 12px', background: DARK, borderRadius: 8, border: BORDER, fontSize: 11, color: TEXT3, lineHeight: 1.7 }}>
+                          d₁ = {d1.toFixed(3)} · d₂ = {d2.toFixed(3)} · N(d₁) = {delta.toFixed(3)}<br/>
+                          Moneyness: {S > K ? 'In-the-money (ITM)' : S < K ? 'Out-of-the-money (OTM)' : 'At-the-money (ATM)'}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div style={CARD}>
+                          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>IV Presets</div>
+                          <div style={{ fontSize: 12, color: TEXT2, marginBottom: 12 }}>Click to see how vol level drives option premium</div>
+                          {IV_PRESETS.map(preset => (
+                            <button key={preset.label} onClick={() => setBsVol(preset.vol)} style={{ width: '100%', padding: '9px 12px', marginBottom: 8, background: bsVol === preset.vol ? `${INDIGO}18` : DARK, border: `1px solid ${bsVol === preset.vol ? INDIGO : BORDER_C}`, borderRadius: 8, cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: bsVol === preset.vol ? INDIGO : TEXT }}>{preset.label}</div>
+                                <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{preset.example}</div>
+                              </div>
+                              <span style={{ fontFamily: 'monospace', fontWeight: 700, color: INDIGO }}>{preset.vol}%</span>
+                            </button>
+                          ))}
+                        </div>
+                        <div style={CARD}>
+                          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Greeks Summary</div>
+                          {[
+                            { greek: 'Δ (Delta)',   call: delta.toFixed(3),          put: (delta-1).toFixed(3),   desc: 'Price sensitivity per $1 move' },
+                            { greek: 'Γ (Gamma)',   call: gamma.toFixed(4),          put: gamma.toFixed(4),       desc: 'Delta change per $1 move' },
+                            { greek: 'Θ (Theta)',   call: `$${theta.toFixed(3)}/day`, put: 'similar',             desc: 'Time decay per day' },
+                          ].map(row => (
+                            <div key={row.greek} style={{ marginBottom: 10, padding: '8px 10px', background: DARK, borderRadius: 7, border: BORDER }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: INDIGO }}>{row.greek}</span>
+                                <span style={{ fontSize: 11, color: TEXT3 }}>{row.desc}</span>
+                              </div>
+                              <div style={{ fontSize: 12, color: TEXT2 }}>Call: <strong style={{ color: BLUE }}>{row.call}</strong> · Put: <strong style={{ color: RED }}>{row.put}</strong></div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, background: `${INDIGO}06`, border: `1px solid ${INDIGO}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: INDIGO }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Black-Scholes Model', formula: <span>C = S·N(d₁) - K·e<sup style={{fontSize:9}}>-rT</sup>·N(d₂)</span>, body: 'The seminal option pricing formula (1973). Assumes log-normal stock returns, constant volatility, no dividends, and frictionless markets. Despite its simplifications, it remains the market standard for quoting and hedging options, with the key input being implied volatility.' },
+                          { term: 'Implied Volatility', formula: 'IV = σ implied by solving BS for observed price', body: 'IV is not an input you observe directly; it\'s backed out from the market option price. If a call trades at $5 and BS gives $5 when σ=25%, then IV=25%. Traders quote options in IV terms, not dollars. Rising IV means the market expects larger moves and options become more expensive.' },
+                          { term: 'VIX & Volatility Surface', formula: 'VIX = 30-day implied vol on S&P 500 options', body: 'The VIX tracks 30-day IV across S&P 500 options and is the most-watched fear gauge. A volatility surface maps IV across different strikes (smile/skew) and maturities (term structure). Put skew: OTM puts often have higher IV than calls, reflecting demand for downside hedges.' },
+                          { term: 'IV Crush', formula: 'Post-event IV drops sharply even if stock moves', body: 'Before an earnings announcement or Fed decision, IV spikes as the market prices uncertainty. Once the event resolves, IV collapses (IV crush), often dramatically. Options bought pre-event can lose money even if the stock moves in the right direction, because the drop in IV offsets the intrinsic gain.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: INDIGO, marginBottom: 6, background: `${INDIGO}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
+                            <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // ── OPTION GREEKS: DELTA & GAMMA ──────────────────────────────────────
+              if (sandboxDataset === 'ds-delta') {
+                const PURPLE_G = '#c084fc';
+                const normCDF2 = (x) => {
+                  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+                  const sign = x < 0 ? -1 : 1;
+                  const ax = Math.abs(x);
+                  const t2 = 1/(1+p*ax);
+                  const poly = ((((a5*t2+a4)*t2+a3)*t2+a2)*t2+a1)*t2;
+                  return 0.5*(1+sign*(1-poly*Math.exp(-ax*ax/2)));
+                };
+                const normPDF = (x) => Math.exp(-x*x/2)/Math.sqrt(2*Math.PI);
+                const T = greekTime / 12;
+                const sigma = greekVol / 100;
+                const r = 0.05;
+                const computeGreeks = (S) => {
+                  if (T <= 0 || sigma <= 0) return { delta: S > greekStrike ? 1 : 0, gamma: 0 };
+                  const d1 = (Math.log(S/greekStrike) + (r + sigma*sigma/2)*T) / (sigma*Math.sqrt(T));
+                  return { delta: normCDF2(d1), gamma: normPDF(d1)/(S*sigma*Math.sqrt(T)) };
+                };
+                const PRICES = Array.from({length: 21}, (_, i) => greekStrike * (0.7 + i * 0.03));
+                const sweep = PRICES.map(S => ({ S: +S.toFixed(2), ...computeGreeks(S) }));
+                const atmGreeks = computeGreeks(greekStrike);
+                const maxGamma = Math.max(...sweep.map(r => r.gamma));
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                      <button onClick={() => exitSandbox()} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Option Greeks: Delta & Gamma</h1>
+                      {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${PURPLE_G}18`, color: PURPLE_G }}>Analyst · Derivatives</span>}
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
+                      Observe how delta and gamma evolve as the stock price moves relative to the strike. Adjust vol and time to see how they shape the sensitivity profile.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                      {[
+                        { label: 'ATM Call Delta',  value: atmGreeks.delta.toFixed(3),             sub: 'At-the-money delta',          color: PURPLE_G },
+                        { label: 'ATM Put Delta',   value: (atmGreeks.delta - 1).toFixed(3),        sub: 'Negative (short exposure)',    color: RED },
+                        { label: 'ATM Gamma',       value: atmGreeks.gamma.toFixed(4),              sub: 'Peaks at ATM',                color: YELLOW },
+                        { label: 'Deep ITM Delta',  value: computeGreeks(greekStrike*1.2).delta.toFixed(3), sub: '120% of strike',     color: GREEN },
+                      ].map(m => (
+                        <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
+                          <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
+                          <div style={{ fontSize: 24, fontWeight: 800, fontFamily: 'monospace', color: m.color, letterSpacing: '-0.5px' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16, marginBottom: 20 }}>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Parameters</div>
+                        {[
+                          { label: 'Strike Price ($K)', value: greekStrike, set: setGreekStrike, min: 80,  max: 130, step: 5,   unit: '$',  color: PURPLE_G },
+                          { label: 'Volatility',        value: greekVol,   set: setGreekVol,   min: 10,  max: 80,  step: 5,   unit: '%',  color: YELLOW },
+                          { label: 'Time to Expiry',    value: greekTime,  set: setGreekTime,  min: 0.5, max: 12,  step: 0.5, unit: 'mo', color: BLUE },
+                        ].map(({ label, value, set, min, max, step, unit, color }) => (
+                          <div key={label} style={{ marginBottom: 20 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                              <span style={{ fontSize: 12, color: TEXT2 }}>{label}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color }}>{unit === '$' ? `$${value}` : `${value}${unit}`}</span>
+                            </div>
+                            <input type="range" min={min} max={max} step={step} value={value} onChange={e => set(Number(e.target.value))} style={{ width: '100%', accentColor: color, cursor: 'pointer' }} />
+                          </div>
+                        ))}
+                        <div style={{ padding: '10px 12px', background: DARK, borderRadius: 8, border: BORDER, fontSize: 12, color: TEXT2, lineHeight: 1.7 }}>
+                          <div>High vol → delta curve flatter, gamma peak lower</div>
+                          <div>Near expiry → delta becomes binary (0 or 1), gamma spikes</div>
+                        </div>
+                      </div>
+                      <div style={CARD}>
+                        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Delta & Gamma Across Stock Prices</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Strike = ${greekStrike} · Vol = {greekVol}% · T = {greekTime}mo</div>
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                            <thead>
+                              <tr style={{ borderBottom: BORDER }}>
+                                {['Stock Price', 'Moneyness', 'Call Delta', 'Put Delta', 'Gamma', 'Delta bar'].map((h, i) => (
+                                  <th key={h} style={{ padding: '5px 8px', textAlign: i === 0 ? 'left' : 'right', fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase' }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {sweep.filter((_, i) => i % 2 === 0).map(row => {
+                                const isAtm = Math.abs(row.S - greekStrike) < greekStrike * 0.02;
+                                const moneyness = row.S >= greekStrike * 1.03 ? 'ITM' : row.S <= greekStrike * 0.97 ? 'OTM' : 'ATM';
+                                return (
+                                  <tr key={row.S} style={{ borderBottom: `1px solid ${BORDER_C}`, background: isAtm ? `${PURPLE_G}08` : 'transparent' }}>
+                                    <td style={{ padding: '7px 8px', fontWeight: isAtm ? 700 : 400, color: isAtm ? PURPLE_G : TEXT }}>${row.S.toFixed(0)}</td>
+                                    <td style={{ padding: '7px 8px', textAlign: 'right', color: moneyness === 'ITM' ? GREEN : moneyness === 'OTM' ? RED : YELLOW, fontWeight: 600, fontSize: 10 }}>{moneyness}</td>
+                                    <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace', color: BLUE, fontWeight: isAtm ? 700 : 400 }}>{row.delta.toFixed(3)}</td>
+                                    <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace', color: RED }}>{(row.delta-1).toFixed(3)}</td>
+                                    <td style={{ padding: '7px 8px', textAlign: 'right', fontFamily: 'monospace', color: YELLOW }}>{row.gamma.toFixed(4)}</td>
+                                    <td style={{ padding: '7px 8px', textAlign: 'right' }}>
+                                      <div style={{ height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden', minWidth: 60 }}>
+                                        <div style={{ height: '100%', width: `${row.delta * 100}%`, background: PURPLE_G, borderRadius: 4 }} />
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ ...CARD, background: `${PURPLE_G}06`, border: `1px solid ${PURPLE_G}20` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: PURPLE_G }}>Key Concepts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16 }}>
+                        {[
+                          { term: 'Delta (Δ)', formula: 'Δ = ∂C/∂S = N(d₁)  (for a call)', body: 'Delta measures how much the option price moves per $1 change in the underlying. An ATM call has Δ ≈ 0.50: if the stock rises $1, the call gains $0.50. Delta also approximates the probability of expiring in-the-money. Deep ITM calls approach Δ=1; deep OTM calls approach Δ=0.' },
+                          { term: 'Gamma (Γ)', formula: <span>Γ = N′(d₁) / (S·σ·√T)</span>, body: 'Gamma measures how fast delta changes per $1 stock move. Gamma peaks at-the-money and near expiration, where small moves dramatically change delta. Long gamma (buying options) profits from large moves; short gamma (selling options) profits from quiet markets but loses from big moves.' },
+                          { term: 'Delta Hedging', formula: 'Hedge = -Δ × option contracts × 100 shares', body: 'A delta-neutral portfolio has zero directional exposure: gains and losses on the option are offset by the stock position. Market makers who sell options continuously delta-hedge by buying/selling stock. Gamma risk means the hedge must be rebalanced as the stock moves, costing more in volatile markets.' },
+                          { term: 'Moneyness & Delta as Probability', formula: 'P(expire ITM) ≈ N(d₂) ≈ Delta', body: 'Delta loosely approximates the risk-neutral probability that the option expires in-the-money. An ATM call with Δ=0.50 has roughly a 50% chance of expiring ITM. A deep OTM call with Δ=0.10 has roughly a 10% chance. This is why delta is used to size hedges and construct synthetic positions.' },
+                        ].map(c => (
+                          <div key={c.term}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: PURPLE_G, marginBottom: 6, background: `${PURPLE_G}10`, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{c.formula}</div>
                             <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>{c.body}</div>
                           </div>
                         ))}
