@@ -11760,7 +11760,7 @@ export default function Dashboard() {
                     {/* Transaction list */}
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>All Transactions This Month</div>
-                      <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+                      <div style={{ maxHeight: 320, overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}>
                         {txns.sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, i) => {
                           const meta = CAT_META[t.personal_finance_category?.primary] || { label: 'Other', color: TEXT3 };
                           return (
