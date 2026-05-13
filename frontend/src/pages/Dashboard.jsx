@@ -532,6 +532,7 @@ function TickerBar({ indices, active }) {
 }
 
 function SP500Chart({ candles, period, onPeriodChange, hidePeriods }) {
+  const _mob = typeof window !== 'undefined' && window.innerWidth <= 768;
   if (!candles || candles.length < 2) {
     return (
       <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT2, fontSize: 13 }}>
@@ -573,12 +574,12 @@ function SP500Chart({ candles, period, onPeriodChange, hidePeriods }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <div style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 22, fontWeight: 700 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: _mob ? 18 : 22, fontWeight: 700 }}>
             {last.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: lineColor }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: lineColor }}>
             {change >= 0 ? '+' : ''}{change.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             {' '}({changePct >= 0 ? '+' : ''}{changePct.toFixed(2)}%)
           </span>
@@ -587,7 +588,7 @@ function SP500Chart({ candles, period, onPeriodChange, hidePeriods }) {
           <div style={{ display: 'flex', gap: 4 }}>
             {PERIODS.map(({ key, label }) => (
               <button key={key} onClick={() => onPeriodChange(key)} style={{
-                padding: '4px 12px', borderRadius: 6, border: 'none', fontSize: 12,
+                padding: _mob ? '3px 9px' : '4px 12px', borderRadius: 6, border: 'none', fontSize: 11,
                 cursor: 'pointer', fontWeight: 600, transition: 'background 0.15s',
                 background: period === key ? BLUE_BTN : MUTED,
                 color: period === key ? '#fff' : TEXT2,
@@ -631,6 +632,7 @@ function SP500Chart({ candles, period, onPeriodChange, hidePeriods }) {
 
 function FearGreedGauge({ score, rating }) {
   if (score == null) return null;
+  const _mob = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   const ZONES = [
     { label: 'Extreme Fear',  max: 25,  color: '#ef4444' },
@@ -644,9 +646,9 @@ function FearGreedGauge({ score, rating }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, marginBottom: 18 }}>
-        <span style={{ fontSize: 56, fontWeight: 800, fontFamily: 'monospace', color: zone.color, lineHeight: 1 }}>{score}</span>
+        <span style={{ fontSize: _mob ? 40 : 56, fontWeight: 800, fontFamily: 'monospace', color: zone.color, lineHeight: 1 }}>{score}</span>
         <div style={{ paddingBottom: 4 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: zone.color }}>{zone.label}</div>
+          <div style={{ fontSize: _mob ? 13 : 16, fontWeight: 700, color: zone.color }}>{zone.label}</div>
           <div style={{ fontSize: 11, color: TEXT3 }}>out of 100</div>
         </div>
       </div>
@@ -674,7 +676,7 @@ function FearGreedGauge({ score, rating }) {
         {ZONES.map(z => {
           const active = z.label === zone.label;
           return (
-            <div key={z.label} style={{ flex: 1, minWidth: 60, padding: '5px 8px', borderRadius: 6, textAlign: 'center', background: active ? `${z.color}22` : DARK, border: `1px solid ${active ? z.color : BORDER_C}` }}>
+            <div key={z.label} style={{ flex: 1, minWidth: _mob ? 44 : 60, padding: '5px 6px', borderRadius: 6, textAlign: 'center', background: active ? `${z.color}22` : DARK, border: `1px solid ${active ? z.color : BORDER_C}` }}>
               <div style={{ fontSize: 8, fontWeight: 700, whiteSpace: 'nowrap', color: active ? z.color : TEXT3 }}>{z.label}</div>
             </div>
           );
@@ -4774,16 +4776,16 @@ export default function Dashboard() {
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <DragSection id="stats" panel="overview" order={_ovOrder} onReorder={_ovReorder} handleTop={30}>
-                <div data-tour="overview-cards" style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24, marginTop: 24 }}>
+                <div data-tour="overview-cards" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : g3, gap: isMobile ? 10 : 16, marginBottom: 24, marginTop: 24 }}>
                   {[
                     { label: 'Net Worth',         value: fmt(netWorth),                   sub: 'Assets − Liabilities' },
                     { label: 'Total Assets',      value: fmt(totalCash + totalPortfolio), sub: (() => { const n = accounts.filter(a => !a.closed && a.type !== 'investment').length; return `${n} account${n !== 1 ? 's' : ''} · ${holdings.length} position${holdings.length !== 1 ? 's' : ''}`; })() },
                     { label: 'Total Liabilities', value: fmt(totalLiabilities),           sub: (() => { const n = (liabilities.credit?.length || 0) + (liabilities.student?.length || 0) + (liabilities.mortgage?.length || 0); return `${n} account${n !== 1 ? 's' : ''}`; })() },
                   ].map(({ label, value, sub, color }) => (
-                    <div key={label} className="lc" style={CARD}>
+                    <div key={label} className="lc" style={{ ...CARD, ...(isMobile ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } : {}) }}>
                       <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-                      <div style={{ fontSize: 30, fontWeight: 700, margin: '8px 0 4px', letterSpacing: '-1px', color: color || TEXT }}>{value}</div>
-                      <div style={{ fontSize: 12, color: TEXT2 }}>{sub}</div>
+                      <div style={{ fontSize: isMobile ? 20 : 30, fontWeight: 700, margin: isMobile ? 0 : '8px 0 4px', letterSpacing: '-1px', color: color || TEXT }}>{value}</div>
+                      {!isMobile && <div style={{ fontSize: 12, color: TEXT2 }}>{sub}</div>}
                     </div>
                   ))}
                 </div>
@@ -6067,15 +6069,15 @@ export default function Dashboard() {
                           Demo data. Connect accounts to see your real finances.
                         </div>
                       )}
-                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
                         {[
                           { label: 'Monthly Cost', value: fmt(totalMonthly) },
                           { label: 'Annual Cost', value: fmt(totalMonthly * 12) },
                           { label: isMockData ? 'Sample Subs' : 'Detected', value: displaySubs.length },
                         ].map(({ label, value }) => (
-                          <div key={label} className="lc" style={CARD}>
+                          <div key={label} className="lc" style={{ ...CARD, ...(isMobile ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } : {}) }}>
                             <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-                            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 8, letterSpacing: '-0.5px' }}>{value}</div>
+                            <div style={{ fontSize: isMobile ? 20 : 28, fontWeight: 700, marginTop: isMobile ? 0 : 8, letterSpacing: '-0.5px' }}>{value}</div>
                           </div>
                         ))}
                       </div>
@@ -7809,7 +7811,7 @@ export default function Dashboard() {
                                     </div>
                                     <div style={{ fontSize: 13, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{ds.title}</div>
                                     <div style={{ fontSize: 12, color: TEXT2, marginBottom: 10, lineHeight: 1.5 }}>{ds.description}</div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 10 }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 6, marginBottom: 10 }}>
                                       {ds.stats.map(([label, value]) => (
                                         <div key={label} style={{ background: DARK, borderRadius: 6, padding: '7px 10px', border: BORDER }}>
                                           <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 2 }}>{label}</div>
@@ -7891,7 +7893,7 @@ export default function Dashboard() {
                   <div style={{ marginTop: 32 }}>
                     <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Additional Resources</div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Trusted external references for going deeper on any topic.</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : g3, gap: 12 }}>
                       {[
                         { name: 'Investopedia',          url: 'https://www.investopedia.com',                                          desc: 'The most comprehensive financial dictionary and concept explainer on the web. Look up any term, formula, or strategy.',       color: BLUE,   icon: '📚' },
                         { name: 'NerdWallet',             url: 'https://www.nerdwallet.com',                                            desc: 'Personal finance comparisons, calculators, and actionable guides for budgeting, credit cards, mortgages, and more.',         color: GREEN,  icon: '🧮' },
@@ -9223,10 +9225,10 @@ export default function Dashboard() {
               ) : null;
 
               return (
-                <div style={{ display: 'flex', margin: -32, minHeight: 'calc(100vh - 64px)' }}>
+                <div style={{ display: 'flex', margin: isMobile ? 0 : -32, minHeight: isMobile ? 'auto' : 'calc(100vh - 64px)' }}>
 
-                  {/* ── Left: Course list ── */}
-                  <div style={{ width: 240, flexShrink: 0, borderRight: `1px solid ${BORDER_C}`, background: 'var(--side-bg, #111115)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  {/* ── Left: Course list (desktop only) ── */}
+                  <div style={{ width: 240, flexShrink: 0, borderRight: `1px solid ${BORDER_C}`, background: 'var(--side-bg, #111115)', display: isMobile ? 'none' : 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
                     {/* Rail header — always visible */}
                     <div style={{ padding: '14px 16px 10px', borderBottom: `1px solid ${BORDER_C}`, flexShrink: 0 }}>
@@ -9345,7 +9347,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* ── Right: Content area ── */}
-                  <div style={{ flex: 1, overflow: 'auto' }}>
+                  <div style={{ flex: 1, overflow: isMobile ? 'visible' : 'auto' }}>
 
                     {/* ── OVERVIEW (eLC homepage style) ── */}
                     {!selectedCourseId && enrolledCourses.length === 0 && !effectiveProfessor && !isAdmin && (
