@@ -700,6 +700,7 @@ The good news is you are actually ahead this month, spending $180 less than you 
 
 const CATEGORY_LABEL = {
   FOOD_AND_DRINK:            'Food & Dining',
+  GROCERIES:                 'Groceries',
   HOME_IMPROVEMENT:          'Home & Housing',
   RENT_AND_UTILITIES:        'Rent & Utilities',
   GENERAL_MERCHANDISE:       'Shopping',
