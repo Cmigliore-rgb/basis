@@ -2571,7 +2571,7 @@ export default function Dashboard() {
     window.addEventListener('resize', handle);
     return () => window.removeEventListener('resize', handle);
   }, []);
-  const g3 = isMobile ? '1fr 1fr' : 'repeat(3, 1fr)';
+  const g3 = isMobile ? '1fr' : 'repeat(3, 1fr)';
   const g4 = isMobile ? '1fr 1fr' : 'repeat(4, 1fr)';
   const g2 = isMobile ? '1fr' : '1fr 1fr';
 
@@ -9236,129 +9236,9 @@ export default function Dashboard() {
               ) : null;
 
               return (
-                <div style={{ display: 'flex', margin: isMobile ? 0 : -32, minHeight: isMobile ? 'auto' : 'calc(100vh - 64px)' }}>
+                <div style={{ margin: isMobile ? 0 : -32 }}>
 
-                  {/* ── Left: Course list (desktop only) ── */}
-                  <div style={{ width: 240, flexShrink: 0, borderRight: `1px solid ${BORDER_C}`, background: 'var(--side-bg, #111115)', display: isMobile ? 'none' : 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
-                    {/* Rail header — always visible */}
-                    <div style={{ padding: '14px 16px 10px', borderBottom: `1px solid ${BORDER_C}`, flexShrink: 0 }}>
-                      <button onClick={() => setSelectedCourseId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', width: '100%' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: !selectedCourseId ? TEXT : TEXT2 }}>My Courses</div>
-                        <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>Spring 2026 · Education Mode</div>
-                      </button>
-                    </div>
-
-                    {!selectedCourseId ? (
-                      /* ── Overview mode: course list ── */
-                      <div style={{ flex: 1, overflow: 'auto', paddingTop: 6 }}>
-                        {enrolledCourses.length === 0 && (
-                          <div style={{ padding: '20px 16px', fontSize: 12, color: TEXT3, lineHeight: 1.6 }}>
-                            No courses yet. Enter a course code from your instructor to get started.
-                          </div>
-                        )}
-                        {enrolledCourses.map(c => {
-                          const overdueC = effectiveProfessor || isAdmin ? 0 : c.assignments.filter(a => {
-                            const due = a.dueDate ? new Date(a.dueDate) : null;
-                            return due && due < now && !submittedAssignments.has(a.id) && a.status !== 'completed';
-                          }).length;
-                          return (
-                            <button key={c.id} onClick={() => { setSelectedCourseId(c.id); setEduInnerTab('content'); setContentFolder('slides'); setOpenSlideIdx(null); }}
-                              style={{ width: '100%', textAlign: 'left', padding: '11px 16px', border: 'none', cursor: 'pointer', background: 'transparent', borderLeft: '3px solid transparent', transition: 'background 0.1s' }}
-                              className="lr">
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                                <span style={{ fontSize: 11, fontWeight: 700, color: c.color }}>{c.code}</span>
-                                {overdueC > 0 && <span style={{ fontSize: 9, fontWeight: 700, color: RED, background: 'rgba(248,113,113,0.12)', padding: '1px 6px', borderRadius: 8 }}>{overdueC}</span>}
-                              </div>
-                              <div style={{ fontSize: 12, fontWeight: 500, color: TEXT2, lineHeight: 1.3 }}>{c.name}</div>
-                              <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>{c.instructor}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      /* ── In-course mode: back + sub-nav + due dates ── */
-                      <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-                        <button onClick={() => setSelectedCourseId(null)}
-                          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', border: 'none', cursor: 'pointer', background: 'transparent', borderBottom: `1px solid ${BORDER_C}`, width: '100%', flexShrink: 0 }}>
-                          <span style={{ color: TEXT3, fontSize: 16, lineHeight: 1 }}>‹</span>
-                          <span style={{ fontSize: 12, color: TEXT2, fontWeight: 500 }}>All Courses</span>
-                        </button>
-
-                        {/* Course identity in rail */}
-                        <div style={{ padding: '10px 16px 8px', borderBottom: `1px solid ${BORDER_C}`, flexShrink: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: activeCourse?.color, flexShrink: 0 }} />
-                            <span style={{ fontSize: 11, fontWeight: 700, color: activeCourse?.color }}>{activeCourse?.code}</span>
-                          </div>
-                          <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.3 }}>{activeCourse?.name}</div>
-                          <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>{activeCourse?.instructor}</div>
-                        </div>
-
-                        {/* Sub-nav */}
-                        <div style={{ flexShrink: 0 }}>
-                          {[
-                            ['syllabus',    '◧', 'Syllabus'],
-                            ['schedule',    '◷', 'Schedule'],
-                            ['content',     '◫', 'Content'],
-                            ['assignments', '◩', 'Assignments'],
-                            ...(!effectiveProfessor ? [['grades', '◈', 'Grades']] : []),
-                          ].map(([tab, icon, label]) => (
-                            <button key={tab} onClick={() => setEduInnerTab(tab)}
-                              style={{ width: '100%', textAlign: 'left', padding: '9px 16px 9px 14px', border: 'none', cursor: 'pointer', background: eduInnerTab === tab ? `${activeCourse?.color}10` : 'transparent', borderLeft: `3px solid ${eduInnerTab === tab ? activeCourse?.color : 'transparent'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ fontSize: 12, opacity: 0.7, color: eduInnerTab === tab ? activeCourse?.color : TEXT3, width: 16, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
-                              <span style={{ fontSize: 13, fontWeight: eduInnerTab === tab ? 600 : 400, color: eduInnerTab === tab ? TEXT : TEXT2 }}>{label}</span>
-                            </button>
-                          ))}
-                          {effectiveProfessor && !mirrorStudentView && (
-                            <button onClick={() => setEduInnerTab('admin')}
-                              style={{ width: '100%', textAlign: 'left', padding: '9px 16px 9px 14px', border: 'none', cursor: 'pointer', background: eduInnerTab === 'admin' ? `${activeCourse?.color}10` : 'transparent', borderLeft: `3px solid ${eduInnerTab === 'admin' ? activeCourse?.color : 'transparent'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ fontSize: 12, opacity: 0.7, color: eduInnerTab === 'admin' ? activeCourse?.color : TEXT3, width: 16, textAlign: 'center', flexShrink: 0 }}>⚙</span>
-                              <span style={{ fontSize: 13, fontWeight: eduInnerTab === 'admin' ? 600 : 400, color: eduInnerTab === 'admin' ? TEXT : TEXT2 }}>Course Admin</span>
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Course-specific due dates — students only */}
-                        {!effectiveProfessor && allDueItems.filter(a => a.course.id === selectedCourseId).length > 0 && (
-                          <div style={{ marginTop: 'auto', borderTop: `1px solid ${BORDER_C}`, padding: '10px 14px', flexShrink: 0 }}>
-                            <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Due Dates</div>
-                            {allDueItems.filter(a => a.course.id === selectedCourseId).slice(0, 5).map(a => {
-                              const due = new Date(a.dueDate);
-                              const daysUntil = Math.ceil((due - now) / 86400000);
-                              const isOver = due < now;
-                              return (
-                                <div key={a.id} onClick={() => setEduInnerTab('assignments')}
-                                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', cursor: 'pointer', borderBottom: `1px solid ${BORDER_C}` }}>
-                                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: isOver ? RED : daysUntil <= 3 ? YELLOW : activeCourse?.color, flexShrink: 0 }} />
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontSize: 11, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.title}</div>
-                                  </div>
-                                  <div style={{ fontSize: 10, fontWeight: 700, color: isOver ? RED : daysUntil <= 3 ? YELLOW : TEXT3, flexShrink: 0 }}>
-                                    {isOver ? `${Math.abs(daysUntil)}d late` : daysUntil === 0 ? 'Today' : `${daysUntil}d`}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* Professor tools — pinned at bottom */}
-                        {effectiveProfessor && (
-                          <div style={{ borderTop: `1px solid ${BORDER_C}`, padding: '10px 14px', flexShrink: 0 }}>
-                            <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Prof Tools</div>
-                            <button onClick={() => { setMirrorStudentView(v => !v); if (eduInnerTab === 'admin') setEduInnerTab('content'); }}
-                              style={{ width: '100%', padding: '6px 10px', border: `1px solid ${mirrorStudentView ? 'rgba(251,191,36,0.4)' : BORDER_C}`, borderRadius: 6, background: mirrorStudentView ? 'rgba(251,191,36,0.08)' : 'transparent', color: mirrorStudentView ? YELLOW : TEXT2, fontSize: 11, fontWeight: 600, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span>👁</span>{mirrorStudentView ? 'Exit Student View' : 'Preview as Student'}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* ── Right: Content area ── */}
-                  <div style={{ flex: 1, overflow: isMobile ? 'visible' : 'auto' }}>
+                  <div>
 
                     {/* ── OVERVIEW (eLC homepage style) ── */}
                     {!selectedCourseId && enrolledCourses.length === 0 && !effectiveProfessor && !isAdmin && (
@@ -9671,8 +9551,26 @@ export default function Dashboard() {
                           )}
 
                           {/* Course header */}
-                          <div style={{ padding: '20px 28px 16px', borderBottom: `1px solid ${BORDER_C}`, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, position: 'sticky', top: 0, background: 'var(--side-bg, #111115)', zIndex: 10 }}>
-                            <div>
+                          <div style={{ borderBottom: `1px solid ${BORDER_C}`, position: 'sticky', top: 0, background: 'var(--side-bg, #111115)', zIndex: 10 }}>
+                            {/* Top bar: back + prof tools */}
+                            <div style={{ padding: '12px 28px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <button onClick={() => setSelectedCourseId(null)}
+                                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                                <span style={{ color: TEXT3, fontSize: 16, lineHeight: 1 }}>‹</span>
+                                <span style={{ fontSize: 12, color: TEXT2, fontWeight: 500 }}>My Courses</span>
+                              </button>
+                              {effectiveProfessor && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.4px', marginRight: 2 }}>Instructor</div>
+                                  <button onClick={() => { setMirrorStudentView(v => !v); if (eduInnerTab === 'admin') setEduInnerTab('content'); }}
+                                    style={{ padding: '5px 12px', border: `1px solid ${mirrorStudentView ? 'rgba(251,191,36,0.5)' : BORDER_C}`, borderRadius: 6, background: mirrorStudentView ? 'rgba(251,191,36,0.1)' : 'transparent', color: mirrorStudentView ? YELLOW : TEXT2, fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
+                                    <span>👁</span>{mirrorStudentView ? 'Exit Student View' : 'Student View'}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            {/* Course identity */}
+                            <div style={{ padding: '10px 28px 14px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                                 <div style={{ width: 10, height: 10, borderRadius: '50%', background: activeCourse.color, flexShrink: 0 }} />
                                 <span style={{ fontSize: 11, fontWeight: 700, color: activeCourse.color, letterSpacing: '0.3px' }}>{activeCourse.code}</span>
@@ -9682,15 +9580,22 @@ export default function Dashboard() {
                               <h2 style={{ margin: '0 0 3px', fontSize: 20, fontWeight: 700, lineHeight: 1.2 }}>{activeCourse.name}</h2>
                               <div style={{ fontSize: 12, color: TEXT2 }}>{activeCourse.instructor}</div>
                             </div>
-                            {effectiveProfessor && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, paddingTop: 2 }}>
-                                <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.4px', marginRight: 2 }}>Instructor</div>
-                                <button onClick={() => { setMirrorStudentView(v => !v); if (eduInnerTab === 'admin') setEduInnerTab('content'); }}
-                                  style={{ padding: '5px 12px', border: `1px solid ${mirrorStudentView ? 'rgba(251,191,36,0.5)' : BORDER_C}`, borderRadius: 6, background: mirrorStudentView ? 'rgba(251,191,36,0.1)' : 'transparent', color: mirrorStudentView ? YELLOW : TEXT2, fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
-                                  <span>👁</span>{mirrorStudentView ? 'Exit Student View' : 'Student View'}
+                            {/* Sub-nav tabs */}
+                            <div style={{ display: 'flex', padding: '0 20px', gap: 2, overflowX: 'auto' }}>
+                              {[
+                                ['syllabus',    'Syllabus'],
+                                ['schedule',    'Schedule'],
+                                ['content',     'Content'],
+                                ['assignments', 'Assignments'],
+                                ...(!effectiveProfessor ? [['grades', 'Grades']] : []),
+                                ...(effectiveProfessor && !mirrorStudentView ? [['admin', 'Course Admin']] : []),
+                              ].map(([tab, label]) => (
+                                <button key={tab} onClick={() => setEduInnerTab(tab)}
+                                  style={{ padding: '8px 16px', background: 'none', border: 'none', borderBottom: `2px solid ${eduInnerTab === tab ? activeCourse.color : 'transparent'}`, color: eduInnerTab === tab ? TEXT : TEXT2, fontSize: 13, fontWeight: eduInnerTab === tab ? 600 : 400, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
+                                  {label}
                                 </button>
-                              </div>
-                            )}
+                              ))}
+                            </div>
                           </div>
 
                           <div style={{ padding: 28 }}>
