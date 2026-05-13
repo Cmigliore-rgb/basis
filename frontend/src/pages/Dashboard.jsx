@@ -7811,14 +7811,25 @@ export default function Dashboard() {
                                     </div>
                                     <div style={{ fontSize: 13, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{ds.title}</div>
                                     <div style={{ fontSize: 12, color: TEXT2, marginBottom: 10, lineHeight: 1.5 }}>{ds.description}</div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 6, marginBottom: 10 }}>
-                                      {ds.stats.map(([label, value]) => (
-                                        <div key={label} style={{ background: DARK, borderRadius: 6, padding: '7px 10px', border: BORDER }}>
-                                          <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 2 }}>{label}</div>
-                                          <div style={{ fontSize: 13, fontWeight: 700, color: ds.color, fontFamily: 'monospace' }}>{value}</div>
-                                        </div>
-                                      ))}
-                                    </div>
+                                    {isMobile ? (
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
+                                        {ds.stats.map(([label, value]) => (
+                                          <div key={label} style={{ background: DARK, borderRadius: 6, padding: '8px 12px', border: BORDER, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <div style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{label}</div>
+                                            <div style={{ fontSize: 14, fontWeight: 700, color: ds.color, fontFamily: 'monospace' }}>{value}</div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 10 }}>
+                                        {ds.stats.map(([label, value]) => (
+                                          <div key={label} style={{ background: DARK, borderRadius: 6, padding: '7px 10px', border: BORDER }}>
+                                            <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 2 }}>{label}</div>
+                                            <div style={{ fontSize: 13, fontWeight: 700, color: ds.color, fontFamily: 'monospace' }}>{value}</div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 12 }}>
                                       {ds.concepts.map(c => (
                                         <span key={c} style={{ fontSize: 10, padding: '2px 8px', background: `${ds.color}12`, border: `1px solid ${ds.color}30`, borderRadius: 10, color: ds.color, fontWeight: 600 }}>{c}</span>
