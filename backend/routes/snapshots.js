@@ -21,10 +21,12 @@ router.post('/', requireAuth, (req, res) => {
 // Get last 90 days of snapshots for the authenticated user
 router.get('/', requireAuth, (req, res) => {
   const snapshots = db.prepare(`
-    SELECT date, value FROM net_worth_snapshots
-    WHERE user_id = ?
-    ORDER BY date ASC
-    LIMIT 90
+    SELECT date, value FROM (
+      SELECT date, value FROM net_worth_snapshots
+      WHERE user_id = ?
+      ORDER BY date DESC
+      LIMIT 90
+    ) ORDER BY date ASC
   `).all(req.user.id);
   res.json({ snapshots });
 });

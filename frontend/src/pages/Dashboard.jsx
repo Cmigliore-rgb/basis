@@ -264,7 +264,9 @@ function NetWorthChart({ snapshots }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
-        <span style={{ fontSize: 13, color: TEXT2 }}>Last {snapshots.length} day{snapshots.length !== 1 ? 's' : ''}</span>
+        <span style={{ fontSize: 13, color: TEXT2 }}>
+          {snapshots.length < 7 ? `${snapshots.length} day${snapshots.length !== 1 ? 's' : ''} — builds up over time` : `Last ${snapshots.length} days`}
+        </span>
         <span style={{ fontSize: 13, fontWeight: 600, color: gainColor, fontFamily: 'monospace' }}>
           {gain >= 0 ? '+' : ''}{fmt(gain)}
         </span>
@@ -715,13 +717,14 @@ const CATEGORY_LABEL = {
   GOVERNMENT_AND_NON_PROFIT: 'Government & Nonprofit',
   RECREATION:                'Recreation',
   SUBSCRIPTION:              'Subscriptions',
+  GENERAL_SERVICES:          'General Services',
   OTHER:                     'Other',
   OTHER_PAYMENT:             'Other Payment',
 };
 
 function fmtCat(raw) {
   if (!raw) return 'Other';
-  return CATEGORY_LABEL[raw] || raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  return CATEGORY_LABEL[raw] || raw.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 }
 
 const ACCOUNT_TYPE_LABEL = {
