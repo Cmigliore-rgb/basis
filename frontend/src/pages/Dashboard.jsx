@@ -3485,10 +3485,10 @@ export default function Dashboard() {
       {/* ── MOBILE BOTTOM TAB BAR + MORE SHEET ─────────── */}
       {isMobile && (() => {
         const mobileTabs = eduMode ? [
-          { key: 'overview',        label: 'Home',        icon: '⊞', edu: false },
           { key: 'edu-courses',     label: 'Courses',     icon: '◫', edu: true  },
           { key: 'edu-assignments', label: 'Work',        icon: '⊟', edu: true  },
           { key: 'learn',           label: 'Learn',       icon: '✦', edu: true  },
+          ...(effectiveProfessor ? [{ key: 'prof-dashboard', label: 'Prof Hub', icon: '⊟', edu: true }] : []),
         ] : [
           { key: 'overview',        label: 'Home',        icon: '⊞', edu: false },
           { key: 'cashflow',        label: 'Money',       icon: '⬡', edu: false },
@@ -5967,34 +5967,53 @@ export default function Dashboard() {
                       )}
                       <div className="lc" style={CARD}>
                         <div style={{ fontWeight: 600, marginBottom: 20 }}>Spending by Category: {lastMonthLabel} vs {thisMonthLabel}</div>
-                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 340 }}>
-                          <thead>
-                            <tr style={{ borderBottom: BORDER }}>
-                              {['Category', lastMonthLabel, thisMonthLabel, 'Change'].map((h, idx) => (
-                                <th key={h} style={{ padding: '8px 12px', textAlign: idx === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
+                        {isMobile ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                             {trendRows.map(({ cat, last, curr }) => {
                               const diff = curr - last, pct = last > 0 ? ((diff / last) * 100) : null;
                               const changeColor = diff > 0 ? RED : diff < 0 ? GREEN : TEXT2;
                               return (
-                                <tr key={cat} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                                  <td style={{ padding: '11px 12px', fontWeight: 500, fontSize: 13, whiteSpace: 'nowrap' }}>{cat}</td>
-                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: TEXT2, whiteSpace: 'nowrap' }}>{last > 0 ? fmt(last) : '—'}</td>
-                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, whiteSpace: 'nowrap' }}>{curr > 0 ? fmt(curr) : '—'}</td>
-                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: changeColor, whiteSpace: 'nowrap' }}>
-                                    <div>{diff === 0 ? '—' : `${diff > 0 ? '+' : ''}${fmt(Math.abs(diff))}`}</div>
-                                    {pct !== null && <div style={{ fontSize: 11, opacity: 0.7 }}>({pct > 0 ? '+' : ''}{pct.toFixed(0)}%)</div>}
-                                  </td>
-                                </tr>
+                                <div key={cat} className="lr" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                                  <div>
+                                    <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{cat}</div>
+                                    <div style={{ fontSize: 11, color: TEXT2, marginTop: 2, fontFamily: 'monospace' }}>{last > 0 ? fmt(last) : '—'} → {curr > 0 ? fmt(curr) : '—'}</div>
+                                  </div>
+                                  <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: changeColor, fontFamily: 'monospace' }}>{diff === 0 ? '—' : `${diff > 0 ? '+' : ''}${fmt(Math.abs(diff))}`}</div>
+                                    {pct !== null && <div style={{ fontSize: 11, color: changeColor, opacity: 0.8 }}>{pct > 0 ? '+' : ''}{pct.toFixed(0)}%</div>}
+                                  </div>
+                                </div>
                               );
                             })}
-                          </tbody>
-                        </table>
-                        </div>
+                          </div>
+                        ) : (
+                          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                              <tr style={{ borderBottom: BORDER }}>
+                                {['Category', lastMonthLabel, thisMonthLabel, 'Change'].map((h, idx) => (
+                                  <th key={h} style={{ padding: '8px 12px', textAlign: idx === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {trendRows.map(({ cat, last, curr }) => {
+                                const diff = curr - last, pct = last > 0 ? ((diff / last) * 100) : null;
+                                const changeColor = diff > 0 ? RED : diff < 0 ? GREEN : TEXT2;
+                                return (
+                                  <tr key={cat} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                    <td style={{ padding: '11px 12px', fontWeight: 500, fontSize: 13 }}>{cat}</td>
+                                    <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: TEXT2 }}>{last > 0 ? fmt(last) : '—'}</td>
+                                    <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{curr > 0 ? fmt(curr) : '—'}</td>
+                                    <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: changeColor }}>
+                                      <div>{diff === 0 ? '—' : `${diff > 0 ? '+' : ''}${fmt(Math.abs(diff))}`}</div>
+                                      {pct !== null && <div style={{ fontSize: 11, opacity: 0.7 }}>({pct > 0 ? '+' : ''}{pct.toFixed(0)}%)</div>}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        )}
                       </div>
                     </>
                   );
@@ -6062,28 +6081,43 @@ export default function Dashboard() {
                       </div>
                       <div className="lc" style={CARD}>
                         <div style={{ fontWeight: 600, marginBottom: 20 }}>Recurring Charges</div>
-                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 420 }}>
-                          <thead>
-                            <tr style={{ borderBottom: BORDER }}>
-                              {['Merchant', 'Frequency', 'Per Charge', 'Monthly Cost', 'Last Charge'].map(h => (
-                                <th key={h} style={{ padding: '8px 12px', textAlign: ['Per Charge', 'Monthly Cost'].includes(h) ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
+                        {isMobile ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                             {displaySubs.map((sub, i) => (
-                              <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                                <td style={{ padding: '11px 12px', fontWeight: 500, whiteSpace: 'nowrap' }}>{sub.name}</td>
-                                <td style={{ padding: '11px 12px' }}><span style={{ background: MUTED, color: TEXT2, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>{sub.frequency}</span></td>
-                                <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, whiteSpace: 'nowrap' }}>{fmt(sub.avgAmt)}</td>
-                                <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: RED, whiteSpace: 'nowrap' }}>{fmt(sub.monthlyCost)}</td>
-                                <td style={{ padding: '11px 12px', color: TEXT2, fontSize: 13, whiteSpace: 'nowrap' }}>{fmtDate(sub.lastDate)}</td>
-                              </tr>
+                              <div key={i} className="lr" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{sub.name}</div>
+                                  <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>
+                                    <span style={{ background: MUTED, padding: '1px 6px', borderRadius: 3, fontWeight: 600, marginRight: 6 }}>{sub.frequency}</span>
+                                    {fmt(sub.avgAmt)} · Last {fmtDate(sub.lastDate)}
+                                  </div>
+                                </div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: RED, fontFamily: 'monospace', flexShrink: 0, marginLeft: 12 }}>{fmt(sub.monthlyCost)}<span style={{ fontSize: 10, fontWeight: 400, color: TEXT2 }}>/mo</span></div>
+                              </div>
                             ))}
-                          </tbody>
-                        </table>
-                        </div>
+                          </div>
+                        ) : (
+                          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                              <tr style={{ borderBottom: BORDER }}>
+                                {['Merchant', 'Frequency', 'Per Charge', 'Monthly Cost', 'Last Charge'].map(h => (
+                                  <th key={h} style={{ padding: '8px 12px', textAlign: ['Per Charge', 'Monthly Cost'].includes(h) ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {displaySubs.map((sub, i) => (
+                                <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                  <td style={{ padding: '11px 12px', fontWeight: 500 }}>{sub.name}</td>
+                                  <td style={{ padding: '11px 12px' }}><span style={{ background: MUTED, color: TEXT2, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600 }}>{sub.frequency}</span></td>
+                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{fmt(sub.avgAmt)}</td>
+                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: RED }}>{fmt(sub.monthlyCost)}</td>
+                                  <td style={{ padding: '11px 12px', color: TEXT2, fontSize: 13 }}>{fmtDate(sub.lastDate)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
                         {!isMockData && (
                           <div style={{ marginTop: 16, padding: '12px 16px', background: MUTED, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
                             Detected by finding charges with consistent amounts recurring on a regular schedule.
@@ -6954,8 +6988,7 @@ export default function Dashboard() {
                           ))}
                         </div>
                       </div>
-                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(11, minmax(48px, 1fr))', gap: 6, minWidth: 560 }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                         {sensitivityRows.map(({ grade, gpa, zell, hope }) => {
                           const col = zell ? GREEN : hope ? YELLOW : RED;
                           const isCurrent = grade === (schCourses[sensIdx]?.grade || 'B');
@@ -6963,6 +6996,7 @@ export default function Dashboard() {
                             <div key={grade}
                               onClick={() => setSchCourses(p => p.map((x, j) => j === sensIdx ? { ...x, grade } : x))}
                               style={{ textAlign: 'center', cursor: 'pointer', padding: '8px 4px', borderRadius: 7,
+                                flex: '1 1 60px', minWidth: 52, maxWidth: 72,
                                 background: isCurrent ? `${col.replace(')',',0.12)')}` : DARK,
                                 border: isCurrent ? `1px solid ${col.replace(')',',0.4)')}` : `1px solid ${BORDER_C}`,
                                 transition: 'all 0.12s' }}>
@@ -6974,7 +7008,6 @@ export default function Dashboard() {
                             </div>
                           );
                         })}
-                      </div>
                       </div>
                       <div style={{ marginTop: 12, fontSize: 11, color: TEXT3 }}>
                         Click a grade cell to apply it to the selected course and see the immediate GPA and financial impact.
@@ -7101,8 +7134,8 @@ export default function Dashboard() {
             {/* ── INSIGHTS ──────────────────────────────── */}
             {panel === 'insights' && (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
-              <div style={{ display: 'flex', gap: 2, background: DARK, borderRadius: 9, padding: 3, width: 'fit-content' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <div style={{ display: 'flex', gap: 2, background: DARK, borderRadius: 9, padding: 3, flexShrink: 0 }}>
                 {(() => {
                   const _IN_DEF = ['markets', 'news', 'signals', 'options'];
                   const _inOrder = getOrder('insights-tabs', _IN_DEF);
@@ -7129,7 +7162,7 @@ export default function Dashboard() {
               <div>
                 <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 700 }}>Markets</h1>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 24 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', gap: 16, marginBottom: 24 }}>
                   <div data-tour="markets-sp500" className="lc" style={CARD}>
                     <div style={{ fontWeight: 600, marginBottom: 4, fontSize: 13, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px' }}>S&P 500</div>
                     <SP500Chart candles={sp500Candles} period={sp500Period} onPeriodChange={fetchSP500} />
@@ -7164,7 +7197,7 @@ export default function Dashboard() {
                 {marketTickers.indices.length > 0 && (
                   <div className="lc" style={{ ...CARD, marginBottom: 16 }}>
                     <div style={{ fontWeight: 600, marginBottom: 14, fontSize: 13 }}>Indices</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12 }}>
                       {marketTickers.indices.map((t, i) => {
                         const up = (t.changePct || 0) >= 0;
                         return (
@@ -7251,6 +7284,42 @@ export default function Dashboard() {
                       const up = val >= 0;
                       return <span style={{ color: up ? GREEN : RED, fontWeight: 700 }}>{up ? '▲' : '▼'} {Math.abs(val).toFixed(2)}%</span>;
                     };
+                    if (isMobile) return (
+                      <div>
+                        {rows.map((t, i) => {
+                          const ext = extendedTickerData[t.symbol] || {};
+                          const d1 = ext.changePct1d != null ? ext.changePct1d : (t.changePct || null);
+                          return (
+                            <div key={i} className="lr" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: `1px solid ${BORDER_C}`, cursor: 'pointer' }}
+                              onClick={(e) => {
+                                if (e.target.closest('button')) return;
+                                setSelectedTicker(t);
+                                setTickerChartPeriod('3mo');
+                                fetchTickerChart(t.symbol, '3mo');
+                              }}>
+                              <div>
+                                <div style={{ fontWeight: 700, fontSize: 13, color: BLUE }}>{t.symbol || t.name}</div>
+                                {t.symbol && t.name !== t.symbol && <div style={{ fontSize: 11, color: TEXT3, marginTop: 1 }}>{t.name}</div>}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 14 }}>
+                                  {(t.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                                <span style={{ fontSize: 13, minWidth: 64, textAlign: 'right' }}>{pctCell(d1)}</span>
+                                {marketView === 'your_list' && (
+                                  <button onClick={() => {
+                                    const next = customTickers.filter(s => s !== t.symbol);
+                                    setCustomTickers(next);
+                                    localStorage.setItem('pl_tickers', JSON.stringify(next));
+                                    setCustomTickerData(prev => prev.filter(q => q.symbol !== t.symbol));
+                                  }} style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 14, padding: 0 }}>✕</button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
                     return (
                       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
@@ -7554,7 +7623,7 @@ export default function Dashboard() {
                               </div>
 
                               {/* Vector bars */}
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 8 }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 10, marginBottom: 8 }}>
                                 {[
                                   { label: 'M · Magnitude', val: a.M, color: '#4da3ff' },
                                   { label: 'P · Probability', val: a.P, color: '#4ade80' },
@@ -7701,7 +7770,7 @@ export default function Dashboard() {
                   {learnCategory === 'analyst' && isPremium && <YieldCurveChart yieldCurve={yieldCurve} />}
 
                   {/* Cards */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, alignItems: 'start', ...(learnCategory === 'analyst' && !isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}) }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, alignItems: 'start', ...(learnCategory === 'analyst' && !isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}) }}>
                     {section?.items.map(item => {
                       const expanded = learnExpanded.has(item.id);
                       return (
