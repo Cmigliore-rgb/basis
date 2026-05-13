@@ -22,7 +22,7 @@ const INSTITUTIONS = [
   { id: 'td',          name: 'TD Bank',          domain: 'tdbank.com',          category: 'bank',       aggregator: 'plaid', plaid_id: 'ins_22'     },
   { id: 'truist',      name: 'Truist',           domain: 'truist.com',          category: 'bank',       aggregator: 'plaid', plaid_id: 'ins_117182' },
   { id: 'usaa',        name: 'USAA',             domain: 'usaa.com',            category: 'bank',       aggregator: 'plaid', plaid_id: 'ins_23'     },
-  { id: 'navyfed',     name: 'Navy Federal',     domain: 'navyfederal.org',     category: 'bank',       aggregator: 'plaid', plaid_id: 'ins_10'     },
+  { id: 'navyfed',     name: 'Navy Federal',     domain: 'navyfederal.org',     category: 'bank',       aggregator: 'plaid', plaid_id: 'ins_133013' },
   { id: 'ally',        name: 'Ally Bank',        domain: 'ally.com',            category: 'bank',       aggregator: 'plaid', plaid_id: 'ins_116914' },
   { id: 'robinhood',   name: 'Robinhood',        domain: 'robinhood.com',       category: 'brokerage',  aggregator: 'plaid', plaid_id: 'ins_117272' },
   { id: 'wealthfront', name: 'Wealthfront',      domain: 'wealthfront.com',     category: 'brokerage',  aggregator: 'plaid' },
@@ -135,7 +135,8 @@ export default function ConnectAccountModal({ onSuccess, onClose }) {
     setLinking(inst.id);
     setError('');
     try {
-      const { data } = await api.post('/plaid/create_link_token', {});
+      const body = inst.plaid_id ? { institution_id: inst.plaid_id } : {};
+      const { data } = await api.post('/plaid/create_link_token', body);
 
       const init = () => {
         if (!window.Plaid) {

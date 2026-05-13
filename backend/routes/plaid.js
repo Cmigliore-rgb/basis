@@ -17,8 +17,9 @@ const config = new Configuration({
 const plaidClient = new PlaidApi(config);
 
 router.post('/create_link_token', requireAuth, async (req, res) => {
+  const { institution_id } = req.body || {};
   try {
-    const params = {
+    const base = {
       user: { client_user_id: String(req.user.id) },
       client_name: 'PeakLedger',
       products: [Products.Transactions],
@@ -26,17 +27,27 @@ router.post('/create_link_token', requireAuth, async (req, res) => {
       country_codes: [CountryCode.Us],
       language: 'en',
       webhook: 'https://peakledger.app/api/plaid/webhook',
-      account_filters: {
-        depository: { account_subtypes: ['checking', 'savings'] },
-        credit:     { account_subtypes: ['credit card'] },
-        investment: { account_subtypes: ['brokerage', 'ira', 'roth', '401k'] },
-        loan:       { account_subtypes: ['student', 'mortgage', 'auto'] },
-      },
     };
-    if (process.env.PLAID_REDIRECT_URI) {
-      params.redirect_uri = process.env.PLAID_REDIRECT_URI;
+    if (process.env.PLAID_REDIRECT_URI) base.redirect_uri = process.env.PLAID_REDIRECT_URI;
+
+    // When pre-selecting an institution, omit account_filters — they conflict with
+    // institution_id for institutions that don't offer every filtered subtype.
+    if (institution_id) {
+      try {
+        const r = await plaidClient.linkTokenCreate({ ...base, institution_id });
+        return res.json({ link_token: r.data.link_token });
+      } catch {
+        // Institution ID rejected — fall through to generic token without pre-selection
+      }
     }
-    const response = await plaidClient.linkTokenCreate(params);
+
+    base.account_filters = {
+      depository: { account_subtypes: ['checking', 'savings'] },
+      credit:     { account_subtypes: ['credit card'] },
+      investment: { account_subtypes: ['brokerage', 'ira', 'roth', '401k'] },
+      loan:       { account_subtypes: ['student', 'mortgage', 'auto'] },
+    };
+    const response = await plaidClient.linkTokenCreate(base);
     res.json({ link_token: response.data.link_token });
   } catch (err) {
     const detail = err.response?.data || err.message;
