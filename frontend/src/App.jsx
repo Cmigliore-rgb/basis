@@ -10,6 +10,7 @@ import Terms from './pages/Terms.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
 import MicrosoftCallback from './pages/MicrosoftCallback.jsx';
+import OAuthReturn from './pages/OAuthReturn.jsx';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/forgot-password"           element={<ForgotPassword />} />
           <Route path="/reset-password"            element={<ResetPassword />} />
           <Route path="/auth/microsoft/callback"   element={<MicrosoftCallback />} />
+          <Route path="/oauth-return"              element={<ProtectedRoute><OAuthReturn /></ProtectedRoute>} />
           <Route path="*"          element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

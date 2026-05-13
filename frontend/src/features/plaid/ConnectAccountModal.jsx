@@ -158,6 +158,7 @@ export default function ConnectAccountModal({ onSuccess, onClose }) {
                 public_token,
                 institution_name: metadata.institution?.name || inst.name,
               });
+              localStorage.removeItem('plaid_link_token');
               setLinking(null);
               onSuccess(metadata.institution?.name || inst.name);
               onClose();
@@ -186,6 +187,7 @@ export default function ConnectAccountModal({ onSuccess, onClose }) {
         }
         handlerRef.current = window.Plaid.create(config);
         window._plaidLinkHandler = handlerRef.current;
+        localStorage.setItem('plaid_link_token', data.link_token);
         handlerRef.current.open();
       };
 
