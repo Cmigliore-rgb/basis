@@ -10630,7 +10630,7 @@ export default function Dashboard() {
                         <div style={{ ...CARD, marginTop: 20, border: '1px solid rgba(168,85,247,0.25)', background: 'rgba(168,85,247,0.03)' }}>
                           <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Interactive Calculator</div>
                           <div style={{ fontSize: 12, color: TEXT2, marginBottom: 20 }}>Adjust any input. The future value updates instantly.</div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                             {[
                               { label: 'Starting Amount (PV)', val: tvmPV, set: setTvmPV, prefix: '$' },
                               { label: 'Monthly Contribution', val: tvmPMT, set: setTvmPMT, prefix: '$' },
@@ -10643,7 +10643,7 @@ export default function Dashboard() {
                               </div>
                             ))}
                           </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
                             {[
                               { label: 'Future Value', value: fmt(fv), color: '#a855f7', big: true },
                               { label: 'Total Contributed', value: fmt(contributed), color: TEXT },
@@ -11002,7 +11002,7 @@ export default function Dashboard() {
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>Credit health analysis: FICO score breakdown, utilization, and paydown impact.</div>
 
                     {/* Score + factors */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '260px 1fr', gap: 16, marginBottom: 20 }}>
                       {/* Gauge */}
                       <div style={{ ...CARD, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px 16px' }}>
                         <svg viewBox="0 0 240 150" style={{ width: '100%', display: 'block' }}>
@@ -11236,7 +11236,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Top stats */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
                         { label: 'Home Price',    value: fmt(homePrice),    sub: `${downPct * 100}% down · ${fmt(downPayment)}` },
                         { label: 'Monthly PITI',  value: fmt(monthlyBuy),   sub: `vs ${fmt(rent)}/mo rent`, color: monthlyBuy > rent ? RED : GREEN },
@@ -11841,7 +11841,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Metric cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
                       {[
                         { label: 'Expected Return', value: `${(expRet * 100).toFixed(1)}%`, sub: 'annualized', color: metricColor(expRet * 100, 4, 7, 10) },
                         { label: 'Portfolio Volatility', value: `${(portVol * 100).toFixed(1)}%`, sub: 'annualized std dev', color: portVol * 100 < 8 ? GREEN : portVol * 100 < 13 ? YELLOW : RED },
@@ -12267,7 +12267,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Hero: total debt stats */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
                         { label: 'Total Debt',     value: fmt(totalDebt),               sub: `${rawDebts.length} accounts`,   color: PINK   },
                         { label: 'Min Payments',   value: fmt(totalMin) + '/mo',         sub: 'combined minimum',              color: YELLOW },
@@ -12468,6 +12468,7 @@ export default function Dashboard() {
                     <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 16 }}>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 14 }}>Tax Bracket Breakdown</div>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                           <thead>
                             <tr style={{ borderBottom: BORDER }}>
@@ -12491,6 +12492,7 @@ export default function Dashboard() {
                             </tr>
                           </tbody>
                         </table>
+                        </div>
                         <div style={{ marginTop: 12, padding: '10px 12px', background: `${ORANGE}10`, borderRadius: 8, border: `1px solid ${ORANGE}25`, fontSize: 12, color: TEXT2 }}>
                           Marginal rate: <span style={{ color: ORANGE, fontWeight: 700 }}>{(marginal*100).toFixed(0)}%</span>
                           <span style={{ margin: '0 10px', color: BORDER_C }}>|</span>
@@ -12621,6 +12623,7 @@ export default function Dashboard() {
                     <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 16 }}>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 14 }}>Purchasing Power Over Time</div>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                           <thead>
                             <tr style={{ borderBottom: BORDER }}>
@@ -12645,10 +12648,12 @@ export default function Dashboard() {
                             })}
                           </tbody>
                         </table>
+                        </div>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div style={CARD}>
                           <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 14 }}>Real-World Price Changes (2000-2024)</div>
+                          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                             <thead>
                               <tr style={{ borderBottom: BORDER }}>
@@ -12672,6 +12677,7 @@ export default function Dashboard() {
                               })}
                             </tbody>
                           </table>
+                          </div>
                         </div>
                         <div style={{ ...CARD, background: `${GREEN}08`, border: `1px solid ${GREEN}25` }}>
                           <div style={{ fontWeight: 700, fontSize: 13, color: GREEN, marginBottom: 10 }}>What if you invested it instead?</div>
@@ -12846,6 +12852,7 @@ export default function Dashboard() {
                           </div>
                         ))}
                       </div>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
@@ -12871,6 +12878,7 @@ export default function Dashboard() {
                           })}
                         </tbody>
                       </table>
+                      </div>
                     </div>
 
                     {/* Key concepts */}
@@ -12921,7 +12929,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Metric cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
                         { label: 'Portfolio Volatility', value: `${(curVol * 100).toFixed(1)}%`,      sub: 'annualized std dev',         color: curVol < 0.18 ? GREEN : curVol < 0.24 ? YELLOW : RED },
                         { label: 'Market Risk',          value: `${(marketRisk * 100).toFixed(1)}%`,  sub: 'cannot be eliminated',       color: RED },
@@ -12978,6 +12986,7 @@ export default function Dashboard() {
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Portfolio Type Comparison</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Assumes 30% average single-stock volatility and 0.30 average pairwise correlation</div>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
@@ -13003,6 +13012,7 @@ export default function Dashboard() {
                           })}
                         </tbody>
                       </table>
+                      </div>
                       <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {COMPARISONS.map(s => (
                           <div key={s.label} style={{ fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>
@@ -13144,6 +13154,7 @@ export default function Dashboard() {
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Historical Annualized Returns</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Approximate annualized total returns (including dividends) as of end of 2024</div>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
@@ -13163,6 +13174,7 @@ export default function Dashboard() {
                           ))}
                         </tbody>
                       </table>
+                      </div>
                       <div style={{ marginTop: 10, fontSize: 11, color: TEXT3 }}>Past performance does not guarantee future results. Returns rounded for illustration.</div>
                     </div>
 
@@ -13347,6 +13359,7 @@ export default function Dashboard() {
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>The Cost of Trying to Time the Market</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>$10,000 invested in the S&P 500 for 20 years (2003–2022). The best days often happen right in the middle of bear markets.</div>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
@@ -13369,6 +13382,7 @@ export default function Dashboard() {
                           })}
                         </tbody>
                       </table>
+                      </div>
                       <div style={{ marginTop: 12, padding: '10px 14px', background: `${GREEN}06`, border: `1px solid ${GREEN}20`, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
                         Missing just 10 of the best trading days cut the final value by more than half. The problem: you cannot know in advance when those best days will be — they typically happen within weeks of the worst days.
                       </div>
@@ -13497,6 +13511,7 @@ export default function Dashboard() {
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Zone vs Forward Returns · Historical Averages</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Average S&P 500 return 12 months after each Fear & Greed reading (approximate, based on data since 2011)</div>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
@@ -13517,12 +13532,14 @@ export default function Dashboard() {
                           ))}
                         </tbody>
                       </table>
+                      </div>
                     </div>
 
                     {/* Historical snapshots */}
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Notable Historical Readings</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Actual Fear & Greed scores at major market turning points</div>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
@@ -13546,6 +13563,7 @@ export default function Dashboard() {
                           })}
                         </tbody>
                       </table>
+                      </div>
                     </div>
 
                     {/* Key concepts */}
@@ -13690,6 +13708,7 @@ export default function Dashboard() {
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Year-by-Year Growth · Roth IRA vs 401(k) with {retMatchPct}% Match</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Assumes 8%/yr return. 401(k) after-tax column applies {retTaxRetire}% retirement tax rate to full balance at each checkpoint.</div>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
@@ -13716,6 +13735,7 @@ export default function Dashboard() {
                           })}
                         </tbody>
                       </table>
+                      </div>
                     </div>
 
                     {/* Key concepts */}
@@ -13828,6 +13848,7 @@ export default function Dashboard() {
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Insurance Types: What You Actually Need</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Roughly ordered by priority for a young adult</div>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
@@ -13848,12 +13869,14 @@ export default function Dashboard() {
                           ))}
                         </tbody>
                       </table>
+                      </div>
                     </div>
 
                     {/* Deductible tradeoff */}
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>The Deductible Tradeoff</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Higher deductible = lower annual premium, but you pay more out-of-pocket when a claim hits. Break-even = premium savings / extra deductible.</div>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
@@ -13880,6 +13903,7 @@ export default function Dashboard() {
                           })}
                         </tbody>
                       </table>
+                      </div>
                       <div style={{ marginTop: 12, padding: '10px 14px', background: `${TEAL}06`, border: `1px solid ${TEAL}20`, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
                         If you go more than 1.7 years without a claim, the High-Deductible Plan saves you money. If you expect frequent claims, the High-Premium Plan costs less overall. Healthy young adults often do better with high-deductible plans paired with an HSA.
                       </div>
@@ -13950,7 +13974,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Summary cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
                         { label: 'Enterprise Value',       value: `$${(ev / 1000).toFixed(2)}B`,          sub: 'PV(FCF) + PV(TV)',           color: PURPLE },
                         { label: 'Equity Value',           value: `$${(Math.max(0, equityValue) / 1000).toFixed(2)}B`, sub: `EV − $${NET_DEBT}M net debt`, color: BLUE },
@@ -14127,7 +14151,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Metric cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
                         { label: 'Bond Price',        value: `$${bondPrice.toFixed(2)}`,                                      sub: isPremium ? 'Premium bond' : isDiscount ? 'Discount bond' : 'At par',  color: isPremium ? GREEN : isDiscount ? RED : YELLOW },
                         { label: 'Premium / Discount', value: `${premiumDiscount >= 0 ? '+' : ''}$${premiumDiscount.toFixed(2)}`, sub: 'vs $1,000 par',              color: premiumDiscount >= 0 ? GREEN : RED },
@@ -14176,6 +14200,7 @@ export default function Dashboard() {
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Cash Flow Schedule (semi-annual)</div>
                         <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>{periods} total periods · showing first 6 + final</div>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                           <thead>
                             <tr style={{ borderBottom: BORDER }}>
@@ -14195,6 +14220,7 @@ export default function Dashboard() {
                             ))}
                           </tbody>
                         </table>
+                        </div>
                         <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', padding: '8px 8px', borderTop: BORDER, fontSize: 13, fontWeight: 700 }}>
                           <span>Total PV = Bond Price</span>
                           <span style={{ fontFamily: 'monospace', color: isPremium ? GREEN : isDiscount ? RED : YELLOW }}>${bondPrice.toFixed(2)}</span>
@@ -14206,6 +14232,7 @@ export default function Dashboard() {
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Price-Yield Sensitivity</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>How price changes at different market yields (coupon fixed at {bondCoupon}%)</div>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
@@ -14231,6 +14258,7 @@ export default function Dashboard() {
                           })}
                         </tbody>
                       </table>
+                      </div>
                       <div style={{ marginTop: 10, fontSize: 11, color: TEXT3 }}>
                         Price and yield move inversely. A +1% rise in market rates changes this bond's price by ${(priceAt(bondYtm + 1) - bondPrice).toFixed(2)} ({((Math.abs(priceAt(bondYtm + 1) - bondPrice) / bondPrice) * 100).toFixed(1)}%).
                       </div>
@@ -14294,7 +14322,7 @@ export default function Dashboard() {
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Retail Chain Co. (fictional) — adjust entry multiple, leverage, EBITDA growth, exit multiple, and hold period to see returns.
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
                         { label: 'Entry EV',      value: `$${(entryEV/1000).toFixed(1)}B`,     sub: `${lboEntryMult}× EBITDA`,          color: ORANGE },
                         { label: 'Entry Equity',  value: `$${(entryEquity/1000).toFixed(2)}B`, sub: `${100-lboDebtPct}% of entry EV`,   color: BLUE },
@@ -14331,6 +14359,7 @@ export default function Dashboard() {
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Annual Debt Paydown</div>
                         <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>8% interest on debt · FCF = EBITDA × 45% − interest</div>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                           <thead>
                             <tr style={{ borderBottom: BORDER }}>
@@ -14351,6 +14380,7 @@ export default function Dashboard() {
                             ))}
                           </tbody>
                         </table>
+                        </div>
                         <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
                           {[
                             { label: 'Exit EV', value: `$${(exitEV/1000).toFixed(2)}B`, color: ORANGE },
@@ -14420,7 +14450,7 @@ export default function Dashboard() {
                         <button key={y} onClick={() => setTenkYear(y)} style={{ padding: '7px 20px', borderRadius: 8, border: `1px solid ${tenkYear === y ? VIOLET : BORDER_C}`, background: tenkYear === y ? `${VIOLET}18` : 'transparent', color: tenkYear === y ? VIOLET : TEXT2, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Year {y}</button>
                       ))}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
                         { label: 'Revenue',      value: `$${row.rev}M`,         sub: prev ? `${revGrowth}% YoY growth` : 'Base year', color: VIOLET },
                         { label: 'EBITDA Margin', value: `${ebitdaMargin}%`,    sub: `$${ebitda}M EBITDA`,             color: BLUE },
@@ -14476,6 +14506,7 @@ export default function Dashboard() {
                         </div>
                         <div style={CARD}>
                           <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>3-Year Trend</div>
+                          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                             <thead>
                               <tr style={{ borderBottom: BORDER }}>
@@ -14500,6 +14531,7 @@ export default function Dashboard() {
                               ))}
                             </tbody>
                           </table>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -14792,7 +14824,7 @@ export default function Dashboard() {
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Adjust coupon, yield, and maturity to see how interest rate sensitivity changes. All calculations on a $1,000 par semi-annual bond.
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
                         { label: 'Bond Price',         value: `$${price.toFixed(2)}`,    sub: price > 1000 ? 'Premium' : price < 1000 ? 'Discount' : 'At par', color: price > 1000 ? GREEN : price < 1000 ? RED : YELLOW },
                         { label: 'Macaulay Duration',  value: `${macD.toFixed(2)} yr`,   sub: 'Weighted avg time to CF',   color: AMBER },
@@ -14901,7 +14933,7 @@ export default function Dashboard() {
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Use the PD × LGD framework to derive credit spreads. Build a bond yield from its risk-free and credit components.
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
                         { label: 'Expected Loss', value: `${expectedLoss.toFixed(0)}bps`, sub: 'PD × LGD',              color: CR_RED },
                         { label: 'Credit Spread',  value: `${creditSpread.toFixed(0)}bps`, sub: '≈ expected loss',       color: YELLOW },
@@ -14940,6 +14972,7 @@ export default function Dashboard() {
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Rating Scale & Spread Benchmarks</div>
                         <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Typical 1-year PD and credit spreads by rating category</div>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                           <thead>
                             <tr style={{ borderBottom: BORDER }}>
@@ -14964,6 +14997,7 @@ export default function Dashboard() {
                             })}
                           </tbody>
                         </table>
+                        </div>
                         <div style={{ marginTop: 10, fontSize: 11, color: TEXT3 }}>Investment Grade (IG): AAA–BBB. High Yield (HY): BB and below. The BBB/BB line is the "fallen angel" threshold.</div>
                       </div>
                     </div>
@@ -15011,7 +15045,7 @@ export default function Dashboard() {
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Build payoff diagrams for long calls and puts. Adjust strike and premium to see profit/loss at any stock price at expiry.
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
                         { label: 'Strike Price',     value: `$${optStrike}`,      sub: 'Call & put strike',         color: OPT_GREEN },
                         { label: 'Call Breakeven',   value: `$${callBreakeven}`,  sub: `Strike + $${optCallPrem} premium`, color: BLUE },
@@ -15148,7 +15182,7 @@ export default function Dashboard() {
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Price a European call and put using Black-Scholes. Adjust volatility, time, and moneyness to see how IV drives option premium.
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
                         { label: 'Call Price',   value: `$${callPrice.toFixed(2)}`,  sub: `Δ = ${delta.toFixed(3)}`,        color: BLUE },
                         { label: 'Put Price',    value: `$${putPrice.toFixed(2)}`,   sub: `Δ = ${(delta-1).toFixed(3)}`,    color: RED },
@@ -15273,7 +15307,7 @@ export default function Dashboard() {
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
                       Observe how delta and gamma evolve as the stock price moves relative to the strike. Adjust vol and time to see how they shape the sensitivity profile.
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
                         { label: 'ATM Call Delta',  value: atmGreeks.delta.toFixed(3),             sub: 'At-the-money delta',          color: PURPLE_G },
                         { label: 'ATM Put Delta',   value: (atmGreeks.delta - 1).toFixed(3),        sub: 'Negative (short exposure)',    color: RED },
