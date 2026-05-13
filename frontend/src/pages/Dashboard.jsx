@@ -3493,6 +3493,7 @@ export default function Dashboard() {
           { key: 'overview',        label: 'Home',        icon: '⊞', edu: false },
           { key: 'cashflow',        label: 'Money',       icon: '⬡', edu: false },
           { key: 'investments',     label: 'Invest',      icon: '◈', edu: false },
+          { key: 'insights',        label: 'Markets',     icon: '◬', edu: false },
           { key: 'learn',           label: 'Learn',       icon: '✦', edu: false },
         ];
         const isTabActive = (t) => panel === t.key && (t.edu ? eduMode : !eduMode || t.key === 'overview');
@@ -3519,14 +3520,6 @@ export default function Dashboard() {
                   </button>
                 )}
 
-                {/* Finance-mode extras */}
-                {!eduMode && (
-                  <button onClick={() => { setPanel('insights'); switchEduMode(false); setShowMobileMenu(false); }}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', background: panel === 'insights' ? 'rgba(255,255,255,0.04)' : 'none', border: 'none', color: panel === 'insights' ? TEXT : TEXT2, cursor: 'pointer', fontSize: 14, fontWeight: panel === 'insights' ? 600 : 400, textAlign: 'left' }}>
-                    <span style={{ fontSize: 18 }}>◬</span>
-                    <span>Market Insights</span>
-                  </button>
-                )}
 
                 {/* Education extras */}
                 {eduMode && (
@@ -5549,13 +5542,13 @@ export default function Dashboard() {
 
                 {/* Subtabs */}
                 {!selectedCategory && (
-                  <div data-tour="budgeting-tabs" style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: BORDER, paddingBottom: 14 }}>
+                  <div data-tour="budgeting-tabs" style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: BORDER, paddingBottom: 14, overflowX: 'auto', WebkitOverflowScrolling: 'touch', flexShrink: 0 }}>
                     {[['income', 'Income'], ['spending', 'Expenses'], ['trends', 'Trends'], ['subscriptions', 'Subscriptions'], ['goals', 'Goals']].map(([key, label]) => (
                       <button key={key} onClick={() => setBudgetTab(key)}
                         style={{ padding: '7px 18px', borderRadius: 8, border: budgetTab === key ? `1px solid ${BLUE}` : BORDER,
                           background: budgetTab === key ? 'rgba(77,163,255,0.1)' : MUTED,
                           color: budgetTab === key ? BLUE : TEXT2,
-                          fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s' }}>
+                          fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0, whiteSpace: 'nowrap' }}>
                         {label}
                       </button>
                     ))}
@@ -5974,11 +5967,12 @@ export default function Dashboard() {
                       )}
                       <div className="lc" style={CARD}>
                         <div style={{ fontWeight: 600, marginBottom: 20 }}>Spending by Category: {lastMonthLabel} vs {thisMonthLabel}</div>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 340 }}>
                           <thead>
                             <tr style={{ borderBottom: BORDER }}>
                               {['Category', lastMonthLabel, thisMonthLabel, 'Change'].map((h, idx) => (
-                                <th key={h} style={{ padding: '8px 12px', textAlign: idx === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                                <th key={h} style={{ padding: '8px 12px', textAlign: idx === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>{h}</th>
                               ))}
                             </tr>
                           </thead>
@@ -5988,18 +5982,19 @@ export default function Dashboard() {
                               const changeColor = diff > 0 ? RED : diff < 0 ? GREEN : TEXT2;
                               return (
                                 <tr key={cat} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                                  <td style={{ padding: '11px 12px', fontWeight: 500, fontSize: 13 }}>{cat}</td>
-                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: TEXT2 }}>{last > 0 ? fmt(last) : '—'}</td>
-                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{curr > 0 ? fmt(curr) : '—'}</td>
-                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: changeColor }}>
-                                    {diff === 0 ? '—' : `${diff > 0 ? '+' : ''}${fmt(Math.abs(diff))}`}
-                                    {pct !== null && <span style={{ fontSize: 11, marginLeft: 5, opacity: 0.7 }}>({pct > 0 ? '+' : ''}{pct.toFixed(0)}%)</span>}
+                                  <td style={{ padding: '11px 12px', fontWeight: 500, fontSize: 13, whiteSpace: 'nowrap' }}>{cat}</td>
+                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: TEXT2, whiteSpace: 'nowrap' }}>{last > 0 ? fmt(last) : '—'}</td>
+                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, whiteSpace: 'nowrap' }}>{curr > 0 ? fmt(curr) : '—'}</td>
+                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: changeColor, whiteSpace: 'nowrap' }}>
+                                    <div>{diff === 0 ? '—' : `${diff > 0 ? '+' : ''}${fmt(Math.abs(diff))}`}</div>
+                                    {pct !== null && <div style={{ fontSize: 11, opacity: 0.7 }}>({pct > 0 ? '+' : ''}{pct.toFixed(0)}%)</div>}
                                   </td>
                                 </tr>
                               );
                             })}
                           </tbody>
                         </table>
+                        </div>
                       </div>
                     </>
                   );
@@ -6067,26 +6062,28 @@ export default function Dashboard() {
                       </div>
                       <div className="lc" style={CARD}>
                         <div style={{ fontWeight: 600, marginBottom: 20 }}>Recurring Charges</div>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 420 }}>
                           <thead>
                             <tr style={{ borderBottom: BORDER }}>
                               {['Merchant', 'Frequency', 'Per Charge', 'Monthly Cost', 'Last Charge'].map(h => (
-                                <th key={h} style={{ padding: '8px 12px', textAlign: ['Per Charge', 'Monthly Cost'].includes(h) ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                                <th key={h} style={{ padding: '8px 12px', textAlign: ['Per Charge', 'Monthly Cost'].includes(h) ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>{h}</th>
                               ))}
                             </tr>
                           </thead>
                           <tbody>
                             {displaySubs.map((sub, i) => (
                               <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                                <td style={{ padding: '11px 12px', fontWeight: 500 }}>{sub.name}</td>
-                                <td style={{ padding: '11px 12px' }}><span style={{ background: MUTED, color: TEXT2, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600 }}>{sub.frequency}</span></td>
-                                <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{fmt(sub.avgAmt)}</td>
-                                <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: RED }}>{fmt(sub.monthlyCost)}</td>
-                                <td style={{ padding: '11px 12px', color: TEXT2, fontSize: 13 }}>{fmtDate(sub.lastDate)}</td>
+                                <td style={{ padding: '11px 12px', fontWeight: 500, whiteSpace: 'nowrap' }}>{sub.name}</td>
+                                <td style={{ padding: '11px 12px' }}><span style={{ background: MUTED, color: TEXT2, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>{sub.frequency}</span></td>
+                                <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, whiteSpace: 'nowrap' }}>{fmt(sub.avgAmt)}</td>
+                                <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: RED, whiteSpace: 'nowrap' }}>{fmt(sub.monthlyCost)}</td>
+                                <td style={{ padding: '11px 12px', color: TEXT2, fontSize: 13, whiteSpace: 'nowrap' }}>{fmtDate(sub.lastDate)}</td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
+                        </div>
                         {!isMockData && (
                           <div style={{ marginTop: 16, padding: '12px 16px', background: MUTED, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
                             Detected by finding charges with consistent amounts recurring on a regular schedule.
@@ -6957,7 +6954,8 @@ export default function Dashboard() {
                           ))}
                         </div>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(11, 1fr)', gap: 6 }}>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(11, minmax(48px, 1fr))', gap: 6, minWidth: 560 }}>
                         {sensitivityRows.map(({ grade, gpa, zell, hope }) => {
                           const col = zell ? GREEN : hope ? YELLOW : RED;
                           const isCurrent = grade === (schCourses[sensIdx]?.grade || 'B');
@@ -6976,6 +6974,7 @@ export default function Dashboard() {
                             </div>
                           );
                         })}
+                      </div>
                       </div>
                       <div style={{ marginTop: 12, fontSize: 11, color: TEXT3 }}>
                         Click a grade cell to apply it to the selected course and see the immediate GPA and financial impact.
@@ -7656,7 +7655,7 @@ export default function Dashboard() {
                     const _lnOrder = getOrder('learn-tabs', _LN_DEF);
                     const _lnMap = Object.fromEntries(LEARN_CONTENT.map(s => [s.category, s]));
                     return (
-                      <div data-tour="learn-tabs" style={{ display: 'flex', gap: 8, marginBottom: 28, borderBottom: BORDER, paddingBottom: 16, alignItems: 'center' }}>
+                      <div data-tour="learn-tabs" style={{ display: 'flex', gap: 8, marginBottom: 28, borderBottom: BORDER, paddingBottom: 16, alignItems: 'center', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                         {_lnOrder.filter(cat => !isSubtabHidden('learn', cat)).map(cat => {
                           const s = _lnMap[cat]; if (!s) return null;
                           return (
@@ -7666,7 +7665,7 @@ export default function Dashboard() {
                               onDragOver={e => e.preventDefault()}
                               onDrop={e => { e.preventDefault(); const [, srcId] = e.dataTransfer.getData('text/plain').split('|||'); if (srcId !== s.category) handleReorder('learn-tabs', _LN_DEF)(srcId, s.category); }}
                               onClick={() => { setLearnCategory(s.category); setLearnExpanded(new Set()); }}
-                              style={{ padding: '8px 20px', minWidth: 130, textAlign: 'center', borderRadius: 8, border: learnCategory === s.category ? `1px solid ${s.color}` : BORDER, background: learnCategory === s.category ? `${s.color}18` : MUTED, color: learnCategory === s.category ? s.color : TEXT2, fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s' }}>
+                              style={{ padding: '8px 20px', flexShrink: 0, whiteSpace: 'nowrap', textAlign: 'center', borderRadius: 8, border: learnCategory === s.category ? `1px solid ${s.color}` : BORDER, background: learnCategory === s.category ? `${s.color}18` : MUTED, color: learnCategory === s.category ? s.color : TEXT2, fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s' }}>
                               {s.label}
                             </button>
                           );
