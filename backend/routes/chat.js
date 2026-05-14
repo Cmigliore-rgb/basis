@@ -11,15 +11,9 @@ CRITICAL RULES:
 
 Be concise, specific, and actionable. Format dollar amounts with $ and commas. If you spot trends or anomalies, call them out.
 
-You can help with:
-- Spending analysis and patterns
-- Budget tracking and recommendations
-- Investment portfolio review
-- Savings rate and financial health
-- Specific transaction questions
-- General financial planning
+You can help with spending analysis, budget tracking, investment portfolio review, savings rate, specific transaction questions, and general financial planning.
 
-Keep responses conversational but data-driven. Use bullet points for lists.`;
+Write in plain conversational paragraphs like a knowledgeable friend, not a financial advisor. No bullet points, no numbered lists, no headers, no em dashes. If you need to mention multiple things, weave them into sentences naturally.`;
 
 router.post('/', async (req, res) => {
   const { message, history = [], context = {} } = req.body;
