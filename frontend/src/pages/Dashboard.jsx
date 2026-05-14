@@ -99,7 +99,7 @@ const NAV = [
   { key: 'overview',       label: 'Overview',     icon: '⊞', premium: false, section: 'finance'   },
   { key: 'cashflow',       label: 'Cash Flow',    icon: '⬡', premium: false, section: 'finance'   },
   { key: 'investments',    label: 'Investments',  icon: '◈', premium: false, section: 'finance'   },
-  { key: 'insights',       label: 'Market Insights', icon: '◬', premium: true,  section: 'finance'   },
+  { key: 'insights',       label: 'Market Insights', icon: '◬', section: 'finance'   },
   { key: 'learn',          label: 'Learn',        icon: '✦', premium: false, section: 'finance'   },
   { key: 'edu-courses',    label: 'My Courses',   icon: '◫', premium: false, section: 'education' },
 ];
@@ -7936,11 +7936,11 @@ export default function Dashboard() {
 
                 <div>
                 {/* Indices row */}
-                {(isPremium ? marketTickers.indices : SNAPSHOT_INDICES).length > 0 && (
+                {marketTickers.indices.length > 0 && (
                   <div className="lc" style={{ ...CARD, marginBottom: 16 }}>
                     <div style={{ fontWeight: 600, marginBottom: 14, fontSize: 13 }}>Indices</div>
                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12 }}>
-                      {(isPremium ? marketTickers.indices : SNAPSHOT_INDICES).map((t, i) => {
+                      {marketTickers.indices.map((t, i) => {
                         const up = (t.changePct || 0) >= 0;
                         return (
                           <div key={i} style={{ padding: '12px 14px', background: DARK, borderRadius: 8, border: BORDER }}>
@@ -7962,21 +7962,19 @@ export default function Dashboard() {
                 <div className="lc" style={CARD}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                     <div style={{ fontWeight: 600 }}>
-                      {!isPremium ? 'Most Active' : marketView === 'your_list' ? 'Your List' : marketView === 'day_gainers' ? 'Top Gainers' : marketView === 'day_losers' ? 'Top Losers' : 'Most Active'}
+                      {marketView === 'your_list' ? 'Your List' : marketView === 'day_gainers' ? 'Top Gainers' : marketView === 'day_losers' ? 'Top Losers' : 'Most Active'}
                     </div>
-                    {isPremium && (
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                        <select value={marketView} onChange={e => setMarketView(e.target.value)}
-                          style={{ padding: '5px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
-                          <option value="most_actives">Most Active</option>
-                          <option value="day_gainers">Gainers</option>
-                          <option value="day_losers">Losers</option>
-                          <option value="your_list">Your List</option>
-                        </select>
-                        <button onClick={() => fetchMarketView(marketView, customTickers)}
-                          style={{ padding: '5px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, cursor: 'pointer' }}>↻</button>
-                      </div>
-                    )}
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <select value={marketView} onChange={e => setMarketView(e.target.value)}
+                        style={{ padding: '5px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
+                        <option value="most_actives">Most Active</option>
+                        <option value="day_gainers">Gainers</option>
+                        <option value="day_losers">Losers</option>
+                        <option value="your_list">Your List</option>
+                      </select>
+                      <button onClick={() => fetchMarketView(marketView, customTickers)}
+                        style={{ padding: '5px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, cursor: 'pointer' }}>↻</button>
+                    </div>
                   </div>
 
                   {marketView === 'your_list' && (
@@ -8010,7 +8008,7 @@ export default function Dashboard() {
                   )}
 
                   {(() => {
-                    const rows = !isPremium ? SNAPSHOT_MARKET_VIEW : marketView === 'your_list'
+                    const rows = marketView === 'your_list'
                       ? customTickerData
                       : marketViewData.length ? marketViewData : marketTickers.active;
                     if (loadingMarketView) return <div style={{ color: TEXT2, textAlign: 'center', padding: 24, fontSize: 13 }}>Loading…</div>;
