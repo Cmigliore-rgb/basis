@@ -9560,6 +9560,26 @@ export default function Dashboard() {
 
                 <ConnectedAccountsCard onFixConnection={openUpdateMode} />
 
+                {isPremium && (
+                  <div style={{ ...CARD, marginBottom: 16 }}>
+                    <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Subscription</div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>You're on the Premium plan. Manage or cancel your subscription through the billing portal.</div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const r = await api.post('/stripe/portal');
+                          window.location.href = r.data.url;
+                        } catch (e) {
+                          alert('Could not open billing portal. Please try again.');
+                        }
+                      }}
+                      style={{ padding: '9px 20px', background: 'transparent', border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Manage Subscription
+                    </button>
+                  </div>
+                )}
+
                 <div style={{ ...CARD, marginBottom: 16 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Appearance</div>
                   <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>Color scheme and accent color.</div>
