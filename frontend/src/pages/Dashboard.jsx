@@ -4934,6 +4934,25 @@ export default function Dashboard() {
                   </div>
                   {showGoalForm && (
                     <div style={{ marginBottom: 16, padding: 16, background: DARK, borderRadius: 8, border: BORDER }}>
+                      {!editingGoal && (
+                        <div style={{ marginBottom: 14 }}>
+                          <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 8 }}>Quick Presets</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {[
+                              { name: 'Recruiting Season Fund', target: '1500', desc: 'Suit, flights, hotels for interviews' },
+                              { name: 'Emergency Fund',         target: '1000', desc: '1 month of expenses' },
+                              { name: 'Spring Break',           target: '600',  desc: 'Travel and lodging' },
+                              { name: 'Laptop Upgrade',         target: '1200', desc: 'New machine for senior year' },
+                            ].map(p => (
+                              <button key={p.name} onClick={() => setGoalForm(f => ({ ...f, name: p.name, target: p.target }))}
+                                title={p.desc}
+                                style={{ padding: '5px 12px', background: goalForm.name === p.name ? `${BLUE_BTN}22` : MUTED, border: `1px solid ${goalForm.name === p.name ? BLUE_BTN : BORDER_C}`, borderRadius: 20, color: goalForm.name === p.name ? BLUE : TEXT2, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                {p.name === 'Recruiting Season Fund' ? '★ ' : ''}{p.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 12 }}>
                         {[
                           { label: 'Goal Name',      type: 'text',   key: 'name',      placeholder: 'e.g. Emergency Fund' },
