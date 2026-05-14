@@ -1404,7 +1404,8 @@ function YieldCurveChart({ yieldCurve }) {
 const _OV  = ['[data-tour="nav-overview"]'];
 const _CF_B = ['[data-tour="nav-cashflow"]', '[data-tour="cashflow-tab-banking"]'];
 const _CF_U = ['[data-tour="nav-cashflow"]', '[data-tour="cashflow-tab-budgeting"]'];
-const _CF_T = ['[data-tour="nav-cashflow"]', '[data-tour="cashflow-tab-taxes"]'];
+const _CF_T   = ['[data-tour="nav-cashflow"]', '[data-tour="cashflow-tab-taxes"]'];
+const _CF_SCH = ['[data-tour="nav-cashflow"]', '[data-tour="cashflow-tab-scholarship"]'];
 const _INV = ['[data-tour="nav-investments"]'];
 const _IN_M = ['[data-tour="nav-insights"]', '[data-tour="insights-tab-markets"]'];
 const _IN_N = ['[data-tour="nav-insights"]', '[data-tour="insights-tab-news"]'];
@@ -1419,7 +1420,7 @@ const FINANCE_TOUR_STEPS = [
   { sel: '[data-tour="sidebar-nav"]',              panel: 'overview',                              side: 'right',
     title: 'Your Navigation',
     body: 'The sidebar is your navigation hub. Each section in Personal Finance has its own panel: Overview, Cash Flow, Investments, Market Insights, Learn, and Settings. Click any item to switch views. The Get Premium button connects your real accounts. Take a Tour restarts this guide from wherever you are.' },
-  { sel: '[data-tour="overview-snapshot"]',         panel: 'overview',                              side: 'bottom',  extraSels: _OV,
+  { sel: '[data-tour="overview-cards"]',            panel: 'overview',   selBottom: '[data-tour="overview-savings-rate"]', side: 'bottom',  extraSels: _OV,
     title: 'Your Financial Snapshot',
     body: 'The top row shows net worth, total cash, and portfolio value. Below that is your Monthly Savings Rate card, which tracks what percentage of your income you kept this month against the 20% target. These numbers update in real time once your accounts are connected.' },
   { sel: '[data-tour="overview-networth-chart"]',  panel: 'overview',                              side: 'bottom',  extraSels: _OV,
@@ -1440,8 +1441,7 @@ const FINANCE_TOUR_STEPS = [
   { sel: '[data-tour="debt-payoff"]',              panel: 'cashflow',   tab: 'banking',            side: 'top',     extraSels: _CF_B,
     title: 'Debt Payoff Planner',
     body: 'The Debt Payoff Planner compares the avalanche method (highest interest first) against the snowball method (smallest balance first) using your actual debts. Enter an extra monthly payment and see exactly how many months you save and how much interest you avoid under each strategy.' },
-  { sel: '[data-tour="budgeting-tabs"]',           panel: 'cashflow',   tab: 'budgeting',          side: 'bottom',  extraSels: _CF_U, spotPadBottom: -6,
-    title: 'Budgeting Overview',
+  { sel: '[data-tour="budgeting-tabs"]',           panel: 'cashflow',   tab: 'budgeting',          side: 'bottom',  extraSels: _CF_U,    title: 'Budgeting Overview',
     body: 'The Budgeting section has five tabs: Income (your earning history), Expenses (spending by category), Trends (month-over-month patterns), Subscriptions (recurring charges), and Goals (savings targets linked to real accounts). Each one gives you a different lens on the same transactions.' },
   { sel: '[data-tour="budget-income"]',            panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'income',   side: 'bottom',  extraSels: _CF_U,
     title: 'Income Tracker',
@@ -1464,11 +1464,9 @@ const FINANCE_TOUR_STEPS = [
   { sel: '[data-tour="news-feed-header"]',         panel: 'insights',   insightsTab: 'news',        side: 'bottom',  extraSels: _IN_N,
     title: 'Market Insights: News',
     body: 'The News tab pulls live financial headlines and lets you filter by any ticker symbol. Type a symbol like AAPL or VTI and hit Filter to narrow to articles mentioning that stock. This is the fastest way to catch earnings releases, analyst calls, and sector headlines as they break.' },
-  { sel: '[data-tour="signal-engine-header"]',     panel: 'insights',   insightsTab: 'signals',     side: 'bottom',  extraSels: _IN_S, spotPadBottom: 0,
-    title: 'Market Insights: Signal Engine',
+  { sel: '[data-tour="signal-engine-header"]',     panel: 'insights',   insightsTab: 'signals',     side: 'bottom',  extraSels: _IN_S,    title: 'Market Insights: Signal Engine',
     body: 'Signal Engine scores every article using four factors: magnitude (how big the event is), probability (how likely it is to move the stock), immediacy (time sensitivity), and moat (how defensible the company is). The heatmap shows which tickers have the strongest signals right now. Click any ticker to see sector contagion and the articles driving the score.' },
-  { sel: '[data-tour="options-header"]',           panel: 'insights',   insightsTab: 'options',     side: 'bottom',  extraSels: _IN_O, spotPadBottom: 2,
-    title: 'Market Insights: Options',
+  { sel: '[data-tour="options-header"]',           panel: 'insights',   insightsTab: 'options',     side: 'bottom',  extraSels: _IN_O,    title: 'Market Insights: Options',
     body: 'The Options tab shows a live options chain for any ticker you enter. Call and put contracts are listed by strike and expiration with bid, ask, volume, open interest, and implied volatility. Use this alongside the Analyst track to practice reading real options flow before making any actual trades.' },
   { sel: '[data-tour="learn-tab-essentials"]',     panel: 'learn',      learnCategory: 'essentials', side: 'bottom', extraSels: _LRN,
     title: 'Learn: The Essentials',
@@ -1488,7 +1486,7 @@ const STUDENT_TOUR_STEPS = [
   { sel: '[data-tour="sidebar-nav"]',              panel: 'overview',                              side: 'right',
     title: 'The Overview Tab',
     body: 'The sidebar is your navigation hub. Personal Finance covers accounts, spending, investments, and market data. Education is where your course modules, datasets, and assignments live. The Get Premium button at the bottom connects your real accounts at the discounted student rate.' },
-  { sel: '[data-tour="overview-snapshot"]',        panel: 'overview',                              side: 'bottom',  extraSels: _OV,
+  { sel: '[data-tour="overview-cards"]',            panel: 'overview',   selBottom: '[data-tour="overview-savings-rate"]', side: 'bottom',  extraSels: _OV,
     title: 'Your Financial Snapshot',
     body: 'The top row shows net worth, total cash, and portfolio value. Below that is your Monthly Savings Rate, which tracks how much of your income you kept this month against the 20% target. Net worth (assets minus liabilities) is the foundational number in personal finance and the one most tied to long-term wealth.' },
   { sel: '[data-tour="overview-networth-chart"]',  panel: 'overview',                              side: 'bottom',  extraSels: _OV,
@@ -1509,8 +1507,7 @@ const STUDENT_TOUR_STEPS = [
   { sel: '[data-tour="debt-payoff"]',              panel: 'cashflow',   tab: 'banking',            side: 'top',     extraSels: _CF_B,
     title: 'Debt Payoff Planner',
     body: 'The Debt Payoff Planner compares the avalanche method (highest interest first) against the snowball method (smallest balance first) using your real debts. Enter an extra monthly payment and see exactly how many months you shave off and how much interest you save under each approach.' },
-  { sel: '[data-tour="budgeting-tabs"]',           panel: 'cashflow',   tab: 'budgeting',          side: 'bottom',  extraSels: _CF_U, spotPadBottom: -6,
-    title: 'Budgeting Overview',
+  { sel: '[data-tour="budgeting-tabs"]',           panel: 'cashflow',   tab: 'budgeting',          side: 'bottom',  extraSels: _CF_U,    title: 'Budgeting Overview',
     body: 'The Budgeting section has five tabs: Income (your earning history), Expenses (spending by category), Trends (month-over-month patterns), Subscriptions (recurring charges), and Goals (savings targets). These map directly to the budgeting unit in your course.' },
   { sel: '[data-tour="budget-income"]',            panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'income',   side: 'bottom',  extraSels: _CF_U,
     title: 'Income Tracker',
@@ -1521,7 +1518,7 @@ const STUDENT_TOUR_STEPS = [
   { sel: '[data-tour="taxes-inputs"]',             panel: 'cashflow',   tab: 'taxes',               side: 'bottom',  extraSels: _CF_T,
     title: 'Tax Estimator',
     body: 'Enter your gross income, 401(k) contributions, and deduction type. PeakLedger shows your federal tax broken down bracket by bracket with your effective and marginal rates. Try adjusting income to model a part-time job, a raise, or financial aid taxability.' },
-  { sel: '[data-tour="scholarship-header"]',       panel: 'cashflow',   tab: 'scholarship',         side: 'bottom',
+  { sel: '[data-tour="scholarship-header"]',       panel: 'cashflow',   tab: 'scholarship',         side: 'bottom',  extraSels: [..._CF_SCH, '[data-tour="scholarship-status"]', '[data-tour="scholarship-stats"]'],
     title: 'Scholarship Health',
     body: 'The Scholarship tab tracks HOPE and Zell Miller eligibility in real time. Enter your current GPA, credit hours, and this semester\'s courses with expected grades. PeakLedger projects your HOPE GPA, flags whether your award is safe or at risk, and shows you the minimum grade needed in each class to stay eligible.' },
   { sel: '[data-tour="investments-holdings"]',     panel: 'investments',                             side: 'bottom',  extraSels: _INV,
@@ -1533,11 +1530,9 @@ const STUDENT_TOUR_STEPS = [
   { sel: '[data-tour="news-feed-header"]',         panel: 'insights',   insightsTab: 'news',        side: 'bottom',  extraSels: _IN_N,
     title: 'Market Insights: News',
     body: 'The News tab pulls live financial headlines and lets you filter by any ticker symbol. Type a symbol like AAPL or VTI and hit Filter to narrow to articles mentioning that stock. These are the same news sources referenced in class market discussions.' },
-  { sel: '[data-tour="signal-engine-header"]',     panel: 'insights',   insightsTab: 'signals',     side: 'bottom',  extraSels: _IN_S, spotPadBottom: 0,
-    title: 'Market Insights: Signal Engine',
+  { sel: '[data-tour="signal-engine-header"]',     panel: 'insights',   insightsTab: 'signals',     side: 'bottom',  extraSels: _IN_S,    title: 'Market Insights: Signal Engine',
     body: 'Signal Engine scores every article using four factors: magnitude (how big the event is), probability (how likely it is to move the stock), immediacy (time sensitivity), and moat (how defensible the company is). The heatmap shows which tickers have the strongest signals right now. Click any ticker to see sector contagion.' },
-  { sel: '[data-tour="options-header"]',           panel: 'insights',   insightsTab: 'options',     side: 'bottom',  extraSels: _IN_O, spotPadBottom: 2,
-    title: 'Market Insights: Options',
+  { sel: '[data-tour="options-header"]',           panel: 'insights',   insightsTab: 'options',     side: 'bottom',  extraSels: _IN_O,    title: 'Market Insights: Options',
     body: 'The Options tab shows a live options chain for any ticker you enter. Call and put contracts are listed by strike and expiration with bid, ask, volume, open interest, and implied volatility. Use this alongside the Analyst track to practice reading options flow the way institutional traders do.' },
   { sel: '[data-tour="learn-tab-essentials"]',     panel: 'learn',      learnCategory: 'essentials', side: 'bottom', extraSels: _LRN,
     title: 'Learn: The Essentials',
@@ -1557,7 +1552,7 @@ const PROFESSOR_TOUR_STEPS = [
   { sel: '[data-tour="sidebar-nav"]',              panel: 'overview',                              side: 'right',
     title: 'The Overview Tab',
     body: 'The sidebar is the student\'s navigation hub. Personal Finance covers accounts, spending, investments, and market data. Education is where course modules, datasets, and assignments live. The Get Premium button connects real accounts at the student rate. In demo mode every section is pre-populated with realistic synthetic data so students can complete all work without linking personal accounts.' },
-  { sel: '[data-tour="overview-snapshot"]',        panel: 'overview',                              side: 'bottom',  extraSels: _OV,
+  { sel: '[data-tour="overview-cards"]',            panel: 'overview',   selBottom: '[data-tour="overview-savings-rate"]', side: 'bottom',  extraSels: _OV,
     title: 'Financial Snapshot',
     body: 'The top row shows net worth, total cash, and portfolio value. Below that is the Monthly Savings Rate card, which tracks what percentage of income was kept this month against a 20% target. Students with linked accounts see their real numbers; demo mode shows a realistic sample.' },
   { sel: '[data-tour="overview-networth-chart"]',  panel: 'overview',                              side: 'bottom',  extraSels: _OV,
@@ -1578,8 +1573,7 @@ const PROFESSOR_TOUR_STEPS = [
   { sel: '[data-tour="debt-payoff"]',              panel: 'cashflow',   tab: 'banking',            side: 'top',     extraSels: _CF_B,
     title: 'Debt Payoff Planner',
     body: 'The Debt Payoff Planner compares the avalanche and snowball methods side by side using a student\'s actual debts. Students enter an extra monthly payment and see the exact month they become debt-free and how much interest they save under each strategy. Covers the debt payoff unit directly.' },
-  { sel: '[data-tour="budgeting-tabs"]',           panel: 'cashflow',   tab: 'budgeting',          side: 'bottom',  extraSels: _CF_U, spotPadBottom: -6,
-    title: 'Budgeting Overview',
+  { sel: '[data-tour="budgeting-tabs"]',           panel: 'cashflow',   tab: 'budgeting',          side: 'bottom',  extraSels: _CF_U,    title: 'Budgeting Overview',
     body: 'The Budgeting section has five tabs: Income, Expenses, Trends, Subscriptions, and Goals. Each provides a distinct analytical lens on the same transaction data and maps to a different aspect of the budgeting unit in your course.' },
   { sel: '[data-tour="budget-income"]',            panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'income',   side: 'bottom',  extraSels: _CF_U,
     title: 'Income Tracker',
@@ -1590,7 +1584,7 @@ const PROFESSOR_TOUR_STEPS = [
   { sel: '[data-tour="taxes-inputs"]',             panel: 'cashflow',   tab: 'taxes',               side: 'bottom',  extraSels: _CF_T,
     title: 'Tax Estimator',
     body: 'Students enter gross income, 401(k) contributions, and deduction type to see their federal tax broken down bracket by bracket. Effective rate, marginal rate, and total liability are all shown. Adjusting income in real time demonstrates progressive taxation and covers the tax planning unit directly.' },
-  { sel: '[data-tour="scholarship-header"]',       panel: 'cashflow',   tab: 'scholarship',         side: 'bottom',
+  { sel: '[data-tour="scholarship-header"]',       panel: 'cashflow',   tab: 'scholarship',         side: 'bottom',  extraSels: [..._CF_SCH, '[data-tour="scholarship-status"]', '[data-tour="scholarship-stats"]'],
     title: 'Scholarship Health',
     body: 'The Scholarship tab tracks HOPE and Zell Miller eligibility in real time. Students enter their GPA, credit hours, and current-semester courses with expected grades. The sensitivity table shows how each grade change shifts scholarship status, which connects GPA decisions to real financial consequences.' },
   { sel: '[data-tour="investments-holdings"]',     panel: 'investments',                             side: 'bottom',  extraSels: _INV,
@@ -1602,11 +1596,9 @@ const PROFESSOR_TOUR_STEPS = [
   { sel: '[data-tour="news-feed-header"]',         panel: 'insights',   insightsTab: 'news',        side: 'bottom',  extraSels: _IN_N,
     title: 'Market Insights: News',
     body: 'The News tab pulls live financial headlines and lets students filter by any ticker symbol. This is the same news feed used in class market discussions. Students can filter to a specific company to research earnings releases, analyst downgrades, or sector news before writing assignments.' },
-  { sel: '[data-tour="signal-engine-header"]',     panel: 'insights',   insightsTab: 'signals',     side: 'bottom',  extraSels: _IN_S, spotPadBottom: 0,
-    title: 'Market Insights: Signal Engine',
+  { sel: '[data-tour="signal-engine-header"]',     panel: 'insights',   insightsTab: 'signals',     side: 'bottom',  extraSels: _IN_S,    title: 'Market Insights: Signal Engine',
     body: 'Signal Engine scores every article using four factors: magnitude (how big the event is), probability (how likely it is to move the stock), immediacy (time sensitivity), and moat (how defensible the company is). Students can use the heatmap to see which tickers have the strongest signals right now, then investigate the underlying articles.' },
-  { sel: '[data-tour="options-header"]',           panel: 'insights',   insightsTab: 'options',     side: 'bottom',  extraSels: _IN_O, spotPadBottom: 2,
-    title: 'Market Insights: Options',
+  { sel: '[data-tour="options-header"]',           panel: 'insights',   insightsTab: 'options',     side: 'bottom',  extraSels: _IN_O,    title: 'Market Insights: Options',
     body: 'The Options tab shows a live options chain for any ticker. Call and put contracts are listed by strike and expiration with bid, ask, volume, open interest, and implied volatility. This is a direct complement to the options pricing concepts in the Analyst track.' },
   { sel: '[data-tour="learn-tab-essentials"]',     panel: 'learn',      learnCategory: 'essentials', side: 'bottom', extraSels: _LRN,
     title: 'Learn: The Essentials',
@@ -1624,25 +1616,36 @@ function Tour({ steps, step, onNext, onPrev, onClose, containerRef }) {
   const [rect, setRect] = React.useState(null);
 
   React.useEffect(() => {
-    const sel = steps[step].sel;
+    const { sel, selBottom } = steps[step];
     const container = containerRef?.current;
+
+    const buildRect = () => {
+      const el = document.querySelector(sel);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      if (selBottom) {
+        const elB = document.querySelector(selBottom);
+        if (elB) {
+          const rb = elB.getBoundingClientRect();
+          return { top: r.top, left: Math.min(r.left, rb.left), right: Math.max(r.right, rb.right), bottom: rb.bottom, width: Math.max(r.right, rb.right) - Math.min(r.left, rb.left), height: rb.bottom - r.top };
+        }
+      }
+      return r;
+    };
 
     // Temporarily re-enable overflow so scrollIntoView works, then re-lock
     if (container) container.style.overflowY = 'auto';
     const el = document.querySelector(sel);
     if (el) {
       el.scrollIntoView({ block: 'center', behavior: 'instant' });
-      setRect(el.getBoundingClientRect());
+      setRect(buildRect());
     } else {
       setRect(null);
     }
     if (container) container.style.overflowY = 'hidden';
 
     // Keep spotlight synced if any residual browser reflow shifts things
-    const measure = () => {
-      const e = document.querySelector(sel);
-      if (e) setRect(e.getBoundingClientRect());
-    };
+    const measure = () => { const r = buildRect(); if (r) setRect(r); };
     window.addEventListener('scroll', measure, true);
     return () => window.removeEventListener('scroll', measure, true);
   }, [step, steps, containerRef]);
@@ -6117,7 +6120,8 @@ export default function Dashboard() {
 
                 {/* Subtabs */}
                 {!selectedCategory && (
-                  <div data-tour="budgeting-tabs" style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: BORDER, paddingBottom: 14, overflowX: 'auto', WebkitOverflowScrolling: 'touch', flexShrink: 0 }}>
+                  <div style={{ marginBottom: 24, borderBottom: BORDER, paddingBottom: 14, overflowX: 'auto', WebkitOverflowScrolling: 'touch', flexShrink: 0 }}>
+                  <div data-tour="budgeting-tabs" style={{ display: 'inline-flex', gap: 6 }}>
                     {[['income', 'Income'], ['spending', 'Expenses'], ['trends', 'Trends'], ['subscriptions', 'Subscriptions'], ['goals', 'Goals']].map(([key, label]) => (
                       <button key={key} onClick={() => setBudgetTab(key)}
                         style={{ padding: '7px 18px', borderRadius: 8, border: budgetTab === key ? `1px solid ${BLUE}` : BORDER,
@@ -6127,6 +6131,7 @@ export default function Dashboard() {
                         {label}
                       </button>
                     ))}
+                  </div>
                   </div>
                 )}
 
@@ -7533,7 +7538,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* ── Status Banner ─────────────────────────────── */}
-                  <div style={{ background: statusBg, border: `1px solid ${statusBorder}`, borderRadius: 10, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div data-tour="scholarship-status" style={{ background: statusBg, border: `1px solid ${statusBorder}`, borderRadius: 10, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{ width: 10, height: 10, borderRadius: '50%', background: statusColor, flexShrink: 0 }} />
                       <span style={{ fontWeight: 700, fontSize: 14, color: statusColor }}>{statusLabel}</span>
@@ -7547,7 +7552,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* ── Financial Stats ───────────────────────────── */}
-                  <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 20 }}>
+                  <div data-tour="scholarship-stats" style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 20 }}>
                     {[
                       {
                         label: 'This Semester Coverage',
@@ -8383,7 +8388,7 @@ export default function Dashboard() {
                 <div data-tour="signal-engine">
                   <div>
                   {/* Header */}
-                  <div data-tour="signal-engine-header" style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
+                  <div data-tour="signal-engine-header" style={{ display: 'inline-flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
                     <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Signal Engine</h1>
                     <span style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
                       {scored.length} articles · {heatTickers.length} tickers · live scoring
@@ -8579,7 +8584,7 @@ export default function Dashboard() {
             {insightsTab === 'options' && (
               <div>
                 <div>
-                  <h1 data-tour="options-header" style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>Options</h1>
+                  <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}><span data-tour="options-header">Options</span></h1>
                   <OptionsChain />
                   <StraddleBuilder />
                 </div>
