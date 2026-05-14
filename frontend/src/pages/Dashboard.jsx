@@ -9374,7 +9374,7 @@ export default function Dashboard() {
             })()}
 
             {/* ── AI ASSISTANT ──────────────────────────── */}
-            {panel === 'assistant' && canSeeAI && (
+            {panel === 'assistant' && isPremium && (
               <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
                 <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>AI Assistant</h1>
                 <div style={{ ...CARD, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, padding: 0, overflow: 'hidden' }}>
@@ -16257,7 +16257,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── AI ASSISTANT FLOATING BUBBLE ── */}
-        {canSeeAI && panel !== 'assistant' && (
+        {isPremium && panel !== 'assistant' && (
           <button
             onClick={() => { setPanel('assistant'); switchEduMode(false); }}
             title="AI Assistant (⌘K)"
