@@ -187,6 +187,13 @@ router.get('/institution_logo/:id', async (req, res) => {
   }
 });
 
+router.get('/cache-status', requireAuth, (req, res) => {
+  const tokens = db.prepare('SELECT id, institution_name, sync_cursor FROM plaid_tokens WHERE user_id = ?').all(req.user.id);
+  const txnCount = db.prepare('SELECT COUNT(*) as c FROM transactions_cache WHERE user_id = ?').get(req.user.id)?.c || 0;
+  const acctCount = db.prepare('SELECT COUNT(*) as c FROM accounts_cache WHERE user_id = ?').get(req.user.id)?.c || 0;
+  res.json({ tokens, txnCount, acctCount });
+});
+
 router.get('/connections', requireAuth, (req, res) => {
   const rows = db.prepare('SELECT id, institution_name, created_at, needs_update FROM plaid_tokens WHERE user_id = ?').all(req.user.id);
   res.json(rows);
