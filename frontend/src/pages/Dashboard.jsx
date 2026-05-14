@@ -265,7 +265,7 @@ function NetWorthChart({ snapshots }) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
         <span style={{ fontSize: 13, color: TEXT2 }}>
-          {snapshots.length < 7 ? `${snapshots.length} day${snapshots.length !== 1 ? 's' : ''} — builds up over time` : `Last ${snapshots.length} days`}
+          {snapshots.length < 7 ? `${snapshots.length} day${snapshots.length !== 1 ? 's' : ''}, builds up over time` : `Last ${snapshots.length} days`}
         </span>
         <span style={{ fontSize: 13, fontWeight: 600, color: gainColor, fontFamily: 'monospace' }}>
           {gain >= 0 ? '+' : ''}{fmt(gain)}
@@ -2394,6 +2394,7 @@ export default function Dashboard() {
   const [learnVideos, setLearnVideos] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_learn_videos') || '{}'); } catch { return {}; } });
   const [yieldCurve, setYieldCurve] = useState({ tenors: [], date: null });
   const [budgetTab, setBudgetTab] = useState('income');
+  const [budgetSummaryView, setBudgetSummaryView] = useState(true);
   const [selectedIncomeMonth, setSelectedIncomeMonth] = useState(0); // 0 = current month, 1 = last month, etc.
   const [selectedExpenseMonth, setSelectedExpenseMonth] = useState(0); // 0 = current month, 1 = last month, etc.
   const [showTour, setShowTour] = useState(false);
@@ -5859,16 +5860,70 @@ export default function Dashboard() {
                       .sort((a, b) => b.total - a.total);
                   }
 
+                  const MOCK_CATEGORY_TXNS = {
+                    'food and drink': [
+                      { merchant_name: 'Chipotle Mexican Grill', date: 10, amount: 13.75 },
+                      { merchant_name: 'Publix Super Markets',   date: 8,  amount: 78.40 },
+                      { merchant_name: 'Starbucks',              date: 6,  amount: 8.25  },
+                      { merchant_name: 'DoorDash',               date: 4,  amount: 34.60 },
+                      { merchant_name: "Chick-fil-A",            date: 3,  amount: 11.80 },
+                      { merchant_name: "Trader Joe's",           date: 1,  amount: 52.30 },
+                    ],
+                    'rent and utilities': [
+                      { merchant_name: 'Georgia Power',   date: 5,  amount: 52.40 },
+                      { merchant_name: 'AT&T Wireless',   date: 3,  amount: 45.00 },
+                      { merchant_name: 'Xfinity',         date: 2,  amount: 64.99 },
+                      { merchant_name: 'Water & Sewer',   date: 1,  amount: 28.50 },
+                    ],
+                    'shopping': [
+                      { merchant_name: 'Amazon',    date: 9,  amount: 85.40 },
+                      { merchant_name: 'Target',    date: 7,  amount: 62.30 },
+                      { merchant_name: 'Nike',      date: 5,  amount: 48.50 },
+                      { merchant_name: 'SHEIN',     date: 3,  amount: 31.20 },
+                      { merchant_name: 'Best Buy',  date: 1,  amount: 24.80 },
+                    ],
+                    'transportation': [
+                      { merchant_name: 'Shell',        date: 8,  amount: 47.80 },
+                      { merchant_name: 'Uber',         date: 6,  amount: 22.40 },
+                      { merchant_name: 'ParkAtl',      date: 4,  amount: 15.00 },
+                      { merchant_name: 'Jiffy Lube',   date: 2,  amount: 38.50 },
+                    ],
+                    'entertainment': [
+                      { merchant_name: 'Netflix',      date: 7,  amount: 15.49 },
+                      { merchant_name: 'Spotify',      date: 5,  amount: 9.99  },
+                      { merchant_name: 'AMC Theaters', date: 4,  amount: 22.50 },
+                      { merchant_name: 'Steam',        date: 2,  amount: 14.99 },
+                    ],
+                    'personal care': [
+                      { merchant_name: 'CVS Pharmacy', date: 8,  amount: 28.40 },
+                      { merchant_name: 'Great Clips',  date: 5,  amount: 22.00 },
+                      { merchant_name: 'Ulta Beauty',  date: 2,  amount: 42.50 },
+                    ],
+                  };
+
                   if (selectedCategory) {
                     const selStart = new Date(now.getFullYear(), now.getMonth() - selectedExpenseMonth, 1);
                     const selEnd   = new Date(now.getFullYear(), now.getMonth() - selectedExpenseMonth + 1, 0, 23, 59, 59);
                     const selLabel = selStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                    const catTxns  = activeTxns.filter(t => {
-                      const cat = t.personal_finance_category?.primary || t.category?.[0] || 'Other';
-                      const td  = new Date(t.date);
-                      return cat === selectedCategory && t.amount > 0 && td >= selStart && td <= selEnd;
-                    });
-                    const total = catTxns.reduce((s, t) => s + t.amount, 0);
+
+                    let catTxns, total;
+                    if (!hasRealExp && MOCK_CATEGORY_TXNS[selectedCategory]) {
+                      const yr = selStart.getFullYear(), mo = selStart.getMonth();
+                      const daysInMonth = new Date(yr, mo + 1, 0).getDate();
+                      catTxns = MOCK_CATEGORY_TXNS[selectedCategory].map(t => ({
+                        ...t,
+                        date: new Date(yr, mo, Math.min(t.date, daysInMonth)).toISOString().slice(0, 10),
+                      }));
+                      total = (MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5]).find(c => c.category === selectedCategory)?.total || catTxns.reduce((s, t) => s + t.amount, 0);
+                    } else {
+                      catTxns = activeTxns.filter(t => {
+                        const cat = t.personal_finance_category?.primary || t.category?.[0] || 'Other';
+                        const td  = new Date(t.date);
+                        return cat === selectedCategory && t.amount > 0 && td >= selStart && td <= selEnd;
+                      });
+                      total = catTxns.reduce((s, t) => s + t.amount, 0);
+                    }
+
                     const limit = budgetLimits[selectedCategory];
                     return (
                       <>
@@ -5889,9 +5944,7 @@ export default function Dashboard() {
                             <div style={{ fontWeight: 600 }}>{fmtCat(selectedCategory)}</div>
                             <div style={{ fontSize: 12, color: TEXT2 }}>{selLabel}</div>
                           </div>
-                          {catTxns.length === 0 ? (
-                            <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>No transactions for this period</div>
-                          ) : catTxns.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, i) => (
+                          {catTxns.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, i) => (
                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < catTxns.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
                               <div>
                                 <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
@@ -5953,14 +6006,75 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <div className="lc" style={CARD}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
                           <div>
                             <div style={{ fontWeight: 600 }}>Spending by Category</div>
                             <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>{selExp.fullLabel}</div>
                           </div>
-                          <div style={{ fontSize: 12, color: TEXT2 }}>Click a category to see transactions</div>
+                          <div style={{ display: 'flex', gap: 0, background: DARK, borderRadius: 8, border: BORDER, overflow: 'hidden' }}>
+                            {[['summary', 'Summary'], ['detailed', 'Detailed']].map(([key, label]) => (
+                              <button key={key} onClick={() => setBudgetSummaryView(key === 'summary')}
+                                style={{ padding: '6px 14px', background: (key === 'summary') === budgetSummaryView ? BLUE_BTN : 'transparent', border: 'none', color: (key === 'summary') === budgetSummaryView ? '#fff' : TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                                {label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                        {displayBudget.length === 0 ? (
+                        {budgetSummaryView ? (() => {
+                          const getBucket = (cat) => {
+                            const c = cat.toLowerCase().replace(/_/g, ' ');
+                            if (c.includes('rent') || c.includes('utilit') || c.includes('loan') || c.includes('mortgage') || c.includes('insurance') || c.includes('subscript') || c.includes('phone') || c.includes('internet') || c.includes('cable')) return 'Fixed';
+                            if (c.includes('saving') || c.includes('transfer') || c.includes('invest')) return 'Savings';
+                            return 'Flex';
+                          };
+                          const activeCats = displayBudget.length === 0 ? (MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5]) : displayBudget;
+                          const buckets = { Fixed: [], Flex: [], Savings: [] };
+                          activeCats.forEach(b => buckets[getBucket(b.category)].push(b));
+                          const bucketTotals = { Fixed: buckets.Fixed.reduce((s, b) => s + b.total, 0), Flex: buckets.Flex.reduce((s, b) => s + b.total, 0), Savings: buckets.Savings.reduce((s, b) => s + b.total, 0) };
+                          const grandTotal = Object.values(bucketTotals).reduce((s, v) => s + v, 0);
+                          return (
+                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 14 }}>
+                              {[
+                                { key: 'Fixed',   label: 'Fixed',   desc: 'Bills that repeat every month',  accent: TEXT2  },
+                                { key: 'Flex',    label: 'Flex',    desc: 'Variable day-to-day spending',   accent: BLUE   },
+                                { key: 'Savings', label: 'Savings', desc: 'Money set aside for goals',      accent: GREEN  },
+                              ].map(({ key, label, desc, accent }) => {
+                                const cats = buckets[key];
+                                const total = bucketTotals[key];
+                                const pct = grandTotal > 0 ? (total / grandTotal) * 100 : 0;
+                                return (
+                                  <div key={key} style={{ padding: 16, background: DARK, borderRadius: 10, border: BORDER }}>
+                                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: accent, marginBottom: 2 }}>{label}</div>
+                                    <div style={{ fontSize: 11, color: TEXT3, marginBottom: 12 }}>{desc}</div>
+                                    <div style={{ fontSize: 24, fontWeight: 800, color: TEXT, fontFamily: 'monospace', marginBottom: 10 }}>{fmt(total)}</div>
+                                    <div style={{ height: 4, background: MUTED, borderRadius: 2, overflow: 'hidden', marginBottom: 8 }}>
+                                      <div style={{ height: '100%', width: `${pct}%`, background: accent, borderRadius: 2 }} />
+                                    </div>
+                                    <div style={{ fontSize: 11, color: TEXT3, marginBottom: 12 }}>{Math.round(pct)}% of spending</div>
+                                    {cats.length === 0 ? (
+                                      <div style={{ fontSize: 12, color: TEXT3, fontStyle: 'italic' }}>
+                                        {key === 'Savings' ? 'No savings transfers tracked.' : 'None this month.'}
+                                      </div>
+                                    ) : (
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                                        {cats.slice(0, 4).map((b, i) => (
+                                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <button onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
+                                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', fontSize: 12, color: TEXT2, textTransform: 'capitalize' }}>
+                                              {b.category}
+                                            </button>
+                                            <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'monospace', color: TEXT }}>{fmt(b.total)}</span>
+                                          </div>
+                                        ))}
+                                        {cats.length > 4 && <div style={{ fontSize: 11, color: TEXT3 }}>+ {cats.length - 4} more</div>}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })() : displayBudget.length === 0 ? (
                           (() => {
                             const cats = MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5];
                             const maxCat = Math.max(...cats.map(c => c.total), 1);
