@@ -2327,7 +2327,7 @@ function DragSection({ id, panel, order, onReorder, children, handleTop = 10 }) 
 }
 
 export default function Dashboard() {
-  const { user, logout, refreshUser, isPremium: isPremiumAuth, isProfessor, isAdmin, isStudent, isUser } = useAuth();
+  const { user, logout, refreshUser, isPremium, isProfessor, isAdmin, isStudent, isUser } = useAuth();
   const [panel, setPanel] = useState(() => localStorage.getItem('pl_panel') || 'overview');
   const [accounts, setAccounts] = useState([]);
   const [isDemoData, setIsDemoData] = useState(false);
@@ -2851,7 +2851,6 @@ export default function Dashboard() {
 
   const effectiveProfessor = isAdmin && viewAs ? viewAs === 'professor' : isProfessor;
   const effectiveStudent   = isAdmin && viewAs ? viewAs === 'student'   : user?.role === 'student';
-  const isPremium          = isAdmin && viewAs === 'free' ? false : isPremiumAuth;
   const canSeeAI           = !isDemoData;
 
   // Lock main panel scrolling while tour is active
@@ -9561,7 +9560,7 @@ export default function Dashboard() {
 
                 <ConnectedAccountsCard onFixConnection={openUpdateMode} />
 
-                {isPremium && (
+                {isPremium && !isAdmin && (
                   <div style={{ ...CARD, marginBottom: 16 }}>
                     <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Subscription</div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>You're on the Premium plan. Manage or cancel your subscription through the billing portal.</div>
@@ -9630,10 +9629,9 @@ export default function Dashboard() {
                     <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>View As</div>
                     <div style={{ display: 'flex', gap: 10 }}>
                       {[
-                        { key: null,        label: 'Admin',     icon: '◈', desc: 'Your real role',       color: '#a78bfa', activeBg: 'rgba(167,139,250,0.1)',  activeBorder: 'rgba(167,139,250,0.4)'  },
-                        { key: 'free',      label: 'Free User', icon: '◇', desc: 'No premium, demo data', color: TEXT2,    activeBg: 'rgba(255,255,255,0.05)', activeBorder: 'rgba(255,255,255,0.2)'  },
-                        { key: 'professor', label: 'Professor', icon: '◫', desc: 'Instructor controls on', color: GREEN,  activeBg: 'rgba(74,222,128,0.08)',  activeBorder: 'rgba(74,222,128,0.35)'  },
-                        { key: 'student',   label: 'Student',   icon: '◩', desc: 'Student-only view',    color: BLUE,     activeBg: 'rgba(77,163,255,0.08)',  activeBorder: 'rgba(77,163,255,0.35)'  },
+                        { key: null,        label: 'Admin',     icon: '◈', desc: 'Your real role',        color: '#a78bfa', activeBg: 'rgba(167,139,250,0.1)', activeBorder: 'rgba(167,139,250,0.4)' },
+                        { key: 'professor', label: 'Professor', icon: '◫', desc: 'Instructor controls on', color: GREEN,   activeBg: 'rgba(74,222,128,0.08)', activeBorder: 'rgba(74,222,128,0.35)' },
+                        { key: 'student',   label: 'Student',   icon: '◩', desc: 'Student-only view',     color: BLUE,    activeBg: 'rgba(77,163,255,0.08)', activeBorder: 'rgba(77,163,255,0.35)' },
                       ].map(({ key, label, icon, desc, color, activeBg, activeBorder }) => {
                         const active = viewAs === key;
                         return (
