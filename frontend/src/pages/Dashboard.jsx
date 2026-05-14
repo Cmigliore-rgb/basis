@@ -5208,6 +5208,34 @@ export default function Dashboard() {
                   const monthStr = `${yr}-${String(mo + 1).padStart(2, '0')}`;
                   const monthLabel = calViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
+                  // Auto-generate bill events from connected liabilities (recurring monthly)
+                  const liabBillEvents = [];
+                  [
+                    ...(liabilities.credit   || []).map(l => ({ l, ltype: 'credit'   })),
+                    ...(liabilities.student  || []).map(l => ({ l, ltype: 'student'  })),
+                    ...(liabilities.mortgage || []).map(l => ({ l, ltype: 'mortgage' })),
+                    ...(liabilities.car      || []).map(l => ({ l, ltype: 'car'      })),
+                  ].forEach(({ l, ltype }) => {
+                    if (!l.next_payment_due_date) return;
+                    const dueDay = new Date(l.next_payment_due_date + 'T00:00:00').getDate();
+                    const calDue = new Date(yr, mo, dueDay);
+                    if (calDue.getMonth() !== mo) return; // day overflows (e.g. Feb 30)
+                    const dateStr = `${monthStr}-${String(dueDay).padStart(2, '0')}`;
+                    const acct = accounts.find(a => a.account_id === l.account_id);
+                    const fallback = ltype === 'credit' ? 'Credit Card' : ltype === 'student' ? 'Student Loan' : ltype === 'mortgage' ? 'Mortgage' : 'Auto Loan';
+                    const name = l._name || (acct ? cleanAcctName(acct.name, acct.subtype, acct.type, acct.mask) : fallback);
+                    const minPmt = l.minimum_payment_amount || l.next_monthly_payment;
+                    liabBillEvents.push({
+                      id: `liab-${l.account_id || ltype}-${dueDay}`,
+                      title: name,
+                      date: dateStr,
+                      type: 'bill',
+                      note: minPmt ? `Min ${fmt(minPmt)}` : 'Payment due',
+                      _auto: true,
+                    });
+                  });
+                  const allCalEvents = (ds) => [...liabBillEvents.filter(e => e.date === ds), ...calendarEvents.filter(e => e.date === ds)];
+
                   const saveEvent = () => {
                     if (!eventForm.title.trim() || !eventForm.date) return;
                     if (editingEvent) {
@@ -5293,7 +5321,7 @@ export default function Dashboard() {
                         {Array.from({ length: daysInMonth }).map((_, i) => {
                           const day = i + 1;
                           const dateStr = `${monthStr}-${String(day).padStart(2, '0')}`;
-                          const dayEvents = calendarEvents.filter(e => e.date === dateStr);
+                          const dayEvents = allCalEvents(dateStr);
                           const isToday = dateStr === todayStr;
                           const isSel = selectedDay === dateStr;
                           return (
@@ -5301,8 +5329,8 @@ export default function Dashboard() {
                               style={{ minHeight: 56, padding: '4px 5px', borderRadius: 7, border: isToday ? `1px solid ${BLUE}` : isSel ? `1px solid ${GREEN}` : `1px solid ${BORDER_C}`, background: isToday ? 'rgba(77,163,255,0.06)' : isSel ? 'rgba(74,222,128,0.04)' : 'transparent', cursor: 'pointer', transition: 'background 0.1s' }}>
                               <div style={{ fontSize: 11, fontWeight: isToday ? 700 : 400, color: isToday ? BLUE : TEXT2, marginBottom: 3 }}>{day}</div>
                               {dayEvents.slice(0, 2).map(ev => (
-                                <div key={ev.id} onClick={e => { e.stopPropagation(); setEditingEvent(ev); setEventForm({ title: ev.title, date: ev.date, type: ev.type, note: ev.note || '' }); setShowEventForm(true); }}
-                                  style={{ fontSize: 9, fontWeight: 600, color: '#fff', background: EVENT_TYPES[ev.type]?.color || BLUE, borderRadius: 3, padding: '1px 4px', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+                                <div key={ev.id} onClick={e => { e.stopPropagation(); if (ev._auto) return; setEditingEvent(ev); setEventForm({ title: ev.title, date: ev.date, type: ev.type, note: ev.note || '' }); setShowEventForm(true); }}
+                                  style={{ fontSize: 9, fontWeight: 600, color: '#fff', background: EVENT_TYPES[ev.type]?.color || BLUE, borderRadius: 3, padding: '1px 4px', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: ev._auto ? 'default' : 'pointer' }}>
                                   {ev.title}
                                 </div>
                               ))}
@@ -5314,7 +5342,7 @@ export default function Dashboard() {
 
                       {/* Upcoming events */}
                       {(() => {
-                        const upcoming = calendarEvents.filter(e => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
+                        const upcoming = [...liabBillEvents, ...calendarEvents].filter(e => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
                         if (!upcoming.length) return null;
                         return (
                           <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${BORDER_C}` }}>
@@ -5327,8 +5355,8 @@ export default function Dashboard() {
                                   {ev.note && <div style={{ fontSize: 11, color: TEXT3 }}>{ev.note}</div>}
                                 </div>
                                 <div style={{ fontSize: 11, color: TEXT2, whiteSpace: 'nowrap' }}>{new Date(ev.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                                <button onClick={() => setCalendarEvents(prev => prev.filter(e => e.id !== ev.id))}
-                                  style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 14, padding: '0 2px', lineHeight: 1 }}>×</button>
+                                {!ev._auto && <button onClick={() => setCalendarEvents(prev => prev.filter(e => e.id !== ev.id))}
+                                  style={{ background: 'none', border: 'none', color: TEXT3, cursor: 'pointer', fontSize: 14, padding: '0 2px', lineHeight: 1 }}>×</button>}
                               </div>
                             ))}
                           </div>
