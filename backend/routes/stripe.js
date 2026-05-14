@@ -87,7 +87,7 @@ router.post('/portal', auth, async (req, res) => {
 
 // ── POST /api/stripe/webhook ──────────────────────────────────────────────
 // Note: raw body is required — mounted before express.json() in server.js
-router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
   try {
@@ -112,6 +112,17 @@ router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) =>
     if (user) {
       db.prepare('UPDATE users SET tier = ?, stripe_subscription_id = NULL WHERE id = ?')
         .run('free', user.id);
+
+      // Disconnect all Plaid accounts and wipe cached data
+      const tokens = db.prepare('SELECT id, access_token FROM plaid_tokens WHERE user_id = ?').all(user.id);
+      const { plaidClient } = require('../routes/plaid');
+      for (const t of tokens) {
+        try { await plaidClient.itemRemove({ access_token: t.access_token }); } catch {}
+        db.prepare('DELETE FROM accounts_cache WHERE token_id = ?').run(t.id);
+        db.prepare('DELETE FROM transactions_cache WHERE token_id = ?').run(t.id);
+      }
+      db.prepare('DELETE FROM plaid_tokens WHERE user_id = ?').run(user.id);
+      console.log(`[stripe] subscription deleted for user=${user.id} — ${tokens.length} Plaid connections removed`);
     }
   }
 
