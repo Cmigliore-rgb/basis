@@ -4891,20 +4891,31 @@ export default function Dashboard() {
                 {/* ── Savings Rate Card ── */}
                 {(() => {
                   const now = new Date();
-                  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                  const monthTxns = transactions.filter(t => { const d = new Date(t.date); return d >= monthStart && d <= now; });
-                  const monthIncome   = monthTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
-                  const monthSpending = monthTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
-                  const saved = monthIncome - monthSpending;
-                  const rate  = monthIncome > 0 ? Math.round((saved / monthIncome) * 100) : null;
+                  const DEMO = { monthIncome: 4850, monthSpending: 3620, saved: 1230, rate: 25 };
+                  let monthIncome, monthSpending, saved, rate;
+                  if (isDemoData) {
+                    ({ monthIncome, monthSpending, saved, rate } = DEMO);
+                  } else {
+                    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                    const monthTxns = transactions.filter(t => { const d = new Date(t.date); return d >= monthStart && d <= now; });
+                    monthIncome   = monthTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+                    monthSpending = monthTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+                    saved = monthIncome - monthSpending;
+                    rate  = monthIncome > 0 ? Math.round((saved / monthIncome) * 100) : null;
+                  }
                   const rateColor = rate === null ? TEXT2 : rate >= 20 ? GREEN : rate >= 10 ? YELLOW : rate >= 0 ? TEXT : RED;
                   const TARGET = 20;
                   return (
                     <div style={{ ...CARD, marginBottom: 24 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: isDemoData ? 8 : 16 }}>
                         <div style={{ fontSize: 13, fontWeight: 700 }}>Monthly Savings Rate</div>
                         <div style={{ fontSize: 11, color: TEXT2 }}>{now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
                       </div>
+                      {isDemoData && (
+                        <div style={{ fontSize: 11, color: BLUE, background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 6, padding: '6px 12px', marginBottom: 16, display: 'inline-block' }}>
+                          Demo data. Connect an account to see your real savings rate.
+                        </div>
+                      )}
                       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 1fr', gap: 16, marginBottom: 16 }}>
                         {[
                           { label: 'Rate',     value: rate !== null ? `${rate}%` : '—',                                              color: rateColor,              big: true },
