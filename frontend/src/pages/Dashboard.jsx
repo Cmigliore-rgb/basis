@@ -6363,14 +6363,14 @@ export default function Dashboard() {
 
                 {budgetTab === 'goals' && (() => {
                   const PRESET_GOALS = [
-                    { name: 'Emergency Fund',     target: 10000, icon: '🛡️', desc: '3–6 months of expenses' },
-                    { name: 'House Down Payment', target: 50000, icon: '🏠', desc: '20% down on a $250k home' },
-                    { name: 'New Car',            target: 8000,  icon: '🚗', desc: 'Solid used car fund' },
-                    { name: 'Vacation Fund',      target: 3000,  icon: '✈️', desc: 'Annual travel budget' },
-                    { name: 'Pay Off Credit Card',target: 5000,  icon: '💳', desc: 'Clear high-interest debt' },
-                    { name: 'Wedding Fund',       target: 20000, icon: '💍', desc: 'Average US wedding cost' },
-                    { name: 'College Fund',       target: 25000, icon: '🎓', desc: '529 savings head start' },
-                    { name: 'Home Renovation',    target: 15000, icon: '🔨', desc: 'Kitchen/bath upgrade' },
+                    { name: 'Recruiting Season Fund', target: 1500,  icon: '★',  desc: 'Suit, flights, hotels for interviews' },
+                    { name: 'Emergency Fund',         target: 1000,  icon: '🛡️', desc: '1 month of living expenses' },
+                    { name: 'Spring Break',           target: 600,   icon: '✈️', desc: 'Travel and lodging' },
+                    { name: 'Laptop Upgrade',         target: 1200,  icon: '💻', desc: 'New machine for senior year' },
+                    { name: 'Pay Off Credit Card',    target: 5000,  icon: '💳', desc: 'Clear high-interest debt' },
+                    { name: 'New Car',                target: 8000,  icon: '🚗', desc: 'Solid used car fund' },
+                    { name: 'House Down Payment',     target: 50000, icon: '🏠', desc: '20% down on a starter home' },
+                    { name: 'Wedding Fund',           target: 20000, icon: '💍', desc: 'Average US wedding cost' },
                   ];
 
                   const totalSaved  = goals.reduce((s, g) => { const a = accounts.find(ac => ac.account_id === g.accountId); return s + (a ? (a.balances?.current || 0) : 0); }, 0);
