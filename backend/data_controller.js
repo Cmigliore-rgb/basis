@@ -15,11 +15,31 @@ async function getAccounts(req) {
     return { accounts: cached.map(r => JSON.parse(r.raw_json)) };
   }
 
-  // No cache yet — sync now (one-time first load cost)
-  const { syncAll } = require('./sync');
-  await syncAll(req.user.id);
-  const fresh = db.prepare('SELECT raw_json FROM accounts_cache WHERE user_id = ?').all(req.user.id);
-  return { accounts: fresh.map(r => JSON.parse(r.raw_json)) };
+  // No cache yet — attempt sync, fall back to live Plaid if sync fails
+  try {
+    const { syncAll } = require('./sync');
+    await syncAll(req.user.id);
+    const fresh = db.prepare('SELECT raw_json FROM accounts_cache WHERE user_id = ?').all(req.user.id);
+    if (fresh.length) return { accounts: fresh.map(r => JSON.parse(r.raw_json)) };
+  } catch (e) {
+    console.warn('[getAccounts] sync failed, falling back to live Plaid:', e.message);
+  }
+
+  // Fallback: live Plaid
+  const all = await Promise.all(
+    tokens.map(async ({ access_token, institution_name }) => {
+      const r = await plaidClient.accountsGet({ access_token });
+      return r.data.accounts.map(a => ({ ...a, institution_name }));
+    })
+  );
+  const seen = new Set();
+  return {
+    accounts: all.flat().filter(a => {
+      if (seen.has(a.account_id)) return false;
+      seen.add(a.account_id);
+      return true;
+    }),
+  };
 }
 
 async function getTransactions(req, start, end) {
@@ -35,13 +55,31 @@ async function getTransactions(req, start, end) {
 
   const hasCache = db.prepare('SELECT 1 FROM transactions_cache WHERE user_id = ? LIMIT 1').get(req.user.id);
   if (!hasCache) {
-    const { syncAll } = require('./sync');
-    await syncAll(req.user.id);
+    try {
+      const { syncAll } = require('./sync');
+      await syncAll(req.user.id);
+    } catch (e) {
+      console.warn('[getTransactions] sync failed, falling back to live Plaid:', e.message);
+    }
   }
 
   const rows = db.prepare(
     'SELECT raw_json FROM transactions_cache WHERE user_id = ? AND date >= ? AND date <= ? ORDER BY date DESC'
   ).all(req.user.id, start, end);
+
+  // If cache is still empty after sync attempt, fall back to live Plaid
+  if (!rows.length && !hasCache) {
+    console.warn('[getTransactions] cache empty after sync, falling back to live Plaid');
+    const all = await Promise.all(
+      tokens.map(({ access_token }) =>
+        plaidClient.transactionsGet({ access_token, start_date: start, end_date: end })
+          .then(r => r.data.transactions)
+          .catch(() => [])
+      )
+    );
+    return { transactions: all.flat().sort((a, b) => new Date(b.date) - new Date(a.date)) };
+  }
+
   return { transactions: rows.map(r => JSON.parse(r.raw_json)) };
 }
 
