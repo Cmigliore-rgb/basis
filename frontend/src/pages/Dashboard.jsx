@@ -3732,7 +3732,7 @@ export default function Dashboard() {
           ...(effectiveProfessor ? [{ key: 'prof-dashboard', label: 'Prof Hub', icon: '⊟', edu: true }] : []),
         ] : [
           { key: 'overview',        label: 'Home',        icon: '⊞', edu: false },
-          { key: 'cashflow',        label: 'Money',       icon: '⬡', edu: false },
+          { key: 'cashflow',        label: 'Budget',      icon: '⬡', edu: false },
           { key: 'investments',     label: 'Invest',      icon: '◈', edu: false },
           { key: 'insights',        label: 'Markets',     icon: '◬', edu: false },
           { key: 'learn',           label: 'Learn',       icon: '✦', edu: false },
@@ -3802,7 +3802,7 @@ export default function Dashboard() {
                 {mobileTabs.map(t => {
                   const active = isTabActive(t);
                   return (
-                    <button key={t.key} onClick={() => { setPanel(t.key); if (t.edu) switchEduMode(true); else if (t.key !== 'overview') switchEduMode(false); setShowMobileMenu(false); }}
+                    <button key={t.key} onClick={() => { setPanel(t.key); if (t.edu) switchEduMode(true); else if (t.key !== 'overview') switchEduMode(false); setShowMobileMenu(false); if (mainRef.current) mainRef.current.scrollTop = 0; }}
                       style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: active ? BLUE : TEXT3, cursor: 'pointer', padding: '8px 0', WebkitTapHighlightColor: 'transparent' }}>
                       <span style={{ fontSize: 20, lineHeight: 1 }}>{t.icon}</span>
                       <span style={{ fontSize: 9, fontWeight: active ? 700 : 500, letterSpacing: '0.3px' }}>{t.label}</span>
@@ -7838,7 +7838,8 @@ export default function Dashboard() {
                     })()
                   ) : (
                     <>
-                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
                             {['Ticker', 'Name', 'Shares', 'Price', 'Value', 'P&L', '1D %', '1W %', '1M %'].map(h => (
@@ -7886,6 +7887,7 @@ export default function Dashboard() {
                           })}
                         </tbody>
                       </table>
+                      </div>
                       {activeHoldings.length > 4 && (
                         <button
                           onClick={() => setHoldingsExpanded(e => !e)}
@@ -12572,7 +12574,7 @@ export default function Dashboard() {
                       ))}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
                       {/* Spending breakdown */}
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Spending by Category</div>
@@ -13643,7 +13645,7 @@ export default function Dashboard() {
                       Invest a fixed amount every month vs. all at once. Watch how consistent buying lowers your average cost per share across different market conditions.
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
                       {/* Controls */}
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>Settings</div>
@@ -14678,7 +14680,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* EV Calculator */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Expected Value Calculator</div>
                         <div style={{ marginBottom: 18 }}>
@@ -14877,7 +14879,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Sliders + FCF table */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Model Assumptions</div>
                         {[
@@ -15054,7 +15056,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Sliders + cash flow table */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Bond Parameters</div>
                         {[
@@ -15223,7 +15225,7 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Deal Assumptions</div>
                         {[
@@ -15351,7 +15353,7 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>Income Statement ($M)</div>
                         {[
@@ -15603,7 +15605,7 @@ export default function Dashboard() {
                         <button key={key} onClick={() => setYcShape(key)} style={{ padding: '7px 18px', borderRadius: 8, border: `1px solid ${ycShape === key ? ROSE : BORDER_C}`, background: ycShape === key ? `${ROSE}18` : 'transparent', color: ycShape === key ? ROSE : TEXT2, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>{label}</button>
                       ))}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12, marginBottom: 20 }}>
                       {[
                         { label: '2Y Rate',        value: `${rates[3]}%`,         sub: 'short-end anchor', color: ROSE },
                         { label: '10Y Rate',       value: `${rates[7]}%`,         sub: 'long-end benchmark', color: BLUE },
@@ -15638,7 +15640,7 @@ export default function Dashboard() {
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Implied Forward Rates</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Forward rates extracted from spot rates via no-arbitrage: <span style={{ fontFamily: 'monospace' }}>f(t₁,t₂) = [(1+s₂)<sup style={{fontSize:9}}>t₂</sup> / (1+s₁)<sup style={{fontSize:9}}>t₁</sup>]<sup style={{fontSize:9}}>1/(t₂−t₁)</sup> − 1</span></div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 10 }}>
                         {[
                           [0, 3, '3M→2Y'],  [3, 7, '2Y→10Y'], [0, 7, '3M→10Y'],
                           [3, 9, '2Y→30Y'], [7, 9, '10Y→30Y'], [2, 7, '1Y→10Y'],
@@ -15722,7 +15724,7 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Bond Parameters</div>
                         {[
@@ -15831,7 +15833,7 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Credit Parameters</div>
                         {[
@@ -15943,7 +15945,7 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: 16, marginBottom: 20 }}>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Option Parameters</div>
                         {[
@@ -16080,7 +16082,7 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 20 }}>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Black-Scholes Inputs</div>
                         {[
@@ -16205,7 +16207,7 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: 16, marginBottom: 20 }}>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Parameters</div>
                         {[
