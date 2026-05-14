@@ -56,10 +56,15 @@ async function getHoldings(req) {
   if (!tokens.length) return { holdings: getDummyData().holdings, demo: true };
 
   const results = await Promise.all(
-    tokens.map(({ access_token }) =>
+    tokens.map(({ access_token, institution_name }) =>
       plaidClient.investmentsHoldingsGet({ access_token })
         .then(r => ({ holdings: r.data.holdings, securities: r.data.securities }))
-        .catch(() => ({ holdings: [], securities: [] }))
+        .catch(err => {
+          const code = err.response?.data?.error_code;
+          const msg  = err.response?.data?.error_message || err.message;
+          console.warn(`[holdings] ${institution_name}: ${code} — ${msg}`);
+          return { holdings: [], securities: [] };
+        })
     )
   );
 
