@@ -240,19 +240,25 @@ router.post('/reset-password', async (req, res) => {
 
 // Update own profile (backup email)
 router.patch('/me', requireAuth, (req, res) => {
-  const { backup_email } = req.body;
-  if (backup_email !== undefined) {
-    if (backup_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(backup_email)) {
-      return res.status(400).json({ error: 'Invalid email address' });
+  try {
+    const { backup_email } = req.body;
+    if (backup_email !== undefined) {
+      if (backup_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(backup_email)) {
+        return res.status(400).json({ error: 'Invalid email address' });
+      }
+      if (backup_email && backup_email.toLowerCase() === (req.user.email || '').toLowerCase()) {
+        return res.status(400).json({ error: 'Backup email must be different from your primary email' });
+      }
+      db.prepare('UPDATE users SET backup_email = ? WHERE id = ?').run(backup_email || null, req.user.id);
     }
-    if (backup_email && backup_email.toLowerCase() === req.user.email.toLowerCase()) {
-      return res.status(400).json({ error: 'Backup email must be different from your primary email' });
-    }
-    db.prepare('UPDATE users SET backup_email = ? WHERE id = ?').run(backup_email || null, req.user.id);
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const enrollments = getEnrollments(req.user.id);
+    res.json({ user: safeUser(user, enrollments) });
+  } catch (err) {
+    console.error('[PATCH /me]', err.message);
+    res.status(500).json({ error: 'Failed to save changes' });
   }
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
-  const enrollments = getEnrollments(req.user.id);
-  res.json({ user: safeUser(user, enrollments) });
 });
 
 // Email verification
