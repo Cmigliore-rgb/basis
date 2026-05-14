@@ -2961,6 +2961,7 @@ export default function Dashboard() {
         ...(liabData.credit   || []),
         ...(liabData.student  || []),
         ...(liabData.mortgage || []),
+        ...(liabData.car      || []),
       ].reduce((s, l) => s + (l.balances?.current || 0), 0);
       const nw = cash + portfolio - totalLiab;
       if (allAccounts.length > 0) {
