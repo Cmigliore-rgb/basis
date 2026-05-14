@@ -5039,17 +5039,24 @@ export default function Dashboard() {
                     ))}
                   </div>
                   <div className="lc" style={CARD}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                       <div style={{ fontWeight: 600 }}>Market Alerts</div>
-                      {articles.length > 5 && (
+                      {isPremium && articles.length > 5 && (
                         <button onClick={() => setShowAllNews(v => !v)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 12, cursor: 'pointer', padding: 0 }}>
                           {showAllNews ? 'Show less ↑' : `+${articles.length - 5} more ↓`}
                         </button>
                       )}
                     </div>
-                    {(showAllNews ? articles : articles.slice(0, 5)).map((a, i, arr) => (
+                    {!isPremium && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 7, marginBottom: 12, fontSize: 11, color: TEXT2 }}>
+                        <span style={{ color: BLUE, fontWeight: 700 }}>◬</span>
+                        <span>Snapshot from <strong style={{ color: TEXT }}>{SNAPSHOT_DATE}</strong>. Upgrade for live daily news.</span>
+                        <button onClick={() => setShowUpgrade(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: BLUE, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Upgrade →</button>
+                      </div>
+                    )}
+                    {(isPremium ? (showAllNews ? articles : articles.slice(0, 5)) : SNAPSHOT_ARTICLES.slice(0, 5)).map((a, i, arr) => (
                       <div key={i} style={{ padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
-                        <a href={a.url} target="_blank" rel="noreferrer" style={{ color: TEXT, textDecoration: 'none', fontSize: 13, fontWeight: 500, lineHeight: 1.4, display: 'block' }}>{a.headline}</a>
+                        <a href={a.url !== '#' ? a.url : undefined} target={a.url !== '#' ? '_blank' : undefined} rel="noreferrer" style={{ color: TEXT, textDecoration: 'none', fontSize: 13, fontWeight: 500, lineHeight: 1.4, display: 'block' }}>{a.headline}</a>
                         <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{a.source} · {fmtDate(a.created_at)}</div>
                       </div>
                     ))}
@@ -5204,42 +5211,6 @@ export default function Dashboard() {
                   );
                 })()}
                 </DragSection>
-
-                {/* ── News Feed (overview) ── */}
-                <div style={{ ...CARD, marginTop: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: !isPremium ? 12 : 16 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15 }}>Market News</div>
-                    {isPremium && <button onClick={() => setPanel('insights')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>View all →</button>}
-                  </div>
-                  {!isPremium && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: TEXT2 }}>
-                      <span style={{ color: BLUE, fontWeight: 700 }}>◬</span>
-                      <span>Snapshot from <strong style={{ color: TEXT }}>{SNAPSHOT_DATE}</strong>. Upgrade for a live daily news feed.</span>
-                      <button onClick={() => setShowUpgrade(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Upgrade →</button>
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                    {(isPremium ? articles : SNAPSHOT_ARTICLES).slice(0, 5).map((a, i, arr) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          {(a.symbols?.length > 0) && (
-                            <div style={{ display: 'flex', gap: 4, marginBottom: 5, flexWrap: 'wrap' }}>
-                              {a.symbols.slice(0, 3).map(s => (
-                                <span key={s} style={{ background: 'rgba(77,163,255,0.1)', color: BLUE, padding: '1px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>{s}</span>
-                              ))}
-                            </div>
-                          )}
-                          <a href={a.url !== '#' ? a.url : undefined} target={a.url !== '#' ? '_blank' : undefined} rel="noreferrer"
-                            style={{ display: 'block', color: TEXT, textDecoration: 'none', fontWeight: 600, fontSize: 13, lineHeight: 1.4, marginBottom: 4 }}>
-                            {a.headline}
-                          </a>
-                          <div style={{ fontSize: 11, color: TEXT3 }}>{a.source} · {fmtDate(a.created_at)}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 </div>{/* end flex layout */}
               </div>
               );
