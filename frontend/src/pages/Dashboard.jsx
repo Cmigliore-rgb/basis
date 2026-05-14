@@ -12036,7 +12036,7 @@ export default function Dashboard() {
 
                     {/* Progress toward 3-month goal */}
                     <div style={{ ...CARD, marginBottom: 20 }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Current Progress — 3-Month Goal</div>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Current Progress: 3-Month Goal</div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: TEXT2, marginBottom: 8 }}>
                         <span>Current savings: <strong style={{ color: TEXT }}>{fmt(currentSavings)}</strong></span>
                         <span style={{ color: pct3mo >= 100 ? GREEN : YELLOW, fontWeight: 700 }}>{pct3mo}% funded</span>
@@ -12092,7 +12092,7 @@ export default function Dashboard() {
                           </div>
                         ))}
                         <div style={{ marginTop: 8, padding: '10px 14px', background: `${GREEN}08`, border: `1px solid ${GREEN}22`, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
-                          By choosing a HYSA, you earn <strong style={{ color: GREEN }}>{fmt(interestDiff)} more per year</strong> — money working while you sleep.
+                          By choosing a HYSA, you earn <strong style={{ color: GREEN }}>{fmt(interestDiff)} more per year</strong>, money working while you sleep.
                         </div>
                       </div>
                     </div>
@@ -12398,7 +12398,7 @@ export default function Dashboard() {
                       <button onClick={exitSandbox} style={{ background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, padding: '7px 14px', cursor: 'pointer', fontSize: 13 }}>Back</button>
                       <div>
                         <div style={{ fontSize: 20, fontWeight: 700 }}>Taxes 101</div>
-                        <div style={{ fontSize: 12, color: TEXT2 }}>Taxes · Ch. 4 · 2025 Federal Income Tax</div>
+                        <div style={{ fontSize: 12, color: TEXT2 }}>Taxes · 2025 Federal Income Tax</div>
                       </div>
                     </div>
                     <div style={{ ...CARD, marginBottom: 16 }}>
@@ -12541,7 +12541,7 @@ export default function Dashboard() {
                       <button onClick={exitSandbox} style={{ background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, padding: '7px 14px', cursor: 'pointer', fontSize: 13 }}>Back</button>
                       <div>
                         <div style={{ fontSize: 20, fontWeight: 700 }}>Inflation & Purchasing Power</div>
-                        <div style={{ fontSize: 12, color: TEXT2 }}>Macro · Ch. 10 · Real vs. Nominal Value</div>
+                        <div style={{ fontSize: 12, color: TEXT2 }}>Macro · Real vs. Nominal Value</div>
                       </div>
                     </div>
                     <div style={{ ...CARD, marginBottom: 16 }}>
@@ -12777,7 +12777,7 @@ export default function Dashboard() {
                     {/* Month-by-month table */}
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Month-by-Month Purchase Log</div>
-                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Each month you invest ${dcaMonthly}. Highlighted rows are the cheapest months — when DCA buys the most shares.</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Each month you invest ${dcaMonthly}. Highlighted rows are the cheapest months, when DCA buys the most shares.</div>
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                           <thead>
@@ -12888,7 +12888,7 @@ export default function Dashboard() {
                 const COMPARISONS = [
                   { label: 'Single Stock',   n: 1,   example: 'e.g. AAPL, TSLA, NVDA',           risk: 'Catastrophic exposure. One bad earnings, lawsuit, or leadership scandal can wipe out 50-80% of value overnight.' },
                   { label: 'Sector ETF',     n: 25,  example: 'e.g. XLK (Tech), XLE (Energy)',    risk: 'Moderate. Company-specific risk is mostly gone, but the whole sector can fall together (e.g., tech selloff in 2022).' },
-                  { label: 'S&P 500 Index',  n: 500, example: 'e.g. VOO, SPY, IVV',              risk: 'Only market risk remains. Cannot be diversified away — it hits all stocks simultaneously.' },
+                  { label: 'S&P 500 Index',  n: 500, example: 'e.g. VOO, SPY, IVV',              risk: 'Only market risk remains. Cannot be diversified away; it hits all stocks simultaneously.' },
                 ];
 
                 return (
@@ -12899,7 +12899,7 @@ export default function Dashboard() {
                       {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${DGREEN}18`, color: DGREEN }}>Sandbox · Ch. 8</span>}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
-                      Drag the slider to add more stocks. Watch company-specific risk disappear while market risk stays constant — no matter how many stocks you hold.
+                      Drag the slider to add more stocks. Watch company-specific risk disappear while market risk stays constant, no matter how many stocks you hold.
                     </div>
 
                     {/* Metric cards */}
@@ -12952,7 +12952,7 @@ export default function Dashboard() {
                         {divStocks === 1 ? 'All risk is company-specific. One bad quarter, scandal, or bankruptcy could wipe out most of your investment.' :
                          divStocks <= 5 ? 'Some improvement, but you still carry significant company-specific risk across your holdings.' :
                          divStocks <= 15 ? 'Good progress. Most unsystematic risk is gone, but a few holdings still carry meaningful individual exposure.' :
-                         'Nearly all company-specific risk is eliminated. What remains is market risk — which hits every stock and cannot be diversified away.'}
+                         'Nearly all company-specific risk is eliminated. What remains is market risk, which hits every stock and cannot be diversified away.'}
                       </div>
                     </div>
 
@@ -13021,7 +13021,7 @@ export default function Dashboard() {
               if (sandboxDataset === 'ds-indices') {
                 const CYAN = '#38bdf8';
                 const INDEXES = [
-                  { name: 'S&P 500', stocks: 500, method: 'Market-cap weighted', color: BLUE,  launched: 1957, ytd: 10.5, desc: 'The 500 largest U.S. companies by market cap. The most widely followed benchmark — often what people mean when they say "the market."' },
+                  { name: 'S&P 500', stocks: 500, method: 'Market-cap weighted', color: BLUE,  launched: 1957, ytd: 10.5, desc: 'The 500 largest U.S. companies by market cap. The most widely followed benchmark, often what people mean when they say "the market."' },
                   { name: 'DJIA',    stocks: 30,  method: 'Price weighted',       color: YELLOW, launched: 1896, ytd: 9.4,  desc: '30 blue-chip companies selected by editors at S&P Dow Jones. Oldest U.S. index, but its price-weighting is considered a flaw by most modern analysts.' },
                   { name: 'Nasdaq Composite', stocks: 3300, method: 'Market-cap weighted', color: '#a78bfa', launched: 1971, ytd: 11.8, desc: 'All stocks listed on the Nasdaq exchange. Heavily tech-weighted (AAPL, MSFT, NVDA, AMZN, GOOGL account for a huge share). More volatile than the S&P 500.' },
                 ];
@@ -13093,7 +13093,7 @@ export default function Dashboard() {
                           ))}
                         </div>
                       </div>
-                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>{METHOD_LABELS[indicesMethod]} — 5 fictional companies. Toggle the method to see how it reshuffles which stocks drive the index.</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>{METHOD_LABELS[indicesMethod]}: 5 fictional companies. Toggle the method to see how it reshuffles which stocks drive the index.</div>
                       {STOCKS.map((s, i) => {
                         const w = weights[i][indicesMethod];
                         const mc = mcaps[i];
@@ -13119,7 +13119,7 @@ export default function Dashboard() {
                       })}
                       <div style={{ marginTop: 16, padding: '12px 14px', background: `${CYAN}08`, border: `1px solid ${CYAN}25`, borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>
                         {indicesMethod === 'marketcap' && <><strong style={{ color: TEXT }}>Market-cap weighted (S&P 500, Nasdaq):</strong> Bigger companies have bigger weight. MEGA ($2.9T market cap) dominates. A 10% move in MEGA moves the index far more than a 10% move in BANK.</>}
-                        {indicesMethod === 'price' && <><strong style={{ color: TEXT }}>Price weighted (DJIA):</strong> The highest-priced stock — HLTH at $314.80 — has the biggest weight even though its market cap is only $881B (less than SHOP). This is widely considered a flaw.</>}
+                        {indicesMethod === 'price' && <><strong style={{ color: TEXT }}>Price weighted (DJIA):</strong> The highest-priced stock (HLTH at $314.80) has the biggest weight even though its market cap is only $881B (less than SHOP). This is widely considered a flaw.</>}
                         {indicesMethod === 'equal' && <><strong style={{ color: TEXT }}>Equal weighted:</strong> Every stock counts the same regardless of size or price. More exposure to small-cap companies. Higher rebalancing costs. Outperforms in small-cap rallies, underperforms in mega-cap rallies.</>}
                       </div>
                     </div>
@@ -13180,13 +13180,13 @@ export default function Dashboard() {
                 const yearsToRecover = gainNeeded === Infinity ? Infinity : Math.log(1 + gainNeeded / 100) / Math.log(1 + bbRecoveryRate / 100);
                 const CYCLES = [
                   { period: '1982–2000', type: 'Bull', change: '+1,749%', duration: '216 mo', note: 'Longest bull run in history. Driven by falling inflation, tech boom, and deregulation.' },
-                  { period: 'Oct 1987',  type: 'Bear', change: '−33.5%',  duration: '3 mo',   note: '"Black Monday" crash. Market lost 22.6% in a single day — the largest single-day % drop ever.' },
+                  { period: 'Oct 1987',  type: 'Bear', change: '−33.5%',  duration: '3 mo',   note: '"Black Monday" crash. Market lost 22.6% in a single day; the largest single-day % drop ever.' },
                   { period: '1990–2000', type: 'Bull', change: '+417%',   duration: '113 mo',  note: 'Dot-com bubble expansion. Internet euphoria drove valuations far beyond earnings.' },
                   { period: '2000–2002', type: 'Bear', change: '−49.1%',  duration: '30 mo',  note: 'Dot-com bust. Recovery took 56 months. Many high-flying tech stocks never recovered.' },
                   { period: '2002–2007', type: 'Bull', change: '+101%',   duration: '60 mo',  note: 'Housing-led expansion. Credit was cheap and widely available.' },
                   { period: '2007–2009', type: 'Bear', change: '−56.8%',  duration: '17 mo',  note: 'Financial crisis. The deepest bear since the Great Depression. Recovery took 49 months.' },
                   { period: '2009–2020', type: 'Bull', change: '+401%',   duration: '132 mo', note: 'Second-longest bull. Fed near-zero rates, QE, and tech growth drove record gains.' },
-                  { period: 'Feb 2020',  type: 'Bear', change: '−33.9%',  duration: '1.1 mo', note: 'COVID crash. Fastest bear market on record. Also the fastest recovery — only 5 months.' },
+                  { period: 'Feb 2020',  type: 'Bear', change: '−33.9%',  duration: '1.1 mo', note: 'COVID crash. Fastest bear market on record. Also the fastest recovery (only 5 months).' },
                   { period: '2020–2022', type: 'Bull', change: '+114%',   duration: '21 mo',  note: 'Pandemic recovery. Stimulus, low rates, and retail-investing boom fueled rapid gains.' },
                   { period: '2022',      type: 'Bear', change: '−25.4%',  duration: '9.4 mo', note: 'Rate-hike bear. Fed raised rates from 0% to 5.25%. Tech stocks hardest hit (Nasdaq −33%).' },
                   { period: '2023–2024', type: 'Bull', change: '+62%',    duration: '24+ mo', note: 'AI-driven rally. Soft landing achieved. S&P 500 hit all-time highs driven by mega-cap tech.' },
@@ -13207,7 +13207,7 @@ export default function Dashboard() {
                       {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${ORANGE}18`, color: ORANGE }}>Sandbox · Ch. 8</span>}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
-                      Every major S&P 500 cycle since 1982 — then use the recovery calculator to see the math behind staying invested.
+                      Every major S&P 500 cycle since 1982; use the recovery calculator to see the math behind staying invested.
                     </div>
 
                     {/* Definition cards */}
@@ -13259,7 +13259,7 @@ export default function Dashboard() {
                     {/* Recovery calculator */}
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Drawdown Recovery Calculator</div>
-                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 20 }}>A loss requires a larger gain to break even — the math is asymmetric and surprises most people.</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 20 }}>A loss requires a larger gain to break even; the math is asymmetric and surprises most people.</div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                         <div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -13292,9 +13292,9 @@ export default function Dashboard() {
                             </div>
                           ))}
                           <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>
-                            {bbDrop <= 10 ? 'A 10% correction is normal — happens on average once a year and rarely requires more than a year to recover.' :
+                            {bbDrop <= 10 ? 'A 10% correction is normal; it happens on average once a year and rarely requires more than a year to recover.' :
                              bbDrop <= 20 ? 'A 20% bear market threshold. Historically takes 1–3 years to recover depending on economic conditions.' :
-                             bbDrop <= 35 ? 'A significant bear. The 2022 bear was in this range — recovery took about 12 months with a 10%/yr rally.' :
+                             bbDrop <= 35 ? 'A significant bear. The 2022 bear was in this range; recovery took about 12 months with a 10%/yr rally.' :
                              bbDrop <= 50 ? 'Deep bear territory. The 2000–2002 dot-com bust and 2007–2009 financial crisis were in this range.' :
                              'Extreme drawdown. Only the Great Depression and dot-com bust at their worst approached this territory.'}
                           </div>
@@ -13358,7 +13358,7 @@ export default function Dashboard() {
                       </table>
                       </div>
                       <div style={{ marginTop: 12, padding: '10px 14px', background: `${GREEN}06`, border: `1px solid ${GREEN}20`, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
-                        Missing just 10 of the best trading days cut the final value by more than half. The problem: you cannot know in advance when those best days will be — they typically happen within weeks of the worst days.
+                        Missing just 10 of the best trading days cut the final value by more than half. The problem: you cannot know in advance when those best days will be; they typically happen within weeks of the worst days.
                       </div>
                     </div>
 
@@ -13575,8 +13575,8 @@ export default function Dashboard() {
                 const taxableAfterTax = fvOwn * (1 - 0.15);
                 const matchInstantReturn = retMatchPct;
                 const ACCT_TYPES = [
-                  { label: 'Roth IRA',          value: rothAfterTax,  color: INDIGO, sub: 'No match · Tax-free at withdrawal',       note: '2025 limit: $7,000/yr ($8,000 if 50+). Contributions are post-tax — growth and withdrawals are completely tax-free.' },
-                  { label: '401(k) with Match',  value: tradAfterTax,  color: GREEN,  sub: `${retMatchPct}% match · Taxed at ${retTaxRetire}% in retirement`, note: '2025 limit: $23,500/yr. Pre-tax contributions reduce your taxable income today. Employer match is free money — always take the full match first.' },
+                  { label: 'Roth IRA',          value: rothAfterTax,  color: INDIGO, sub: 'No match · Tax-free at withdrawal',       note: '2025 limit: $7,000/yr ($8,000 if 50+). Contributions are post-tax; growth and withdrawals are completely tax-free.' },
+                  { label: '401(k) with Match',  value: tradAfterTax,  color: GREEN,  sub: `${retMatchPct}% match · Taxed at ${retTaxRetire}% in retirement`, note: '2025 limit: $23,500/yr. Pre-tax contributions reduce your taxable income today. Employer match is free money; always take the full match first.' },
                   { label: 'Taxable Brokerage', value: taxableAfterTax, color: TEXT2, sub: 'No match · 15% long-term cap gains tax',  note: 'No contribution limits, no early withdrawal penalties, but no tax advantages. Use after maxing tax-advantaged accounts.' },
                 ];
 
@@ -13626,7 +13626,7 @@ export default function Dashboard() {
                             </div>
                             {retMatchPct > 0 && (
                               <div style={{ marginTop: 8, padding: '8px 12px', background: `${GREEN}08`, border: `1px solid ${GREEN}20`, borderRadius: 8, fontSize: 12, color: GREEN }}>
-                                +${annualMatch.toLocaleString()}/yr free from employer — an instant {matchInstantReturn}% return on your contribution.
+                                +${annualMatch.toLocaleString()}/yr free from employer: an instant {matchInstantReturn}% return on your contribution.
                               </div>
                             )}
                           </div>
@@ -13656,9 +13656,9 @@ export default function Dashboard() {
                             </div>
                             <div style={{ marginTop: 10, padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>
                               {retTaxNow < retTaxRetire
-                                ? 'Your tax rate is expected to rise. Roth wins — pay the lower rate now, withdraw tax-free later.'
+                                ? 'Your tax rate is expected to rise. Roth wins; pay the lower rate now, withdraw tax-free later.'
                                 : retTaxNow > retTaxRetire
-                                ? 'Your tax rate is expected to fall. Traditional may win — defer at the high rate now, pay less in retirement.'
+                                ? 'Your tax rate is expected to fall. Traditional may win; defer at the high rate now, pay less in retirement.'
                                 : 'Same tax rate: Roth and Traditional produce equal after-tax results. Roth gets the nod for flexibility (no RMDs, tax-free heirs).'}
                             </div>
                           </div>
@@ -13740,9 +13740,9 @@ export default function Dashboard() {
                 const evOfInsurance = expectedLoss - insPremiumAmt;
                 const breakEvenProb = (insPremiumAmt / insLossAmt) * 100;
                 const INS_TYPES = [
-                  { type: 'Health',          premium: '$150–400/mo', coverage: 'Unlimited (with deductible/copay)', deductible: '$1,000–$5,000', who: 'Everyone — one ER visit without it can cost $10,000+', color: RED },
+                  { type: 'Health',          premium: '$150–400/mo', coverage: 'Unlimited (with deductible/copay)', deductible: '$1,000–$5,000', who: 'Everyone; one ER visit without it can cost $10,000+', color: RED },
                   { type: 'Renters',         premium: '$15–30/mo',   coverage: '$20,000+ belongings + liability',  deductible: '$500–$1,000',   who: 'All renters. Covers theft, fire, water damage, and liability. Cheapest insurance available.', color: BLUE },
-                  { type: 'Auto (Liability)', premium: '$50–150/mo',  coverage: 'Damage to others',                 deductible: '$0',            who: 'Everyone who drives — legally required in most states.', color: YELLOW },
+                  { type: 'Auto (Liability)', premium: '$50–150/mo',  coverage: 'Damage to others',                 deductible: '$0',            who: 'Everyone who drives; legally required in most states.', color: YELLOW },
                   { type: 'Auto (Full)',      premium: '$100–300/mo', coverage: 'Your car + others',                deductible: '$500–$2,000',   who: 'If your car is worth more than $8,000 (otherwise repair cost > premium savings).', color: YELLOW },
                   { type: 'Term Life',        premium: '$20–50/mo',   coverage: '$500K–$1M death benefit',          deductible: 'N/A',           who: 'Only if someone depends on your income. Skip if you have no dependents.', color: GREEN },
                   { type: 'Disability',       premium: '$50–150/mo',  coverage: '60–70% of income if disabled',    deductible: '90-day wait',   who: 'If you have dependents or high fixed expenses. Most overlooked coverage type.', color: '#a78bfa' },
@@ -13801,7 +13801,7 @@ export default function Dashboard() {
                         {[
                           { label: 'Expected Annual Loss',     value: `$${Math.round(expectedLoss).toLocaleString()}`, sub: `${insLossProb}% × $${insLossAmt.toLocaleString()}`,          color: RED },
                           { label: 'Annual Premium',           value: `$${insPremiumAmt.toLocaleString()}`,             sub: 'What you pay regardless of claims',                           color: TEXT2 },
-                          { label: 'Net EV of Insurance',      value: evOfInsurance >= 0 ? `+$${Math.round(evOfInsurance).toLocaleString()}` : `−$${Math.round(Math.abs(evOfInsurance)).toLocaleString()}`, sub: evOfInsurance >= 0 ? 'Insurance saves you money on average' : 'You pay more than expected loss — but coverage still has value', color: evOfInsurance >= 0 ? GREEN : YELLOW },
+                          { label: 'Net EV of Insurance',      value: evOfInsurance >= 0 ? `+$${Math.round(evOfInsurance).toLocaleString()}` : `−$${Math.round(Math.abs(evOfInsurance)).toLocaleString()}`, sub: evOfInsurance >= 0 ? 'Insurance saves you money on average' : 'You pay more than expected loss, but coverage still has value', color: evOfInsurance >= 0 ? GREEN : YELLOW },
                           { label: 'Break-Even Probability',   value: `${breakEvenProb.toFixed(1)}%`,                   sub: `Premium equals expected loss at this probability`,            color: TEAL },
                         ].map(m => (
                           <div key={m.label} style={{ ...CARD, padding: '14px 16px' }}>
@@ -13812,8 +13812,8 @@ export default function Dashboard() {
                         ))}
                         <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: BORDER, fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>
                           {evOfInsurance < 0
-                            ? 'Even with a negative EV, insurance is still worth it for large, catastrophic losses. You buy insurance for events that would financially ruin you — not just ones that are statistically likely.'
-                            : 'The premium is less than your expected annual loss — insurance is mathematically a good deal here, before even considering the catastrophic protection.'}
+                            ? 'Even with a negative EV, insurance is still worth it for large, catastrophic losses. You buy insurance for events that would financially ruin you, not just ones that are statistically likely.'
+                            : 'The premium is less than your expected annual loss; insurance is mathematically a good deal here, before even considering the catastrophic protection.'}
                         </div>
                       </div>
                     </div>
@@ -13944,7 +13944,7 @@ export default function Dashboard() {
                       {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${PURPLE}18`, color: PURPLE }}>Analyst · Valuation</span>}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
-                      Apex SaaS Inc. (fictional) — adjust FCF, growth, and WACC to see how intrinsic value compares to the $280/share market price.
+                      Apex SaaS Inc. (fictional): adjust FCF, growth, and WACC to see how intrinsic value compares to the $280/share market price.
                     </div>
 
                     {/* Summary cards */}
@@ -14027,7 +14027,7 @@ export default function Dashboard() {
                     {/* Sensitivity table */}
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Intrinsic Value Sensitivity ($  / share)</div>
-                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>WACC (rows) vs. terminal growth rate (columns) — green = above $280 market price</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>WACC (rows) vs. terminal growth rate (columns): green = above $280 market price</div>
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                           <thead>
@@ -14164,10 +14164,10 @@ export default function Dashboard() {
                             {isPremium ? 'Premium Bond' : isDiscount ? 'Discount Bond' : 'At Par'}:
                           </strong>{' '}
                           {isPremium
-                            ? `Coupon (${bondCoupon}%) > YTM (${bondYtm}%) — price above par`
+                            ? `Coupon (${bondCoupon}%) > YTM (${bondYtm}%): price above par`
                             : isDiscount
-                            ? `YTM (${bondYtm}%) > Coupon (${bondCoupon}%) — price below par`
-                            : 'Coupon = YTM — price equals par'}
+                            ? `YTM (${bondYtm}%) > Coupon (${bondCoupon}%): price below par`
+                            : 'Coupon = YTM: price equals par'}
                         </div>
                       </div>
 
@@ -14294,7 +14294,7 @@ export default function Dashboard() {
                       {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${ORANGE}18`, color: ORANGE }}>Analyst · Private Equity</span>}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24, marginLeft: 2 }}>
-                      Retail Chain Co. (fictional) — adjust entry multiple, leverage, EBITDA growth, exit multiple, and hold period to see returns.
+                      Retail Chain Co. (fictional): adjust entry multiple, leverage, EBITDA growth, exit multiple, and hold period to see returns.
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                       {[
@@ -14376,7 +14376,7 @@ export default function Dashboard() {
                           { term: 'MOIC (Multiple on Invested Capital)', formula: 'MOIC = Exit Equity / Entry Equity', body: 'The total return multiple on the equity check written at entry. A 3× MOIC means PE tripled its money. Buyout funds typically target 2.5-3.5× over 5 years. MOIC ignores time; a 3× in 3 years is far better than a 3× in 7 years.' },
                           { term: 'IRR (Internal Rate of Return)', formula: 'IRR = MOIC^(1/years) - 1', body: 'The annualized return on invested capital. Accounts for time, unlike MOIC. PE funds typically target 20-25%+ IRR. IRR is sensitive to hold period: a 3× MOIC in 3 years = 44% IRR; the same return in 7 years = only 17% IRR.' },
                           { term: 'Leverage & Debt Paydown', formula: 'Entry Equity = Entry EV × (1 - Debt %)', body: 'Using 70% debt means the PE firm only needs 30 cents of equity per dollar of company purchased. As the company generates FCF and pays down debt, equity value grows even if EV stays flat. This is the financial engineering core of an LBO.' },
-                          { term: 'Entry vs. Exit Multiple', formula: 'Return from multiple expansion = (Exit − Entry) × EBITDA', body: 'LBO returns come from three sources: EBITDA growth, debt paydown, and multiple expansion (buying cheap, selling expensive). Multiple expansion is the riskiest — it depends on market conditions at exit, not operating performance.' },
+                          { term: 'Entry vs. Exit Multiple', formula: 'Return from multiple expansion = (Exit − Entry) × EBITDA', body: 'LBO returns come from three sources: EBITDA growth, debt paydown, and multiple expansion (buying cheap, selling expensive). Multiple expansion is the riskiest; it depends on market conditions at exit, not operating performance.' },
                         ].map(c => (
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
@@ -14417,7 +14417,7 @@ export default function Dashboard() {
                       {sandboxSource !== 'learn' && <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 12, background: `${VIOLET}18`, color: VIOLET }}>Analyst · Accounting</span>}
                     </div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20, marginLeft: 2 }}>
-                      Nexus Software Inc. (fictional) — 3-year financials. Toggle the year to see how margins and ratios evolve.
+                      Nexus Software Inc. (fictional): 3-year financials. Toggle the year to see how margins and ratios evolve.
                     </div>
                     <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
                       {[1, 2, 3].map(y => (
@@ -14605,7 +14605,7 @@ export default function Dashboard() {
                       </div>
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>EV/EBITDA vs. P/E</div>
-                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Same EBITDA, same earnings — but P/E varies wildly due to capital structure</div>
+                        <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Same EBITDA, same earnings, but P/E varies wildly due to capital structure</div>
                         {withEV.map((c, idx) => {
                           const colors = [BLUE, YELLOW, EMERALD, '#f472b6'];
                           return (
@@ -14626,7 +14626,7 @@ export default function Dashboard() {
                           );
                         })}
                         <div style={{ marginTop: 14, padding: '10px 14px', background: `${EMERALD}08`, border: `1px solid ${EMERALD}25`, borderRadius: 8, fontSize: 12, color: TEXT2, lineHeight: 1.6 }}>
-                          EV/EBITDA clusters around 8-12× for all four companies. P/E ranges from 18× to 33× — not because of earnings, but because of leverage and cash. This is why analysts use EV/EBITDA for cross-company comparisons.
+                          EV/EBITDA clusters around 8-12× for all four companies. P/E ranges from 18× to 33×, not because of earnings, but because of leverage and cash. This is why analysts use EV/EBITDA for cross-company comparisons.
                         </div>
                       </div>
                     </div>
@@ -14637,7 +14637,7 @@ export default function Dashboard() {
                           { term: 'Enterprise Value', formula: 'EV = Market Cap + Debt - Cash', body: 'EV is the total cost to acquire a business: buy all the equity (market cap), assume all debt, and collect all cash. It represents the theoretical takeover price and is capital-structure neutral, making it the right numerator for EBITDA-based multiples.' },
                           { term: 'EV/EBITDA', formula: 'EV/EBITDA = Enterprise Value / EBITDA', body: 'The most widely used valuation multiple in M&A because it excludes financing decisions (interest, taxes) and non-cash charges (D&A). Allows apples-to-apples comparison between a highly levered company and an unleveraged one. Typical ranges: 8-12× for industrials, 15-25× for software.' },
                           { term: 'Why P/E Is Distorted', formula: 'P/E = Market Cap / Net Income', body: 'Net income is after interest payments, so a highly levered company shows lower net income and a lower P/E for the same operating performance. P/E penalizes debt even when leverage is strategic. This is why PE firms and M&A advisors almost never use P/E as the primary valuation metric.' },
-                          { term: 'Net Debt', formula: 'Net Debt = Total Debt - Cash & Equivalents', body: 'The net financial obligation of a company. A company with $1B debt and $1.2B cash is a net cash company (negative net debt). Net debt is what gets bridged between EV and equity value in M&A transactions — a key concept in fairness opinions and LBO models.' },
+                          { term: 'Net Debt', formula: 'Net Debt = Total Debt - Cash & Equivalents', body: 'The net financial obligation of a company. A company with $1B debt and $1.2B cash is a net cash company (negative net debt). Net debt is what gets bridged between EV and equity value in M&A transactions, a key concept in fairness opinions and LBO models.' },
                         ].map(c => (
                           <div key={c.term}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{c.term}</div>
@@ -14697,7 +14697,7 @@ export default function Dashboard() {
                       {[
                         { label: '2Y Rate',        value: `${rates[3]}%`,         sub: 'short-end anchor', color: ROSE },
                         { label: '10Y Rate',       value: `${rates[7]}%`,         sub: 'long-end benchmark', color: BLUE },
-                        { label: '2Y/10Y Spread',  value: `${spread2y10y >= 0 ? '+' : ''}${spread2y10y}%`, sub: parseFloat(spread2y10y) < 0 ? 'Inverted — recession watch' : 'Positive — normal slope', color: parseFloat(spread2y10y) < 0 ? RED : GREEN },
+                        { label: '2Y/10Y Spread',  value: `${spread2y10y >= 0 ? '+' : ''}${spread2y10y}%`, sub: parseFloat(spread2y10y) < 0 ? 'Inverted: recession watch' : 'Positive: normal slope', color: parseFloat(spread2y10y) < 0 ? RED : GREEN },
                       ].map(m => (
                         <div key={m.label} style={{ ...CARD, padding: '16px 18px' }}>
                           <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
@@ -15101,7 +15101,7 @@ export default function Dashboard() {
                         {[
                           { term: 'Call Payoff', formula: 'max(S - K, 0) - Premium', body: 'A call profits when the stock exceeds the strike. Below the strike, the option expires worthless and you lose only the premium. Above the breakeven (K + premium), profit is unlimited. This asymmetric payoff is the core value of options as a hedging and speculation tool.' },
                           { term: 'Put Payoff', formula: 'max(K - S, 0) - Premium', body: 'A put profits when the stock falls below the strike. It is the classic portfolio hedge: as your stock portfolio falls, your puts gain. Max gain is limited to the strike price (if the stock goes to zero). Max loss is the premium paid.' },
-                          { term: 'Breakeven & Intrinsic Value', formula: 'Call BE = K + Premium  ·  Put BE = K - Premium', body: 'Intrinsic value is max(S-K, 0) for calls — what you\'d receive exercising right now. Time value = option price - intrinsic value. At expiry, there is no time value. The breakeven is the price where intrinsic value exactly covers the premium paid.' },
+                          { term: 'Breakeven & Intrinsic Value', formula: 'Call BE = K + Premium  ·  Put BE = K - Premium', body: 'Intrinsic value is max(S-K, 0) for calls: what you\'d receive exercising right now. Time value = option price - intrinsic value. At expiry, there is no time value. The breakeven is the price where intrinsic value exactly covers the premium paid.' },
                           { term: 'Long vs. Short Options', formula: 'Long = pay premium, right not obligation. Short = collect premium, obligation to perform.', body: 'Long options have unlimited upside (calls) or capped upside (puts) with max loss = premium. Short options (selling calls/puts) collect the premium but take on obligation: a short call has unlimited loss if the stock surges; a short put has large loss if the stock collapses.' },
                         ].map(c => (
                           <div key={c.term}>
