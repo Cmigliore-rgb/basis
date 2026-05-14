@@ -3407,9 +3407,9 @@ export default function Dashboard() {
                   </button>
                 </>}
                 {!isProfOrAdmin && !isStudentRole && <>
-                  <button onClick={() => { dismiss('overview', false); setShowConnectModal(true); }}
+                  <button onClick={() => { dismiss('overview', false); isPremium ? setShowConnectModal(true) : setShowUpgrade(true); }}
                     style={{ padding: '14px 20px', background: 'rgba(77,163,255,0.1)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 10, color: BLUE, fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>🔗 Connect my accounts</span><span style={{ opacity: 0.6 }}>→</span>
+                    <span>{isPremium ? '🔗 Connect my accounts' : 'Get Premium'}</span><span style={{ opacity: 0.6 }}>→</span>
                   </button>
                   <button onClick={() => dismiss('overview', false)}
                     style={{ padding: '14px 20px', background: MUTED, border: BORDER, borderRadius: 10, color: TEXT2, fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -3533,7 +3533,7 @@ export default function Dashboard() {
             {isAdmin && !viewAs && (
               <div data-tour="connect">
                 <button
-                  onClick={() => setShowConnectModal(true)}
+                  onClick={() => isPremium ? setShowConnectModal(true) : setShowUpgrade(true)}
                   style={{
                     width: '100%', padding: '9px 0',
                     background: 'rgba(77,163,255,0.08)',
@@ -3544,7 +3544,7 @@ export default function Dashboard() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}
                 >
-                  + Connect Account
+                  {isPremium ? '+ Connect Account' : 'Get Premium'}
                 </button>
               </div>
             )}
@@ -4814,10 +4814,10 @@ export default function Dashboard() {
                       <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Connect your bank and investment accounts to see your real finances.</div>
                     </div>
                     <button
-                      onClick={() => setShowConnectModal(true)}
-                      style={{ padding: '7px 14px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 7, color: '#4ade80', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      onClick={() => isPremium ? setShowConnectModal(true) : setShowUpgrade(true)}
+                      style={{ padding: '7px 14px', background: isPremium ? 'rgba(74,222,128,0.12)' : 'rgba(77,163,255,0.12)', border: `1px solid ${isPremium ? 'rgba(74,222,128,0.35)' : 'rgba(77,163,255,0.35)'}`, borderRadius: 7, color: isPremium ? '#4ade80' : BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
                     >
-                      + Connect Account
+                      {isPremium ? '+ Connect Account' : 'Get Premium'}
                     </button>
                     <button
                       onClick={() => { setConnectBannerDismissed(true); localStorage.setItem('pl_connect_banner_dismissed', '1'); }}
@@ -7642,9 +7642,9 @@ export default function Dashboard() {
                                   Refresh
                                 </button>
                               ) : (
-                                <button onClick={() => setShowConnectModal(true)}
+                                <button onClick={() => isPremium ? setShowConnectModal(true) : setShowUpgrade(true)}
                                   style={{ padding: '10px 24px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                                  + Connect Brokerage
+                                  {isPremium ? '+ Connect Brokerage' : 'Get Premium'}
                                 </button>
                               )}
                             </div>
