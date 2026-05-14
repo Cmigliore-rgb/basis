@@ -738,6 +738,10 @@ A few things worth focusing on: try to close that $80/month gap even a little at
   budgeting: `Your biggest expense this month is food and drink at $520, which jumped $140 from last month and makes up about a third of everything you spent. That is the main thing to watch.
 
 The good news is you are actually ahead this month, spending $180 less than you earned. Entertainment ticked up $35 and transportation rose $30, but shopping came down $20. Pulling food and drink back toward last month would put an extra $140 in your pocket each month.`,
+
+  investments: `Your $7,832 portfolio is 87% broad market ETFs and 13% Apple, which is a solid foundation for long-term investing. VTI and SPY together give you exposure to the entire U.S. market, and SCHD adds a dividend tilt that tends to hold up better during downturns. The one thing to be aware of is overlap: Apple already makes up roughly 7% of both VTI and SPY, so your separate AAPL position pushes your effective Apple exposure to around 16-18% of the total portfolio.
+
+Performance-wise, you are tracking almost exactly with the S&P 500, which makes sense given how much of the portfolio is index funds. If you want to take a more active position, the next logical step would be diversifying into international stocks or adding a bond allocation to reduce volatility as your balance grows. Connect your real accounts to see how your actual portfolio compares.`,
 };
 
 const CATEGORY_LABEL = {
@@ -3186,7 +3190,7 @@ export default function Dashboard() {
       overview:    'Write 2 short friendly paragraphs summarizing my overall financial health based on my accounts, spending, and portfolio. Highlight the most important thing going well and the single most important thing to work on. Sound like a knowledgeable friend, not a financial advisor. Write in plain conversational sentences. No bullet points, no headers, no em dashes.',
       cashflow:    'Write 2 short friendly paragraphs analyzing my cash flow. Talk about whether my spending is trending above or below my income baseline and what is driving the biggest swings. End with one concrete thing I could do this month to improve my net cash flow. Sound like a knowledgeable friend. No bullet points, no headers, no em dashes.',
       banking:     'Write 2 short friendly paragraphs about my recent transactions and account balances. Point out any spending patterns worth knowing and one or two practical things I could do. Sound like a knowledgeable friend. No bullet points, no headers, no em dashes.',
-      investments: 'Write 2 short friendly paragraphs reviewing my investment portfolio. Comment on my overall strategy, any concentration risk, and one thing I might consider changing. Sound like a knowledgeable friend. No bullet points, no headers, no em dashes.',
+      investments: 'Write 2 short friendly paragraphs reviewing my investment portfolio. Use the sector allocation to comment on concentration or diversification. Use the performance data to compare my portfolio return to the S&P 500 over the period shown and explain what is driving any gap. End with one concrete suggestion. Sound like a knowledgeable friend, not a financial advisor. No bullet points, no headers, no em dashes.',
       budgeting:   'Write 2 short friendly paragraphs reviewing my spending by category this month. Call out my biggest spending area and whether it looks reasonable, then give one practical suggestion to improve. Sound like a knowledgeable friend. No bullet points, no headers, no em dashes.',
       goals:       'Write 2 short friendly paragraphs about my savings goals. Tell me which ones look on track and which might need attention, and give one concrete tip to stay on schedule. Sound like a knowledgeable friend. No bullet points, no headers, no em dashes.',
     };
@@ -3196,16 +3200,25 @@ export default function Dashboard() {
       const slimAccounts = accounts.map(a => ({ name: a.name, type: a.type, balance: a.balances?.current ?? a.balance }));
       const slimTxns = transactions.slice(0, 40).map(t => ({ date: t.date, name: t.merchant_name || t.name, amount: t.amount, category: fmtCat(t.personal_finance_category?.primary || t.category?.[0]) }));
       const slimHoldings = holdings.map(h => ({ name: h.security?.name || h.name, ticker: h.security?.ticker_symbol || h.ticker_symbol, value: (h.quantity || 0) * (h.institution_price || 0) }));
+      const extraContext = {};
+      if (panelKey === 'investments') {
+        extraContext.sectorAllocation = slimHoldings.map(h => ({ ticker: h.ticker, sector: sectorData[h.ticker] || 'Unknown', value: h.value }));
+        if (portfolioPerf.portfolio.length >= 2) {
+          const pfChg = portfolioPerf.portfolio[portfolioPerf.portfolio.length - 1].value - 100;
+          const spChg = portfolioPerf.sp500[portfolioPerf.sp500.length - 1].value - 100;
+          extraContext.performanceVsSP500 = { portfolioPct: +pfChg.toFixed(2), sp500Pct: +spChg.toFixed(2), alphaPct: +(pfChg - spChg).toFixed(2), period: perfPeriod };
+        }
+      }
       const res = await api.post('/chat', {
         message: prompts[panelKey] || 'Give me financial recommendations based on my data.',
         history: [],
-        context: { accounts: slimAccounts, transactions: slimTxns, holdings: slimHoldings, budget: budgetMap },
+        context: { accounts: slimAccounts, transactions: slimTxns, holdings: slimHoldings, budget: budgetMap, ...extraContext },
       });
       setAdviceState(s => ({ ...s, [panelKey]: { loading: false, text: res.data.reply } }));
     } catch {
       setAdviceState(s => ({ ...s, [panelKey]: { loading: false, text: 'Could not get advice. Check GROQ_API_KEY in backend .env.' } }));
     }
-  }, [accounts, transactions, holdings, budget, budgetLimits]);
+  }, [accounts, transactions, holdings, budget, budgetLimits, sectorData, portfolioPerf, perfPeriod]);
 
   const totalCash        = accounts.filter(a => !a.closed && a.type !== 'investment' && a.type !== 'credit').reduce((s, a) => s + (a.balances?.current || 0), 0);
   const totalPortfolio   = holdings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
@@ -7579,11 +7592,11 @@ export default function Dashboard() {
                     </>
                   );
                 })()}
-                {canSeeAI && activeHoldings.length > 0 && (
+                {activeHoldings.length > 0 && (
                   <AIInsightCard
-                    isDemoData={false}
-                    demoKey={null}
-                    onGetAdvice={() => getAdvice('investments')}
+                    isDemoData={isDemoData}
+                    demoKey={isDemoData ? 'investments' : null}
+                    onGetAdvice={canSeeAI && !isDemoData ? () => getAdvice('investments') : undefined}
                     loading={adviceState.investments?.loading}
                     text={adviceState.investments?.text}
                   />
