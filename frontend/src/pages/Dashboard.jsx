@@ -2330,7 +2330,7 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState([]);
   const [holdings, setHoldings] = useState([]);
   const [noBrokerage, setNoBrokerage] = useState(false);
-  const [liabilities, setLiabilities] = useState({ credit: [], student: [], mortgage: [] });
+  const [liabilities, setLiabilities] = useState({ credit: [], student: [], mortgage: [], car: [] });
   const [liabDemo, setLiabDemo]     = useState(false);
   const [liabModal, setLiabModal]   = useState(null); // null | { type, name, balance, interest_rate, minimum_payment, credit_limit, due_day, id? }
   const [liabSaving, setLiabSaving] = useState(false);
@@ -3204,7 +3204,7 @@ export default function Dashboard() {
 
   const totalCash        = accounts.filter(a => !a.closed && a.type !== 'investment' && a.type !== 'credit').reduce((s, a) => s + (a.balances?.current || 0), 0);
   const totalPortfolio   = holdings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
-  const totalLiabilities = [...(liabilities.credit || []), ...(liabilities.student || []), ...(liabilities.mortgage || [])].reduce((s, l) => s + (l.balances?.current || 0), 0);
+  const totalLiabilities = [...(liabilities.credit || []), ...(liabilities.student || []), ...(liabilities.mortgage || []), ...(liabilities.car || [])].reduce((s, l) => s + (l.balances?.current || 0), 0);
   const netWorth         = totalCash + totalPortfolio - totalLiabilities;
   const monthlySpend   = budget.reduce((s, b) => s + b.total, 0);
 
@@ -4827,7 +4827,7 @@ export default function Dashboard() {
                   {[
                     { label: 'Net Worth',         value: fmt(netWorth),                   sub: 'Assets − Liabilities' },
                     { label: 'Total Assets',      value: fmt(totalCash + totalPortfolio), sub: (() => { const n = accounts.filter(a => !a.closed && a.type !== 'investment').length; return `${n} account${n !== 1 ? 's' : ''} · ${holdings.length} position${holdings.length !== 1 ? 's' : ''}`; })() },
-                    { label: 'Total Liabilities', value: fmt(totalLiabilities),           sub: (() => { const n = (liabilities.credit?.length || 0) + (liabilities.student?.length || 0) + (liabilities.mortgage?.length || 0); return `${n} account${n !== 1 ? 's' : ''}`; })() },
+                    { label: 'Total Liabilities', value: fmt(totalLiabilities),           sub: (() => { const n = (liabilities.credit?.length || 0) + (liabilities.student?.length || 0) + (liabilities.mortgage?.length || 0) + (liabilities.car?.length || 0); return `${n} account${n !== 1 ? 's' : ''}`; })() },
                   ].map(({ label, value, sub, color }) => (
                     <div key={label} className="lc" style={{ ...CARD, ...(isMobile ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } : {}) }}>
                       <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
@@ -5513,6 +5513,37 @@ export default function Dashboard() {
                           </div>
                         </div>
                       )}
+                      {(liabilities.car || []).length > 0 && (
+                        <div>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Car Loans</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {liabilities.car.map((c, i) => {
+                              const name = c._name || `Car Loan ${i + 1}`;
+                              const bal = c.balances?.current || 0;
+                              const rate = c.interest_rate_percentage;
+                              const minPmt = c.minimum_payment_amount;
+                              const nextDue = c.next_payment_due_date;
+                              return (
+                                <div key={c.account_id || i} style={{ padding: '12px 16px', background: DARK, borderRadius: 8, border: BORDER }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                      <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'monospace' }}>{fmt(bal)}</div>
+                                      {c._manual && <button onClick={() => setLiabModal({ id: c._id, type: 'car', name, balance: bal, interest_rate: rate ?? '', minimum_payment: minPmt ?? '', credit_limit: '', due_day: '' })} style={{ background: 'transparent', border: 'none', color: TEXT2, fontSize: 11, cursor: 'pointer', padding: 0 }}>Edit</button>}
+                                      {c._manual && <button onClick={() => deleteLiability(c._id)} style={{ background: 'transparent', border: 'none', color: RED, fontSize: 11, cursor: 'pointer', padding: 0 }}>Remove</button>}
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2 }}>
+                                    {rate != null && <span>Rate {rate.toFixed(2)}%</span>}
+                                    {minPmt != null && <span>Min payment {fmt(minPmt)}</span>}
+                                    {nextDue && <span>Due {new Date(nextDue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     {!liabDemo && totalLiabilities === 0 && (
                       <div style={{ padding: '24px 0', textAlign: 'center', color: TEXT2, fontSize: 13 }}>
@@ -5527,17 +5558,17 @@ export default function Dashboard() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                           <div>
                             <div style={{ fontSize: 12, color: TEXT2, marginBottom: 6 }}>Type</div>
-                            <div style={{ display: 'flex', gap: 8 }}>
-                              {['credit','student','mortgage'].map(t => (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                              {['credit','student','mortgage','car'].map(t => (
                                 <button key={t} onClick={() => setLiabModal(m => ({ ...m, type: t }))}
-                                  style={{ flex: 1, padding: '7px 0', borderRadius: 6, border: `1px solid ${liabModal.type === t ? BLUE_BTN : BORDER_C}`, background: liabModal.type === t ? `${BLUE_BTN}22` : 'transparent', color: liabModal.type === t ? BLUE : TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize' }}>
-                                  {t === 'credit' ? 'Credit Card' : t === 'student' ? 'Student Loan' : 'Mortgage'}
+                                  style={{ flex: '1 1 auto', padding: '7px 0', borderRadius: 6, border: `1px solid ${liabModal.type === t ? BLUE_BTN : BORDER_C}`, background: liabModal.type === t ? `${BLUE_BTN}22` : 'transparent', color: liabModal.type === t ? BLUE : TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize' }}>
+                                  {t === 'credit' ? 'Credit Card' : t === 'student' ? 'Student Loan' : t === 'car' ? 'Car Loan' : 'Mortgage'}
                                 </button>
                               ))}
                             </div>
                           </div>
                           {[
-                            { key: 'name',            label: 'Name',               placeholder: liabModal.type === 'credit' ? 'e.g. Chase Freedom' : liabModal.type === 'student' ? 'e.g. Federal Direct Loan' : 'e.g. Home Mortgage' },
+                            { key: 'name',            label: 'Name',               placeholder: liabModal.type === 'credit' ? 'e.g. Chase Freedom' : liabModal.type === 'student' ? 'e.g. Federal Direct Loan' : liabModal.type === 'car' ? 'e.g. Toyota Camry Loan' : 'e.g. Home Mortgage' },
                             { key: 'balance',         label: 'Current Balance ($)', placeholder: '0.00' },
                             ...(liabModal.type === 'credit' ? [{ key: 'credit_limit', label: 'Credit Limit ($)', placeholder: '5000' }] : []),
                             { key: 'interest_rate',   label: liabModal.type === 'credit' ? 'APR (%)' : 'Interest Rate (%)', placeholder: '6.5' },
@@ -5612,6 +5643,14 @@ export default function Dashboard() {
                 )}
 
                 {budgetTab === 'income' && (() => {
+                  const MOCK_SOURCES = [
+                    [{ cat: 'Wages / Part-time', amt: 950 }, { cat: 'Financial Aid', amt: 450 }, { cat: 'Interest / Savings', amt: 20 }],
+                    [{ cat: 'Wages / Part-time', amt: 1050 }, { cat: 'Financial Aid', amt: 600 }, { cat: 'Freelance', amt: 175 }, { cat: 'Interest / Savings', amt: 25 }],
+                    [{ cat: 'Wages / Part-time', amt: 750 }, { cat: 'Financial Aid', amt: 450 }],
+                    [{ cat: 'Wages / Part-time', amt: 1100 }, { cat: 'Financial Aid', amt: 425 }, { cat: 'Interest / Savings', amt: 25 }],
+                    [{ cat: 'Wages / Part-time', amt: 900 }, { cat: 'Financial Aid', amt: 425 }, { cat: 'Freelance', amt: 25 }],
+                    [{ cat: 'Wages / Part-time', amt: 1125 }, { cat: 'Financial Aid', amt: 450 }, { cat: 'Freelance', amt: 175 }, { cat: 'Interest / Savings', amt: 50 }],
+                  ];
                   const now = new Date();
                   const INCOME_CATS = new Set(['income', 'transfer in', 'payroll', 'wages', 'salary', 'deposit', 'interest', 'dividends', 'rent', 'financial aid']);
                   const isIncomeTxn = t => {
@@ -5670,12 +5709,7 @@ export default function Dashboard() {
                     });
                     sources = Object.entries(sourceMap).map(([cat, amt]) => ({ cat, amt })).sort((a, b) => b.amt - a.amt);
                   } else {
-                    sources = [
-                      { cat: 'Wages / Part-time', amt: 1125 },
-                      { cat: 'Financial Aid',      amt: 450  },
-                      { cat: 'Freelance',          amt: 175  },
-                      { cat: 'Interest / Savings', amt: 50   },
-                    ];
+                    sources = MOCK_SOURCES[selIdx] || MOCK_SOURCES[5];
                   }
                   const totalIncome = sources.reduce((s, x) => s + x.amt, 0);
 
@@ -5785,6 +5819,14 @@ export default function Dashboard() {
                     return ['income','payroll','wages','salary','deposit','financial aid'].some(k => cat.includes(k)) && Math.abs(t.amount) > 50;
                   });
                   const hasRealExp = hasRealIncomeCheck && expMonths.some(m => m.total > 20);
+                  const MOCK_EXPENSE_CATS = [
+                    [{ category: 'food and drink', total: 480 }, { category: 'rent and utilities', total: 350 }, { category: 'shopping', total: 240 }, { category: 'transportation', total: 170 }, { category: 'entertainment', total: 100 }],
+                    [{ category: 'food and drink', total: 560 }, { category: 'rent and utilities', total: 350 }, { category: 'shopping', total: 350 }, { category: 'transportation', total: 200 }, { category: 'entertainment', total: 180 }, { category: 'personal care', total: 80 }],
+                    [{ category: 'food and drink', total: 380 }, { category: 'rent and utilities', total: 350 }, { category: 'shopping', total: 200 }, { category: 'transportation', total: 130 }, { category: 'entertainment', total: 40 }],
+                    [{ category: 'food and drink', total: 510 }, { category: 'rent and utilities', total: 350 }, { category: 'shopping', total: 280 }, { category: 'transportation', total: 180 }, { category: 'entertainment', total: 140 }],
+                    [{ category: 'food and drink', total: 490 }, { category: 'rent and utilities', total: 350 }, { category: 'shopping', total: 270 }, { category: 'transportation', total: 180 }, { category: 'entertainment', total: 120 }],
+                    [{ category: 'food and drink', total: 520 }, { category: 'rent and utilities', total: 350 }, { category: 'shopping', total: 300 }, { category: 'transportation', total: 190 }, { category: 'entertainment', total: 140 }, { category: 'personal care', total: 120 }],
+                  ];
                   const MOCK_EXP = [
                     { label: expMonths[0].label, fullLabel: expMonths[0].fullLabel, total: 1340, topCat: 'Food & Dining', txns: [], isCurrent: false, monthOffset: 5 },
                     { label: expMonths[1].label, fullLabel: expMonths[1].fullLabel, total: 1720, topCat: 'Food & Dining', txns: [], isCurrent: false, monthOffset: 4 },
@@ -5917,24 +5959,21 @@ export default function Dashboard() {
                           <div style={{ fontSize: 12, color: TEXT2 }}>Click a category to see transactions</div>
                         </div>
                         {displayBudget.length === 0 ? (
-                          [
-                            { category: 'food and drink',     total: 520 },
-                            { category: 'rent and utilities', total: 350 },
-                            { category: 'shopping',           total: 300 },
-                            { category: 'transportation',     total: 190 },
-                            { category: 'entertainment',      total: 140 },
-                            { category: 'personal care',      total: 120 },
-                          ].map((b, i) => (
-                            <div key={i} style={{ marginBottom: 20 }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>{b.category}</span>
-                                <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: TEXT }}>{fmt(b.total)}</span>
+                          (() => {
+                            const cats = MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5];
+                            const maxCat = Math.max(...cats.map(c => c.total), 1);
+                            return cats.map((b, i) => (
+                              <div key={i} style={{ marginBottom: 20 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                  <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>{b.category}</span>
+                                  <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: TEXT }}>{fmt(b.total)}</span>
+                                </div>
+                                <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: `${(b.total / maxCat) * 100}%`, background: BLUE_BTN, borderRadius: 3, opacity: 0.6 }} />
+                                </div>
                               </div>
-                              <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: `${(b.total / 520) * 100}%`, background: BLUE_BTN, borderRadius: 3, opacity: 0.6 }} />
-                              </div>
-                            </div>
-                          ))
+                            ));
+                          })()
                         ) : displayBudget.map((b, i) => {
                           const limit    = budgetLimits[b.category];
                           const pct      = limit ? Math.min((b.total / limit) * 100, 100) : null;
