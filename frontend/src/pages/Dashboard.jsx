@@ -3241,6 +3241,9 @@ export default function Dashboard() {
       setPanel('edu-courses'); setEduInnerTab('content'); setContentFolder('datasets');
     }
   };
+  useEffect(() => {
+    if (sandboxDataset) window.scrollTo(0, 0);
+  }, [sandboxDataset]);
   const SandboxBanner = sandboxDataset ? (
     <div style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 8, padding: '10px 16px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -13969,9 +13972,9 @@ export default function Dashboard() {
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 18 }}>Model Assumptions</div>
                         {[
                           { label: 'FCF Year 1 ($M)',        value: dcfFcf,    set: setDcfFcf,    min: 20,  max: 300, step: 5,   unit: 'M',  color: PURPLE },
-                          { label: 'FCF Growth Rate (Yr 1–5)', value: dcfGrowth, set: setDcfGrowth, min: 5,   max: 35,  step: 1,   unit: '%',  color: BLUE },
-                          { label: 'WACC',                   value: dcfWacc,   set: setDcfWacc,   min: 6,   max: 18,  step: 0.5, unit: '%',  color: YELLOW },
-                          { label: 'Terminal Growth Rate',    value: dcfTg,     set: setDcfTg,     min: 1,   max: 5,   step: 0.5, unit: '%',  color: GREEN },
+                          { label: 'FCF Growth Rate (Yr 1–5)', value: dcfGrowth, set: setDcfGrowth, min: 5,   max: 35,  step: 1,   unit: '%',  color: PURPLE },
+                          { label: 'WACC',                   value: dcfWacc,   set: setDcfWacc,   min: 6,   max: 18,  step: 0.5, unit: '%',  color: PURPLE },
+                          { label: 'Terminal Growth Rate',    value: dcfTg,     set: setDcfTg,     min: 1,   max: 5,   step: 0.5, unit: '%',  color: PURPLE },
                         ].map(({ label, value, set, min, max, step, unit, color }) => (
                           <div key={label} style={{ marginBottom: 18 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -14594,10 +14597,10 @@ export default function Dashboard() {
                                 <span style={{ fontWeight: 700, color: colors[idx] }}>{c.name}</span>
                                 <span style={{ fontFamily: 'monospace', color: EMERALD, fontWeight: 700 }}>EV ${(c.ev/1000).toFixed(1)}B</span>
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: TEXT2 }}>
-                                <span style={{ background: BLUE, color: '#fff', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>MktCap ${(c.mktcap/1000).toFixed(1)}B</span>
-                                {c.debt > 0 && <span style={{ background: RED, color: '#fff', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>+Debt ${(c.debt/1000).toFixed(1)}B</span>}
-                                {c.cash > 0 && <span style={{ background: GREEN, color: '#fff', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>-Cash ${(c.cash/1000).toFixed(1)}B</span>}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
+                                <span style={{ color: BLUE }}>MktCap ${(c.mktcap/1000).toFixed(1)}B</span>
+                                {c.debt > 0 && <span style={{ color: RED }}>+ Debt ${(c.debt/1000).toFixed(1)}B</span>}
+                                {c.cash > 0 && <span style={{ color: GREEN }}>&minus; Cash ${(c.cash/1000).toFixed(1)}B</span>}
                               </div>
                             </div>
                           );
@@ -14727,7 +14730,7 @@ export default function Dashboard() {
                     </div>
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Implied Forward Rates</div>
-                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Forward rates extracted from spot rates via no-arbitrage: f(t₁, t₂) = [(1+s₂)^t₂ / (1+s₁)^t₁]^(1/(t₂-t₁)) - 1</div>
+                      <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Forward rates extracted from spot rates via no-arbitrage: <span style={{ fontFamily: 'monospace' }}>f(t₁,t₂) = [(1+s₂)<sup style={{fontSize:9}}>t₂</sup> / (1+s₁)<sup style={{fontSize:9}}>t₁</sup>]<sup style={{fontSize:9}}>1/(t₂−t₁)</sup> − 1</span></div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                         {[
                           [0, 3, '3M→2Y'],  [3, 7, '2Y→10Y'], [0, 7, '3M→10Y'],
