@@ -3405,7 +3405,7 @@ export default function Dashboard() {
                   </button>
                 </>}
                 {!isProfOrAdmin && !isStudentRole && <>
-                  <button onClick={() => { dismiss('overview', false); setTimeout(() => window._plaidLinkHandler?.open(), 300); }}
+                  <button onClick={() => { dismiss('overview', false); setShowConnectModal(true); }}
                     style={{ padding: '14px 20px', background: 'rgba(77,163,255,0.1)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 10, color: BLUE, fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span>🔗 Connect my accounts</span><span style={{ opacity: 0.6 }}>→</span>
                   </button>
@@ -4812,7 +4812,7 @@ export default function Dashboard() {
                       <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Connect your bank and investment accounts to see your real finances.</div>
                     </div>
                     <button
-                      onClick={() => window._plaidLinkHandler?.open()}
+                      onClick={() => setShowConnectModal(true)}
                       style={{ padding: '7px 14px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 7, color: '#4ade80', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
                     >
                       + Connect Account
@@ -7375,7 +7375,7 @@ export default function Dashboard() {
                           : 'Connect an investment account to track your portfolio, holdings, and performance in real time.'}
                       </div>
                       {isAdmin && !viewAs && (
-                        <button onClick={() => window._plaidLinkHandler?.open()}
+                        <button onClick={() => setShowConnectModal(true)}
                           style={{ padding: '10px 24px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                           + Connect Brokerage
                         </button>
