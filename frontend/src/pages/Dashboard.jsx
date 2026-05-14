@@ -5559,7 +5559,7 @@ export default function Dashboard() {
                           <div>
                             <div style={{ fontSize: 12, color: TEXT2, marginBottom: 6 }}>Type</div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                              {['credit','student','mortgage','car'].map(t => (
+                              {['credit','student','car','mortgage'].map(t => (
                                 <button key={t} onClick={() => setLiabModal(m => ({ ...m, type: t }))}
                                   style={{ flex: '1 1 auto', padding: '7px 0', borderRadius: 6, border: `1px solid ${liabModal.type === t ? BLUE_BTN : BORDER_C}`, background: liabModal.type === t ? `${BLUE_BTN}22` : 'transparent', color: liabModal.type === t ? BLUE : TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize' }}>
                                   {t === 'credit' ? 'Credit Card' : t === 'student' ? 'Student Loan' : t === 'car' ? 'Car Loan' : 'Mortgage'}
@@ -5844,7 +5844,9 @@ export default function Dashboard() {
                   const selExp    = display[selExpIdx] || display[5];
 
                   let displayBudget;
-                  if (!hasRealExp || selectedExpenseMonth === 0) {
+                  if (!hasRealExp) {
+                    displayBudget = [];
+                  } else if (selectedExpenseMonth === 0) {
                     displayBudget = activeBudget;
                   } else {
                     const catTotals = {};
@@ -5921,8 +5923,8 @@ export default function Dashboard() {
                       />
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24, marginTop: 20 }}>
                         {[
-                          { label: 'Month-to-Date Spend', value: fmt(hasRealExp ? activeMonthlySpend : 1620) },
-                          { label: 'Top Category',         value: hasRealExp ? (fmtCat(activeBudget[0]?.category) || '—') : 'Food & Dining' },
+                          { label: 'Month-to-Date Spend', value: fmt(hasRealExp ? activeMonthlySpend : selExp.total) },
+                          { label: 'Top Category',         value: hasRealExp ? (fmtCat(activeBudget[0]?.category) || '—') : fmtCat((MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5])[0]?.category) },
                           { label: 'Month Change',         value: expPct !== null ? `${expDiff >= 0 ? '+' : ''}${expPct.toFixed(0)}%` : '—', color: expPct !== null ? (expDiff <= 0 ? GREEN : RED) : TEXT2 },
                         ].map(({ label, value, color }) => (
                           <div key={label} className="lc" style={CARD}>
