@@ -3164,7 +3164,7 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (panel === 'overview' && isPremium && articles.length === 0) fetchNews();
+    if (panel === 'overview' && articles.length === 0) fetchNews();
   }, [panel, isPremium, fetchNews]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchSP500 = useCallback(async (period) => {
@@ -8118,36 +8118,27 @@ export default function Dashboard() {
 
             {insightsTab === 'news' && (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: !isPremium ? 16 : 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>News Feed</h1>
-                  {isPremium && (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <input
-                        value={tickerFilter}
-                        onChange={e => setTickerFilter(e.target.value)}
-                        placeholder="Filter: AAPL,NVDA,VTI"
-                        style={{ padding: '8px 12px', border: BORDER, borderRadius: 6, fontSize: 13, width: 200, outline: 'none', background: MUTED, color: TEXT }}
-                      />
-                      <button onClick={() => fetchNews(tickerFilter || undefined)} style={{ padding: '8px 16px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-                        Filter
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      value={tickerFilter}
+                      onChange={e => setTickerFilter(e.target.value)}
+                      placeholder="Filter: AAPL,NVDA,VTI"
+                      style={{ padding: '8px 12px', border: BORDER, borderRadius: 6, fontSize: 13, width: 200, outline: 'none', background: MUTED, color: TEXT }}
+                    />
+                    <button onClick={() => fetchNews(tickerFilter || undefined)} style={{ padding: '8px 16px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                      Filter
+                    </button>
+                    {tickerFilter && (
+                      <button onClick={() => { setTickerFilter(''); fetchNews(); }} style={{ padding: '8px 12px', background: MUTED, color: TEXT2, border: BORDER, borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>
+                        Clear
                       </button>
-                      {tickerFilter && (
-                        <button onClick={() => { setTickerFilter(''); fetchNews(); }} style={{ padding: '8px 12px', background: MUTED, color: TEXT2, border: BORDER, borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {!isPremium && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: TEXT2 }}>
-                    <span style={{ color: BLUE, fontWeight: 700 }}>◬</span>
-                    <span>Snapshot from <strong style={{ color: TEXT }}>{SNAPSHOT_DATE}</strong>. Upgrade for a live daily news feed with ticker filtering.</span>
-                    <button onClick={() => setShowUpgrade(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Upgrade →</button>
+                    )}
                   </div>
-                )}
+                </div>
                 {(() => {
-                  const displayArticles = isPremium ? articles : SNAPSHOT_ARTICLES;
+                  const displayArticles = articles;
                   return displayArticles.length === 0 ? (
                   <div style={{ ...CARD, textAlign: 'center', padding: 48, color: TEXT2 }}>No articles found</div>
                 ) : (
@@ -8180,7 +8171,7 @@ export default function Dashboard() {
 
             {insightsTab === 'signals' && (() => {
               // ── Score all articles ─────────────────────────────────────────
-              const sourceArticles = isPremium ? articles : SNAPSHOT_ARTICLES;
+              const sourceArticles = articles;
               const scored = sourceArticles.map(a => ({ ...a, ...scoreArticle(a) }));
               const bySignal = [...scored].sort((a, b) => b.signal - a.signal);
 
@@ -8428,20 +8419,7 @@ export default function Dashboard() {
 
             {insightsTab === 'options' && (
               <div>
-                {!isPremium && (
-                  <div style={{ background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: '36px 40px', textAlign: 'center', maxWidth: 400, margin: '0 auto 24px', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
-                    <div style={{ fontSize: 40, marginBottom: 14 }}>◬</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Options</div>
-                    <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 28 }}>
-                      Options chain viewer, implied volatility, and straddle builder for any ticker.
-                    </div>
-                    <button onClick={() => setShowUpgrade(true)}
-                      style={{ padding: '12px 32px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,102,245,0.35)', width: '100%' }}>
-                      Upgrade to Premium
-                    </button>
-                  </div>
-                )}
-                <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
+                <div>
                   <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>Options</h1>
                   <OptionsChain />
                   <StraddleBuilder />
