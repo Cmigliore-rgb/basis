@@ -1404,19 +1404,19 @@ function YieldCurveChart({ yieldCurve }) {
 const FINANCE_TOUR_STEPS = [
   { sel: '[data-tour="brand"]',                panel: 'overview',   side: 'right',
     title: 'Welcome to PeakLedger',
-    body: 'PeakLedger keeps your full financial picture in one place: accounts, spending, investments, and market data. This tour walks through each section of the personal finance platform.' },
+    body: 'PeakLedger keeps your full financial picture in one place: accounts, spending, investments, and market data. You\'re currently viewing demo data. Upgrade to Premium to connect your real accounts and see your actual finances.' },
   { sel: '[data-tour="overview-cards"]',       panel: 'overview',   side: 'bottom',
     title: 'Your Financial Snapshot',
-    body: 'Net worth, total cash across linked accounts, and portfolio value update in real time. Net worth (assets minus liabilities) is the single most important number in personal finance.' },
+    body: 'Net worth, total cash, and portfolio value update in real time once your accounts are connected. Net worth (assets minus liabilities) is the single most important number in personal finance.' },
   { sel: '[data-tour="overview-txns"]',        panel: 'overview',   side: 'top',
     title: 'Recent Transactions',
-    body: 'Every purchase flowing through linked accounts shows here with merchant name, category, and amount. Green means income, red means expense. This feed is what powers your budget analysis.' },
+    body: 'Every purchase flowing through linked accounts shows here with merchant name, category, and amount. Green means income, red means expense. This feed powers your budget analysis and spending insights.' },
   { sel: '[data-tour="nav-cashflow"]',         panel: 'cashflow',   tab: 'banking',   side: 'right',
     title: 'Cash Flow',
-    body: 'Cash Flow covers the three pillars of personal finance: Banking (accounts and balances), Budgeting (spending by category), and Taxes (federal bracket estimator). You can drag the tabs to reorder them.' },
+    body: 'Cash Flow covers the three pillars of personal finance: Banking (accounts and balances), Budgeting (spending by category), and Taxes (federal bracket estimator). It also includes a Debt Payoff Planner to map out your payoff strategy.' },
   { sel: '[data-tour="banking-accounts"]',     panel: 'cashflow',   tab: 'banking',   side: 'bottom',
     title: 'Linked Accounts',
-    body: 'Each card shows the institution, account type, and live balance. Cash and savings accounts feed directly into your net worth calculation. Connect accounts via Plaid in Settings, usually takes under a minute.' },
+    body: 'Each card shows the institution, account type, and live balance. Cash and savings accounts feed directly into your net worth calculation. Connect accounts using the Get Premium button in the sidebar.' },
   { sel: '[data-tour="budgeting-tabs"]',       panel: 'cashflow',   tab: 'budgeting', side: 'bottom',
     title: 'Budget Tracker',
     body: 'Spending is automatically sorted into categories like Food, Transport, and Housing. The 50/30/20 rule is applied: 50% needs, 30% wants, 20% savings. Set a cap on any category to trigger alerts.' },
@@ -1425,37 +1425,34 @@ const FINANCE_TOUR_STEPS = [
     body: 'Enter gross income, 401(k) contributions, and deduction type. PeakLedger calculates your effective and marginal rates across every federal bracket. Good for modeling a raise or side income.' },
   { sel: '[data-tour="nav-investments"]',      panel: 'investments',                  side: 'right',
     title: 'Investments',
-    body: 'Your full portfolio in one place: holdings, allocation breakdown, and unrealized P&L per position. Prices update via live market feeds during trading hours.' },
-  { sel: '[data-tour="investments-holdings"]', panel: 'investments',                  side: 'bottom',
-    title: 'Portfolio Holdings',
-    body: 'Each row shows ticker, shares held, cost basis, live price, total value, and gain/loss. The allocation ring on the right breaks down how much of your portfolio each position makes up.' },
+    body: 'Your full portfolio in one place: holdings, allocation breakdown, and unrealized P&L per position. Connect a brokerage account to see your real holdings, or use the Portfolio Simulator to test hypothetical allocations.' },
   { sel: '[data-tour="markets-sp500"]',        panel: 'insights',   insightsTab: 'markets', side: 'bottom',
-    title: 'Market Data',
-    body: 'The S&P 500 chart, Fear and Greed index, yield curve, and major index levels give you market context without leaving the app. News pulls from financial sources and is filtered for relevance.' },
+    title: 'Market Insights',
+    body: 'Live S&P 500 chart, Fear and Greed index, yield curve, and major index levels. The News and Signal Engine tabs surface relevant headlines and sentiment analysis. All of this is available to every user, no upgrade needed.' },
   { sel: '[data-tour="nav-learn"]',            panel: 'learn',                        side: 'right',
     title: 'Learn',
-    body: 'Two tracks: Essentials covers personal finance fundamentals (budgeting, compound interest, credit, investing) and Analyst covers valuation, fixed income, and derivatives. Each topic includes the formula and a plain-English explanation.' },
+    body: 'Two tracks: Essentials covers personal finance fundamentals (budgeting, compound interest, credit, investing). The Analyst track goes deeper into valuation, fixed income, and derivatives and is available with Premium.' },
   { sel: '[data-tour="nav-settings"]',         panel: 'settings',                     side: 'right',
     title: 'Settings',
-    body: 'Link bank accounts and brokerages via Plaid, manage notification preferences, set budget category limits, and control which panels and tabs are visible on your dashboard.' },
+    body: 'Customize which panels and tabs are visible, manage your appearance, and control your subscription. Once you\'re on Premium, connected accounts can be managed here too.' },
 ];
 
 const STUDENT_TOUR_STEPS = [
   { sel: '[data-tour="brand"]',                panel: 'overview',   side: 'right',
     title: 'Welcome to PeakLedger',
-    body: 'PeakLedger connects your real financial life with your coursework. Track accounts, analyze spending, and build real financial skills, all in one place. This tour walks through every section of the platform.' },
+    body: 'PeakLedger connects your real financial life with your coursework. Track accounts, analyze spending, and build real financial skills, all in one place. You\'re viewing demo data right now. Upgrade to Premium to link your real accounts at a discounted student rate.' },
   { sel: '[data-tour="overview-cards"]',       panel: 'overview',   side: 'bottom',
     title: 'Your Financial Snapshot',
-    body: 'Net worth, total cash, and portfolio value update in real time when you link accounts. Net worth (assets minus liabilities) is the single most important number in personal finance. This is yours.' },
+    body: 'Net worth, total cash, and portfolio value update in real time once your accounts are connected. Net worth (assets minus liabilities) is the single most important number in personal finance. This is yours.' },
   { sel: '[data-tour="overview-txns"]',        panel: 'overview',   side: 'top',
     title: 'Recent Transactions',
     body: 'Every transaction flowing through linked accounts appears here with merchant, category, and amount. Green means income, red means expense. Your real spending data is what makes every analysis meaningful.' },
   { sel: '[data-tour="nav-cashflow"]',         panel: 'cashflow',   tab: 'banking',   side: 'right',
     title: 'Cash Flow',
-    body: 'Cash Flow covers the three pillars of personal finance: Banking, Budgeting, and Taxes. There is also a Scholarship tab built specifically for Georgia students tracking HOPE and Zell Miller eligibility.' },
+    body: 'Cash Flow covers the core pillars of personal finance: Banking (accounts and balances), Budgeting (50/30/20 rule), and Taxes (federal bracket estimator). There is also a Scholarship tab for Georgia students and a Debt Payoff Planner to map out a payoff strategy.' },
   { sel: '[data-tour="banking-accounts"]',     panel: 'cashflow',   tab: 'banking',   side: 'bottom',
     title: 'Linked Accounts',
-    body: 'Each card shows the institution, account type, and live balance. These feed into your net worth calculation automatically. Connect real accounts via Plaid in Settings, or explore with sample data first.' },
+    body: 'Each card shows the institution, account type, and live balance. These feed into your net worth calculation automatically. Connect your real accounts using the Get Premium button in the sidebar.' },
   { sel: '[data-tour="scholarship-header"]',   panel: 'cashflow',   tab: 'scholarship', side: 'bottom',
     title: 'Scholarship Health',
     body: 'Tracks HOPE and Zell Miller eligibility in real time. Enter your current GPA, credit hours, and this semester\'s courses. PeakLedger projects your HOPE GPA and flags whether your award is safe, at risk, or lost.' },
@@ -1469,35 +1466,35 @@ const STUDENT_TOUR_STEPS = [
     title: 'Investments',
     body: 'Your full portfolio with live prices, allocation breakdown, and unrealized P&L. The Portfolio Simulator lets you build and test hypothetical allocations before putting real money to work.' },
   { sel: '[data-tour="markets-sp500"]',        panel: 'insights',   insightsTab: 'markets', side: 'bottom',
-    title: 'Market Data',
-    body: 'Live S&P 500 chart, Fear and Greed index, yield curve, and major index levels give you market context without leaving the app. These are the same indicators referenced in class discussions.' },
+    title: 'Market Insights',
+    body: 'Live S&P 500 chart, Fear and Greed index, yield curve, and major index levels give you market context without leaving the app. The News and Signal Engine tabs are included too. All of this is available to every user, no upgrade needed.' },
   { sel: '[data-tour="nav-learn"]',            panel: 'learn',                        side: 'right',
     title: 'Learn',
-    body: 'Two tracks: Essentials covers personal finance fundamentals (budgeting, compound interest, credit, investing) and Analyst covers valuation, fixed income, and derivatives, structured to mirror your course syllabus.' },
+    body: 'Two tracks: Essentials covers personal finance fundamentals (budgeting, compound interest, credit, investing) and Analyst covers valuation, fixed income, and derivatives, structured to mirror your course syllabus. The Analyst track is available with Premium.' },
   { sel: '[data-tour="nav-settings"]',         panel: 'settings',                     side: 'right',
     title: 'Settings',
-    body: 'Link bank accounts and brokerages via Plaid, manage notifications, and customize which panels and tabs are visible on your dashboard.' },
+    body: 'Customize which panels and tabs are visible, manage your appearance, and control your subscription. Once you\'re on Premium, your connected accounts can be managed here too.' },
 ];
 
 const PROFESSOR_TOUR_STEPS = [
   { sel: '[data-tour="brand"]',                panel: 'overview',   side: 'right',
     title: 'Welcome to PeakLedger',
-    body: 'PeakLedger is what your class will use to connect real financial data with coursework. This tour walks through the personal finance tools so you know exactly what each person in your course is working with.' },
+    body: 'PeakLedger is what your class will use to connect real financial data with coursework. This tour walks through the personal finance tools so you know exactly what each student in your course is working with.' },
   { sel: '[data-tour="overview-cards"]',       panel: 'overview',   side: 'bottom',
     title: 'Financial Snapshot',
-    body: 'Net worth, total cash, and portfolio value update in real time when accounts are linked. In demo mode, PeakLedger loads realistic synthetic data so anyone can complete work without connecting personal accounts.' },
+    body: 'Net worth, total cash, and portfolio value update in real time when accounts are linked. In demo mode, PeakLedger loads realistic synthetic data so anyone can complete assignments without connecting personal accounts.' },
   { sel: '[data-tour="overview-txns"]',        panel: 'overview',   side: 'top',
     title: 'Transaction Feed',
-    body: 'Every transaction shows up here with merchant, category, and amount. This is the raw data behind budget analysis and spending pattern work. Real accounts and sample data both work the same way.' },
+    body: 'Every transaction shows up here with merchant, category, and amount. This is the raw data behind budget analysis and spending pattern work. Real accounts and demo data both work the same way.' },
   { sel: '[data-tour="nav-cashflow"]',         panel: 'cashflow',   tab: 'banking',   side: 'right',
     title: 'Cash Flow Panel',
-    body: 'Four tabs: Banking, Budgeting, Taxes, and Scholarship. Each one maps to a major unit in your course. This is where most of the hands-on personal finance work happens.' },
+    body: 'Four tabs: Banking, Budgeting, Taxes, and Scholarship. Each maps to a major unit in your course. There is also a Debt Payoff Planner for modeling loan payoff strategies. This is where most of the hands-on personal finance work happens.' },
   { sel: '[data-tour="banking-accounts"]',     panel: 'cashflow',   tab: 'banking',   side: 'bottom',
     title: 'Account Overview',
-    body: 'Each linked account shows its type, institution, and balance. Balances roll into the net worth calculation automatically, which makes balance sheet construction concrete rather than abstract.' },
+    body: 'Each linked account shows its type, institution, and balance. Balances roll into the net worth calculation automatically, which makes balance sheet construction concrete rather than abstract. Students connect accounts using Get Premium in the sidebar.' },
   { sel: '[data-tour="scholarship-header"]',   panel: 'cashflow',   tab: 'scholarship', side: 'bottom',
     title: 'Scholarship Health',
-    body: 'Tracks HOPE and Zell Miller eligibility in real time. Users enter their GPA, credit hours, and current-semester courses. The sensitivity table shows how each grade change shifts scholarship status.' },
+    body: 'Tracks HOPE and Zell Miller eligibility in real time. Students enter their GPA, credit hours, and current-semester courses. The sensitivity table shows how each grade change shifts scholarship status.' },
   { sel: '[data-tour="budgeting-tabs"]',       panel: 'cashflow',   tab: 'budgeting', side: 'bottom',
     title: 'Budget Tracker',
     body: 'Transactions are auto-categorized and the 50/30/20 rule is applied automatically. Per-category spending limits can be set to trigger alerts. This is the foundation of most budget-focused work in the course.' },
@@ -1506,16 +1503,16 @@ const PROFESSOR_TOUR_STEPS = [
     body: 'Enter gross income, 401(k) contributions, and deduction type to see federal tax broken down bracket by bracket. Effective rate, marginal rate, and total liability are all shown. Covers the tax planning unit directly.' },
   { sel: '[data-tour="nav-investments"]',      panel: 'investments',                  side: 'right',
     title: 'Investments',
-    body: 'Full portfolio view with live prices, allocation, and unrealized P&L. The Portfolio Simulator dataset lets anyone build hypothetical allocations and review Sharpe ratios, diversification scores, and 10-year projections.' },
+    body: 'Full portfolio view with live prices, allocation, and unrealized P&L. The Portfolio Simulator lets anyone build hypothetical allocations and review Sharpe ratios, diversification scores, and 10-year projections, no real brokerage needed.' },
   { sel: '[data-tour="markets-sp500"]',        panel: 'insights',   insightsTab: 'markets', side: 'bottom',
-    title: 'Market Data',
-    body: 'Live S&P 500 chart, Fear and Greed index, yield curve, and index levels. These indicators appear in course material and give real-world grounding to investment and macroeconomics discussions.' },
+    title: 'Market Insights',
+    body: 'Live S&P 500 chart, Fear and Greed index, yield curve, and index levels. The News and Signal Engine tabs are included. All market data is available to every user with no upgrade required, so every student has the same access.' },
   { sel: '[data-tour="nav-learn"]',            panel: 'learn',                        side: 'right',
     title: 'Learn',
-    body: 'Two tracks: Essentials covers personal finance fundamentals (budgeting, compound interest, credit, investing) and Analyst covers valuation, fixed income, and derivatives. Both are structured to mirror your syllabus.' },
+    body: 'Two tracks: Essentials covers personal finance fundamentals (budgeting, compound interest, credit, investing) and Analyst covers valuation, fixed income, and derivatives. Both are structured to mirror your syllabus. The Analyst track requires Premium.' },
   { sel: '[data-tour="nav-settings"]',         panel: 'settings',                     side: 'right',
     title: 'Settings',
-    body: 'Individuals link accounts, manage notifications, and customize their dashboard here. Your Professor Hub, accessible from the sidebar, is where you manage course codes, rosters, and grading.' },
+    body: 'Students customize their dashboard, manage appearance, and handle their subscription here. Your Professor Hub, accessible from the sidebar, is where you manage course codes, rosters, and grading.' },
 ];
 
 
@@ -5168,20 +5165,13 @@ export default function Dashboard() {
                   <div className="lc" style={CARD}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                       <div style={{ fontWeight: 600 }}>Market Alerts</div>
-                      {isPremium && articles.length > 5 && (
+                      {articles.length > 5 && (
                         <button onClick={() => setShowAllNews(v => !v)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 12, cursor: 'pointer', padding: 0 }}>
                           {showAllNews ? 'Show less ↑' : `+${articles.length - 5} more ↓`}
                         </button>
                       )}
                     </div>
-                    {!isPremium && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 7, marginBottom: 12, fontSize: 11, color: TEXT2 }}>
-                        <span style={{ color: BLUE, fontWeight: 700 }}>◬</span>
-                        <span>Snapshot from <strong style={{ color: TEXT }}>{SNAPSHOT_DATE}</strong>. Upgrade for live daily news.</span>
-                        <button onClick={() => setShowUpgrade(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: BLUE, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Upgrade →</button>
-                      </div>
-                    )}
-                    {(isPremium ? (showAllNews ? articles : articles.slice(0, 5)) : SNAPSHOT_ARTICLES.slice(0, 5)).map((a, i, arr) => (
+                    {(showAllNews ? articles : articles.slice(0, 5)).map((a, i, arr) => (
                       <div key={i} style={{ padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
                         <a href={a.url !== '#' ? a.url : undefined} target={a.url !== '#' ? '_blank' : undefined} rel="noreferrer" style={{ color: TEXT, textDecoration: 'none', fontSize: 13, fontWeight: 500, lineHeight: 1.4, display: 'block' }}>{a.headline}</a>
                         <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{a.source} · {fmtDate(a.created_at)}</div>
@@ -7935,30 +7925,16 @@ export default function Dashboard() {
               <div>
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 24 }}>
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Markets</h1>
-                  {!isPremium && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 11, color: TEXT3 }}>Snapshot: {SNAPSHOT_DATE}</span>
-                      <button onClick={() => setShowUpgrade(true)} style={{ padding: '5px 14px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Upgrade for live data</button>
-                    </div>
-                  )}
                 </div>
-
-                {!isPremium && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: TEXT2 }}>
-                    <span style={{ color: BLUE, fontWeight: 700 }}>◬</span>
-                    <span>You're viewing a market snapshot from <strong style={{ color: TEXT }}>{SNAPSHOT_DATE}</strong>. Upgrade to Premium for live daily updates across all sections.</span>
-                    <button onClick={() => setShowUpgrade(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Upgrade →</button>
-                  </div>
-                )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', gap: 16, marginBottom: 24 }}>
                   <div data-tour="markets-sp500" className="lc" style={CARD}>
                     <div style={{ fontWeight: 600, marginBottom: 4, fontSize: 13, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px' }}>S&P 500</div>
-                    <SP500Chart candles={isPremium ? sp500Candles : SNAPSHOT_SP500} period={sp500Period} onPeriodChange={isPremium ? fetchSP500 : () => {}} />
+                    <SP500Chart candles={sp500Candles} period={sp500Period} onPeriodChange={fetchSP500} />
                   </div>
                   <div data-tour="markets-fg" className="lc" style={CARD}>
                     <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Fear & Greed Index</div>
-                    <FearGreedGauge score={isPremium ? (fearGreed?.score ?? SNAPSHOT_FEAR_GREED.score) : SNAPSHOT_FEAR_GREED.score} rating={isPremium ? (fearGreed?.rating ?? SNAPSHOT_FEAR_GREED.rating) : SNAPSHOT_FEAR_GREED.rating} />
+                    <FearGreedGauge score={fearGreed?.score ?? SNAPSHOT_FEAR_GREED.score} rating={fearGreed?.rating ?? SNAPSHOT_FEAR_GREED.rating} />
                     <div style={{ fontSize: 11, color: TEXT3, marginTop: 8, textAlign: 'center' }}>CNN composite · 7 sentiment indicators</div>
                   </div>
                 </div>
@@ -8244,13 +8220,6 @@ export default function Dashboard() {
 
               return (
                 <div>
-                  {!isPremium && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: TEXT2 }}>
-                      <span style={{ color: BLUE, fontWeight: 700 }}>◎</span>
-                      <span>Signals scored from snapshot news (<strong style={{ color: TEXT }}>{SNAPSHOT_DATE}</strong>). Upgrade for live daily signal scoring.</span>
-                      <button onClick={() => setShowUpgrade(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Upgrade →</button>
-                    </div>
-                  )}
                   <div>
                   {/* Header */}
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
