@@ -4886,6 +4886,48 @@ export default function Dashboard() {
                   ))}
                 </div>
 
+                {/* ── Savings Rate Card ── */}
+                {(() => {
+                  const now = new Date();
+                  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                  const monthTxns = transactions.filter(t => { const d = new Date(t.date); return d >= monthStart && d <= now; });
+                  const monthIncome   = monthTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+                  const monthSpending = monthTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+                  const saved = monthIncome - monthSpending;
+                  const rate  = monthIncome > 0 ? Math.round((saved / monthIncome) * 100) : null;
+                  const rateColor = rate === null ? TEXT2 : rate >= 20 ? GREEN : rate >= 10 ? YELLOW : rate >= 0 ? TEXT : RED;
+                  const TARGET = 20;
+                  return (
+                    <div style={{ ...CARD, marginBottom: 24 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700 }}>Monthly Savings Rate</div>
+                        <div style={{ fontSize: 11, color: TEXT2 }}>{now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 1fr', gap: 16, marginBottom: 16 }}>
+                        {[
+                          { label: 'Rate',     value: rate !== null ? `${rate}%` : '—',                                              color: rateColor,              big: true },
+                          { label: 'Income',   value: fmt(monthIncome),                                                               color: GREEN                         },
+                          { label: 'Spending', value: fmt(monthSpending),                                                             color: RED                           },
+                          { label: 'Saved',    value: saved >= 0 ? fmt(saved) : `−${fmt(Math.abs(saved))}`,                          color: saved >= 0 ? GREEN : RED      },
+                        ].map(({ label, value, color, big }) => (
+                          <div key={label}>
+                            <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 4 }}>{label}</div>
+                            <div style={{ fontSize: big ? 28 : 18, fontWeight: 700, color, letterSpacing: big ? '-1px' : 'normal' }}>{value}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ background: MUTED, borderRadius: 4, height: 6, overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.min(Math.max(rate ?? 0, 0), 100)}%`, height: '100%', background: rateColor, borderRadius: 4, transition: 'width 0.6s ease' }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: TEXT3 }}>
+                        <span>0%</span>
+                        <span style={{ color: rate !== null && rate >= TARGET ? GREEN : TEXT3 }}>{TARGET}% target</span>
+                        <span>100%</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 </DragSection>
                 <DragSection id="chart" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
                 <div style={{ ...CARD, marginBottom: 16 }}>
