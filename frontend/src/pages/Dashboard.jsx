@@ -7422,7 +7422,7 @@ export default function Dashboard() {
                 </div>
                 {activeHoldings.length > 0 && (() => {
                   const ETF_SECTOR = {
-                    SPY:'Broad Market', VOO:'Broad Market', VTI:'Broad Market', IVV:'Broad Market', SCHB:'Broad Market', ITOT:'Broad Market',
+                    SPY:'Broad Market', VOO:'Broad Market', VTI:'Broad Market', IVV:'Broad Market', SCHB:'Broad Market', ITOT:'Broad Market', SCHD:'Broad Market', DVY:'Broad Market', VYM:'Broad Market',
                     QQQ:'Technology', VGT:'Technology', XLK:'Technology', TQQQ:'Technology',
                     XLE:'Energy', XLF:'Financial Services', XLV:'Healthcare', XLI:'Industrials',
                     XLC:'Communication Services', XLY:'Consumer Cyclical', XLP:'Consumer Defensive',
