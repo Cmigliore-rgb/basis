@@ -2819,10 +2819,6 @@ export default function Dashboard() {
   }, [accent]);
   useEffect(() => { localStorage.setItem('pl_panel', panel); }, [panel]);
 
-  useEffect(() => {
-    if (panel === 'overview' && isPremium && articles.length === 0) fetchNews();
-  }, [panel, isPremium, fetchNews]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // Handle return from Stripe checkout or email verification
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -3155,6 +3151,10 @@ export default function Dashboard() {
       console.error('News fetch error:', err);
     }
   }, []);
+
+  useEffect(() => {
+    if (panel === 'overview' && isPremium && articles.length === 0) fetchNews();
+  }, [panel, isPremium, fetchNews]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchSP500 = useCallback(async (period) => {
     setSp500Period(period);

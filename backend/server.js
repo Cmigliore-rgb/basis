@@ -47,6 +47,7 @@ const stripeRoutes   = require('./routes/stripe');
 const store = require('./store');
 
 const app = express();
+app.set('trust proxy', 1);
 
 app.use(helmet({
   contentSecurityPolicy: false,       // inline styles throughout the app
