@@ -6253,14 +6253,15 @@ export default function Dashboard() {
                 })()}
 
                 {budgetTab === 'subscriptions' && (() => {
+                  const today = new Date();
                   const MOCK_SUBS = [
-                    { name: 'Spotify', avgAmt: 5.99,  frequency: 'Monthly', monthlyCost: 5.99,  lastDate: '2026-04-01' },
-                    { name: 'Netflix', avgAmt: 15.49, frequency: 'Monthly', monthlyCost: 15.49, lastDate: '2026-04-03' },
-                    { name: 'YouTube Premium', avgAmt: 13.99, frequency: 'Monthly', monthlyCost: 13.99, lastDate: '2026-04-05' },
-                    { name: 'ChatGPT Plus', avgAmt: 20.00, frequency: 'Monthly', monthlyCost: 20.00, lastDate: '2026-04-10' },
-                    { name: 'Apple iCloud+', avgAmt: 2.99, frequency: 'Monthly', monthlyCost: 2.99, lastDate: '2026-04-12' },
-                    { name: 'Hulu', avgAmt: 7.99, frequency: 'Monthly', monthlyCost: 7.99, lastDate: '2026-04-02' },
-                    { name: 'Amazon Prime', avgAmt: 14.99, frequency: 'Monthly', monthlyCost: 14.99, lastDate: '2026-03-28' },
+                    { name: 'Amazon Prime',    avgAmt: 14.99, avgGap: 30, frequency: 'Monthly', monthlyCost: 14.99, lastDate: '2026-04-13' },
+                    { name: 'Spotify',         avgAmt: 5.99,  avgGap: 30, frequency: 'Monthly', monthlyCost: 5.99,  lastDate: '2026-04-14' },
+                    { name: 'Netflix',         avgAmt: 15.49, avgGap: 30, frequency: 'Monthly', monthlyCost: 15.49, lastDate: '2026-04-15' },
+                    { name: 'YouTube Premium', avgAmt: 13.99, avgGap: 30, frequency: 'Monthly', monthlyCost: 13.99, lastDate: '2026-04-18' },
+                    { name: 'ChatGPT Plus',    avgAmt: 20.00, avgGap: 30, frequency: 'Monthly', monthlyCost: 20.00, lastDate: '2026-04-22' },
+                    { name: 'Apple iCloud+',   avgAmt: 2.99,  avgGap: 30, frequency: 'Monthly', monthlyCost: 2.99,  lastDate: '2026-04-25' },
+                    { name: 'Hulu',            avgAmt: 7.99,  avgGap: 30, frequency: 'Monthly', monthlyCost: 7.99,  lastDate: '2026-04-20' },
                   ];
                   const groups = {};
                   activeTxns.filter(t => t.amount > 0).forEach(t => {
@@ -6287,12 +6288,30 @@ export default function Dashboard() {
                     else if (avgGap >= 85  && avgGap <= 100) { frequency = 'Quarterly';  monthlyCost = avgAmt / 3; }
                     else if (avgGap >= 340 && avgGap <= 390) { frequency = 'Annual';     monthlyCost = avgAmt / 12; }
                     else return;
-                    subs.push({ name, avgAmt, frequency, monthlyCost, lastDate: sorted[sorted.length - 1].date });
+                    subs.push({ name, avgAmt, avgGap, frequency, monthlyCost, lastDate: sorted[sorted.length - 1].date });
                   });
                   subs.sort((a, b) => b.monthlyCost - a.monthlyCost);
-                  const displaySubs = subs.length > 0 ? subs : MOCK_SUBS;
+                  const rawSubs   = subs.length > 0 ? subs : MOCK_SUBS;
                   const isMockData = subs.length === 0;
-                  const totalMonthly = displaySubs.reduce((s, sub) => s + sub.monthlyCost, 0);
+
+                  const withNext = rawSubs.map(sub => {
+                    const last = new Date(sub.lastDate + 'T12:00:00');
+                    const next = new Date(last.getTime() + (sub.avgGap || 30) * 86400000);
+                    const daysUntil = Math.round((next - today) / 86400000);
+                    return { ...sub, nextExpected: next, daysUntil };
+                  });
+
+                  const dueSoon      = withNext.filter(s => s.daysUntil >= 0 && s.daysUntil <= 14).sort((a, b) => a.daysUntil - b.daysUntil);
+                  const totalMonthly = withNext.reduce((s, sub) => s + sub.monthlyCost, 0);
+                  const upcomingAmt  = withNext.filter(s => s.daysUntil >= 0 && s.daysUntil <= 30).reduce((s, sub) => s + sub.avgAmt, 0);
+
+                  const fmtNext = (daysUntil, date) => {
+                    if (daysUntil === 0) return 'Today';
+                    if (daysUntil === 1) return 'Tomorrow';
+                    if (daysUntil < 0)  return `${Math.abs(daysUntil)}d overdue`;
+                    return `in ${daysUntil}d (${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`;
+                  };
+
                   return (
                     <>
                       {(isMockData || isDemoData) && (
@@ -6300,32 +6319,54 @@ export default function Dashboard() {
                           Demo data. Connect accounts to see your real finances.
                         </div>
                       )}
+
                       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
                         {[
-                          { label: 'Monthly Cost', value: fmt(totalMonthly) },
-                          { label: 'Annual Cost', value: fmt(totalMonthly * 12) },
-                          { label: isMockData ? 'Sample Subs' : 'Detected', value: displaySubs.length },
-                        ].map(({ label, value }) => (
+                          { label: 'Monthly Total',    value: fmt(totalMonthly) },
+                          { label: 'Due Next 30 Days', value: fmt(upcomingAmt), color: upcomingAmt > 0 ? YELLOW : TEXT },
+                          { label: isMockData ? 'Sample' : 'Detected', value: withNext.length },
+                        ].map(({ label, value, color }) => (
                           <div key={label} className="lc" style={{ ...CARD, ...(isMobile ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } : {}) }}>
                             <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-                            <div style={{ fontSize: isMobile ? 20 : 28, fontWeight: 700, marginTop: isMobile ? 0 : 8, letterSpacing: '-0.5px' }}>{value}</div>
+                            <div style={{ fontSize: isMobile ? 20 : 28, fontWeight: 700, marginTop: isMobile ? 0 : 8, letterSpacing: '-0.5px', color: color || TEXT }}>{value}</div>
                           </div>
                         ))}
                       </div>
+
+                      {dueSoon.length > 0 && (
+                        <div style={{ ...CARD, marginBottom: 16, border: `1px solid ${YELLOW}40`, background: `${YELLOW}08` }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: YELLOW, marginBottom: 14 }}>Charging Soon</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {dueSoon.map((sub, i) => (
+                              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                  <span style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{sub.name}</span>
+                                  <span style={{ fontSize: 12, color: TEXT3, marginLeft: 10 }}>{sub.frequency}</span>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: TEXT, fontFamily: 'monospace' }}>{fmt(sub.avgAmt)}</div>
+                                  <div style={{ fontSize: 11, color: sub.daysUntil <= 2 ? YELLOW : TEXT3, fontWeight: sub.daysUntil <= 2 ? 700 : 400 }}>{fmtNext(sub.daysUntil, sub.nextExpected)}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="lc" style={CARD}>
-                        <div style={{ fontWeight: 600, marginBottom: 20 }}>Recurring Charges</div>
+                        <div style={{ fontWeight: 600, marginBottom: 20 }}>All Recurring Charges</div>
                         {isMobile ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                            {displaySubs.map((sub, i) => (
+                            {withNext.map((sub, i) => (
                               <div key={i} className="lr" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderBottom: `1px solid ${BORDER_C}` }}>
                                 <div>
                                   <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{sub.name}</div>
                                   <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>
                                     <span style={{ background: MUTED, padding: '1px 6px', borderRadius: 3, fontWeight: 600, marginRight: 6 }}>{sub.frequency}</span>
-                                    {fmt(sub.avgAmt)} · Last {fmtDate(sub.lastDate)}
+                                    Next: {fmtNext(sub.daysUntil, sub.nextExpected)}
                                   </div>
                                 </div>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: RED, fontFamily: 'monospace', flexShrink: 0, marginLeft: 12 }}>{fmt(sub.monthlyCost)}<span style={{ fontSize: 10, fontWeight: 400, color: TEXT2 }}>/mo</span></div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: RED, fontFamily: 'monospace', flexShrink: 0, marginLeft: 12 }}>{fmt(sub.avgAmt)}</div>
                               </div>
                             ))}
                           </div>
@@ -6333,21 +6374,24 @@ export default function Dashboard() {
                           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                               <tr style={{ borderBottom: BORDER }}>
-                                {['Merchant', 'Frequency', 'Per Charge', 'Monthly Cost', 'Last Charge'].map(h => (
+                                {['Merchant', 'Frequency', 'Per Charge', 'Monthly Cost', 'Next Charge'].map(h => (
                                   <th key={h} style={{ padding: '8px 12px', textAlign: ['Per Charge', 'Monthly Cost'].includes(h) ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
                                 ))}
                               </tr>
                             </thead>
                             <tbody>
-                              {displaySubs.map((sub, i) => (
-                                <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                                  <td style={{ padding: '11px 12px', fontWeight: 500 }}>{sub.name}</td>
-                                  <td style={{ padding: '11px 12px' }}><span style={{ background: MUTED, color: TEXT2, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600 }}>{sub.frequency}</span></td>
-                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{fmt(sub.avgAmt)}</td>
-                                  <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: RED }}>{fmt(sub.monthlyCost)}</td>
-                                  <td style={{ padding: '11px 12px', color: TEXT2, fontSize: 13 }}>{fmtDate(sub.lastDate)}</td>
-                                </tr>
-                              ))}
+                              {withNext.map((sub, i) => {
+                                const soon = sub.daysUntil >= 0 && sub.daysUntil <= 7;
+                                return (
+                                  <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                    <td style={{ padding: '11px 12px', fontWeight: 500 }}>{sub.name}</td>
+                                    <td style={{ padding: '11px 12px' }}><span style={{ background: MUTED, color: TEXT2, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600 }}>{sub.frequency}</span></td>
+                                    <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{fmt(sub.avgAmt)}</td>
+                                    <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: RED }}>{fmt(sub.monthlyCost)}</td>
+                                    <td style={{ padding: '11px 12px', fontSize: 12, fontWeight: soon ? 700 : 400, color: soon ? YELLOW : TEXT2 }}>{fmtNext(sub.daysUntil, sub.nextExpected)}</td>
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         )}
