@@ -258,7 +258,8 @@ async function verifyPlaidWebhook(token, rawBody) {
   if (payload.request_body_sha256 !== bodyHash) throw new Error('Body hash mismatch');
 }
 
-router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+router.post('/webhook', async (req, res) => {
+  // raw body already captured by app-level express.raw() in server.js
   const rawBody = req.body;
   const verificationToken = req.headers['plaid-verification'];
 
@@ -277,6 +278,10 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
   if (webhook_type === 'TRANSACTIONS' && ['DEFAULT_UPDATE', 'INITIAL_UPDATE', 'HISTORICAL_UPDATE'].includes(webhook_code)) {
     // New transactions available — real-time push can be added later
+  }
+
+  if (webhook_type === 'HOLDINGS' && webhook_code === 'DEFAULT_UPDATE') {
+    console.log(`Holdings ready for item ${item_id} — user can now refresh investments`);
   }
 
   if (webhook_type === 'ITEM') {

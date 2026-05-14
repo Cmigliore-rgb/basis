@@ -74,6 +74,8 @@ app.use(cors({
 
 // Stripe webhook must be registered before express.json() — needs raw body
 app.use('/api/stripe', stripeRoutes);
+// Plaid webhook verification also needs raw body — must be before express.json()
+app.use('/api/plaid/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json({ limit: '2mb' }));
 

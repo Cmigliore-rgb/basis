@@ -7368,17 +7368,28 @@ export default function Dashboard() {
                   {activeHoldings.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '32px 24px' }}>
                       <div style={{ fontSize: 28, marginBottom: 12 }}>📈</div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 8 }}>No brokerage account connected</div>
-                      <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, maxWidth: 340, margin: '0 auto 20px' }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 8 }}>
+                        {noBrokerage ? 'Investment data syncing' : 'No brokerage account connected'}
+                      </div>
+                      <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, maxWidth: 360, margin: '0 auto 20px' }}>
                         {noBrokerage
-                          ? 'Your bank account is connected but you have no brokerage linked. Connect a Fidelity, Schwab, or other investment account to see your real portfolio here.'
+                          ? 'Your brokerage is connected but holdings are still loading. Plaid can take a few minutes to sync investment data for the first time. Click Refresh to check again.'
                           : 'Connect an investment account to track your portfolio, holdings, and performance in real time.'}
                       </div>
                       {isAdmin && !viewAs && (
-                        <button onClick={() => setShowConnectModal(true)}
-                          style={{ padding: '10px 24px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                          + Connect Brokerage
-                        </button>
+                        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                          {noBrokerage ? (
+                            <button onClick={() => fetchAll()}
+                              style={{ padding: '10px 24px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                              Refresh
+                            </button>
+                          ) : (
+                            <button onClick={() => setShowConnectModal(true)}
+                              style={{ padding: '10px 24px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                              + Connect Brokerage
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   ) : (
