@@ -8201,8 +8201,19 @@ export default function Dashboard() {
                       const overallPct = gradedArr.length
                         ? Math.round(gradedArr.reduce((a, s) => a + (s.grade / (ALL_ASSIGNMENTS_MAP[s.assignment_id]?.points ?? 100) * 100), 0) / gradedArr.length)
                         : null;
-                      return { ...stu, grades, overallPct };
+                      const submittedCount = Object.keys(grades).length;
+                      return { ...stu, grades, overallPct, submittedCount };
                     });
+
+                    const totalEnrolled = codeData.students.length;
+                    const totalPossible = totalEnrolled * assignIds.length;
+                    const subRate = totalPossible > 0 ? Math.round((codeData.submissions.length / totalPossible) * 100) : null;
+                    const classAvg = gradedSubs.length > 0
+                      ? Math.round(gradedSubs.reduce((a, s) => a + (s.grade / (ALL_ASSIGNMENTS_MAP[s.assignment_id]?.points ?? 100) * 100), 0) / gradedSubs.length)
+                      : null;
+                    const notStarted = studentRows.filter(s => s.submittedCount === 0);
+                    const struggling = studentRows.filter(s => s.overallPct != null && s.overallPct < 70);
+                    const needsAttention = [...new Map([...notStarted, ...struggling].map(s => [s.id, s])).values()];
 
                     return (
                       <div style={{ ...CARD, marginBottom: 24 }}>
@@ -8237,6 +8248,24 @@ export default function Dashboard() {
                             </button>
                           </div>
                         </div>
+
+                        {/* Engagement overview */}
+                        {totalEnrolled > 0 && (
+                          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12, marginBottom: 24, paddingBottom: 24, borderBottom: `1px solid ${BORDER_C}` }}>
+                            {[
+                              { label: 'Enrolled', value: totalEnrolled, sub: 'students', color: TEXT },
+                              { label: 'Submission Rate', value: subRate != null ? `${subRate}%` : '—', sub: assignIds.length > 0 ? `${codeData.submissions.length} of ${totalPossible}` : 'no assignments yet', color: subRate != null ? (subRate >= 75 ? GREEN : subRate >= 40 ? YELLOW : RED) : TEXT3 },
+                              { label: 'Class Average', value: classAvg != null ? `${classAvg}%` : '—', sub: classAvg != null ? `${gradedSubs.length} graded` : 'no grades yet', color: classAvg != null ? letterColor[getLetter(classAvg, 100)] : TEXT3 },
+                              { label: 'Pending Review', value: pendingCount, sub: pendingCount === 1 ? 'submission' : 'submissions', color: pendingCount > 0 ? YELLOW : TEXT3 },
+                            ].map(({ label, value, sub, color }) => (
+                              <div key={label} style={{ padding: '12px 16px', background: DARK, borderRadius: 8 }}>
+                                <div style={{ fontSize: 10, color: TEXT3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>{label}</div>
+                                <div style={{ fontSize: 22, fontWeight: 800, color, fontFamily: 'monospace', lineHeight: 1 }}>{value}</div>
+                                <div style={{ fontSize: 11, color: TEXT3, marginTop: 4 }}>{sub}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
                         <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 24, marginBottom: 24 }}>
                           {/* Grade Distribution */}
@@ -8278,20 +8307,28 @@ export default function Dashboard() {
                               <div style={{ fontSize: 13, color: TEXT3 }}>No submissions yet.</div>
                             ) : (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                                {assignStats.map(a => (
-                                  <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: DARK, borderRadius: 8 }}>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                      <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</div>
-                                      <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{a.submitted}/{codeData.students.length} submitted · {a.graded} graded</div>
-                                    </div>
-                                    {a.letter ? (
-                                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                                        <div style={{ fontSize: 15, fontWeight: 800, color: letterColor[a.letter], lineHeight: 1 }}>{a.letter}</div>
-                                        <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{a.avgPct}% avg</div>
+                                {assignStats.map(a => {
+                                  const compPct = totalEnrolled > 0 ? (a.submitted / totalEnrolled) * 100 : 0;
+                                  return (
+                                    <div key={a.id} style={{ padding: '10px 12px', background: DARK, borderRadius: 8 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                          <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</div>
+                                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{a.submitted}/{totalEnrolled} submitted · {a.graded} graded</div>
+                                        </div>
+                                        {a.letter ? (
+                                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                            <div style={{ fontSize: 15, fontWeight: 800, color: letterColor[a.letter], lineHeight: 1 }}>{a.letter}</div>
+                                            <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{a.avgPct}% avg</div>
+                                          </div>
+                                        ) : <div style={{ fontSize: 12, color: TEXT3, flexShrink: 0 }}>—</div>}
                                       </div>
-                                    ) : <div style={{ fontSize: 12, color: TEXT3, flexShrink: 0 }}>—</div>}
-                                  </div>
-                                ))}
+                                      <div style={{ marginTop: 8, height: 3, background: MUTED, borderRadius: 2, overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', width: `${compPct}%`, background: compPct >= 75 ? GREEN : compPct >= 40 ? YELLOW : BLUE, borderRadius: 2, transition: 'width 0.3s ease' }} />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
@@ -8344,6 +8381,32 @@ export default function Dashboard() {
                                   ))}
                                 </tbody>
                               </table>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Needs Attention */}
+                        {needsAttention.length > 0 && (
+                          <div style={{ marginTop: 24 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 14 }}>Needs Attention</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {needsAttention.map(stu => {
+                                const isNoSub = stu.submittedCount === 0;
+                                const tag = isNoSub ? 'No submissions' : `${stu.overallPct}% avg`;
+                                const tagColor = isNoSub ? TEXT3 : RED;
+                                return (
+                                  <div key={stu.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: DARK, borderRadius: 8, border: `1px solid ${isNoSub ? BORDER_C : `${RED}30`}` }}>
+                                    <div>
+                                      <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{stu.name}</div>
+                                      <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>{stu.email}</div>
+                                    </div>
+                                    <div style={{ fontSize: 12, fontWeight: 700, color: tagColor, textAlign: 'right' }}>
+                                      <div>{tag}</div>
+                                      {!isNoSub && <div style={{ fontSize: 11, color: TEXT3, fontWeight: 400, marginTop: 2 }}>{stu.submittedCount} of {assignIds.length} submitted</div>}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
