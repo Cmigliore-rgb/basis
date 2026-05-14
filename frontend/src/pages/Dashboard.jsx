@@ -372,6 +372,46 @@ function buildDemoSnapshots() {
 }
 const DEMO_SNAPSHOTS = buildDemoSnapshots();
 
+const SNAPSHOT_DATE = 'May 9, 2025';
+const SNAPSHOT_SP500 = [
+  { date: '2025-04-08', close: 5074.08 }, { date: '2025-04-09', close: 5456.90 },
+  { date: '2025-04-10', close: 5363.36 }, { date: '2025-04-11', close: 5282.70 },
+  { date: '2025-04-14', close: 5405.97 }, { date: '2025-04-15', close: 5396.63 },
+  { date: '2025-04-16', close: 5275.70 }, { date: '2025-04-17', close: 5282.70 },
+  { date: '2025-04-22', close: 5287.76 }, { date: '2025-04-23', close: 5484.77 },
+  { date: '2025-04-24', close: 5560.83 }, { date: '2025-04-25', close: 5525.21 },
+  { date: '2025-04-28', close: 5528.75 }, { date: '2025-04-29', close: 5560.83 },
+  { date: '2025-04-30', close: 5461.48 }, { date: '2025-05-01', close: 5569.06 },
+  { date: '2025-05-02', close: 5606.23 }, { date: '2025-05-05', close: 5650.81 },
+  { date: '2025-05-06', close: 5686.67 }, { date: '2025-05-07', close: 5631.28 },
+  { date: '2025-05-08', close: 5642.10 }, { date: '2025-05-09', close: 5659.91 },
+];
+const SNAPSHOT_FEAR_GREED = { score: 53, rating: 'Neutral' };
+const SNAPSHOT_INDICES = [
+  { name: 'S&P 500',      price: 5659.91,  changePct:  0.58 },
+  { name: 'Dow Jones',    price: 42410.10, changePct:  0.62 },
+  { name: 'NASDAQ',       price: 17928.92, changePct:  1.07 },
+  { name: 'Russell 2000', price: 2010.45,  changePct:  0.84 },
+];
+const SNAPSHOT_MARKET_VIEW = [
+  { symbol: 'NVDA', name: 'NVIDIA Corp',      price: 112.50, changePct:  2.14 },
+  { symbol: 'TSLA', name: 'Tesla Inc',         price: 285.30, changePct:  1.82 },
+  { symbol: 'AAPL', name: 'Apple Inc',         price: 209.20, changePct:  0.51 },
+  { symbol: 'META', name: 'Meta Platforms',    price: 598.40, changePct:  1.23 },
+  { symbol: 'AMZN', name: 'Amazon.com',        price: 211.80, changePct:  0.71 },
+  { symbol: 'MSFT', name: 'Microsoft Corp',    price: 442.50, changePct:  0.93 },
+];
+const SNAPSHOT_ARTICLES = [
+  { headline: 'S&P 500 Climbs as Trade Optimism Lifts Sentiment', summary: 'Stocks rose broadly as investors cheered signals of progress in U.S.-China trade negotiations, pushing the S&P 500 toward its best week since November.', url: '#', source: 'Reuters', symbols: ['SPY', 'QQQ'], created_at: '2025-05-09T14:30:00Z' },
+  { headline: 'Nvidia Reports Record Data Center Revenue, Stock Surges', summary: 'Nvidia posted quarterly data center revenue beating analyst estimates by a wide margin as demand for AI accelerators continues to outpace supply.', url: '#', source: 'Bloomberg', symbols: ['NVDA'], created_at: '2025-05-09T12:15:00Z' },
+  { headline: 'Fed Officials Signal Patience on Rate Cuts Amid Sticky Inflation', summary: 'Federal Reserve policymakers pushed back on expectations for near-term rate reductions, citing persistent services inflation and a resilient labor market.', url: '#', source: 'Wall Street Journal', symbols: ['TLT', 'BND'], created_at: '2025-05-09T11:00:00Z' },
+  { headline: 'Apple Unveils AI-Powered Features for iPhone 17 Lineup', summary: 'Apple announced on-device artificial intelligence capabilities for its upcoming iPhone 17, positioning the company as a serious competitor in the generative AI space.', url: '#', source: 'CNBC', symbols: ['AAPL'], created_at: '2025-05-09T10:30:00Z' },
+  { headline: 'Tesla Deliveries Beat Estimates as New Model Y Drives Demand', summary: 'Tesla reported stronger-than-expected deliveries fueled by the refreshed Model Y launch and expanded charging infrastructure in key markets.', url: '#', source: 'Bloomberg', symbols: ['TSLA'], created_at: '2025-05-09T09:45:00Z' },
+  { headline: 'Microsoft Azure Growth Accelerates, Beating Cloud Expectations', summary: 'Microsoft Azure revenue grew 33% year-over-year, driven by enterprise AI workloads and expansion of its Copilot product suite across Fortune 500 customers.', url: '#', source: 'Reuters', symbols: ['MSFT', 'AMZN', 'GOOGL'], created_at: '2025-05-09T09:00:00Z' },
+  { headline: 'Treasury Yields Fall as Investors Weigh Rate Path', summary: '10-year Treasury yields fell to 4.38% as bond markets priced in a more cautious Federal Reserve and softer global growth expectations heading into summer.', url: '#', source: 'MarketWatch', symbols: ['TLT', 'IEF'], created_at: '2025-05-08T16:00:00Z' },
+  { headline: 'Oil Prices Drop on OPEC+ Supply Increase Plans', summary: 'Crude oil fell more than 2% after OPEC+ members agreed to accelerate production increases in June, adding to supply amid uncertain global demand.', url: '#', source: 'Reuters', symbols: ['XOM', 'CVX', 'USO'], created_at: '2025-05-08T14:30:00Z' },
+];
+
 function BaselineChart({ months, baseline, currentMTD, status, onRefresh, refreshing, isDemo }) {
   const W = 620, H = 180, PAD = { top: 20, right: 16, bottom: 32, left: 68 };
   const innerW = W - PAD.left - PAD.right;
@@ -2779,6 +2819,10 @@ export default function Dashboard() {
   }, [accent]);
   useEffect(() => { localStorage.setItem('pl_panel', panel); }, [panel]);
 
+  useEffect(() => {
+    if (panel === 'overview' && isPremium && articles.length === 0) fetchNews();
+  }, [panel, isPremium, fetchNews]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Handle return from Stripe checkout or email verification
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -5160,6 +5204,42 @@ export default function Dashboard() {
                   );
                 })()}
                 </DragSection>
+
+                {/* ── News Feed (overview) ── */}
+                <div style={{ ...CARD, marginTop: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: !isPremium ? 12 : 16 }}>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>Market News</div>
+                    {isPremium && <button onClick={() => setPanel('insights')} style={{ fontSize: 11, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>View all →</button>}
+                  </div>
+                  {!isPremium && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: TEXT2 }}>
+                      <span style={{ color: BLUE, fontWeight: 700 }}>◬</span>
+                      <span>Snapshot from <strong style={{ color: TEXT }}>{SNAPSHOT_DATE}</strong>. Upgrade for a live daily news feed.</span>
+                      <button onClick={() => setShowUpgrade(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Upgrade →</button>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {(isPremium ? articles : SNAPSHOT_ARTICLES).slice(0, 5).map((a, i, arr) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          {(a.symbols?.length > 0) && (
+                            <div style={{ display: 'flex', gap: 4, marginBottom: 5, flexWrap: 'wrap' }}>
+                              {a.symbols.slice(0, 3).map(s => (
+                                <span key={s} style={{ background: 'rgba(77,163,255,0.1)', color: BLUE, padding: '1px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>{s}</span>
+                              ))}
+                            </div>
+                          )}
+                          <a href={a.url !== '#' ? a.url : undefined} target={a.url !== '#' ? '_blank' : undefined} rel="noreferrer"
+                            style={{ display: 'block', color: TEXT, textDecoration: 'none', fontWeight: 600, fontSize: 13, lineHeight: 1.4, marginBottom: 4 }}>
+                            {a.headline}
+                          </a>
+                          <div style={{ fontSize: 11, color: TEXT3 }}>{a.source} · {fmtDate(a.created_at)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 </div>{/* end flex layout */}
               </div>
               );
@@ -7162,45 +7242,43 @@ export default function Dashboard() {
               </div>
             {insightsTab === 'markets' && (
               <div>
-                <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 700 }}>Markets</h1>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 24 }}>
+                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Markets</h1>
+                  {!isPremium && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 11, color: TEXT3 }}>Snapshot: {SNAPSHOT_DATE}</span>
+                      <button onClick={() => setShowUpgrade(true)} style={{ padding: '5px 14px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Upgrade for live data</button>
+                    </div>
+                  )}
+                </div>
+
+                {!isPremium && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: TEXT2 }}>
+                    <span style={{ color: BLUE, fontWeight: 700 }}>◬</span>
+                    <span>You're viewing a market snapshot from <strong style={{ color: TEXT }}>{SNAPSHOT_DATE}</strong>. Upgrade to Premium for live daily updates across all sections.</span>
+                    <button onClick={() => setShowUpgrade(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Upgrade →</button>
+                  </div>
+                )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', gap: 16, marginBottom: 24 }}>
                   <div data-tour="markets-sp500" className="lc" style={CARD}>
                     <div style={{ fontWeight: 600, marginBottom: 4, fontSize: 13, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px' }}>S&P 500</div>
-                    <SP500Chart candles={sp500Candles} period={sp500Period} onPeriodChange={fetchSP500} />
+                    <SP500Chart candles={isPremium ? sp500Candles : SNAPSHOT_SP500} period={sp500Period} onPeriodChange={isPremium ? fetchSP500 : () => {}} />
                   </div>
                   <div data-tour="markets-fg" className="lc" style={CARD}>
                     <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Fear & Greed Index</div>
-                    {fearGreed ? (
-                      <FearGreedGauge score={fearGreed.score} rating={fearGreed.rating} />
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 110, color: TEXT2, fontSize: 12 }}>Loading…</div>
-                    )}
+                    <FearGreedGauge score={isPremium ? (fearGreed?.score ?? SNAPSHOT_FEAR_GREED.score) : SNAPSHOT_FEAR_GREED.score} rating={isPremium ? (fearGreed?.rating ?? SNAPSHOT_FEAR_GREED.rating) : SNAPSHOT_FEAR_GREED.rating} />
                     <div style={{ fontSize: 11, color: TEXT3, marginTop: 8, textAlign: 'center' }}>CNN composite · 7 sentiment indicators</div>
                   </div>
                 </div>
 
-                {!isPremium && (
-                  <div style={{ background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: '36px 40px', textAlign: 'center', maxWidth: 400, margin: '0 auto 24px', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
-                    <div style={{ fontSize: 40, marginBottom: 14 }}>◬</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Market Insights</div>
-                    <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 28 }}>
-                      Live charts, Fear &amp; Greed index, yield curve, stock screeners, and a real-time news feed.
-                    </div>
-                    <button onClick={() => setShowUpgrade(true)}
-                      style={{ padding: '12px 32px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,102,245,0.35)', width: '100%' }}>
-                      Upgrade to Premium
-                    </button>
-                  </div>
-                )}
-
-                <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
+                <div>
                 {/* Indices row */}
-                {marketTickers.indices.length > 0 && (
+                {(isPremium ? marketTickers.indices : SNAPSHOT_INDICES).length > 0 && (
                   <div className="lc" style={{ ...CARD, marginBottom: 16 }}>
                     <div style={{ fontWeight: 600, marginBottom: 14, fontSize: 13 }}>Indices</div>
                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12 }}>
-                      {marketTickers.indices.map((t, i) => {
+                      {(isPremium ? marketTickers.indices : SNAPSHOT_INDICES).map((t, i) => {
                         const up = (t.changePct || 0) >= 0;
                         return (
                           <div key={i} style={{ padding: '12px 14px', background: DARK, borderRadius: 8, border: BORDER }}>
@@ -7222,19 +7300,21 @@ export default function Dashboard() {
                 <div className="lc" style={CARD}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                     <div style={{ fontWeight: 600 }}>
-                      {marketView === 'your_list' ? 'Your List' : marketView === 'day_gainers' ? 'Top Gainers' : marketView === 'day_losers' ? 'Top Losers' : 'Most Active'}
+                      {!isPremium ? 'Most Active' : marketView === 'your_list' ? 'Your List' : marketView === 'day_gainers' ? 'Top Gainers' : marketView === 'day_losers' ? 'Top Losers' : 'Most Active'}
                     </div>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <select value={marketView} onChange={e => setMarketView(e.target.value)}
-                        style={{ padding: '5px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
-                        <option value="most_actives">Most Active</option>
-                        <option value="day_gainers">Gainers</option>
-                        <option value="day_losers">Losers</option>
-                        <option value="your_list">Your List</option>
-                      </select>
-                      <button onClick={() => fetchMarketView(marketView, customTickers)}
-                        style={{ padding: '5px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, cursor: 'pointer' }}>↻</button>
-                    </div>
+                    {isPremium && (
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <select value={marketView} onChange={e => setMarketView(e.target.value)}
+                          style={{ padding: '5px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
+                          <option value="most_actives">Most Active</option>
+                          <option value="day_gainers">Gainers</option>
+                          <option value="day_losers">Losers</option>
+                          <option value="your_list">Your List</option>
+                        </select>
+                        <button onClick={() => fetchMarketView(marketView, customTickers)}
+                          style={{ padding: '5px 10px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, cursor: 'pointer' }}>↻</button>
+                      </div>
+                    )}
                   </div>
 
                   {marketView === 'your_list' && (
@@ -7268,7 +7348,7 @@ export default function Dashboard() {
                   )}
 
                   {(() => {
-                    const rows = marketView === 'your_list'
+                    const rows = !isPremium ? SNAPSHOT_MARKET_VIEW : marketView === 'your_list'
                       ? customTickerData
                       : marketViewData.length ? marketViewData : marketTickers.active;
                     if (loadingMarketView) return <div style={{ color: TEXT2, textAlign: 'center', padding: 24, fontSize: 13 }}>Loading…</div>;
@@ -7378,30 +7458,41 @@ export default function Dashboard() {
 
             {insightsTab === 'news' && (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: !isPremium ? 16 : 24 }}>
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>News Feed</h1>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input
-                      value={tickerFilter}
-                      onChange={e => setTickerFilter(e.target.value)}
-                      placeholder="Filter: AAPL,NVDA,VTI"
-                      style={{ padding: '8px 12px', border: BORDER, borderRadius: 6, fontSize: 13, width: 200, outline: 'none', background: MUTED, color: TEXT }}
-                    />
-                    <button onClick={() => fetchNews(tickerFilter || undefined)} style={{ padding: '8px 16px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-                      Filter
-                    </button>
-                    {tickerFilter && (
-                      <button onClick={() => { setTickerFilter(''); fetchNews(); }} style={{ padding: '8px 12px', background: MUTED, color: TEXT2, border: BORDER, borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>
-                        Clear
+                  {isPremium && (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        value={tickerFilter}
+                        onChange={e => setTickerFilter(e.target.value)}
+                        placeholder="Filter: AAPL,NVDA,VTI"
+                        style={{ padding: '8px 12px', border: BORDER, borderRadius: 6, fontSize: 13, width: 200, outline: 'none', background: MUTED, color: TEXT }}
+                      />
+                      <button onClick={() => fetchNews(tickerFilter || undefined)} style={{ padding: '8px 16px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                        Filter
                       </button>
-                    )}
-                  </div>
+                      {tickerFilter && (
+                        <button onClick={() => { setTickerFilter(''); fetchNews(); }} style={{ padding: '8px 12px', background: MUTED, color: TEXT2, border: BORDER, borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {articles.length === 0 ? (
+                {!isPremium && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: TEXT2 }}>
+                    <span style={{ color: BLUE, fontWeight: 700 }}>◬</span>
+                    <span>Snapshot from <strong style={{ color: TEXT }}>{SNAPSHOT_DATE}</strong>. Upgrade for a live daily news feed with ticker filtering.</span>
+                    <button onClick={() => setShowUpgrade(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Upgrade →</button>
+                  </div>
+                )}
+                {(() => {
+                  const displayArticles = isPremium ? articles : SNAPSHOT_ARTICLES;
+                  return displayArticles.length === 0 ? (
                   <div style={{ ...CARD, textAlign: 'center', padding: 48, color: TEXT2 }}>No articles found</div>
                 ) : (
-                  <div data-tour="news-articles" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-                    {articles.map((a, i) => (
+                  <div data-tour="news-articles" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 16 }}>
+                    {displayArticles.map((a, i) => (
                       <div key={i} className="lc" style={CARD}>
                         {(a.symbols?.length > 0) && (
                           <div style={{ display: 'flex', gap: 5, marginBottom: 10, flexWrap: 'wrap' }}>
@@ -7422,13 +7513,15 @@ export default function Dashboard() {
                       </div>
                     ))}
                   </div>
-                )}
+                );
+                })()}
               </div>
             )}
 
             {insightsTab === 'signals' && (() => {
               // ── Score all articles ─────────────────────────────────────────
-              const scored = articles.map(a => ({ ...a, ...scoreArticle(a) }));
+              const sourceArticles = isPremium ? articles : SNAPSHOT_ARTICLES;
+              const scored = sourceArticles.map(a => ({ ...a, ...scoreArticle(a) }));
               const bySignal = [...scored].sort((a, b) => b.signal - a.signal);
 
               // ── Build ticker heat map ──────────────────────────────────────
@@ -7472,19 +7565,13 @@ export default function Dashboard() {
               return (
                 <div>
                   {!isPremium && (
-                    <div style={{ background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: '36px 40px', textAlign: 'center', maxWidth: 400, margin: '0 auto 24px', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
-                      <div style={{ fontSize: 40, marginBottom: 14 }}>◎</div>
-                      <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Signal Engine</div>
-                      <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 28 }}>
-                        Multi-vector news scoring, live ticker heatmaps, and sector contagion analysis.
-                      </div>
-                      <button onClick={() => setShowUpgrade(true)}
-                        style={{ padding: '12px 32px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,102,245,0.35)', width: '100%' }}>
-                        Upgrade to Premium
-                      </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: TEXT2 }}>
+                      <span style={{ color: BLUE, fontWeight: 700 }}>◎</span>
+                      <span>Signals scored from snapshot news (<strong style={{ color: TEXT }}>{SNAPSHOT_DATE}</strong>). Upgrade for live daily signal scoring.</span>
+                      <button onClick={() => setShowUpgrade(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Upgrade →</button>
                     </div>
                   )}
-                  <div style={!isPremium ? { filter: 'blur(5px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
+                  <div>
                   {/* Header */}
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
                     <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Signal Engine</h1>
