@@ -6023,8 +6023,8 @@ export default function Dashboard() {
                         {budgetSummaryView ? (() => {
                           const getBucket = (cat) => {
                             const c = cat.toLowerCase().replace(/_/g, ' ');
-                            if (c.includes('rent') || c.includes('utilit') || c.includes('loan') || c.includes('mortgage') || c.includes('insurance') || c.includes('subscript') || c.includes('phone') || c.includes('internet') || c.includes('cable')) return 'Fixed';
-                            if (c.includes('saving') || c.includes('transfer') || c.includes('invest')) return 'Savings';
+                            if (c.includes('rent') || c.includes('utilit') || c.includes('loan') || c.includes('mortgage') || c.includes('insurance') || c.includes('subscript') || c.includes('phone') || c.includes('internet') || c.includes('cable') || c.includes('home improvement') || c.includes('home_improvement')) return 'Fixed';
+                            if (c.includes('saving') || c.includes('invest')) return 'Savings';
                             return 'Flex';
                           };
                           const activeCats = displayBudget.length === 0 ? (MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5]) : displayBudget;
@@ -6060,8 +6060,8 @@ export default function Dashboard() {
                                         {cats.slice(0, 4).map((b, i) => (
                                           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <button onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
-                                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', fontSize: 12, color: TEXT2, textTransform: 'capitalize' }}>
-                                              {b.category}
+                                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', fontSize: 12, color: TEXT2 }}>
+                                              {fmtCat(b.category)}
                                             </button>
                                             <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'monospace', color: TEXT }}>{fmt(b.total)}</span>
                                           </div>
