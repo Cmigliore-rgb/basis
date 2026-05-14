@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Groq = require('groq-sdk');
+const requireAuth = require('../middleware/requireAuth');
+const db = require('../db');
 
 const SYSTEM_PROMPT = `You are a personal financial advisor assistant built into Ledger, a personal finance dashboard.
 
@@ -15,7 +17,10 @@ You can help with spending analysis, budget tracking, investment portfolio revie
 
 Write in plain conversational paragraphs like a knowledgeable friend, not a financial advisor. No bullet points, no numbered lists, no headers, no em dashes. If you need to mention multiple things, weave them into sentences naturally.`;
 
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
+  const user = db.prepare('SELECT tier FROM users WHERE id = ?').get(req.user.id);
+  if (user?.tier !== 'premium') return res.status(403).json({ error: 'Premium required' });
+
   const { message, history = [], context = {} } = req.body;
 
   if (!message) {

@@ -2851,7 +2851,7 @@ export default function Dashboard() {
 
   const effectiveProfessor = isAdmin && viewAs ? viewAs === 'professor' : isProfessor;
   const effectiveStudent   = isAdmin && viewAs ? viewAs === 'student'   : user?.role === 'student';
-  const canSeeAI           = !isDemoData;
+  const canSeeAI           = !isDemoData && isPremium;
 
   // Lock main panel scrolling while tour is active
   useEffect(() => {
