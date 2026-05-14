@@ -7366,32 +7366,37 @@ export default function Dashboard() {
                     )}
                   </div>
                   {activeHoldings.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '32px 24px' }}>
-                      <div style={{ fontSize: 28, marginBottom: 12 }}>📈</div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 8 }}>
-                        {noBrokerage ? 'Investment data syncing' : 'No brokerage account connected'}
-                      </div>
-                      <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, maxWidth: 360, margin: '0 auto 20px' }}>
-                        {noBrokerage
-                          ? 'Your brokerage is connected but holdings are still loading. Plaid can take a few minutes to sync investment data for the first time. Click Refresh to check again.'
-                          : 'Connect an investment account to track your portfolio, holdings, and performance in real time.'}
-                      </div>
-                      {isAdmin && !viewAs && (
-                        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-                          {noBrokerage ? (
-                            <button onClick={() => fetchAll()}
-                              style={{ padding: '10px 24px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                              Refresh
-                            </button>
-                          ) : (
-                            <button onClick={() => setShowConnectModal(true)}
-                              style={{ padding: '10px 24px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                              + Connect Brokerage
-                            </button>
+                    (() => {
+                      const hasBrokerageAcct = !isDemoData && activeAccounts.some(a => a.type === 'investment');
+                      return (
+                        <div style={{ textAlign: 'center', padding: '32px 24px' }}>
+                          <div style={{ fontSize: 28, marginBottom: 12 }}>📈</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 8 }}>
+                            {hasBrokerageAcct ? 'Investment data syncing' : 'No brokerage account connected'}
+                          </div>
+                          <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, maxWidth: 360, margin: '0 auto 20px' }}>
+                            {hasBrokerageAcct
+                              ? 'Your brokerage is connected but holdings are still loading. Plaid can take a few minutes to sync investment data for the first time. Click Refresh to check again.'
+                              : 'Connect an investment account to track your portfolio, holdings, and performance in real time.'}
+                          </div>
+                          {isAdmin && !viewAs && (
+                            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                              {hasBrokerageAcct ? (
+                                <button onClick={() => fetchAll()}
+                                  style={{ padding: '10px 24px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                                  Refresh
+                                </button>
+                              ) : (
+                                <button onClick={() => setShowConnectModal(true)}
+                                  style={{ padding: '10px 24px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                                  + Connect Brokerage
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
-                    </div>
+                      );
+                    })()
                   ) : (
                     <>
                       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
