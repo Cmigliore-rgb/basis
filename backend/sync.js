@@ -37,9 +37,9 @@ async function syncTransactions(tokenRow) {
   }
 
   if (cursor) {
-    db.prepare('UPDATE plaid_tokens SET sync_cursor = ? WHERE id = ?').run(cursor, tokenId);
+    db.prepare("UPDATE plaid_tokens SET sync_cursor = ?, last_synced_at = datetime('now') WHERE id = ?").run(cursor, tokenId);
   }
-  console.log(`[sync:txns] ${institution_name} done — cursor updated`);
+  console.log(`[sync:txns] ${institution_name} done`);
 }
 
 async function syncAccounts(tokenRow) {

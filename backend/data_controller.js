@@ -6,26 +6,45 @@ function getUserTokens(userId) {
   return db.prepare('SELECT * FROM plaid_tokens WHERE user_id = ?').all(userId);
 }
 
+const STALE_MS = 30 * 60 * 1000; // 30 minutes
+
+function isStale(userId) {
+  const row = db.prepare('SELECT MIN(last_synced_at) as t FROM plaid_tokens WHERE user_id = ?').get(userId);
+  if (!row?.t) return true;
+  return Date.now() - new Date(row.t).getTime() > STALE_MS;
+}
+
+function bgSync(userId) {
+  const { syncAll } = require('./sync');
+  syncAll(userId).catch(e => console.warn('[bg-sync]', e.message));
+}
+
 async function getAccounts(req) {
   const tokens = getUserTokens(req.user.id);
   if (!tokens.length) return { accounts: getDummyData().accounts, demo: true };
 
   const cached = db.prepare('SELECT raw_json FROM accounts_cache WHERE user_id = ?').all(req.user.id);
   if (cached.length) {
+    if (isStale(req.user.id)) {
+      console.log(`[getAccounts] user=${req.user.id} cache=hit stale=true — bg sync triggered`);
+      bgSync(req.user.id);
+    } else {
+      console.log(`[getAccounts] user=${req.user.id} cache=hit stale=false`);
+    }
     return { accounts: cached.map(r => JSON.parse(r.raw_json)) };
   }
 
-  // No cache yet — attempt sync, fall back to live Plaid if sync fails
+  console.log(`[getAccounts] user=${req.user.id} cache=miss — syncing now`);
   try {
     const { syncAll } = require('./sync');
     await syncAll(req.user.id);
     const fresh = db.prepare('SELECT raw_json FROM accounts_cache WHERE user_id = ?').all(req.user.id);
     if (fresh.length) return { accounts: fresh.map(r => JSON.parse(r.raw_json)) };
   } catch (e) {
-    console.warn('[getAccounts] sync failed, falling back to live Plaid:', e.message);
+    console.warn('[getAccounts] sync error:', e.message);
   }
 
-  // Fallback: live Plaid
+  console.warn('[getAccounts] falling back to live Plaid');
   const all = await Promise.all(
     tokens.map(async ({ access_token, institution_name }) => {
       const r = await plaidClient.accountsGet({ access_token });
@@ -54,22 +73,33 @@ async function getTransactions(req, start, end) {
   }
 
   const hasCache = db.prepare('SELECT 1 FROM transactions_cache WHERE user_id = ? LIMIT 1').get(req.user.id);
-  if (!hasCache) {
-    try {
-      const { syncAll } = require('./sync');
-      await syncAll(req.user.id);
-    } catch (e) {
-      console.warn('[getTransactions] sync failed, falling back to live Plaid:', e.message);
+  if (hasCache) {
+    if (isStale(req.user.id)) {
+      console.log(`[getTransactions] user=${req.user.id} cache=hit stale=true — bg sync triggered`);
+      bgSync(req.user.id);
+    } else {
+      console.log(`[getTransactions] user=${req.user.id} cache=hit stale=false`);
     }
+    const rows = db.prepare(
+      'SELECT raw_json FROM transactions_cache WHERE user_id = ? AND date >= ? AND date <= ? ORDER BY date DESC'
+    ).all(req.user.id, start, end);
+    return { transactions: rows.map(r => JSON.parse(r.raw_json)) };
+  }
+
+  console.log(`[getTransactions] user=${req.user.id} cache=miss — syncing now`);
+  try {
+    const { syncAll } = require('./sync');
+    await syncAll(req.user.id);
+  } catch (e) {
+    console.warn('[getTransactions] sync error:', e.message);
   }
 
   const rows = db.prepare(
     'SELECT raw_json FROM transactions_cache WHERE user_id = ? AND date >= ? AND date <= ? ORDER BY date DESC'
   ).all(req.user.id, start, end);
 
-  // If cache is still empty after sync attempt, fall back to live Plaid
-  if (!rows.length && !hasCache) {
-    console.warn('[getTransactions] cache empty after sync, falling back to live Plaid');
+  if (!rows.length) {
+    console.warn('[getTransactions] cache still empty — falling back to live Plaid');
     const all = await Promise.all(
       tokens.map(({ access_token }) =>
         plaidClient.transactionsGet({ access_token, start_date: start, end_date: end })

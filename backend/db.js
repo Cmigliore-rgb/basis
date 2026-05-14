@@ -135,6 +135,7 @@ try { db.exec("UPDATE users SET tier = 'premium' WHERE email = 'joemigliore@gmai
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN item_id TEXT'); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN needs_update INTEGER NOT NULL DEFAULT 0'); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN sync_cursor TEXT'); } catch {}
+try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN last_synced_at TEXT'); } catch {}
 try {
   db.exec(`CREATE TABLE IF NOT EXISTS transactions_cache (
     transaction_id TEXT NOT NULL,
