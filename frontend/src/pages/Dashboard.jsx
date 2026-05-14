@@ -3530,7 +3530,7 @@ export default function Dashboard() {
           ))}
           {/* Get Premium / Connect Account + Tour + Settings — anchored under Education section */}
           <div style={{ padding: '10px 14px 4px', display: 'flex', flexDirection: 'column', gap: 7 }}>
-            {isAdmin && !viewAs && (
+            {!viewAs && (
               <div data-tour="connect">
                 <button
                   onClick={() => isPremium ? setShowConnectModal(true) : setShowUpgrade(true)}
