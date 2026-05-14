@@ -5967,7 +5967,10 @@ export default function Dashboard() {
                             return cats.map((b, i) => (
                               <div key={i} style={{ marginBottom: 20 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                  <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>{b.category}</span>
+                                  <button onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+                                    <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>{b.category}</span>
+                                  </button>
                                   <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: TEXT }}>{fmt(b.total)}</span>
                                 </div>
                                 <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
