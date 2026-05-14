@@ -134,6 +134,29 @@ try { db.exec("UPDATE users SET edu_verified_at = datetime('now') WHERE role = '
 try { db.exec("UPDATE users SET tier = 'premium' WHERE email = 'joemigliore@gmail.com'"); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN item_id TEXT'); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN needs_update INTEGER NOT NULL DEFAULT 0'); } catch {}
+try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN sync_cursor TEXT'); } catch {}
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS transactions_cache (
+    transaction_id TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    token_id INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    pending INTEGER NOT NULL DEFAULT 0,
+    raw_json TEXT NOT NULL,
+    PRIMARY KEY (user_id, transaction_id)
+  )`);
+} catch {}
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS accounts_cache (
+    account_id TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    token_id INTEGER NOT NULL,
+    type TEXT,
+    raw_json TEXT NOT NULL,
+    synced_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, account_id)
+  )`);
+} catch {}
 try { db.exec(`CREATE TABLE IF NOT EXISTS net_worth_snapshots (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id),

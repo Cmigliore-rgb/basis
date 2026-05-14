@@ -104,6 +104,15 @@ router.post('/exchange_token', requireAuth, async (req, res) => {
       INSERT INTO plaid_tokens (user_id, access_token, institution_name, item_id)
       VALUES (?, ?, ?, ?)
     `).run(req.user.id, access_token, institution_name || 'Unknown', item_id);
+
+    // Background initial sync — don't await, user proceeds immediately
+    const newToken = db.prepare('SELECT * FROM plaid_tokens WHERE item_id = ? AND user_id = ?').get(item_id, req.user.id);
+    if (newToken) {
+      const { syncTransactions, syncAccounts } = require('../sync');
+      Promise.all([syncTransactions(newToken), syncAccounts(newToken)])
+        .catch(e => console.error('[post-connect sync]', e.message));
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error('exchange_token error:', err.message);
@@ -138,6 +147,9 @@ router.delete('/disconnect/:id', requireAuth, async (req, res) => {
       console.warn('itemRemove error (continuing):', e.message);
     }
   }
+  // Clean up cached data for this token before removing the token
+  db.prepare('DELETE FROM accounts_cache WHERE token_id = ?').run(req.params.id);
+  db.prepare('DELETE FROM transactions_cache WHERE token_id = ?').run(req.params.id);
   db.prepare('DELETE FROM plaid_tokens WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
   res.json({ success: true });
 });
@@ -235,6 +247,18 @@ router.delete('/manual-liabilities/:id', requireAuth, (req, res) => {
   res.json({ success: true });
 });
 
+// ── Manual sync: force-refresh cache for all connected accounts ───────────
+router.post('/sync', requireAuth, async (req, res) => {
+  try {
+    const { syncAll } = require('../sync');
+    await syncAll(req.user.id);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('manual sync error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const jwkCache = new Map();
 
 async function verifyPlaidWebhook(token, rawBody) {
@@ -277,7 +301,12 @@ router.post('/webhook', async (req, res) => {
   console.log(`Plaid webhook: ${webhook_type}/${webhook_code} item=${item_id}`);
 
   if (webhook_type === 'TRANSACTIONS' && ['DEFAULT_UPDATE', 'INITIAL_UPDATE', 'HISTORICAL_UPDATE'].includes(webhook_code)) {
-    // New transactions available — real-time push can be added later
+    const tokenRow = db.prepare('SELECT * FROM plaid_tokens WHERE item_id = ?').get(item_id);
+    if (tokenRow) {
+      const { syncTransactions, syncAccounts } = require('../sync');
+      Promise.all([syncTransactions(tokenRow), syncAccounts(tokenRow)])
+        .catch(e => console.error('[webhook sync]', e.message));
+    }
   }
 
   if (webhook_type === 'HOLDINGS' && webhook_code === 'DEFAULT_UPDATE') {
