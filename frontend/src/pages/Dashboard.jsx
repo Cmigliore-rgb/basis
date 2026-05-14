@@ -10528,19 +10528,19 @@ export default function Dashboard() {
                         const color  = colors[idx % colors.length];
                         return (
                           <div key={idx} style={{ ...CARD }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-                              <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+                              <div style={{ minWidth: 0 }}>
                                 <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{sc.label}</div>
-                                <div style={{ fontSize: 12, color: TEXT2, display: 'flex', gap: 14 }}>
+                                <div style={{ fontSize: 12, color: TEXT2, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                                   {sc.principal > 0 && <span>Principal: {fmt(sc.principal)}</span>}
                                   {sc.monthly > 0 && <span>Monthly: {fmt(sc.monthly)}/mo</span>}
                                   <span>Rate: {sc.rate}% APY</span>
                                   <span>Term: {sc.years} years</span>
                                 </div>
                               </div>
-                              <div style={{ textAlign: 'right' }}>
+                              <div style={{ textAlign: 'right', flexShrink: 0 }}>
                                 <div style={{ fontSize: 11, color: TEXT2, marginBottom: 2 }}>Future Value</div>
-                                <div style={{ fontSize: 26, fontWeight: 700, fontFamily: 'monospace', color }}>{fmt(final?.fv || 0)}</div>
+                                <div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, fontFamily: 'monospace', color }}>{fmt(final?.fv || 0)}</div>
                               </div>
                             </div>
 
@@ -11833,7 +11833,7 @@ export default function Dashboard() {
                       ))}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginBottom: 20 }}>
                       {/* Allocation sliders */}
                       <div style={CARD}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
@@ -11930,38 +11930,36 @@ export default function Dashboard() {
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 18 }}>
                         Bear = base −5pp &nbsp;·&nbsp; Base = {(expRet * 100).toFixed(1)}% &nbsp;·&nbsp; Bull = base +3pp. No annual contributions assumed.
                       </div>
-                      <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                          <thead>
-                            <tr style={{ borderBottom: BORDER }}>
-                              {['Year', 'Bear', 'Base', 'Bull', 'Base vs. S&P 500*'].map((h, i) => (
-                                <th key={h} style={{ padding: '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {[1, 3, 5, 7, 10].map(yr => {
-                              const bearR = Math.max(0, expRet - 0.05), baseR = expRet, bullR = expRet + 0.03;
-                              const bearV = BUDGET * Math.pow(1 + bearR, yr);
-                              const baseV = BUDGET * Math.pow(1 + baseR, yr);
-                              const bullV = BUDGET * Math.pow(1 + bullR, yr);
-                              const sp500 = BUDGET * Math.pow(1.105, yr);
-                              const diff = baseV - sp500;
-                              return (
-                                <tr key={yr} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                                  <td style={{ padding: '10px 10px', fontWeight: 600 }}>Year {yr}</td>
-                                  <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: RED }}>{fmt(bearV)}</td>
-                                  <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: BLUE, fontWeight: 700 }}>{fmt(baseV)}</td>
-                                  <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>{fmt(bullV)}</td>
-                                  <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: diff >= 0 ? GREEN : RED, fontWeight: 600 }}>
-                                    {diff >= 0 ? '+' : ''}{fmt(Math.abs(diff))} {diff >= 0 ? 'ahead' : 'behind'}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: BORDER }}>
+                            {(isMobile ? ['Year', 'Bear', 'Base', 'Bull'] : ['Year', 'Bear', 'Base', 'Bull', 'Base vs. S&P 500*']).map((h, i) => (
+                              <th key={h} style={{ padding: isMobile ? '7px 8px' : '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[1, 3, 5, 7, 10].map(yr => {
+                            const bearR = Math.max(0, expRet - 0.05), baseR = expRet, bullR = expRet + 0.03;
+                            const bearV = BUDGET * Math.pow(1 + bearR, yr);
+                            const baseV = BUDGET * Math.pow(1 + baseR, yr);
+                            const bullV = BUDGET * Math.pow(1 + bullR, yr);
+                            const sp500 = BUDGET * Math.pow(1.105, yr);
+                            const diff = baseV - sp500;
+                            return (
+                              <tr key={yr} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
+                                <td style={{ padding: isMobile ? '8px 8px' : '10px 10px', fontWeight: 600 }}>Yr {yr}</td>
+                                <td style={{ padding: isMobile ? '8px 8px' : '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: RED }}>{fmt(bearV)}</td>
+                                <td style={{ padding: isMobile ? '8px 8px' : '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: BLUE, fontWeight: 700 }}>{fmt(baseV)}</td>
+                                <td style={{ padding: isMobile ? '8px 8px' : '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>{fmt(bullV)}</td>
+                                {!isMobile && <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: 'monospace', color: diff >= 0 ? GREEN : RED, fontWeight: 600 }}>
+                                  {diff >= 0 ? '+' : ''}{fmt(Math.abs(diff))} {diff >= 0 ? 'ahead' : 'behind'}
+                                </td>}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                       <div style={{ marginTop: 10, fontSize: 11, color: TEXT3 }}>* S&P 500 benchmark uses 10.5% historical annualized return. Projections are illustrative; past performance does not guarantee future results.</div>
                     </div>
 
@@ -12319,16 +12317,16 @@ export default function Dashboard() {
                           const barPct = Math.min(100, Math.round((d.balance / totalDebt) * 100));
                           return (
                             <div key={d.name} style={{ padding: '12px 14px', background: MUTED, border: BORDER, borderRadius: 10 }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <div style={{ marginBottom: 8 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5, flexWrap: 'wrap' }}>
                                   <span style={{ fontSize: 11, fontWeight: 800, color: debtStrategy === 'avalanche' ? PINK : BLUE, background: `${debtStrategy === 'avalanche' ? PINK : BLUE}18`, padding: '2px 8px', borderRadius: 4 }}>#{idx + 1}</span>
                                   <span style={{ fontSize: 13, fontWeight: 600 }}>{d.name}</span>
+                                  {mo && <span style={{ color: GREEN, fontWeight: 700, fontSize: 11 }}>paid off mo. {mo}</span>}
                                 </div>
-                                <div style={{ display: 'flex', gap: 20, fontSize: 12, color: TEXT2, fontFamily: 'monospace' }}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px', fontSize: 12, color: TEXT2, fontFamily: 'monospace' }}>
                                   <span>Balance: <strong style={{ color: PINK }}>{fmt(d.balance)}</strong></span>
                                   <span>APR: <strong style={{ color: YELLOW }}>{d.apr}%</strong></span>
                                   <span>Min: {fmt(d.minPayment)}/mo</span>
-                                  {mo && <span style={{ color: GREEN, fontWeight: 700 }}>paid off mo. {mo}</span>}
                                 </div>
                               </div>
                               <div style={{ height: 6, background: DARK, borderRadius: 3, overflow: 'hidden' }}>
@@ -13102,15 +13100,15 @@ export default function Dashboard() {
                         const mc = mcaps[i];
                         return (
                           <div key={s.ticker} style={{ marginBottom: 14 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 13, color: CYAN, minWidth: 42 }}>{s.ticker}</span>
-                                <span style={{ fontSize: 12, color: TEXT2 }}>{s.name}</span>
-                                <span style={{ fontSize: 10, color: TEXT3, background: MUTED, padding: '2px 7px', borderRadius: 10 }}>{s.sector}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5, gap: 8 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden' }}>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 13, color: CYAN, flexShrink: 0 }}>{s.ticker}</span>
+                                <span style={{ fontSize: isMobile ? 11 : 12, color: TEXT2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                                {!isMobile && <span style={{ fontSize: 10, color: TEXT3, background: MUTED, padding: '2px 7px', borderRadius: 10, flexShrink: 0 }}>{s.sector}</span>}
                               </div>
-                              <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                                <span style={{ fontSize: 11, color: TEXT3, fontFamily: 'monospace' }}>Mkt cap ${(mc / 1000).toFixed(1)}T</span>
-                                <span style={{ fontSize: 11, color: TEXT3, fontFamily: 'monospace' }}>Price ${s.price.toFixed(2)}</span>
+                              <div style={{ display: 'flex', gap: isMobile ? 8 : 16, alignItems: 'center', flexShrink: 0 }}>
+                                {!isMobile && <span style={{ fontSize: 11, color: TEXT3, fontFamily: 'monospace' }}>Mkt cap ${(mc / 1000).toFixed(1)}T</span>}
+                                {!isMobile && <span style={{ fontSize: 11, color: TEXT3, fontFamily: 'monospace' }}>Price ${s.price.toFixed(2)}</span>}
                                 <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'monospace', color: CYAN, minWidth: 42, textAlign: 'right' }}>{(w * 100).toFixed(1)}%</span>
                               </div>
                             </div>
@@ -13214,7 +13212,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Definition cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 24 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginBottom: 24 }}>
                       {[
                         { label: 'Bull Market', icon: '↑', color: GREEN,  def: 'A rise of 20% or more from a recent low. Typically accompanied by strong GDP growth, low unemployment, and rising corporate earnings. Average duration: ~5 years.' },
                         { label: 'Bear Market', icon: '↓', color: RED,    def: 'A decline of 20% or more from a recent high. Usually triggered by recession fears, rising rates, or financial crises. Average duration: ~9 months.' },
@@ -13263,7 +13261,7 @@ export default function Dashboard() {
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Drawdown Recovery Calculator</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 20 }}>A loss requires a larger gain to break even; the math is asymmetric and surprises most people.</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 20 }}>
                         <div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                             <span style={{ fontSize: 12, color: TEXT2, fontWeight: 600 }}>PORTFOLIO DROP</span>
@@ -13303,12 +13301,12 @@ export default function Dashboard() {
                           </div>
                         </div>
                       </div>
-                      <div style={{ marginTop: 16, overflowX: 'auto' }}>
+                      <div style={{ marginTop: 16 }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                           <thead>
                             <tr style={{ borderBottom: BORDER }}>
-                              {['Drop', 'Gain to Break Even', 'Years at 5%', 'Years at 8%', 'Years at 10%'].map((h, i) => (
-                                <th key={h} style={{ padding: '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                              {(isMobile ? ['Drop', 'Gain Needed', 'Yrs at 10%'] : ['Drop', 'Gain to Break Even', 'Years at 5%', 'Years at 8%', 'Years at 10%']).map((h, i) => (
+                                <th key={h} style={{ padding: isMobile ? '7px 8px' : '7px 10px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
                               ))}
                             </tr>
                           </thead>
@@ -13317,13 +13315,16 @@ export default function Dashboard() {
                               const gn = (d / (100 - d)) * 100;
                               return (
                                 <tr key={d} style={{ borderBottom: `1px solid ${BORDER_C}`, background: d === bbDrop ? `${RED}08` : 'transparent' }}>
-                                  <td style={{ padding: '9px 10px', fontWeight: 700, color: RED }}>−{d}%</td>
-                                  <td style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: RED }}>+{gn.toFixed(1)}%</td>
-                                  {[5, 8, 10].map(r => (
-                                    <td key={r} style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>
-                                      {(Math.log(1 + gn / 100) / Math.log(1 + r / 100)).toFixed(1)} yr
-                                    </td>
-                                  ))}
+                                  <td style={{ padding: isMobile ? '8px 8px' : '9px 10px', fontWeight: 700, color: RED }}>−{d}%</td>
+                                  <td style={{ padding: isMobile ? '8px 8px' : '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: RED }}>+{gn.toFixed(1)}%</td>
+                                  {isMobile
+                                    ? <td style={{ padding: '8px 8px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>{(Math.log(1 + gn / 100) / Math.log(1.10)).toFixed(1)} yr</td>
+                                    : [5, 8, 10].map(r => (
+                                      <td key={r} style={{ padding: '9px 10px', textAlign: 'right', fontFamily: 'monospace', color: TEXT2 }}>
+                                        {(Math.log(1 + gn / 100) / Math.log(1 + r / 100)).toFixed(1)} yr
+                                      </td>
+                                    ))
+                                  }
                                 </tr>
                               );
                             })}
@@ -13336,12 +13337,11 @@ export default function Dashboard() {
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>The Cost of Trying to Time the Market</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>$10,000 invested in the S&P 500 for 20 years (2003–2022). The best days often happen right in the middle of bear markets.</div>
-                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
-                            {['Strategy', 'Final Value', 'Annualized Return', 'vs. Buy & Hold'].map((h, i) => (
-                              <th key={h} style={{ padding: '7px 12px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            {(isMobile ? ['Strategy', 'Final Value', 'Return'] : ['Strategy', 'Final Value', 'Annualized Return', 'vs. Buy & Hold']).map((h, i) => (
+                              <th key={h} style={{ padding: isMobile ? '7px 8px' : '7px 12px', textAlign: i === 0 ? 'left' : 'right', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -13350,16 +13350,15 @@ export default function Dashboard() {
                             const diff = m.value - 64844;
                             return (
                               <tr key={m.days} style={{ borderBottom: `1px solid ${BORDER_C}`, background: m.days === 0 ? `${GREEN}06` : 'transparent' }}>
-                                <td style={{ padding: '10px 12px', fontWeight: m.days === 0 ? 700 : 400 }}>{m.label}</td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: m.days === 0 ? GREEN : m.annualized < 0 ? RED : TEXT }}>${m.value.toLocaleString()}</td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: m.annualized < 0 ? RED : m.annualized < 5 ? YELLOW : GREEN }}>{m.annualized}%</td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: m.days === 0 ? TEXT3 : RED }}>{m.days === 0 ? '—' : `−$${Math.abs(diff).toLocaleString()}`}</td>
+                                <td style={{ padding: isMobile ? '8px 8px' : '10px 12px', fontWeight: m.days === 0 ? 700 : 400, fontSize: isMobile ? 11 : 12 }}>{m.label}</td>
+                                <td style={{ padding: isMobile ? '8px 8px' : '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: m.days === 0 ? GREEN : m.annualized < 0 ? RED : TEXT }}>${m.value.toLocaleString()}</td>
+                                <td style={{ padding: isMobile ? '8px 8px' : '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: m.annualized < 0 ? RED : m.annualized < 5 ? YELLOW : GREEN }}>{m.annualized}%</td>
+                                {!isMobile && <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: m.days === 0 ? TEXT3 : RED }}>{m.days === 0 ? '—' : `−$${Math.abs(diff).toLocaleString()}`}</td>}
                               </tr>
                             );
                           })}
                         </tbody>
                       </table>
-                      </div>
                       <div style={{ marginTop: 12, padding: '10px 14px', background: `${GREEN}06`, border: `1px solid ${GREEN}20`, borderRadius: 8, fontSize: 12, color: TEXT2 }}>
                         Missing just 10 of the best trading days cut the final value by more than half. The problem: you cannot know in advance when those best days will be; they typically happen within weeks of the worst days.
                       </div>
@@ -13432,7 +13431,7 @@ export default function Dashboard() {
                       Adjust all 7 indicators to build a composite sentiment score, then look up what that reading has historically meant for 12-month returns.
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginBottom: 20 }}>
                       {/* Left: sliders */}
                       <div style={CARD}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -13488,40 +13487,37 @@ export default function Dashboard() {
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Zone vs Forward Returns · Historical Averages</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Average S&P 500 return 12 months after each Fear & Greed reading (approximate, based on data since 2011)</div>
-                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
-                            {['Zone', 'Score Range', 'Avg 12-mo Return', 'Signal', 'Interpretation'].map((h, i) => (
-                              <th key={h} style={{ padding: '7px 12px', textAlign: i === 0 ? 'left' : i < 3 ? 'center' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            {(isMobile ? ['Zone', 'Avg Return', 'Signal'] : ['Zone', 'Score Range', 'Avg 12-mo Return', 'Signal', 'Interpretation']).map((h, i) => (
+                              <th key={h} style={{ padding: isMobile ? '7px 8px' : '7px 12px', textAlign: i === 0 ? 'left' : i === (isMobile ? 1 : 2) ? 'center' : i === 1 ? 'center' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {FG_ZONES.map(z => (
                             <tr key={z.label} style={{ borderBottom: `1px solid ${BORDER_C}`, background: z.label === currentZone.label ? `${z.color}10` : 'transparent' }}>
-                              <td style={{ padding: '10px 12px' }}><span style={{ fontWeight: 700, color: z.color }}>{z.label}</span></td>
-                              <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'monospace', color: TEXT2 }}>{z.max <= 25 ? '0–25' : z.max <= 45 ? '26–45' : z.max <= 55 ? '46–55' : z.max <= 75 ? '56–75' : '76–100'}</td>
-                              <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, color: z.fwdReturn.startsWith('-') ? RED : GREEN }}>{z.fwdReturn}</td>
-                              <td style={{ padding: '10px 12px', fontSize: 11 }}>{z.max <= 25 ? 'Strong Buy' : z.max <= 45 ? 'Mild Buy' : z.max <= 55 ? 'Hold' : z.max <= 75 ? 'Caution' : 'High Risk'}</td>
-                              <td style={{ padding: '10px 12px', fontSize: 11, color: TEXT2 }}>{z.body.split('.')[0]}.</td>
+                              <td style={{ padding: isMobile ? '8px 8px' : '10px 12px' }}><span style={{ fontWeight: 700, color: z.color }}>{z.label}</span></td>
+                              {!isMobile && <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'monospace', color: TEXT2 }}>{z.max <= 25 ? '0–25' : z.max <= 45 ? '26–45' : z.max <= 55 ? '46–55' : z.max <= 75 ? '56–75' : '76–100'}</td>}
+                              <td style={{ padding: isMobile ? '8px 8px' : '10px 12px', textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, color: z.fwdReturn.startsWith('-') ? RED : GREEN }}>{z.fwdReturn}</td>
+                              <td style={{ padding: isMobile ? '8px 8px' : '10px 12px', fontSize: 11 }}>{z.max <= 25 ? 'Strong Buy' : z.max <= 45 ? 'Mild Buy' : z.max <= 55 ? 'Hold' : z.max <= 75 ? 'Caution' : 'High Risk'}</td>
+                              {!isMobile && <td style={{ padding: '10px 12px', fontSize: 11, color: TEXT2 }}>{z.body.split('.')[0]}.</td>}
                             </tr>
                           ))}
                         </tbody>
                       </table>
-                      </div>
                     </div>
 
                     {/* Historical snapshots */}
                     <div style={{ ...CARD, marginBottom: 20 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Notable Historical Readings</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginBottom: 14 }}>Actual Fear & Greed scores at major market turning points</div>
-                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr style={{ borderBottom: BORDER }}>
-                            {['Date', 'Score', 'Zone', 'Event', '12-mo Fwd Return'].map((h, i) => (
-                              <th key={h} style={{ padding: '7px 12px', textAlign: i === 0 || i >= 3 ? 'left' : 'center', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                            {(isMobile ? ['Date', 'Score', '12-mo Return'] : ['Date', 'Score', 'Zone', 'Event', '12-mo Fwd Return']).map((h, i) => (
+                              <th key={h} style={{ padding: isMobile ? '7px 8px' : '7px 12px', textAlign: i === 0 ? 'left' : i === 1 ? 'center' : i >= (isMobile ? 2 : 3) ? 'left' : 'center', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -13530,17 +13526,16 @@ export default function Dashboard() {
                             const zc = h.zone === 'Extreme Fear' ? '#ef4444' : '#16a34a';
                             return (
                               <tr key={h.date} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                                <td style={{ padding: '10px 12px', fontWeight: 600 }}>{h.date}</td>
-                                <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, color: zc }}>{h.score}</td>
-                                <td style={{ padding: '10px 12px', textAlign: 'center' }}><span style={{ padding: '2px 8px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: `${zc}18`, color: zc }}>{h.zone}</span></td>
-                                <td style={{ padding: '10px 12px', fontSize: 12, color: TEXT2 }}>{h.event}</td>
-                                <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 700, color: h.fwd.startsWith('-') ? RED : GREEN }}>{h.fwd}</td>
+                                <td style={{ padding: isMobile ? '8px 8px' : '10px 12px', fontWeight: 600 }}>{h.date}</td>
+                                <td style={{ padding: isMobile ? '8px 8px' : '10px 12px', textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, color: zc }}>{h.score}</td>
+                                {!isMobile && <td style={{ padding: '10px 12px', textAlign: 'center' }}><span style={{ padding: '2px 8px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: `${zc}18`, color: zc }}>{h.zone}</span></td>}
+                                {!isMobile && <td style={{ padding: '10px 12px', fontSize: 12, color: TEXT2 }}>{h.event}</td>}
+                                <td style={{ padding: isMobile ? '8px 8px' : '10px 12px', fontFamily: 'monospace', fontWeight: 700, color: h.fwd.startsWith('-') ? RED : GREEN }}>{h.fwd}</td>
                               </tr>
                             );
                           })}
                         </tbody>
                       </table>
-                      </div>
                     </div>
 
                     {/* Key concepts */}
@@ -14568,10 +14563,9 @@ export default function Dashboard() {
                           </thead>
                           <tbody>
                             {withEV.map((c, idx) => {
-                              const colors = [BLUE, YELLOW, EMERALD, '#f472b6'];
                               return (
                                 <tr key={c.name} style={{ borderBottom: `1px solid ${BORDER_C}` }}>
-                                  <td style={{ padding: '10px 12px', fontWeight: 700, color: colors[idx] }}>{c.name}</td>
+                                  <td style={{ padding: '10px 12px', fontWeight: 700, color: TEXT }}>{c.name}</td>
                                   <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace' }}>${(c.mktcap/1000).toFixed(1)}B</td>
                                   <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: c.debt > 0 ? RED : TEXT3 }}>{c.debt > 0 ? `$${(c.debt/1000).toFixed(1)}B` : '—'}</td>
                                   <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', color: GREEN }}>${(c.cash/1000).toFixed(1)}B</td>
@@ -14590,11 +14584,10 @@ export default function Dashboard() {
                       <div style={CARD}>
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>EV Bridge: How EV Is Built</div>
                         {withEV.map((c, idx) => {
-                          const colors = [BLUE, YELLOW, EMERALD, '#f472b6'];
                           return (
                             <div key={c.name} style={{ marginBottom: 16 }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
-                                <span style={{ fontWeight: 700, color: colors[idx] }}>{c.name}</span>
+                                <span style={{ fontWeight: 700, color: TEXT }}>{c.name}</span>
                                 <span style={{ fontFamily: 'monospace', color: EMERALD, fontWeight: 700 }}>EV ${(c.ev/1000).toFixed(1)}B</span>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
@@ -14610,11 +14603,10 @@ export default function Dashboard() {
                         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>EV/EBITDA vs. P/E</div>
                         <div style={{ fontSize: 12, color: TEXT2, marginBottom: 16 }}>Same EBITDA, same earnings, but P/E varies wildly due to capital structure</div>
                         {withEV.map((c, idx) => {
-                          const colors = [BLUE, YELLOW, EMERALD, '#f472b6'];
                           return (
                             <div key={c.name} style={{ marginBottom: 14 }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
-                                <span style={{ fontWeight: 600, color: colors[idx] }}>{c.name}</span>
+                                <span style={{ fontWeight: 600, color: TEXT }}>{c.name}</span>
                                 <span style={{ fontSize: 11, color: TEXT3 }}>EV/EBITDA {c.evEbitda.toFixed(1)}× · P/E {c.pe.toFixed(1)}×</span>
                               </div>
                               <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
@@ -14622,7 +14614,7 @@ export default function Dashboard() {
                                   <div style={{ height: '100%', width: `${Math.min(c.evEbitda / 15 * 100, 100)}%`, background: EMERALD, borderRadius: 4 }} />
                                 </div>
                                 <div style={{ flex: 1, height: 8, background: MUTED, borderRadius: 4, overflow: 'hidden' }}>
-                                  <div style={{ height: '100%', width: `${Math.min(c.pe / 35 * 100, 100)}%`, background: colors[idx], borderRadius: 4 }} />
+                                  <div style={{ height: '100%', width: `${Math.min(c.pe / 35 * 100, 100)}%`, background: TEXT3, borderRadius: 4 }} />
                                 </div>
                               </div>
                             </div>
