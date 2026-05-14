@@ -3654,7 +3654,19 @@ export default function Dashboard() {
             )}
             {!viewAs && !isAdmin && (
               <button
-                onClick={() => { switchEduMode(false); setPanel('overview'); setTourStep(0); setShowTour(true); }}
+                onClick={() => {
+                  const steps = effectiveProfessor ? PROFESSOR_TOUR_STEPS : effectiveStudent ? STUDENT_TOUR_STEPS : FINANCE_TOUR_STEPS;
+                  // Find first step matching current panel + tab + subtab (progressively less specific)
+                  let idx = steps.findIndex(s =>
+                    s.panel === panel &&
+                    (!s.tab || s.tab === cashFlowTab) &&
+                    (!s.budgetTab || s.budgetTab === budgetTab) &&
+                    (!s.insightsTab || s.insightsTab === insightsTab)
+                  );
+                  if (idx < 0) idx = steps.findIndex(s => s.panel === panel && (!s.tab || s.tab === cashFlowTab));
+                  if (idx < 0) idx = steps.findIndex(s => s.panel === panel);
+                  openTourAt(idx >= 0 ? idx : 0);
+                }}
                 style={{ width: '100%', padding: '8px 0', background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.25)', borderRadius: 8, color: BLUE, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
                 ✦ Take a Tour
