@@ -1401,68 +1401,79 @@ function YieldCurveChart({ yieldCurve }) {
   );
 }
 
+const _OV  = ['[data-tour="nav-overview"]'];
+const _CF_B = ['[data-tour="nav-cashflow"]', '[data-tour="cashflow-tab-banking"]'];
+const _CF_U = ['[data-tour="nav-cashflow"]', '[data-tour="cashflow-tab-budgeting"]'];
+const _CF_T = ['[data-tour="nav-cashflow"]', '[data-tour="cashflow-tab-taxes"]'];
+const _INV = ['[data-tour="nav-investments"]'];
+const _IN_M = ['[data-tour="nav-insights"]', '[data-tour="insights-tab-markets"]'];
+const _IN_N = ['[data-tour="nav-insights"]', '[data-tour="insights-tab-news"]'];
+const _IN_S = ['[data-tour="nav-insights"]', '[data-tour="insights-tab-signals"]'];
+const _IN_O = ['[data-tour="nav-insights"]', '[data-tour="insights-tab-options"]'];
+const _LRN  = ['[data-tour="nav-learn"]'];
+
 const FINANCE_TOUR_STEPS = [
   { sel: '[data-tour="brand"]',                    panel: 'overview',                              side: 'right',
     title: 'Welcome to PeakLedger',
     body: 'PeakLedger keeps your full financial picture in one place: accounts, spending, investments, and market data. You\'re currently viewing demo data. Upgrade to Premium to connect your real accounts and see your actual finances.' },
   { sel: '[data-tour="sidebar-nav"]',              panel: 'overview',                              side: 'right',
-    title: 'The Overview Tab',
+    title: 'Your Navigation',
     body: 'The sidebar is your navigation hub. Each section in Personal Finance has its own panel: Overview, Cash Flow, Investments, Market Insights, Learn, and Settings. Click any item to switch views. The Get Premium button connects your real accounts. Take a Tour restarts this guide from wherever you are.' },
-  { sel: '[data-tour="overview-cards"]',           panel: 'overview',                              side: 'bottom',
+  { sel: '[data-tour="overview-snapshot"]',         panel: 'overview',                              side: 'bottom',  extraSels: _OV,
     title: 'Your Financial Snapshot',
     body: 'The top row shows net worth, total cash, and portfolio value. Below that is your Monthly Savings Rate card, which tracks what percentage of your income you kept this month against the 20% target. These numbers update in real time once your accounts are connected.' },
-  { sel: '[data-tour="overview-networth-chart"]',  panel: 'overview',                              side: 'bottom',
+  { sel: '[data-tour="overview-networth-chart"]',  panel: 'overview',                              side: 'bottom',  extraSels: _OV,
     title: 'Net Worth History',
     body: 'This chart tracks your net worth month over month, showing assets minus liabilities over time. Watching the line trend upward consistently is one of the clearest signals that your finances are moving in the right direction.' },
-  { sel: '[data-tour="overview-baseline"]',        panel: 'overview',                              side: 'bottom',
+  { sel: '[data-tour="overview-baseline"]',        panel: 'overview',                              side: 'bottom',  extraSels: _OV,
     title: 'Cash Flow Baseline',
     body: 'PeakLedger pulls up to 13 months of transaction history to build a personal spending baseline, adjusted for seasonal patterns. The chart compares your actual spending each month against that baseline so you can see immediately when a month runs high or low.' },
-  { sel: '[data-tour="overview-txns"]',            panel: 'overview',                              side: 'top',
+  { sel: '[data-tour="overview-txns"]',            panel: 'overview',                              side: 'top',     extraSels: _OV,
     title: 'Recent Transactions',
     body: 'Every purchase and deposit flowing through linked accounts shows here with merchant name, category, and amount. Green means income, red means expense. This feed is the raw data behind your budget analysis and spending insights.' },
-  { sel: '[data-tour="overview-calendar"]',        panel: 'overview',                              side: 'top',
+  { sel: '[data-tour="overview-calendar"]',        panel: 'overview',                              side: 'top',     extraSels: _OV,
     title: 'Financial Calendar',
     body: 'The calendar shows all your upcoming bills and payment due dates pulled directly from your connected liability accounts, plus any custom reminders you add. Liability due dates repeat every month automatically so you never lose track of what is coming.' },
-  { sel: '[data-tour="banking-accounts"]',         panel: 'cashflow',   tab: 'banking',            side: 'bottom',
+  { sel: '[data-tour="banking-accounts"]',         panel: 'cashflow',   tab: 'banking',            side: 'bottom',  extraSels: _CF_B,
     title: 'Linked Accounts',
     body: 'The Banking tab shows all connected accounts grouped by institution, with live balances and account type. Each balance feeds directly into your net worth. Connect accounts using the Get Premium button in the sidebar.' },
-  { sel: '[data-tour="budgeting-tabs"]',           panel: 'cashflow',   tab: 'budgeting',          side: 'bottom', spotPadBottom: 2,
-    title: 'Budgeting Overview',
-    body: 'The Budgeting section has five tabs: Income (your earning history), Expenses (spending by category), Trends (month-over-month patterns), Subscriptions (recurring charges), and Goals (savings targets linked to real accounts). Each one gives you a different lens on the same transactions.' },
-  { sel: '[data-tour="budget-income"]',            panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'income',   side: 'bottom',
-    title: 'Income Tracker',
-    body: 'The Income tab shows your take-home pay broken down by source over the last six months, including wages, freelance, financial aid, and investment income. Tracking income trends alongside spending is the foundation of accurate savings goal planning.' },
-  { sel: '[data-tour="debt-payoff"]',              panel: 'cashflow',   tab: 'banking',            side: 'top',
+  { sel: '[data-tour="debt-payoff"]',              panel: 'cashflow',   tab: 'banking',            side: 'top',     extraSels: _CF_B,
     title: 'Debt Payoff Planner',
     body: 'The Debt Payoff Planner compares the avalanche method (highest interest first) against the snowball method (smallest balance first) using your actual debts. Enter an extra monthly payment and see exactly how many months you save and how much interest you avoid under each strategy.' },
-  { sel: '[data-tour="budget-expenses"]',          panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'spending', side: 'bottom',
+  { sel: '[data-tour="budgeting-tabs"]',           panel: 'cashflow',   tab: 'budgeting',          side: 'bottom',  extraSels: _CF_U, spotPadBottom: -6,
+    title: 'Budgeting Overview',
+    body: 'The Budgeting section has five tabs: Income (your earning history), Expenses (spending by category), Trends (month-over-month patterns), Subscriptions (recurring charges), and Goals (savings targets linked to real accounts). Each one gives you a different lens on the same transactions.' },
+  { sel: '[data-tour="budget-income"]',            panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'income',   side: 'bottom',  extraSels: _CF_U,
+    title: 'Income Tracker',
+    body: 'The Income tab shows your take-home pay broken down by source over the last six months, including wages, freelance, financial aid, and investment income. Tracking income trends alongside spending is the foundation of accurate savings goal planning.' },
+  { sel: '[data-tour="budget-expenses"]',          panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'spending', side: 'bottom',  extraSels: _CF_U,
     title: 'Expenses and Spending',
     body: 'The Expenses tab shows your spending history month by month. The Summary view sorts every transaction into three buckets: Fixed (rent, utilities, loan payments), Flex (food, shopping, entertainment), and Savings (investment contributions). Set spending limits per category to get an alert when you go over.' },
-  { sel: '[data-tour="taxes-brackets"]',           panel: 'cashflow',   tab: 'taxes',               side: 'bottom',
+  { sel: '[data-tour="taxes-inputs"]',             panel: 'cashflow',   tab: 'taxes',               side: 'bottom',  extraSels: _CF_T,
     title: 'Tax Estimator',
     body: 'Enter your gross income, 401(k) contributions, and whether you itemize or take the standard deduction. PeakLedger breaks your federal liability across every bracket and shows your effective and marginal rates. Good for modeling a raise, a bonus, or a side income scenario.' },
-  { sel: '[data-tour="goals-cards"]',              panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'goals',    side: 'bottom',
+  { sel: '[data-tour="goals-cards"]',              panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'goals',    side: 'bottom',  extraSels: _CF_U,
     title: 'Savings Goals',
     body: 'Link any savings or investment account to a named goal, set a target dollar amount, and PeakLedger tracks your progress in real time. The progress bar turns green when you hit the target. Goals work with any account type, from emergency funds to down payments.' },
-  { sel: '[data-tour="investments-holdings"]',     panel: 'investments',                             side: 'bottom',
+  { sel: '[data-tour="investments-holdings"]',     panel: 'investments',                             side: 'bottom',  extraSels: _INV,
     title: 'Investments',
     body: 'The portfolio view shows every holding with its current price, quantity, total value, and unrealized gain or loss. The allocation chart breaks your portfolio down by sector so you can spot concentration risk at a glance. The Portfolio Simulator lets you build and test hypothetical allocations before putting real money to work.' },
-  { sel: '[data-tour="markets-sp500"]',            panel: 'insights',   insightsTab: 'markets',     side: 'bottom',
+  { sel: '[data-tour="markets-sp500"]',            panel: 'insights',   insightsTab: 'markets',     side: 'bottom',  extraSels: _IN_M,
     title: 'Market Insights: Markets',
     body: 'The live S&P 500 chart updates daily with adjustable time periods. Below it you will find the Fear and Greed Index (a composite of seven sentiment indicators), the yield curve, and live index levels for the Dow, Nasdaq, and Russell 2000. All of this is available to every user.' },
-  { sel: '[data-tour="news-feed-header"]',         panel: 'insights',   insightsTab: 'news',        side: 'bottom',
+  { sel: '[data-tour="news-feed-header"]',         panel: 'insights',   insightsTab: 'news',        side: 'bottom',  extraSels: _IN_N,
     title: 'Market Insights: News',
     body: 'The News tab pulls live financial headlines and lets you filter by any ticker symbol. Type a symbol like AAPL or VTI and hit Filter to narrow to articles mentioning that stock. This is the fastest way to catch earnings releases, analyst calls, and sector headlines as they break.' },
-  { sel: '[data-tour="signal-engine-header"]',     panel: 'insights',   insightsTab: 'signals',     side: 'bottom',
+  { sel: '[data-tour="signal-engine-header"]',     panel: 'insights',   insightsTab: 'signals',     side: 'bottom',  extraSels: _IN_S, spotPadBottom: 0,
     title: 'Market Insights: Signal Engine',
     body: 'Signal Engine scores every article using four factors: magnitude (how big the event is), probability (how likely it is to move the stock), immediacy (time sensitivity), and moat (how defensible the company is). The heatmap shows which tickers have the strongest signals right now. Click any ticker to see sector contagion and the articles driving the score.' },
-  { sel: '[data-tour="options-header"]',           panel: 'insights',   insightsTab: 'options',     side: 'bottom',
+  { sel: '[data-tour="options-header"]',           panel: 'insights',   insightsTab: 'options',     side: 'bottom',  extraSels: _IN_O, spotPadBottom: 2,
     title: 'Market Insights: Options',
     body: 'The Options tab shows a live options chain for any ticker you enter. Call and put contracts are listed by strike and expiration with bid, ask, volume, open interest, and implied volatility. Use this alongside the Analyst track to practice reading real options flow before making any actual trades.' },
-  { sel: '[data-tour="learn-tab-essentials"]',     panel: 'learn',      learnCategory: 'essentials', side: 'bottom',
+  { sel: '[data-tour="learn-tab-essentials"]',     panel: 'learn',      learnCategory: 'essentials', side: 'bottom', extraSels: _LRN,
     title: 'Learn: The Essentials',
     body: 'The Essentials track covers the full spectrum of personal finance: net worth, the 50/30/20 rule, emergency funds, credit scores, debt payoff strategies, tax planning, compound interest, dollar-cost averaging, asset allocation, index funds, and retirement accounts. Each card has a formula, a plain-English explanation, and a worked example. The Emergency Fund and Debt Payoff cards include interactive calculators you can fill in with your own numbers.' },
-  { sel: '[data-tour="learn-tab-analyst"]',        panel: 'learn',      learnCategory: 'analyst',   side: 'bottom',
+  { sel: '[data-tour="learn-tab-analyst"]',        panel: 'learn',      learnCategory: 'analyst',   side: 'bottom',  extraSels: _LRN,
     title: 'Learn: The Analyst Track',
     body: 'The Analyst track covers advanced financial concepts: DCF valuation, LBO modeling, reading 10-Ks, bond pricing and duration, credit risk analysis, and options pricing with Black-Scholes. The yield curve chart in this section uses live daily data. Each concept includes an interactive dataset or model you can adjust. The Analyst track is available with Premium.' },
   { sel: '[data-tour="nav-settings"]',             panel: 'settings',                                side: 'right',
@@ -1477,61 +1488,61 @@ const STUDENT_TOUR_STEPS = [
   { sel: '[data-tour="sidebar-nav"]',              panel: 'overview',                              side: 'right',
     title: 'The Overview Tab',
     body: 'The sidebar is your navigation hub. Personal Finance covers accounts, spending, investments, and market data. Education is where your course modules, datasets, and assignments live. The Get Premium button at the bottom connects your real accounts at the discounted student rate.' },
-  { sel: '[data-tour="overview-cards"]',           panel: 'overview',                              side: 'bottom',
+  { sel: '[data-tour="overview-snapshot"]',        panel: 'overview',                              side: 'bottom',  extraSels: _OV,
     title: 'Your Financial Snapshot',
     body: 'The top row shows net worth, total cash, and portfolio value. Below that is your Monthly Savings Rate, which tracks how much of your income you kept this month against the 20% target. Net worth (assets minus liabilities) is the foundational number in personal finance and the one most tied to long-term wealth.' },
-  { sel: '[data-tour="overview-networth-chart"]',  panel: 'overview',                              side: 'bottom',
+  { sel: '[data-tour="overview-networth-chart"]',  panel: 'overview',                              side: 'bottom',  extraSels: _OV,
     title: 'Net Worth History',
     body: 'This chart tracks your net worth month over month. Even small positive trends compound significantly over time. If it is trending up, your financial habits are working. If it is flat or declining, something in your cash flow needs attention.' },
-  { sel: '[data-tour="overview-baseline"]',        panel: 'overview',                              side: 'bottom',
+  { sel: '[data-tour="overview-baseline"]',        panel: 'overview',                              side: 'bottom',  extraSels: _OV,
     title: 'Cash Flow Baseline',
     body: 'PeakLedger analyzes up to 13 months of transaction history to build a personal spending baseline adjusted for seasonal patterns. The chart shows whether each month ran above or below your norm, which is useful for spotting months that had irregular expenses like textbooks or travel.' },
-  { sel: '[data-tour="overview-txns"]',            panel: 'overview',                              side: 'top',
+  { sel: '[data-tour="overview-txns"]',            panel: 'overview',                              side: 'top',     extraSels: _OV,
     title: 'Recent Transactions',
     body: 'Every transaction flowing through linked accounts appears here with merchant, category, and amount. Green means income, red means expense. This is the raw data that powers all your budget analysis and course assignments.' },
-  { sel: '[data-tour="overview-calendar"]',        panel: 'overview',                              side: 'top',
+  { sel: '[data-tour="overview-calendar"]',        panel: 'overview',                              side: 'top',     extraSels: _OV,
     title: 'Financial Calendar',
     body: 'The calendar shows upcoming bills and payment due dates pulled from your connected liability accounts, along with any reminders you add manually. Due dates repeat every month automatically. It is a useful way to plan around cash-tight weeks before rent or loan payments hit.' },
-  { sel: '[data-tour="banking-accounts"]',         panel: 'cashflow',   tab: 'banking',            side: 'bottom',
+  { sel: '[data-tour="banking-accounts"]',         panel: 'cashflow',   tab: 'banking',            side: 'bottom',  extraSels: _CF_B,
     title: 'Linked Accounts',
     body: 'The Banking tab shows every connected account with its institution, type, and live balance. Balances roll into your net worth automatically. Connect your real accounts using the Get Premium button in the sidebar.' },
-  { sel: '[data-tour="budgeting-tabs"]',           panel: 'cashflow',   tab: 'budgeting',          side: 'bottom', spotPadBottom: 2,
-    title: 'Budgeting Overview',
-    body: 'The Budgeting section has five tabs: Income (your earning history), Expenses (spending by category), Trends (month-over-month patterns), Subscriptions (recurring charges), and Goals (savings targets). These map directly to the budgeting unit in your course.' },
-  { sel: '[data-tour="budget-income"]',            panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'income',   side: 'bottom',
-    title: 'Income Tracker',
-    body: 'The Income tab shows your earnings broken down by source over the last six months: wages, financial aid, freelance, and interest. Tracking income alongside expenses is how you calculate your real savings rate and set realistic goals.' },
-  { sel: '[data-tour="debt-payoff"]',              panel: 'cashflow',   tab: 'banking',             side: 'top',
+  { sel: '[data-tour="debt-payoff"]',              panel: 'cashflow',   tab: 'banking',            side: 'top',     extraSels: _CF_B,
     title: 'Debt Payoff Planner',
     body: 'The Debt Payoff Planner compares the avalanche method (highest interest first) against the snowball method (smallest balance first) using your real debts. Enter an extra monthly payment and see exactly how many months you shave off and how much interest you save under each approach.' },
-  { sel: '[data-tour="budget-expenses"]',          panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'spending', side: 'bottom',
+  { sel: '[data-tour="budgeting-tabs"]',           panel: 'cashflow',   tab: 'budgeting',          side: 'bottom',  extraSels: _CF_U, spotPadBottom: -6,
+    title: 'Budgeting Overview',
+    body: 'The Budgeting section has five tabs: Income (your earning history), Expenses (spending by category), Trends (month-over-month patterns), Subscriptions (recurring charges), and Goals (savings targets). These map directly to the budgeting unit in your course.' },
+  { sel: '[data-tour="budget-income"]',            panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'income',   side: 'bottom',  extraSels: _CF_U,
+    title: 'Income Tracker',
+    body: 'The Income tab shows your earnings broken down by source over the last six months: wages, financial aid, freelance, and interest. Tracking income alongside expenses is how you calculate your real savings rate and set realistic goals.' },
+  { sel: '[data-tour="budget-expenses"]',          panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'spending', side: 'bottom',  extraSels: _CF_U,
     title: 'Expenses and Spending',
     body: 'The Expenses tab breaks your spending down month by month. The Summary view groups every transaction into Fixed (rent, utilities, loan payments), Flex (food, shopping, entertainment), and Savings (investment contributions). You can set a budget limit per category and get an alert when you go over.' },
-  { sel: '[data-tour="taxes-brackets"]',           panel: 'cashflow',   tab: 'taxes',               side: 'bottom',
+  { sel: '[data-tour="taxes-inputs"]',             panel: 'cashflow',   tab: 'taxes',               side: 'bottom',  extraSels: _CF_T,
     title: 'Tax Estimator',
     body: 'Enter your gross income, 401(k) contributions, and deduction type. PeakLedger shows your federal tax broken down bracket by bracket with your effective and marginal rates. Try adjusting income to model a part-time job, a raise, or financial aid taxability.' },
   { sel: '[data-tour="scholarship-header"]',       panel: 'cashflow',   tab: 'scholarship',         side: 'bottom',
     title: 'Scholarship Health',
     body: 'The Scholarship tab tracks HOPE and Zell Miller eligibility in real time. Enter your current GPA, credit hours, and this semester\'s courses with expected grades. PeakLedger projects your HOPE GPA, flags whether your award is safe or at risk, and shows you the minimum grade needed in each class to stay eligible.' },
-  { sel: '[data-tour="investments-holdings"]',     panel: 'investments',                             side: 'bottom',
+  { sel: '[data-tour="investments-holdings"]',     panel: 'investments',                             side: 'bottom',  extraSels: _INV,
     title: 'Investments',
     body: 'The portfolio view shows every holding with its current price, quantity, total value, and unrealized gain or loss. The sector allocation chart helps you spot concentration risk. The Portfolio Simulator lets you build hypothetical allocations and stress-test them, which is directly useful for the investing unit in your course.' },
-  { sel: '[data-tour="markets-sp500"]',            panel: 'insights',   insightsTab: 'markets',     side: 'bottom',
+  { sel: '[data-tour="markets-sp500"]',            panel: 'insights',   insightsTab: 'markets',     side: 'bottom',  extraSels: _IN_M,
     title: 'Market Insights: Markets',
     body: 'The live S&P 500 chart updates daily with adjustable time periods. Below it you will find the Fear and Greed Index (a composite of seven market sentiment indicators), the yield curve, and live index levels for the Dow, Nasdaq, and Russell 2000. All of this is available to every user.' },
-  { sel: '[data-tour="news-feed-header"]',         panel: 'insights',   insightsTab: 'news',        side: 'bottom',
+  { sel: '[data-tour="news-feed-header"]',         panel: 'insights',   insightsTab: 'news',        side: 'bottom',  extraSels: _IN_N,
     title: 'Market Insights: News',
     body: 'The News tab pulls live financial headlines and lets you filter by any ticker symbol. Type a symbol like AAPL or VTI and hit Filter to narrow to articles mentioning that stock. These are the same news sources referenced in class market discussions.' },
-  { sel: '[data-tour="signal-engine-header"]',     panel: 'insights',   insightsTab: 'signals',     side: 'bottom',
+  { sel: '[data-tour="signal-engine-header"]',     panel: 'insights',   insightsTab: 'signals',     side: 'bottom',  extraSels: _IN_S, spotPadBottom: 0,
     title: 'Market Insights: Signal Engine',
     body: 'Signal Engine scores every article using four factors: magnitude (how big the event is), probability (how likely it is to move the stock), immediacy (time sensitivity), and moat (how defensible the company is). The heatmap shows which tickers have the strongest signals right now. Click any ticker to see sector contagion.' },
-  { sel: '[data-tour="options-header"]',           panel: 'insights',   insightsTab: 'options',     side: 'bottom',
+  { sel: '[data-tour="options-header"]',           panel: 'insights',   insightsTab: 'options',     side: 'bottom',  extraSels: _IN_O, spotPadBottom: 2,
     title: 'Market Insights: Options',
     body: 'The Options tab shows a live options chain for any ticker you enter. Call and put contracts are listed by strike and expiration with bid, ask, volume, open interest, and implied volatility. Use this alongside the Analyst track to practice reading options flow the way institutional traders do.' },
-  { sel: '[data-tour="learn-tab-essentials"]',     panel: 'learn',      learnCategory: 'essentials', side: 'bottom',
+  { sel: '[data-tour="learn-tab-essentials"]',     panel: 'learn',      learnCategory: 'essentials', side: 'bottom', extraSels: _LRN,
     title: 'Learn: The Essentials',
     body: 'The Essentials track covers personal finance fundamentals structured to mirror your course syllabus: net worth, the 50/30/20 rule, emergency funds, credit scores, debt payoff, taxes, compound interest, dollar-cost averaging, asset allocation, and retirement accounts. Each card has a formula, explanation, and worked example you can interact with. The Emergency Fund and Debt Payoff calculators let you plug in your own numbers.' },
-  { sel: '[data-tour="learn-tab-analyst"]',        panel: 'learn',      learnCategory: 'analyst',   side: 'bottom',
+  { sel: '[data-tour="learn-tab-analyst"]',        panel: 'learn',      learnCategory: 'analyst',   side: 'bottom',  extraSels: _LRN,
     title: 'Learn: The Analyst Track',
     body: 'The Analyst track covers advanced material: DCF valuation, LBO modeling, reading 10-Ks, bond pricing and duration, credit risk, and options pricing. The live yield curve chart in this section uses real daily data. Each concept has an interactive dataset or calculator built in. The Analyst track requires Premium.' },
   { sel: '[data-tour="nav-settings"]',             panel: 'settings',                                side: 'right',
@@ -1546,61 +1557,61 @@ const PROFESSOR_TOUR_STEPS = [
   { sel: '[data-tour="sidebar-nav"]',              panel: 'overview',                              side: 'right',
     title: 'The Overview Tab',
     body: 'The sidebar is the student\'s navigation hub. Personal Finance covers accounts, spending, investments, and market data. Education is where course modules, datasets, and assignments live. The Get Premium button connects real accounts at the student rate. In demo mode every section is pre-populated with realistic synthetic data so students can complete all work without linking personal accounts.' },
-  { sel: '[data-tour="overview-cards"]',           panel: 'overview',                              side: 'bottom',
+  { sel: '[data-tour="overview-snapshot"]',        panel: 'overview',                              side: 'bottom',  extraSels: _OV,
     title: 'Financial Snapshot',
     body: 'The top row shows net worth, total cash, and portfolio value. Below that is the Monthly Savings Rate card, which tracks what percentage of income was kept this month against a 20% target. Students with linked accounts see their real numbers; demo mode shows a realistic sample.' },
-  { sel: '[data-tour="overview-networth-chart"]',  panel: 'overview',                              side: 'bottom',
+  { sel: '[data-tour="overview-networth-chart"]',  panel: 'overview',                              side: 'bottom',  extraSels: _OV,
     title: 'Net Worth History',
     body: 'This chart tracks net worth month over month, plotting assets minus liabilities over time. It makes the abstract concept of balance sheet growth concrete and observable. Students with linked accounts see their real trajectory; demo mode shows a realistic sample.' },
-  { sel: '[data-tour="overview-baseline"]',        panel: 'overview',                              side: 'bottom',
+  { sel: '[data-tour="overview-baseline"]',        panel: 'overview',                              side: 'bottom',  extraSels: _OV,
     title: 'Cash Flow Baseline',
     body: 'PeakLedger analyzes up to 13 months of transaction history to build a personal spending baseline adjusted for seasonality. The chart compares actual spending each month against that baseline, which gives students a quantitative framework for identifying irregular expense months.' },
-  { sel: '[data-tour="overview-txns"]',            panel: 'overview',                              side: 'top',
+  { sel: '[data-tour="overview-txns"]',            panel: 'overview',                              side: 'top',     extraSels: _OV,
     title: 'Transaction Feed',
     body: 'Every transaction shows up here with merchant name, category, and amount. This is the raw data behind all budget and spending analysis. Real accounts and demo data both work identically, so students who opt not to connect personal accounts can still complete all transaction-based work.' },
-  { sel: '[data-tour="overview-calendar"]',        panel: 'overview',                              side: 'top',
+  { sel: '[data-tour="overview-calendar"]',        panel: 'overview',                              side: 'top',     extraSels: _OV,
     title: 'Financial Calendar',
     body: 'The calendar pulls payment due dates from connected liability accounts and surfaces them as recurring monthly events, alongside any custom reminders. It reinforces cash flow timing concepts and helps students see the difference between when income arrives and when obligations are due.' },
-  { sel: '[data-tour="banking-accounts"]',         panel: 'cashflow',   tab: 'banking',            side: 'bottom',
+  { sel: '[data-tour="banking-accounts"]',         panel: 'cashflow',   tab: 'banking',            side: 'bottom',  extraSels: _CF_B,
     title: 'Account Overview',
     body: 'The Banking tab shows every connected account with its institution, type, and live balance. Balances roll into the net worth calculation automatically, making balance sheet construction concrete. Students connect their real accounts using Get Premium in the sidebar at a discounted student rate.' },
-  { sel: '[data-tour="budgeting-tabs"]',           panel: 'cashflow',   tab: 'budgeting',          side: 'bottom', spotPadBottom: 2,
-    title: 'Budgeting Overview',
-    body: 'The Budgeting section has five tabs: Income, Expenses, Trends, Subscriptions, and Goals. Each provides a distinct analytical lens on the same transaction data and maps to a different aspect of the budgeting unit in your course.' },
-  { sel: '[data-tour="budget-income"]',            panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'income',   side: 'bottom',
-    title: 'Income Tracker',
-    body: 'The Income tab shows the last six months of earnings broken down by source: wages, financial aid, freelance, and interest income. Tracking income by source over time is foundational for savings rate calculations and goal-setting exercises.' },
-  { sel: '[data-tour="debt-payoff"]',              panel: 'cashflow',   tab: 'banking',             side: 'top',
+  { sel: '[data-tour="debt-payoff"]',              panel: 'cashflow',   tab: 'banking',            side: 'top',     extraSels: _CF_B,
     title: 'Debt Payoff Planner',
     body: 'The Debt Payoff Planner compares the avalanche and snowball methods side by side using a student\'s actual debts. Students enter an extra monthly payment and see the exact month they become debt-free and how much interest they save under each strategy. Covers the debt payoff unit directly.' },
-  { sel: '[data-tour="budget-expenses"]',          panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'spending', side: 'bottom',
+  { sel: '[data-tour="budgeting-tabs"]',           panel: 'cashflow',   tab: 'budgeting',          side: 'bottom',  extraSels: _CF_U, spotPadBottom: -6,
+    title: 'Budgeting Overview',
+    body: 'The Budgeting section has five tabs: Income, Expenses, Trends, Subscriptions, and Goals. Each provides a distinct analytical lens on the same transaction data and maps to a different aspect of the budgeting unit in your course.' },
+  { sel: '[data-tour="budget-income"]',            panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'income',   side: 'bottom',  extraSels: _CF_U,
+    title: 'Income Tracker',
+    body: 'The Income tab shows the last six months of earnings broken down by source: wages, financial aid, freelance, and interest income. Tracking income by source over time is foundational for savings rate calculations and goal-setting exercises.' },
+  { sel: '[data-tour="budget-expenses"]',          panel: 'cashflow',   tab: 'budgeting',  budgetTab: 'spending', side: 'bottom',  extraSels: _CF_U,
     title: 'Expenses and Spending',
     body: 'The Expenses tab shows spending month by month with a 6-month bar chart. The Summary view categorizes every transaction into Fixed (rent, utilities, loan payments), Flex (food, shopping, entertainment), and Savings (investment contributions). Students can set category limits that trigger budget alerts. This is the foundation of most budget-focused assignments.' },
-  { sel: '[data-tour="taxes-brackets"]',           panel: 'cashflow',   tab: 'taxes',               side: 'bottom',
+  { sel: '[data-tour="taxes-inputs"]',             panel: 'cashflow',   tab: 'taxes',               side: 'bottom',  extraSels: _CF_T,
     title: 'Tax Estimator',
     body: 'Students enter gross income, 401(k) contributions, and deduction type to see their federal tax broken down bracket by bracket. Effective rate, marginal rate, and total liability are all shown. Adjusting income in real time demonstrates progressive taxation and covers the tax planning unit directly.' },
   { sel: '[data-tour="scholarship-header"]',       panel: 'cashflow',   tab: 'scholarship',         side: 'bottom',
     title: 'Scholarship Health',
     body: 'The Scholarship tab tracks HOPE and Zell Miller eligibility in real time. Students enter their GPA, credit hours, and current-semester courses with expected grades. The sensitivity table shows how each grade change shifts scholarship status, which connects GPA decisions to real financial consequences.' },
-  { sel: '[data-tour="investments-holdings"]',     panel: 'investments',                             side: 'bottom',
+  { sel: '[data-tour="investments-holdings"]',     panel: 'investments',                             side: 'bottom',  extraSels: _INV,
     title: 'Investments',
     body: 'The portfolio view shows holdings with live prices, allocation by sector, and unrealized P&L. The sector allocation chart makes diversification concepts visual. The Portfolio Simulator lets students build hypothetical portfolios and review Sharpe ratios, diversification scores, and 10-year projections without any real brokerage account.' },
-  { sel: '[data-tour="markets-sp500"]',            panel: 'insights',   insightsTab: 'markets',     side: 'bottom',
+  { sel: '[data-tour="markets-sp500"]',            panel: 'insights',   insightsTab: 'markets',     side: 'bottom',  extraSels: _IN_M,
     title: 'Market Insights: Markets',
     body: 'The live S&P 500 chart updates daily with adjustable time periods. Below it are the Fear and Greed Index, the yield curve, and major index levels. All market data is available to every student with no upgrade required, so the entire class has identical access to the same live information.' },
-  { sel: '[data-tour="news-feed-header"]',         panel: 'insights',   insightsTab: 'news',        side: 'bottom',
+  { sel: '[data-tour="news-feed-header"]',         panel: 'insights',   insightsTab: 'news',        side: 'bottom',  extraSels: _IN_N,
     title: 'Market Insights: News',
     body: 'The News tab pulls live financial headlines and lets students filter by any ticker symbol. This is the same news feed used in class market discussions. Students can filter to a specific company to research earnings releases, analyst downgrades, or sector news before writing assignments.' },
-  { sel: '[data-tour="signal-engine-header"]',     panel: 'insights',   insightsTab: 'signals',     side: 'bottom',
+  { sel: '[data-tour="signal-engine-header"]',     panel: 'insights',   insightsTab: 'signals',     side: 'bottom',  extraSels: _IN_S, spotPadBottom: 0,
     title: 'Market Insights: Signal Engine',
     body: 'Signal Engine scores every article using four factors: magnitude (how big the event is), probability (how likely it is to move the stock), immediacy (time sensitivity), and moat (how defensible the company is). Students can use the heatmap to see which tickers have the strongest signals right now, then investigate the underlying articles.' },
-  { sel: '[data-tour="options-header"]',           panel: 'insights',   insightsTab: 'options',     side: 'bottom',
+  { sel: '[data-tour="options-header"]',           panel: 'insights',   insightsTab: 'options',     side: 'bottom',  extraSels: _IN_O, spotPadBottom: 2,
     title: 'Market Insights: Options',
     body: 'The Options tab shows a live options chain for any ticker. Call and put contracts are listed by strike and expiration with bid, ask, volume, open interest, and implied volatility. This is a direct complement to the options pricing concepts in the Analyst track.' },
-  { sel: '[data-tour="learn-tab-essentials"]',     panel: 'learn',      learnCategory: 'essentials', side: 'bottom',
+  { sel: '[data-tour="learn-tab-essentials"]',     panel: 'learn',      learnCategory: 'essentials', side: 'bottom', extraSels: _LRN,
     title: 'Learn: The Essentials',
     body: 'The Essentials track covers all personal finance fundamentals structured to mirror your syllabus: net worth, the 50/30/20 rule, emergency funds, credit scores, debt payoff, taxes, compound interest, dollar-cost averaging, asset allocation, index funds, and retirement accounts. Each card has a formula, plain-English explanation, a worked example, and interactive calculators students can use for assignments.' },
-  { sel: '[data-tour="learn-tab-analyst"]',        panel: 'learn',      learnCategory: 'analyst',   side: 'bottom',
+  { sel: '[data-tour="learn-tab-analyst"]',        panel: 'learn',      learnCategory: 'analyst',   side: 'bottom',  extraSels: _LRN,
     title: 'Learn: The Analyst Track',
     body: 'The Analyst track covers advanced financial theory: DCF valuation, LBO modeling, reading 10-Ks, bond pricing and duration, credit risk analysis, and options pricing with Black-Scholes. The live yield curve in this section uses real daily data. Interactive datasets let students model their own scenarios. The Analyst track requires Premium.' },
   { sel: '[data-tour="nav-settings"]',             panel: 'settings',                                side: 'right',
@@ -1636,9 +1647,15 @@ function Tour({ steps, step, onNext, onPrev, onClose, containerRef }) {
     return () => window.removeEventListener('scroll', measure, true);
   }, [step, steps, containerRef]);
 
-  const { title, body, side, spotPadBottom } = steps[step];
+  const { title, body, side, spotPadBottom, extraSels } = steps[step];
   const PAD = 8;
   const PAD_B = spotPadBottom !== undefined ? spotPadBottom : PAD;
+
+  // Secondary outline rects (nav button, subtab) — measured inline, no scroll needed
+  const extraRects = (extraSels || []).map(sel => {
+    const el = document.querySelector(sel);
+    return el ? el.getBoundingClientRect() : null;
+  }).filter(Boolean);
   const TW = 300;
   const TH = 280; // estimated tooltip height
   const GAP = 14;
@@ -1688,6 +1705,9 @@ function Tour({ steps, step, onNext, onPrev, onClose, containerRef }) {
   return (
     <>
       {spotStyle && <div style={spotStyle} />}
+      {extraRects.map((r, i) => (
+        <div key={i} style={{ position: 'fixed', top: r.top - 3, left: r.left - 3, width: r.width + 6, height: r.height + 6, borderRadius: 8, border: '2px solid rgba(77,163,255,0.65)', zIndex: 9999, pointerEvents: 'none', boxShadow: '0 0 8px rgba(77,163,255,0.3)' }} />
+      ))}
       <div style={tipStyle}>
         <div style={{ fontSize: 10, color: BLUE, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 8 }}>
           {step + 1} / {steps.length}
@@ -3566,7 +3586,8 @@ export default function Dashboard() {
             )}
           </button>
         </div>
-        <nav data-tour="sidebar-nav" style={{ flex: 1, paddingTop: 10, overflowY: 'auto' }}>
+        <nav style={{ flex: 1, paddingTop: 10, overflowY: 'auto' }}>
+        <div data-tour="sidebar-nav">
 
           {/* ── PERSONAL FINANCE SECTION ── */}
           {eduMode ? (
@@ -3678,6 +3699,7 @@ export default function Dashboard() {
               {hiddenPanels.size > 0 && <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(251,191,36,0.15)', color: YELLOW, padding: '2px 5px', borderRadius: 4 }}>{hiddenPanels.size} hidden</span>}
             </button>
           </div>
+        </div>{/* end sidebar-nav */}
         </nav>
         <div style={{ padding: '12px 16px 16px', borderTop: BORDER, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ marginTop: 0, padding: '10px 12px', background: DARK, borderRadius: 8, border: viewAs ? '1px solid rgba(251,191,36,0.4)' : BORDER }}>
@@ -4992,6 +5014,7 @@ export default function Dashboard() {
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <DragSection id="stats" panel="overview" order={_ovOrder} onReorder={_ovReorder} handleTop={30}>
+                <div data-tour="overview-snapshot">
                 <div data-tour="overview-cards" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : g3, gap: isMobile ? 10 : 16, marginBottom: 24, marginTop: 24 }}>
                   {[
                     { label: 'Net Worth',         value: fmt(netWorth),                   sub: 'Assets − Liabilities' },
@@ -5062,6 +5085,7 @@ export default function Dashboard() {
                   );
                 })()}
 
+                </div>{/* overview-snapshot */}
                 </DragSection>
                 <DragSection id="chart" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
                 <div data-tour="overview-networth-chart" style={{ ...CARD, marginBottom: 16 }}>
@@ -5502,6 +5526,7 @@ export default function Dashboard() {
                       if (!l) return null;
                       return (
                         <button key={v}
+                          data-tour={`cashflow-tab-${v}`}
                           draggable
                           onDragStart={e => e.dataTransfer.setData('text/plain', `cashflow-tabs|||${v}`)}
                           onDragOver={e => e.preventDefault()}
@@ -5945,7 +5970,7 @@ export default function Dashboard() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <div style={{ fontWeight: 700, fontSize: 15 }}>Debt Payoff Planner</div>
-                            <button onClick={() => openTourAt(10)} style={{ background: 'none', border: `1px solid ${BORDER_C}`, borderRadius: '50%', width: 16, height: 16, cursor: 'pointer', color: TEXT3, fontSize: 10, fontWeight: 700, lineHeight: 1, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} title="What is this?">?</button>
+                            <button onClick={() => openTourAt(8)} style={{ background: 'none', border: `1px solid ${BORDER_C}`, borderRadius: '50%', width: 16, height: 16, cursor: 'pointer', color: TEXT3, fontSize: 10, fontWeight: 700, lineHeight: 1, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} title="What is this?">?</button>
                           </div>
                           {isDemoData && <span style={{ fontSize: 11, color: BLUE, background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 6, padding: '3px 10px' }}>Demo</span>}
                         </div>
@@ -8042,6 +8067,7 @@ export default function Dashboard() {
                     if (!l) return null;
                     return (
                       <button key={v}
+                        data-tour={`insights-tab-${v}`}
                         draggable
                         onDragStart={e => e.dataTransfer.setData('text/plain', `insights-tabs|||${v}`)}
                         onDragOver={e => e.preventDefault()}
