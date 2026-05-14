@@ -4,6 +4,21 @@ const Groq = require('groq-sdk');
 const requireAuth = require('../middleware/requireAuth');
 const db = require('../db');
 
+const DAILY_LIMIT = 50;
+const usage = new Map(); // userId -> { count, day }
+
+function checkRateLimit(userId) {
+  const today = new Date().toISOString().slice(0, 10);
+  const entry = usage.get(userId);
+  if (!entry || entry.day !== today) {
+    usage.set(userId, { count: 1, day: today });
+    return true;
+  }
+  if (entry.count >= DAILY_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
 const SYSTEM_PROMPT = `You are a personal financial advisor assistant built into Ledger, a personal finance dashboard.
 
 CRITICAL RULES:
@@ -20,6 +35,7 @@ Write in plain conversational paragraphs like a knowledgeable friend, not a fina
 router.post('/', requireAuth, async (req, res) => {
   const user = db.prepare('SELECT tier FROM users WHERE id = ?').get(req.user.id);
   if (user?.tier !== 'premium') return res.status(403).json({ error: 'Premium required' });
+  if (!checkRateLimit(req.user.id)) return res.status(429).json({ error: 'Daily message limit reached. Try again tomorrow.' });
 
   const { message, history = [], context = {} } = req.body;
 
