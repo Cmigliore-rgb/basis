@@ -7,6 +7,7 @@ function getUserTokens(userId) {
 }
 
 const STALE_MS = 30 * 60 * 1000; // 30 minutes
+const syncInProgress = new Set();
 
 function isStale(userId) {
   const row = db.prepare('SELECT MIN(last_synced_at) as t FROM plaid_tokens WHERE user_id = ?').get(userId);
@@ -15,8 +16,12 @@ function isStale(userId) {
 }
 
 function bgSync(userId) {
+  if (syncInProgress.has(userId)) return;
+  syncInProgress.add(userId);
   const { syncAll } = require('./sync');
-  syncAll(userId).catch(e => console.warn('[bg-sync]', e.message));
+  syncAll(userId)
+    .catch(e => console.warn('[bg-sync]', e.message))
+    .finally(() => syncInProgress.delete(userId));
 }
 
 async function getAccounts(req) {
