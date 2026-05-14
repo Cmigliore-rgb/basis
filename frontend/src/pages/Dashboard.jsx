@@ -2714,6 +2714,10 @@ export default function Dashboard() {
   const [tickerChartCandles, setTickerChartCandles] = useState([]);
   const [tickerChartPeriod, setTickerChartPeriod] = useState('3mo');
   const [extendedTickerData, setExtendedTickerData] = useState({});
+  const [portfolioPerf, setPortfolioPerf]   = useState({ portfolio: [], sp500: [] });
+  const [sectorData, setSectorData]         = useState({});
+  const [perfPeriod, setPerfPeriod]         = useState('3mo');
+  const [perfLoading, setPerfLoading]       = useState(false);
   const [calendarEvents, setCalendarEvents] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_calendar') || '[]'); } catch { return []; } });
   const [calViewDate, setCalViewDate]       = useState(() => new Date());
   const [showEventForm, setShowEventForm]   = useState(false);
@@ -3227,12 +3231,43 @@ export default function Dashboard() {
   const activeMonthlySpend   = activeBudget.reduce((s, b) => s + b.total, 0);
   const activeTotalPortfolio = activeHoldings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
 
+  const fetchPortfolioAnalysis = useCallback(async (holdings, period) => {
+    const positions = holdings
+      .map(h => ({ sym: h.security?.ticker_symbol, qty: h.quantity }))
+      .filter(p => p.sym && p.qty > 0)
+      .slice(0, 20);
+    if (!positions.length) return;
+    setPerfLoading(true);
+    try {
+      const posStr = positions.map(p => `${p.sym}:${p.qty.toFixed(4)}`).join(',');
+      const symStr = positions.map(p => p.sym).join(',');
+      const [perfRes, sectRes] = await Promise.allSettled([
+        api.get('/market/portfolio-perf', { params: { positions: posStr, period } }),
+        api.get('/market/sector-alloc',   { params: { symbols: symStr } }),
+      ]);
+      if (perfRes.status === 'fulfilled') setPortfolioPerf(perfRes.value.data);
+      if (sectRes.status === 'fulfilled') {
+        const map = {};
+        (sectRes.value.data.sectors || []).forEach(s => { map[s.symbol] = s.sector; });
+        setSectorData(map);
+      }
+    } catch {}
+    finally { setPerfLoading(false); }
+  }, []);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (panel !== 'investments') return;
     const symbols = activeHoldings.map(h => h.security?.ticker_symbol).filter(Boolean);
     if (symbols.length) fetchExtendedData(symbols);
   }, [panel, activeHoldings, fetchExtendedData]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (panel === 'investments' && activeHoldings.length > 0) {
+      fetchPortfolioAnalysis(activeHoldings, perfPeriod);
+    }
+  }, [panel, activeHoldings, perfPeriod, fetchPortfolioAnalysis]);
 
   const exitSandbox = () => {
     setSandboxDataset(null);
@@ -5280,7 +5315,7 @@ export default function Dashboard() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
                       <button onClick={() => setSelectedBankAccount(null)} style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>← Back</button>
-                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>{acct?.name}</h1>
+                      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>{cleanAcctName(acct?.name, acct?.subtype, acct?.type, acct?.mask)}</h1>
                     </div>
                     {acct && (
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24 }}>
@@ -5617,17 +5652,6 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  {/* ── Credit Score ──────────────────────── */}
-                  <div className="lc" style={{ ...CARD, marginTop: 16 }}>
-                    <div style={{ fontWeight: 600, marginBottom: 12 }}>Credit Score</div>
-                    <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.65 }}>
-                      Credit scores aren't accessible through Plaid's API. Check your score for free through your credit card's app or website, or visit{' '}
-                      <a href="https://www.creditkarma.com" target="_blank" rel="noreferrer" style={{ color: BLUE, textDecoration: 'none' }}>Credit Karma</a>
-                      {' '}or{' '}
-                      <a href="https://www.annualcreditreport.com" target="_blank" rel="noreferrer" style={{ color: BLUE, textDecoration: 'none' }}>AnnualCreditReport.com</a>
-                      {' '}for a free report from all three bureaus. The credit score module in the Learn section uses sample data to demonstrate how FICO scoring works.
-                    </div>
-                  </div>
                 </div>
               );
             })()}
@@ -7396,6 +7420,165 @@ export default function Dashboard() {
                     </>
                   )}
                 </div>
+                {activeHoldings.length > 0 && (() => {
+                  const ETF_SECTOR = {
+                    SPY:'Broad Market', VOO:'Broad Market', VTI:'Broad Market', IVV:'Broad Market', SCHB:'Broad Market', ITOT:'Broad Market',
+                    QQQ:'Technology', VGT:'Technology', XLK:'Technology', TQQQ:'Technology',
+                    XLE:'Energy', XLF:'Financial Services', XLV:'Healthcare', XLI:'Industrials',
+                    XLC:'Communication Services', XLY:'Consumer Cyclical', XLP:'Consumer Defensive',
+                    XLB:'Basic Materials', XLRE:'Real Estate', XLU:'Utilities',
+                    GLD:'Commodities', SLV:'Commodities', GDX:'Commodities',
+                    TLT:'Bonds', BND:'Bonds', AGG:'Bonds', HYG:'Bonds', LQD:'Bonds', BNDX:'Bonds',
+                    VHT:'Healthcare', VFH:'Financial Services', VDE:'Energy', VNQ:'Real Estate',
+                    ARKK:'Technology', ARKG:'Healthcare', ARKW:'Technology', ARKF:'Technology',
+                    VEA:'International', VXUS:'International', EFA:'International', EEM:'Emerging Markets',
+                  };
+                  const SECTOR_COLORS = {
+                    'Technology':'#4da3ff', 'Healthcare':'#34d399', 'Financial Services':'#a78bfa',
+                    'Consumer Cyclical':'#fb923c', 'Consumer Defensive':'#22d3ee', 'Energy':'#f87171',
+                    'Industrials':'#94a3b8', 'Basic Materials':'#c8a97e', 'Real Estate':'#f472b6',
+                    'Communication Services':'#60a5fa', 'Utilities':'#facc15',
+                    'Broad Market':'#6ee7b7', 'Bonds':'#fbbf24', 'Commodities':'#d97706',
+                    'International':'#c084fc', 'Emerging Markets':'#e879f9',
+                    'ETF':'#6b7280', 'Fund':'#6b7280', 'Other':'#4b5563',
+                  };
+                  const sectorColor = s => SECTOR_COLORS[s] || '#4b5563';
+
+                  // Build sector groups from holdings
+                  const sectorGroups = {};
+                  activeHoldings.forEach(h => {
+                    const ticker = h.security?.ticker_symbol;
+                    if (!ticker) return;
+                    const sect = ETF_SECTOR[ticker] || sectorData[ticker] || 'Other';
+                    const val = (h.quantity || 0) * (h.institution_price || 0);
+                    sectorGroups[sect] = (sectorGroups[sect] || 0) + val;
+                  });
+                  const totalVal = Object.values(sectorGroups).reduce((s, v) => s + v, 0) || 1;
+                  const sectors = Object.entries(sectorGroups)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([name, val]) => ({ name, val, pct: (val / totalVal) * 100 }));
+
+                  // Performance chart data
+                  const pfData  = portfolioPerf.portfolio;
+                  const spData  = portfolioPerf.sp500;
+                  const hasPerf = pfData.length >= 2 && spData.length >= 2;
+                  const pfLast  = hasPerf ? pfData[pfData.length - 1].value : 100;
+                  const spLast  = hasPerf ? spData[spData.length - 1].value : 100;
+                  const pfChg   = pfLast - 100;
+                  const spChg   = spLast - 100;
+                  const alpha   = pfChg - spChg;
+
+                  // SVG dual-line chart renderer
+                  const PerfChart = () => {
+                    if (!hasPerf) return (
+                      <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT2, fontSize: 13 }}>
+                        {perfLoading ? 'Loading chart...' : 'Chart unavailable'}
+                      </div>
+                    );
+                    const W = 600, H = 160, PAD = { top: 12, right: 12, bottom: 28, left: 44 };
+                    const iW = W - PAD.left - PAD.right, iH = H - PAD.top - PAD.bottom;
+                    const allV = [...pfData.map(d => d.value), ...spData.map(d => d.value)];
+                    const minV = Math.min(...allV), maxV = Math.max(...allV);
+                    const range = maxV - minV || 1;
+                    const n = pfData.length;
+                    const toX = i => PAD.left + (i / (n - 1)) * iW;
+                    const toY = v => PAD.top + iH - ((v - minV) / range) * iH;
+                    const pfPts = pfData.map((d, i) => `${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' ');
+                    const spPts = spData.map((d, i) => `${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' ');
+                    const labelCount = isMobile ? 3 : 5;
+                    const labelIdxs = Array.from({ length: labelCount }, (_, i) => Math.round((i / (labelCount - 1)) * (n - 1)));
+                    const base100Y = toY(100);
+                    return (
+                      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+                        {base100Y >= PAD.top && base100Y <= H - PAD.bottom && (
+                          <line x1={PAD.left} y1={base100Y} x2={W - PAD.right} y2={base100Y} stroke={BORDER_C} strokeWidth={1} strokeDasharray="4,3" />
+                        )}
+                        <polyline fill="none" stroke="#6b7280" strokeWidth={1.5} points={spPts} />
+                        <polyline fill="none" stroke={BLUE} strokeWidth={2.5} points={pfPts} />
+                        {labelIdxs.map(i => (
+                          <text key={i} x={toX(i)} y={H - 4} textAnchor="middle" fill={TEXT3} fontSize={10} fontFamily="sans-serif">
+                            {new Date(pfData[i]?.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </text>
+                        ))}
+                        {[minV, (minV + maxV) / 2, maxV].map((v, i) => (
+                          <text key={i} x={PAD.left - 5} y={toY(v) + 4} textAnchor="end" fill={TEXT3} fontSize={10} fontFamily="sans-serif">
+                            {v.toFixed(0)}
+                          </text>
+                        ))}
+                      </svg>
+                    );
+                  };
+
+                  return (
+                    <>
+                      {/* Portfolio vs S&P 500 */}
+                      <div className="lc" style={{ ...CARD, marginTop: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+                          <div style={{ fontWeight: 600 }}>Portfolio vs S&P 500</div>
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            {[['1mo','1M'],['3mo','3M'],['6mo','6M'],['1y','1Y']].map(([k, l]) => (
+                              <button key={k} onClick={() => setPerfPeriod(k)} style={{ padding: '4px 11px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600, cursor: 'pointer', background: perfPeriod === k ? BLUE_BTN : MUTED, color: perfPeriod === k ? '#fff' : TEXT2 }}>{l}</button>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 20, marginBottom: 12, flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div style={{ width: 20, height: 2.5, background: BLUE, borderRadius: 1 }} />
+                            <span style={{ fontSize: 12, color: TEXT2 }}>Portfolio</span>
+                            {hasPerf && <span style={{ fontSize: 13, fontWeight: 700, color: pfChg >= 0 ? GREEN : RED, marginLeft: 2 }}>{pfChg >= 0 ? '+' : ''}{pfChg.toFixed(2)}%</span>}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div style={{ width: 20, height: 2, background: '#6b7280', borderRadius: 1 }} />
+                            <span style={{ fontSize: 12, color: TEXT2 }}>S&P 500</span>
+                            {hasPerf && <span style={{ fontSize: 13, fontWeight: 700, color: spChg >= 0 ? GREEN : RED, marginLeft: 2 }}>{spChg >= 0 ? '+' : ''}{spChg.toFixed(2)}%</span>}
+                          </div>
+                          {hasPerf && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 12, color: TEXT2 }}>vs Benchmark</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: alpha >= 0 ? GREEN : RED }}>{alpha >= 0 ? '+' : ''}{alpha.toFixed(2)}%</span>
+                            </div>
+                          )}
+                        </div>
+                        {PerfChart()}
+                      </div>
+
+                      {/* Sector Allocation */}
+                      <div className="lc" style={{ ...CARD, marginTop: 16 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 14 }}>Sector Allocation</div>
+                        {sectors.length === 0 ? (
+                          <div style={{ color: TEXT2, fontSize: 13, textAlign: 'center', padding: 24 }}>Loading sector data...</div>
+                        ) : (
+                          <>
+                            {/* Stacked bar */}
+                            <div style={{ display: 'flex', height: 10, borderRadius: 6, overflow: 'hidden', marginBottom: 18, gap: 1 }}>
+                              {sectors.map(s => (
+                                <div key={s.name} style={{ flex: s.pct, background: sectorColor(s.name), minWidth: 2 }} title={`${s.name}: ${s.pct.toFixed(1)}%`} />
+                              ))}
+                            </div>
+                            {/* Rows */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                              {sectors.map(s => (
+                                <div key={s.name} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 48px' : '160px 1fr 56px 80px', alignItems: 'center', gap: 8 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                                    <div style={{ width: 9, height: 9, borderRadius: '50%', background: sectorColor(s.name), flexShrink: 0 }} />
+                                    <span style={{ fontSize: 13, color: TEXT, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
+                                  </div>
+                                  {!isMobile && (
+                                    <div style={{ height: 5, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                      <div style={{ width: `${s.pct}%`, height: '100%', background: sectorColor(s.name), borderRadius: 3 }} />
+                                    </div>
+                                  )}
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: TEXT, textAlign: 'right' }}>{s.pct.toFixed(1)}%</span>
+                                  {!isMobile && <span style={{ fontSize: 12, color: TEXT2, textAlign: 'right', fontFamily: 'monospace' }}>{fmt(s.val)}</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
                 {canSeeAI && activeHoldings.length > 0 && (
                   <AIInsightCard
                     isDemoData={false}

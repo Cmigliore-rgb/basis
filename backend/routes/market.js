@@ -274,4 +274,116 @@ router.get('/yield-curve', async (req, res) => {
   }
 });
 
+// ── Portfolio performance vs S&P 500 ─────────────────────────────────────────
+const portfolioPerfCache = {};
+router.get('/portfolio-perf', async (req, res) => {
+  const rawPos = (req.query.positions || '').split(',').filter(Boolean);
+  const period = ['1mo','3mo','6mo','1y'].includes(req.query.period) ? req.query.period : '3mo';
+  if (!rawPos.length || !yahooFinance) return res.json({ portfolio: [], sp500: [] });
+
+  const positions = rawPos.map(p => {
+    const [sym, qty] = p.split(':');
+    return { sym: (sym || '').toUpperCase(), qty: parseFloat(qty) || 0 };
+  }).filter(p => p.sym && p.qty > 0).slice(0, 20);
+  if (!positions.length) return res.json({ portfolio: [], sp500: [] });
+
+  const cacheKey = positions.map(p => `${p.sym}:${p.qty}`).sort().join(',') + '-' + period;
+  if (portfolioPerfCache[cacheKey] && Date.now() - portfolioPerfCache[cacheKey].ts < CACHE.CHART) {
+    return res.json(portfolioPerfCache[cacheKey].data);
+  }
+
+  try {
+    const daysMap = { '1mo': 35, '3mo': 95, '6mo': 185, '1y': 370 };
+    const period1 = new Date(Date.now() - (daysMap[period] || 95) * 24 * 60 * 60 * 1000);
+    const period2 = new Date();
+    const symbols  = positions.map(p => p.sym);
+    const allSyms  = [...symbols, '^GSPC'];
+
+    const results = await Promise.allSettled(
+      allSyms.map(s => yahooFinance.chart(s, { period1, period2, interval: '1d' }))
+    );
+
+    const charts = {};
+    allSyms.forEach((s, i) => {
+      charts[s] = results[i].status === 'fulfilled'
+        ? (results[i].value.quotes || []).filter(c => c.close != null)
+        : [];
+    });
+
+    const sp500 = charts['^GSPC'];
+    if (!sp500.length) return res.json({ portfolio: [], sp500: [] });
+    const spFirst = sp500[0].close;
+
+    const toDate = c => (c.date instanceof Date ? c.date : new Date(c.date)).toISOString().slice(0, 10);
+    const qtyMap  = {};
+    const firstPx = {};
+    const dateMaps = {};
+    positions.forEach(p => {
+      qtyMap[p.sym] = p.qty;
+      if (charts[p.sym]?.length) firstPx[p.sym] = charts[p.sym][0].close;
+      dateMaps[p.sym] = {};
+      (charts[p.sym] || []).forEach(c => { dateMaps[p.sym][toDate(c)] = c.close; });
+    });
+
+    const startVal = positions.reduce((s, p) => s + p.qty * (firstPx[p.sym] || 0), 0);
+    if (!startVal) return res.json({ portfolio: [], sp500: [] });
+
+    const portfolio = sp500.map(c => {
+      const date = toDate(c);
+      let dayVal = 0;
+      positions.forEach(p => {
+        const px = dateMaps[p.sym]?.[date] ?? firstPx[p.sym] ?? 0;
+        dayVal += p.qty * px;
+      });
+      return { date, value: +((dayVal / startVal) * 100).toFixed(2) };
+    });
+
+    const sp500Series = sp500.map(c => ({ date: toDate(c), value: +((c.close / spFirst) * 100).toFixed(2) }));
+    const data = { portfolio, sp500: sp500Series };
+    portfolioPerfCache[cacheKey] = { data, ts: Date.now() };
+    res.json(data);
+  } catch (err) {
+    console.error('Portfolio perf error:', err.message);
+    res.json({ portfolio: [], sp500: [] });
+  }
+});
+
+// ── Sector allocation for holdings ───────────────────────────────────────────
+const sectorCache = {};
+const ETF_SECTOR_MAP = {
+  SPY:'Broad Market', VOO:'Broad Market', VTI:'Broad Market', IVV:'Broad Market', SCHB:'Broad Market', ITOT:'Broad Market',
+  QQQ:'Technology', VGT:'Technology', XLK:'Technology', TQQQ:'Technology',
+  XLE:'Energy', XLF:'Financial Services', XLV:'Healthcare', XLI:'Industrials',
+  XLC:'Communication Services', XLY:'Consumer Cyclical', XLP:'Consumer Defensive',
+  XLB:'Basic Materials', XLRE:'Real Estate', XLU:'Utilities',
+  GLD:'Commodities', SLV:'Commodities', GDX:'Commodities',
+  TLT:'Bonds', BND:'Bonds', AGG:'Bonds', HYG:'Bonds', LQD:'Bonds', BNDX:'Bonds',
+  VHT:'Healthcare', VFH:'Financial Services', VDE:'Energy', VNQ:'Real Estate',
+  ARKK:'Technology', ARKG:'Healthcare', ARKW:'Technology', ARKF:'Technology',
+  VEA:'International', VXUS:'International', EFA:'International', EEM:'Emerging Markets',
+};
+
+router.get('/sector-alloc', async (req, res) => {
+  const symbols = (req.query.symbols || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean).slice(0, 25);
+  if (!symbols.length || !yahooFinance) return res.json({ sectors: [] });
+  const key = symbols.slice().sort().join(',');
+  if (sectorCache[key] && Date.now() - sectorCache[key].ts < 6 * 60 * 60 * 1000) return res.json(sectorCache[key].data);
+  try {
+    const results = await Promise.allSettled(symbols.map(s => yahooFinance.quote(s)));
+    const sectors = results.map((r, i) => {
+      const sym = symbols[i];
+      if (r.status !== 'fulfilled' || !r.value) return { symbol: sym, sector: ETF_SECTOR_MAP[sym] || 'Other' };
+      const q = r.value;
+      const sector = q.sector || ETF_SECTOR_MAP[sym] || (q.quoteType === 'ETF' ? 'ETF' : q.quoteType === 'MUTUALFUND' ? 'Fund' : 'Other');
+      return { symbol: q.symbol || sym, sector };
+    });
+    const data = { sectors };
+    sectorCache[key] = { data, ts: Date.now() };
+    res.json(data);
+  } catch (err) {
+    console.error('Sector alloc error:', err.message);
+    res.json({ sectors: [] });
+  }
+});
+
 module.exports = router;
