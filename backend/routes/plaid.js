@@ -22,8 +22,8 @@ router.post('/create_link_token', requireAuth, async (req, res) => {
     const base = {
       user: { client_user_id: String(req.user.id) },
       client_name: 'PeakLedger',
-      products: [Products.Transactions, Products.Investments],
-      optional_products: [Products.Liabilities],
+      products: [Products.Transactions],
+      optional_products: [Products.Investments, Products.Liabilities],
       country_codes: [CountryCode.Us],
       language: 'en',
       webhook: 'https://peakledger.app/api/plaid/webhook',
