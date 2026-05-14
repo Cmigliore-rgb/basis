@@ -2336,9 +2336,11 @@ export default function Dashboard() {
   const [noBrokerage, setNoBrokerage] = useState(false);
   const [liabilities, setLiabilities] = useState({ credit: [], student: [], mortgage: [], car: [] });
   const [liabDemo, setLiabDemo]     = useState(false);
-  const [liabModal, setLiabModal]   = useState(null); // null | { type, name, balance, interest_rate, minimum_payment, credit_limit, due_day, id? }
-  const [liabSaving, setLiabSaving] = useState(false);
-  const [hasBank, setHasBank]       = useState(false);
+  const [liabModal, setLiabModal]       = useState(null); // null | { type, name, balance, interest_rate, minimum_payment, credit_limit, due_day, id? }
+  const [liabSaving, setLiabSaving]     = useState(false);
+  const [hasBank, setHasBank]           = useState(false);
+  const [plannerExtra, setPlannerExtra] = useState(100);
+  const [plannerStrategy, setPlannerStrategy] = useState('avalanche');
   const [brokenConnections, setBrokenConnections] = useState([]);
   const [updatingId, setUpdatingId] = useState(null); // token id currently being re-authed
   const [budget, setBudget] = useState([]);
@@ -5661,6 +5663,191 @@ export default function Dashboard() {
                       </div>
                     )}
                   </div>
+
+                  {/* ── Debt Payoff Planner ── */}
+                  {(() => {
+                    const DEMO_DEBTS = [
+                      { name: 'Visa Credit Card',     balance: 4200,  apr: 24.99, minPayment: 85,  type: 'credit'  },
+                      { name: 'Federal Student Loan', balance: 18500, apr: 5.5,   minPayment: 195, type: 'student' },
+                      { name: 'Car Loan',             balance: 8750,  apr: 7.9,   minPayment: 198, type: 'car'     },
+                    ];
+                    const realDebts = [
+                      ...(liabilities.credit || []).map((c, i) => {
+                        const acct = accounts.find(a => a.account_id === c.account_id);
+                        return {
+                          name: c._name || (acct ? cleanAcctName(acct.name, acct.subtype, acct.type, acct.mask) : `Credit Card ${i + 1}`),
+                          balance: c.balances?.current || 0,
+                          apr: c.aprs?.find(a => a.apr_type === 'purchase_apr')?.apr_percentage || 18.99,
+                          minPayment: c.minimum_payment_amount || 25,
+                          type: 'credit',
+                        };
+                      }),
+                      ...(liabilities.student || []).map((s, i) => ({
+                        name: s._name || `Student Loan ${i + 1}`,
+                        balance: s.balances?.current || 0,
+                        apr: s.interest_rate_percentage || 5.5,
+                        minPayment: s.minimum_payment_amount || 100,
+                        type: 'student',
+                      })),
+                      ...(liabilities.mortgage || []).map((m, i) => ({
+                        name: m._name || `Mortgage ${i + 1}`,
+                        balance: m.balances?.current || 0,
+                        apr: m.interest_rate?.percentage || m.interest_rate_percentage || 6.5,
+                        minPayment: m.next_monthly_payment || m.minimum_payment_amount || 0,
+                        type: 'mortgage',
+                      })),
+                      ...(liabilities.car || []).map((c, i) => ({
+                        name: c._name || `Car Loan ${i + 1}`,
+                        balance: c.balances?.current || 0,
+                        apr: c.interest_rate_percentage || 7.9,
+                        minPayment: c.minimum_payment_amount || 0,
+                        type: 'car',
+                      })),
+                    ].filter(d => d.balance > 0 && d.minPayment > 0);
+
+                    const debts = liabDemo ? DEMO_DEBTS : realDebts;
+
+                    if (!liabDemo && realDebts.length === 0) return (
+                      <div style={{ ...CARD, marginTop: 16, textAlign: 'center', padding: '28px 24px', color: TEXT2, fontSize: 13 }}>
+                        Add liabilities above to use the debt payoff planner.
+                      </div>
+                    );
+
+                    const simulate = (ds, strategy) => {
+                      let accts = ds.map((d, i) => ({ ...d, id: i }));
+                      const order = strategy === 'avalanche'
+                        ? [...accts].sort((a, b) => b.apr - a.apr)
+                        : [...accts].sort((a, b) => a.balance - b.balance);
+                      let month = 0, totalInterest = 0;
+                      const payoffMonths = {};
+                      while (accts.some(a => a.balance > 0) && month < 600) {
+                        month++;
+                        let freed = 0;
+                        accts = accts.map(a => {
+                          if (a.balance <= 0) { freed += a.minPayment; return a; }
+                          const interest = a.balance * (a.apr / 100 / 12);
+                          totalInterest += interest;
+                          let bal = a.balance + interest - a.minPayment;
+                          if (bal <= 0) { freed += Math.abs(bal) + a.minPayment; bal = 0; if (!payoffMonths[a.id]) payoffMonths[a.id] = month; }
+                          return { ...a, balance: bal };
+                        });
+                        const target = order.find(o => accts[o.id].balance > 0);
+                        if (target) {
+                          const cur = accts[target.id].balance;
+                          accts[target.id] = { ...accts[target.id], balance: Math.max(0, cur - (plannerExtra + freed)) };
+                          if (accts[target.id].balance <= 0 && !payoffMonths[target.id]) payoffMonths[target.id] = month;
+                        }
+                      }
+                      return { months: month, totalInterest: Math.round(totalInterest), payoffMonths };
+                    };
+
+                    const fmtMo = m => {
+                      if (m >= 600) return '50+ yrs';
+                      const yr = Math.floor(m / 12), mo = m % 12;
+                      if (yr === 0) return `${mo} mo`;
+                      if (mo === 0) return `${yr} yr`;
+                      return `${yr} yr ${mo} mo`;
+                    };
+                    const moToDate = m => new Date(new Date().getFullYear(), new Date().getMonth() + m, 1)
+                      .toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+                    const avRes  = simulate(debts, 'avalanche');
+                    const sbRes  = simulate(debts, 'snowball');
+                    const active = plannerStrategy === 'avalanche' ? avRes : sbRes;
+                    const other  = plannerStrategy === 'avalanche' ? sbRes : avRes;
+                    const interestDiff = other.totalInterest - active.totalInterest;
+                    const totalDebt = debts.reduce((s, d) => s + d.balance, 0);
+                    const totalMin  = debts.reduce((s, d) => s + d.minPayment, 0);
+
+                    const orderedDebts = (plannerStrategy === 'avalanche'
+                      ? [...debts].map((d, i) => ({ ...d, origIdx: i })).sort((a, b) => b.apr - a.apr)
+                      : [...debts].map((d, i) => ({ ...d, origIdx: i })).sort((a, b) => a.balance - b.balance));
+
+                    const BADGE_COLOR = { credit: BLUE, student: GREEN, mortgage: YELLOW, car: TEXT2 };
+                    const BADGE_LABEL = { credit: 'CC', student: 'SL', mortgage: 'MTG', car: 'AUTO' };
+
+                    return (
+                      <div style={{ ...CARD, marginTop: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                          <div style={{ fontWeight: 700, fontSize: 15 }}>Debt Payoff Planner</div>
+                          {liabDemo && <span style={{ fontSize: 11, color: BLUE, background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 6, padding: '3px 10px' }}>Demo</span>}
+                        </div>
+                        <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>Compare avalanche vs. snowball using your actual debts. Adjust your extra monthly payment to see the impact.</div>
+
+                        {/* Controls */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 16, marginBottom: 20 }}>
+                          <div>
+                            <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>Extra Monthly Payment</div>
+                            <div style={{ display: 'flex', alignItems: 'center', background: DARK, border: BORDER, borderRadius: 8, overflow: 'hidden', width: 140 }}>
+                              <span style={{ padding: '8px 10px', color: TEXT2, fontSize: 13, borderRight: BORDER }}>$</span>
+                              <input type="number" min={0} value={plannerExtra}
+                                onChange={e => setPlannerExtra(Math.max(0, Number(e.target.value)))}
+                                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: TEXT, fontSize: 13, padding: '8px 10px' }} />
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>Strategy</div>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              {[['avalanche', 'Avalanche', 'Highest APR first'], ['snowball', 'Snowball', 'Lowest balance first']].map(([val, label, sub]) => (
+                                <button key={val} onClick={() => setPlannerStrategy(val)}
+                                  style={{ padding: '7px 14px', borderRadius: 6, border: `1px solid ${plannerStrategy === val ? BLUE_BTN : BORDER_C}`, background: plannerStrategy === val ? `${BLUE_BTN}22` : 'transparent', color: plannerStrategy === val ? BLUE : TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
+                                  <div>{label}</div>
+                                  <div style={{ fontSize: 10, fontWeight: 400, color: TEXT3, marginTop: 2 }}>{sub}</div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Stats */}
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                          {[
+                            { label: 'Total Debt',     value: fmt(totalDebt),            color: RED    },
+                            { label: 'Payoff In',      value: fmtMo(active.months),      color: TEXT   },
+                            { label: 'Total Interest', value: fmt(active.totalInterest),  color: YELLOW },
+                            { label: interestDiff >= 0 ? `Saved vs ${plannerStrategy === 'avalanche' ? 'Snowball' : 'Avalanche'}` : `Costs More vs ${plannerStrategy === 'avalanche' ? 'Snowball' : 'Avalanche'}`,
+                              value: `${interestDiff >= 0 ? '-' : '+'}${fmt(Math.abs(interestDiff))}`, color: interestDiff >= 0 ? GREEN : RED },
+                          ].map(({ label, value, color }) => (
+                            <div key={label} style={{ background: DARK, border: BORDER, borderRadius: 8, padding: '14px 16px' }}>
+                              <div style={{ fontSize: 10, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                              <div style={{ fontSize: 18, fontWeight: 700, color, letterSpacing: '-0.5px' }}>{value}</div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Payoff order */}
+                        <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>
+                          Payoff Order ({plannerStrategy === 'avalanche' ? 'highest APR first' : 'lowest balance first'})
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {orderedDebts.map((d, i) => {
+                            const mo = active.payoffMonths[d.origIdx];
+                            return (
+                              <div key={i} style={{ background: DARK, border: BORDER, borderRadius: 8, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: TEXT3, minWidth: 20 }}>#{i + 1}</div>
+                                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: `${BADGE_COLOR[d.type] || TEXT2}18`, color: BADGE_COLOR[d.type] || TEXT2, flexShrink: 0 }}>
+                                  {BADGE_LABEL[d.type] || 'DEBT'}
+                                </span>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</div>
+                                  <div style={{ fontSize: 11, color: TEXT2 }}>{d.apr}% APR, {fmt(d.minPayment)}/mo min</div>
+                                </div>
+                                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: RED }}>{fmt(d.balance)}</div>
+                                  <div style={{ fontSize: 11, color: TEXT2 }}>paid off {mo ? moToDate(mo) : 'N/A'}</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div style={{ marginTop: 14, fontSize: 11, color: TEXT3 }}>
+                          Based on {fmt(totalMin)}/mo in minimums + {fmt(plannerExtra)}/mo extra. Assumes constant APRs and no new charges.
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {liabModal && (
                     <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setLiabModal(null)}>
                       <div style={{ ...CARD, width: 380, maxWidth: '92vw', padding: 28 }} onClick={e => e.stopPropagation()}>
