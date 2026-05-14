@@ -3765,11 +3765,6 @@ export default function Dashboard() {
                 {/* Education extras */}
                 {eduMode && (
                   <>
-                    <button onClick={() => { setPanel('edu-sandbox'); switchEduMode(true); setShowMobileMenu(false); }}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', background: panel === 'edu-sandbox' ? 'rgba(255,255,255,0.04)' : 'none', border: 'none', color: panel === 'edu-sandbox' ? TEXT : TEXT2, cursor: 'pointer', fontSize: 14, fontWeight: panel === 'edu-sandbox' ? 600 : 400, textAlign: 'left' }}>
-                      <span style={{ fontSize: 18 }}>◎</span>
-                      <span>Datasets</span>
-                    </button>
                     {effectiveProfessor && (
                       <button onClick={() => { setPanel('prof-dashboard'); switchEduMode(true); setShowMobileMenu(false); }}
                         style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', background: panel === 'prof-dashboard' ? 'rgba(255,255,255,0.04)' : 'none', border: 'none', color: panel === 'prof-dashboard' ? TEXT : TEXT2, cursor: 'pointer', fontSize: 14, fontWeight: panel === 'prof-dashboard' ? 600 : 400, textAlign: 'left' }}>
@@ -5408,7 +5403,7 @@ export default function Dashboard() {
 
                       {showEventForm && (
                         <div style={{ marginBottom: 16, padding: 14, background: DARK, borderRadius: 9, border: BORDER }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
                             <div>
                               <div style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>Title</div>
                               <input autoFocus value={eventForm.title} onChange={e => setEventForm(f => ({ ...f, title: e.target.value }))}

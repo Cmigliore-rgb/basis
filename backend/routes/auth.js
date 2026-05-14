@@ -513,8 +513,8 @@ router.post('/google', async (req, res) => {
       const role = inferRole(email);
       const tier = (role === 'admin' || role === 'professor') ? 'premium' : 'free';
       const result = db.prepare(
-        'INSERT INTO users (email, name, role, tier, email_verified, google_id) VALUES (?, ?, ?, ?, 1, ?)'
-      ).run(email.toLowerCase(), name || email.split('@')[0], role, tier, googleId);
+        'INSERT INTO users (email, password_hash, name, role, tier, email_verified, google_id) VALUES (?, ?, ?, ?, ?, 1, ?)'
+      ).run(email.toLowerCase(), '', name || email.split('@')[0], role, tier, googleId);
       user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
     }
 
@@ -555,8 +555,8 @@ router.post('/apple', async (req, res) => {
       const role = email ? inferRole(email) : 'user';
       const tier = (role === 'admin' || role === 'professor') ? 'premium' : 'free';
       const result = db.prepare(
-        'INSERT INTO users (email, name, role, tier, email_verified, apple_id) VALUES (?, ?, ?, ?, 1, ?)'
-      ).run(userEmail, userName, role, tier, appleId);
+        'INSERT INTO users (email, password_hash, name, role, tier, email_verified, apple_id) VALUES (?, ?, ?, ?, ?, 1, ?)'
+      ).run(userEmail, '', userName, role, tier, appleId);
       user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
     }
 
@@ -601,8 +601,8 @@ router.post('/microsoft', async (req, res) => {
       const role = userEmail ? inferRole(userEmail) : 'user';
       const tier = (role === 'admin' || role === 'professor') ? 'premium' : 'free';
       const result = db.prepare(
-        'INSERT INTO users (email, name, role, tier, email_verified, microsoft_id) VALUES (?, ?, ?, ?, 1, ?)'
-      ).run(finalEmail, name || finalEmail.split('@')[0], role, tier, msId);
+        'INSERT INTO users (email, password_hash, name, role, tier, email_verified, microsoft_id) VALUES (?, ?, ?, ?, ?, 1, ?)'
+      ).run(finalEmail, '', name || finalEmail.split('@')[0], role, tier, msId);
       user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
     }
 
