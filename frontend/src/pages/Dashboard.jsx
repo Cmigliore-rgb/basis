@@ -5677,48 +5677,63 @@ export default function Dashboard() {
 
                   {/* ── Debt Payoff Planner ── */}
                   {(() => {
+                    // Demo debts are intentionally designed so avalanche and snowball
+                    // produce different orderings — the whole point is to show the tradeoff.
+                    // Snowball order: Medical ($800) → CC ($3,800) → Car ($7,200) → Student ($14,500)
+                    // Avalanche order: CC (22.99%) → Car (7.4%) → Student (5.5%) → Medical (0%)
                     const DEMO_DEBTS = [
-                      { name: 'Visa Credit Card',     balance: 4200,  apr: 24.99, minPayment: 85,  type: 'credit'  },
-                      { name: 'Federal Student Loan', balance: 18500, apr: 5.5,   minPayment: 195, type: 'student' },
-                      { name: 'Car Loan',             balance: 8750,  apr: 7.9,   minPayment: 198, type: 'car'     },
+                      { name: 'Medical Bill',         balance: 800,   apr: 0,     minPayment: 50,  type: 'credit'  },
+                      { name: 'Chase Sapphire Card',  balance: 3800,  apr: 22.99, minPayment: 85,  type: 'credit'  },
+                      { name: 'Car Loan',             balance: 7200,  apr: 7.4,   minPayment: 175, type: 'car'     },
+                      { name: 'Federal Student Loan', balance: 14500, apr: 5.5,   minPayment: 180, type: 'student' },
                     ];
                     const realDebts = [
                       ...(liabilities.credit || []).map((c, i) => {
                         const acct = accounts.find(a => a.account_id === c.account_id);
+                        const bal  = c.balances?.current || 0;
                         return {
                           name: c._name || (acct ? cleanAcctName(acct.name, acct.subtype, acct.type, acct.mask) : `Credit Card ${i + 1}`),
-                          balance: c.balances?.current || 0,
+                          balance: bal,
                           apr: c.aprs?.find(a => a.apr_type === 'purchase_apr')?.apr_percentage || 18.99,
-                          minPayment: c.minimum_payment_amount || 25,
+                          minPayment: c.minimum_payment_amount || Math.max(25, bal * 0.02),
                           type: 'credit',
                         };
                       }),
-                      ...(liabilities.student || []).map((s, i) => ({
-                        name: s._name || `Student Loan ${i + 1}`,
-                        balance: s.balances?.current || 0,
-                        apr: s.interest_rate_percentage || 5.5,
-                        minPayment: s.minimum_payment_amount || 100,
-                        type: 'student',
-                      })),
-                      ...(liabilities.mortgage || []).map((m, i) => ({
-                        name: m._name || `Mortgage ${i + 1}`,
-                        balance: m.balances?.current || 0,
-                        apr: m.interest_rate?.percentage || m.interest_rate_percentage || 6.5,
-                        minPayment: m.next_monthly_payment || m.minimum_payment_amount || 0,
-                        type: 'mortgage',
-                      })),
-                      ...(liabilities.car || []).map((c, i) => ({
-                        name: c._name || `Car Loan ${i + 1}`,
-                        balance: c.balances?.current || 0,
-                        apr: c.interest_rate_percentage || 7.9,
-                        minPayment: c.minimum_payment_amount || 0,
-                        type: 'car',
-                      })),
-                    ].filter(d => d.balance > 0 && d.minPayment > 0);
+                      ...(liabilities.student || []).map((s, i) => {
+                        const bal = s.balances?.current || 0;
+                        return {
+                          name: s._name || `Student Loan ${i + 1}`,
+                          balance: bal,
+                          apr: s.interest_rate_percentage || 5.5,
+                          minPayment: s.minimum_payment_amount || Math.max(50, bal * 0.01),
+                          type: 'student',
+                        };
+                      }),
+                      ...(liabilities.mortgage || []).map((m, i) => {
+                        const bal = m.balances?.current || 0;
+                        return {
+                          name: m._name || `Mortgage ${i + 1}`,
+                          balance: bal,
+                          apr: m.interest_rate?.percentage || m.interest_rate_percentage || 6.5,
+                          minPayment: m.next_monthly_payment || m.minimum_payment_amount || Math.max(500, bal * 0.005),
+                          type: 'mortgage',
+                        };
+                      }),
+                      ...(liabilities.car || []).map((c, i) => {
+                        const bal = c.balances?.current || 0;
+                        return {
+                          name: c._name || `Car Loan ${i + 1}`,
+                          balance: bal,
+                          apr: c.interest_rate_percentage || 7.9,
+                          minPayment: c.minimum_payment_amount || Math.max(100, bal * 0.02),
+                          type: 'car',
+                        };
+                      }),
+                    ].filter(d => d.balance > 0);
 
-                    const debts = liabDemo ? DEMO_DEBTS : realDebts;
+                    const debts = isDemoData ? DEMO_DEBTS : realDebts;
 
-                    if (!liabDemo && realDebts.length === 0) return (
+                    if (!isDemoData && realDebts.length === 0) return (
                       <div style={{ ...CARD, marginTop: 16, textAlign: 'center', padding: '28px 24px', color: TEXT2, fontSize: 13 }}>
                         Add liabilities above to use the debt payoff planner.
                       </div>
@@ -5781,7 +5796,7 @@ export default function Dashboard() {
                       <div style={{ ...CARD, marginTop: 16 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                           <div style={{ fontWeight: 700, fontSize: 15 }}>Debt Payoff Planner</div>
-                          {liabDemo && <span style={{ fontSize: 11, color: BLUE, background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 6, padding: '3px 10px' }}>Demo</span>}
+                          {isDemoData && <span style={{ fontSize: 11, color: BLUE, background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 6, padding: '3px 10px' }}>Demo</span>}
                         </div>
                         <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20 }}>Compare avalanche vs. snowball using your actual debts. Adjust your extra monthly payment to see the impact.</div>
 
