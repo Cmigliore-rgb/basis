@@ -7337,6 +7337,15 @@ export default function Dashboard() {
               <div>
                 <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>Investments</h1>
                 {SandboxBanner}
+                {activeHoldings.length > 0 && (
+                  <AIInsightCard
+                    isDemoData={isDemoData}
+                    demoKey={isDemoData ? 'investments' : null}
+                    onGetAdvice={canSeeAI && !isDemoData ? () => getAdvice('investments') : undefined}
+                    loading={adviceState.investments?.loading}
+                    text={adviceState.investments?.text}
+                  />
+                )}
                 <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24, marginTop: 24 }}>
                   {[
                     { label: 'Portfolio Value', value: fmt(activeTotalPortfolio) },
@@ -7592,15 +7601,6 @@ export default function Dashboard() {
                     </>
                   );
                 })()}
-                {activeHoldings.length > 0 && (
-                  <AIInsightCard
-                    isDemoData={isDemoData}
-                    demoKey={isDemoData ? 'investments' : null}
-                    onGetAdvice={canSeeAI && !isDemoData ? () => getAdvice('investments') : undefined}
-                    loading={adviceState.investments?.loading}
-                    text={adviceState.investments?.text}
-                  />
-                )}
               </div>
             )}
 
