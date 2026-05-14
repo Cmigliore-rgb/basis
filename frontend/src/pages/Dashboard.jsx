@@ -4932,10 +4932,10 @@ export default function Dashboard() {
                       <div style={{ background: MUTED, borderRadius: 4, height: 6, overflow: 'hidden' }}>
                         <div style={{ width: `${Math.min(Math.max(rate ?? 0, 0), 100)}%`, height: '100%', background: rateColor, borderRadius: 4, transition: 'width 0.6s ease' }} />
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: TEXT3 }}>
-                        <span>0%</span>
-                        <span style={{ color: rate !== null && rate >= TARGET ? GREEN : TEXT3 }}>{TARGET}% target</span>
-                        <span>100%</span>
+                      <div style={{ position: 'relative', marginTop: 6, fontSize: 11, color: TEXT3, height: 16 }}>
+                        <span style={{ position: 'absolute', left: 0 }}>0%</span>
+                        <span style={{ position: 'absolute', left: `${TARGET}%`, transform: 'translateX(-50%)', color: rate !== null && rate >= TARGET ? GREEN : TEXT3 }}>{TARGET}% target</span>
+                        <span style={{ position: 'absolute', right: 0 }}>100%</span>
                       </div>
                     </div>
                   );
