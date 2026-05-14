@@ -1,9 +1,18 @@
+require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
+
+const Sentry = require('@sentry/node');
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV || 'development',
+  enabled: !!process.env.SENTRY_DSN,
+  tracesSampleRate: 0.1,
+});
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -113,6 +122,8 @@ app.use('/api/assignments', assignmentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/baseline', baselineRoutes);
+
+Sentry.setupExpressErrorHandler(app);
 
 if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, 'public');

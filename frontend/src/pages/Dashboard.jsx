@@ -3727,7 +3727,7 @@ export default function Dashboard() {
       {isMobile && (() => {
         const mobileTabs = eduMode ? [
           { key: 'edu-courses',     label: 'Courses',     icon: '◫', edu: true  },
-          { key: 'edu-assignments', label: 'Work',        icon: '⊟', edu: true  },
+          ...(user?.enrollments?.length ? [{ key: 'edu-assignments', label: 'Work', icon: '⊟', edu: true }] : []),
           { key: 'learn',           label: 'Learn',       icon: '✦', edu: true  },
           ...(effectiveProfessor ? [{ key: 'prof-dashboard', label: 'Prof Hub', icon: '⊟', edu: true }] : []),
         ] : [
