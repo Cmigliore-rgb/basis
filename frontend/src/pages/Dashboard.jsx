@@ -4472,7 +4472,7 @@ export default function Dashboard() {
         );
       })()}
 
-      <main ref={mainRef} style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', paddingTop: isMobile ? 'calc(52px + env(safe-area-inset-top))' : 0 }}>
+      <main ref={mainRef} style={{ flex: 1, overflowX: 'hidden', overflowY: 'auto', display: 'flex', flexDirection: 'column', paddingTop: isMobile ? 'calc(52px + env(safe-area-inset-top))' : 0 }}>
         {panel === 'insights' && <TickerBar indices={marketTickers.indices} active={marketTickers.active} />}
         {syncingBank && (
           <div style={{ background: 'rgba(77,163,255,0.08)', borderBottom: '1px solid rgba(77,163,255,0.2)', padding: '10px 24px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: BLUE }}>
@@ -10215,7 +10215,7 @@ export default function Dashboard() {
 
                     {/* ── OVERVIEW (eLC homepage style) ── */}
                     {!selectedCourseId && enrolledCourses.length === 0 && !effectiveProfessor && !isAdmin && (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 480, padding: '40px 28px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 480, padding: isMobile ? '40px 16px' : '40px 28px' }}>
                         <div style={{ fontSize: 44, marginBottom: 16 }}>🎓</div>
                         <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>No courses yet</div>
                         <div style={{ fontSize: 13, color: TEXT2, maxWidth: 340, lineHeight: 1.7, marginBottom: 28, textAlign: 'center' }}>
