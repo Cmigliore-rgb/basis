@@ -69,6 +69,7 @@ export default function Register() {
   });
   const [error, setError]         = useState('');
   const [loading, setLoading]     = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [codeState, setCodeState] = useState(null);
   const codeTimer = useRef(null);
 
@@ -125,6 +126,11 @@ export default function Register() {
 
   const submit = async (e) => {
     e.preventDefault();
+    setSubmitted(true);
+
+    // Required field check
+    if (!form.name.trim() || !form.email.trim() || !form.password || !form.confirmPassword) return;
+    if (form.role === 'professor' && !form.professorCode.trim()) return;
 
     // Client-side password validation
     if (form.password.length < 8) {
@@ -320,12 +326,14 @@ export default function Register() {
 
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>Full Name</label>
-            <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required style={inp} />
+            <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} style={inp} />
+            {submitted && !form.name.trim() && <div style={{ marginTop: 4, fontSize: 11, color: '#ef4444' }}>Required</div>}
           </div>
 
           <div style={{ marginBottom: 6 }}>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>Email</label>
-            <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required autoComplete="email" style={inp} />
+            <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} autoComplete="email" style={inp} />
+            {submitted && !form.email.trim() && <div style={{ marginTop: 4, fontSize: 11, color: '#ef4444' }}>Required</div>}
           </div>
           {isEdu
             ? <div style={{ marginBottom: 14, fontSize: 12, color: '#4ade80', display: 'flex', alignItems: 'center', gap: 5 }}>✓ Student email, you qualify for the student discount</div>
@@ -335,7 +343,8 @@ export default function Register() {
           {/* Password */}
           <div style={{ marginBottom: 8 }}>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>Password</label>
-            <input type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required autoComplete="new-password" style={inp} />
+            <input type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} autoComplete="new-password" style={inp} />
+            {submitted && !form.password && <div style={{ marginTop: 4, fontSize: 11, color: '#ef4444' }}>Required</div>}
           </div>
 
           {/* Strength bar */}
@@ -368,9 +377,10 @@ export default function Register() {
             <input
               type="password" value={form.confirmPassword}
               onChange={e => setForm(p => ({ ...p, confirmPassword: e.target.value }))}
-              required autoComplete="new-password"
+              autoComplete="new-password"
               style={{ ...inp, border: form.confirmPassword && form.confirmPassword !== form.password ? '1px solid rgba(248,113,113,0.5)' : form.confirmPassword && form.confirmPassword === form.password ? '1px solid rgba(74,222,128,0.4)' : BORDER }}
             />
+            {submitted && !form.confirmPassword && <div style={{ marginTop: 5, fontSize: 11, color: '#ef4444' }}>Required</div>}
             {form.confirmPassword && form.confirmPassword !== form.password && (
               <div style={{ marginTop: 5, fontSize: 11, color: '#f87171' }}>Passwords do not match</div>
             )}
@@ -411,6 +421,7 @@ export default function Register() {
                 onChange={e => setForm(p => ({ ...p, professorCode: e.target.value }))}
                 style={{ ...inp, border: BORDER }}
               />
+              {submitted && !form.professorCode.trim() && <div style={{ marginTop: 4, fontSize: 11, color: '#ef4444' }}>Required</div>}
               <div style={{ marginTop: 6, fontSize: 12, color: TEXT3 }}>Contact your institution or PeakLedger to get an access code.</div>
             </div>
           )}
