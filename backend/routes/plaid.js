@@ -83,6 +83,14 @@ router.post('/create_update_token', requireAuth, async (req, res) => {
 router.post('/exchange_token', requireAuth, async (req, res) => {
   const { public_token, institution_name } = req.body;
   try {
+    // Total institution cap by tier
+    const userRow = db.prepare('SELECT tier FROM users WHERE id = ?').get(req.user.id);
+    const totalCap = userRow?.tier === 'premium' ? 8 : 3;
+    const totalCount = db.prepare('SELECT COUNT(*) as cnt FROM plaid_tokens WHERE user_id = ?').get(req.user.id)?.cnt || 0;
+    if (totalCount >= totalCap) {
+      return res.status(429).json({ error: `Account limit reached. ${userRow?.tier === 'premium' ? 'Premium' : 'Free'} accounts can connect up to ${totalCap} institutions.` });
+    }
+
     // Rate limit: max 3 new connections per user per 24 hours
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const recentCount = db.prepare(
