@@ -204,4 +204,14 @@ router.patch('/codes/:code/toggle', requireAuth, requireProfessor, (req, res) =>
   res.json({ code: updated });
 });
 
+// DELETE /professor/codes/:code — delete a course code and its enrollments
+router.delete('/codes/:code', requireAuth, requireProfessor, (req, res) => {
+  const code = req.params.code.toUpperCase();
+  const row = db.prepare('SELECT * FROM course_codes WHERE code = ?').get(code);
+  if (!row) return res.status(404).json({ error: 'Code not found' });
+  db.prepare('DELETE FROM enrollments WHERE course_code = ?').run(code);
+  db.prepare('DELETE FROM course_codes WHERE code = ?').run(code);
+  res.json({ ok: true });
+});
+
 module.exports = router;

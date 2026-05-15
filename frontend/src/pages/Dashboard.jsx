@@ -2038,52 +2038,13 @@ const COURSES = [
     instructor: 'Prof. Thomas',
     semester: 'Spring 2026',
     color: '#4ade80',
+    isTemplate: true,
     classTimes: 'MWF 11:15–12:05 AM',
     classDays: ['Mon', 'Wed', 'Fri'],
     location: 'Brooks Hall 101',
     officeHours: 'Tue/Thu 2:00–4:00 PM',
     modules: COURSE_MODULES,
     assignments: MAJOR_ASSIGNMENTS,
-  },
-  {
-    id: 'fina4200',
-    code: 'FINA 4200',
-    name: 'Investment Analysis',
-    instructor: 'Prof. Thomas',
-    semester: 'Spring 2026',
-    color: '#4da3ff',
-    classTimes: 'TTh 12:30–1:45 PM',
-    classDays: ['Tue', 'Thu'],
-    location: 'Terry College 302',
-    officeHours: 'Mon/Wed 3:00–5:00 PM',
-    modules: [
-      { week: 'Jan 12–18',     topic: 'Financial Markets Overview',   chapter: 'Ch. 1',   assignments: ['Quiz 1'],                         datasetId: 'ds-portfolio', current: false },
-      { week: 'Jan 19–25',     topic: 'Equity Securities',            chapter: 'Ch. 2',   assignments: ['Quiz 2'],                         datasetId: 'ds-portfolio', current: false },
-      { week: 'Jan 26–Feb 1',  topic: 'Debt Securities',              chapter: 'Ch. 2',   assignments: [],                                 datasetId: null,           current: false },
-      { week: 'Feb 2–8',       topic: 'Risk & Return',                chapter: 'Ch. 3',   assignments: ['Quiz 3'],                         datasetId: 'ds-portfolio', current: false },
-      { week: 'Feb 9–15',      topic: 'Portfolio Theory',             chapter: 'Ch. 4',   assignments: ['Stock Analysis Report'],          datasetId: 'ds-portfolio', current: false },
-      { week: 'Feb 16–22',     topic: 'CAPM',                         chapter: 'Ch. 4',   assignments: ['Quiz 4'],                         datasetId: null,           current: false },
-      { week: 'Feb 23–Mar 1',  topic: 'Market Efficiency',            chapter: 'Ch. 5',   assignments: ['Quiz 5'],                         datasetId: null,           current: false },
-      { week: 'Mar 2–8',       topic: 'Equity Valuation',             chapter: 'Ch. 6',   assignments: ['Portfolio Construction Project'], datasetId: 'ds-portfolio', current: false },
-      { week: 'Mar 9–15',      topic: 'Spring Break',                 chapter: '—',       assignments: [],                                 datasetId: null,           current: false, isBreak: true },
-      { week: 'Mar 16–22',     topic: 'Fixed Income',                 chapter: 'Ch. 7',   assignments: ['Quiz 6'],                         datasetId: null,           current: false },
-      { week: 'Mar 23–29',     topic: 'Derivatives: Options',         chapter: 'Ch. 8',   assignments: ['Options Pricing Assignment'],     datasetId: null,           current: true  },
-      { week: 'Mar 30–Apr 5',  topic: 'Derivatives: Futures',         chapter: 'Ch. 8',   assignments: ['Quiz 7'],                         datasetId: null,           current: false },
-      { week: 'Apr 6–12',      topic: 'Alternative Investments',      chapter: 'Ch. 9',   assignments: ['Quiz 8'],                         datasetId: null,           current: false },
-      { week: 'Apr 13–19',     topic: 'Portfolio Management',         chapter: 'Ch. 10',  assignments: ['Quiz 9'],                         datasetId: 'ds-portfolio', current: false },
-      { week: 'Apr 20–26',     topic: 'Performance Evaluation',       chapter: 'Ch. 10',  assignments: [],                                 datasetId: null,           current: false },
-      { week: 'Apr 27–May 4',  topic: 'Final Review',                 chapter: '—',       assignments: ['Final Portfolio Report'],         datasetId: 'ds-portfolio', current: false },
-    ],
-    assignments: [
-      { id: 'i1', title: 'Stock Analysis Report',          week: 'Feb 9–15',     chapter: 'Ch. 3–4', datasetId: 'ds-portfolio', status: 'completed', points: 100,
-        description: 'Pick two S&P 500 equities. Calculate expected return and beta using 12 months of price data, then compare to the CAPM prediction.' },
-      { id: 'i2', title: 'Portfolio Construction Project', week: 'Mar 2–8',      chapter: 'Ch. 4–6', datasetId: 'ds-portfolio', status: 'completed', points: 150,
-        description: 'Build a 5-asset diversified portfolio using the Beginner Investment Portfolio dataset. Optimize for Sharpe ratio and justify asset weights.' },
-      { id: 'i3', title: 'Options Pricing Assignment',     week: 'Mar 23–29',    chapter: 'Ch. 8',   datasetId: null,           status: 'active',    points: 75,
-        description: 'Price a European call option using Black-Scholes. Sensitivity analysis on volatility and time-to-expiry. Submit a one-page memo.' },
-      { id: 'i4', title: 'Final Portfolio Report',         week: 'Apr 27–May 4', chapter: 'Ch. 1–10', datasetId: 'ds-portfolio', status: 'upcoming', points: 200,
-        description: 'Comprehensive portfolio analysis: performance attribution, risk-adjusted returns, benchmark comparison, and 12-month forward outlook.' },
-    ],
   },
 ];
 
@@ -2092,9 +2053,8 @@ const ALL_ASSIGNMENTS_MAP = Object.fromEntries(
 );
 
 const DEMO_ANNOUNCEMENTS = [
-  { id: 1, from: 'Prof. Thomas', course: 'FINA 3000', date: '2026-04-24', title: 'Future Forecasting Assignment Posted', body: 'Assignment 6 is now live in the Assignments tab. Forecasting model templates are available under Content → Resources. Due April 20; late submissions accepted through May 4 for partial credit.' },
+  { id: 1, from: 'Prof. Thomas', course: 'FINA 3000', date: '2026-04-24', title: 'Future Forecasting Assignment Posted', body: 'Assignment 6 is now live in the Assignments tab. Forecasting model templates are available under Content. Due April 20; late submissions accepted through May 4 for partial credit.' },
   { id: 2, from: 'Prof. Thomas', course: 'FINA 3000', date: '2026-04-17', title: 'Projects 1–3 Graded', body: 'Scores and written feedback are posted. Check the Assignments tab. Office hours this week are Tue/Thu 2–4 PM in Brooks Hall 101 if you have questions.' },
-  { id: 3, from: 'Prof. Thomas', course: 'FINA 4200', date: '2026-04-15', title: 'Options Pricing Memo: Deadline Extended', body: 'Extended to April 28 due to the exam schedule conflict. Peer review submissions (2 reviews) earn up to 10 pts extra credit. Details on the course page.' },
 ];
 
 // ── Signal Engine ─────────────────────────────────────────────────────────────
@@ -2846,6 +2806,7 @@ export default function Dashboard() {
   const [showLinkCal, setShowLinkCal]       = useState(false);
   const [selectedDay, setSelectedDay]       = useState(null);
   const [showCreateAssignment, setShowCreateAssignment] = useState(false);
+  const [assignStep, setAssignStep] = useState('template'); // 'template' | 'form'
   const [customAssignments, setCustomAssignments] = useState([]);
   const [createAssignLoading, setCreateAssignLoading] = useState(false);
   const [createAssignError, setCreateAssignError] = useState('');
@@ -3906,109 +3867,158 @@ export default function Dashboard() {
       {/* ── CREATE ASSIGNMENT MODAL ─────────────────────── */}
       {showCreateAssignment && (
         <div style={{ position: 'fixed', inset: 0, background: OVERLAY, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
-          onClick={e => { if (e.target === e.currentTarget) { setShowCreateAssignment(false); setCreateAssignCourseId(null); } }}>
-          <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, padding: 28, width: '100%', maxWidth: 520, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div style={{ fontWeight: 700, fontSize: 18 }}>Create Assignment</div>
-              <button onClick={() => { setShowCreateAssignment(false); setCreateAssignCourseId(null); }} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
-            </div>
+          onClick={e => { if (e.target === e.currentTarget) { setShowCreateAssignment(false); setCreateAssignCourseId(null); setAssignStep('template'); } }}>
+          <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, width: '100%', maxWidth: assignStep === 'template' ? 680 : 520, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
 
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Course</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {COURSES.map(c => (
-                  <button key={c.id} onClick={() => setCreateAssignCourseId(c.id)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: createAssignCourseId === c.id ? `${c.color}0e` : BG, border: createAssignCourseId === c.id ? `1px solid ${c.color}44` : BORDER, borderRadius: 9, cursor: 'pointer', textAlign: 'left' }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{c.name}</div>
-                      <div style={{ fontSize: 11, color: TEXT3 }}>{c.code} · {c.semester}</div>
-                    </div>
-                    {createAssignCourseId === c.id && <span style={{ fontSize: 11, fontWeight: 700, color: c.color }}>✓</span>}
+            {/* ── Step 1: Template picker ── */}
+            {assignStep === 'template' && (
+              <div style={{ padding: 28 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <div style={{ fontWeight: 700, fontSize: 18 }}>New Assignment</div>
+                  <button onClick={() => { setShowCreateAssignment(false); setCreateAssignCourseId(null); setAssignStep('template'); }} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
+                </div>
+                <div style={{ fontSize: 13, color: TEXT2, marginBottom: 24 }}>Choose a template to start from, or build your own from scratch.</div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+                  {/* Scratch card */}
+                  <button onClick={() => { setCreateForm({ title: '', description: '', chapter: 'Ch. 1', datasetId: '', points: '100', week: '', dueDate: '' }); setAssignStep('form'); }}
+                    style={{ padding: '16px 14px', background: DARK, border: `1.5px dashed ${BORDER_C}`, borderRadius: 10, cursor: 'pointer', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 6, minHeight: 110 }}>
+                    <div style={{ fontSize: 18, marginBottom: 2 }}>✏️</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>Start from Scratch</div>
+                    <div style={{ fontSize: 11, color: TEXT3, lineHeight: 1.4 }}>Blank assignment — fill in everything yourself.</div>
                   </button>
-                ))}
-              </div>
-            </div>
 
-            {[
-              { label: 'Title', key: 'title', type: 'text', placeholder: 'e.g. Net Worth Statement' },
-              { label: 'Week / Due', key: 'week', type: 'text', placeholder: 'e.g. Feb 9–15' },
-              { label: 'Points', key: 'points', type: 'number', placeholder: '100' },
-            ].map(f => (
-              <div key={f.key} style={{ marginBottom: 14 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{f.label}</label>
-                <input type={f.type} placeholder={f.placeholder} value={createForm[f.key]}
-                  onChange={e => setCreateForm(p => ({ ...p, [f.key]: e.target.value }))}
-                  style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  {/* Template cards from MAJOR_ASSIGNMENTS */}
+                  {MAJOR_ASSIGNMENTS.map(a => {
+                    const ds = a.datasetId ? PREBUILT_DATASETS.find(d => d.id === a.datasetId) : null;
+                    return (
+                      <button key={a.id} onClick={() => {
+                        setCreateForm({ title: a.title, description: a.description, chapter: a.chapter, datasetId: a.datasetId || '', points: String(a.points), week: a.week, dueDate: a.dueDate || '' });
+                        setAssignStep('form');
+                      }}
+                        style={{ padding: '14px', background: DARK, border: BORDER, borderRadius: 10, cursor: 'pointer', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 6, minHeight: 110, transition: 'border-color 0.15s' }}
+                        className="lc">
+                        {ds && <div style={{ fontSize: 9, fontWeight: 700, color: ds.color, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 2 }}>{ds.title}</div>}
+                        <div style={{ fontSize: 12, fontWeight: 700, color: TEXT, lineHeight: 1.3 }}>{a.title}</div>
+                        <div style={{ fontSize: 11, color: TEXT3, lineHeight: 1.4, flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{a.description}</div>
+                        <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
+                          <span style={{ fontSize: 10, color: TEXT3 }}>{a.points} pts</span>
+                          <span style={{ fontSize: 10, color: TEXT3 }}>·</span>
+                          <span style={{ fontSize: 10, color: TEXT3 }}>{a.chapter}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            ))}
-            <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 12, marginBottom: 14 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Chapter</label>
-                <select value={createForm.chapter} onChange={e => setCreateForm(p => ({ ...p, chapter: e.target.value }))}
-                  style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none' }}>
-                  {['Ch. 1','Ch. 2','Ch. 3','Ch. 4','Ch. 5','Ch. 6','Ch. 7','Ch. 8','Ch. 9'].map(c => <option key={c}>{c}</option>)}
-                </select>
+            )}
+
+            {/* ── Step 2: Edit form ── */}
+            {assignStep === 'form' && (
+              <div style={{ padding: 28 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <button onClick={() => setAssignStep('template')} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: 0 }}>‹</button>
+                    <div style={{ fontWeight: 700, fontSize: 18 }}>Assignment Details</div>
+                  </div>
+                  <button onClick={() => { setShowCreateAssignment(false); setCreateAssignCourseId(null); setAssignStep('template'); }} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
+                </div>
+
+                {/* Course selector — uses real professor courses */}
+                {enrolledCourses.length > 1 && (
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Course</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {enrolledCourses.map(c => (
+                        <button key={c.id} onClick={() => setCreateAssignCourseId(c.id)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: createAssignCourseId === c.id ? `${c.color}0e` : BG, border: createAssignCourseId === c.id ? `1px solid ${c.color}44` : BORDER, borderRadius: 9, cursor: 'pointer', textAlign: 'left' }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{c.name}</div>
+                            <div style={{ fontSize: 11, color: TEXT3 }}>{c.code} · {c.semester}</div>
+                          </div>
+                          {createAssignCourseId === c.id && <span style={{ fontSize: 11, fontWeight: 700, color: c.color }}>✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {[
+                  { label: 'Title', key: 'title', type: 'text', placeholder: 'e.g. Net Worth Statement' },
+                  { label: 'Week / Due', key: 'week', type: 'text', placeholder: 'e.g. Feb 9–15' },
+                  { label: 'Points', key: 'points', type: 'number', placeholder: '100' },
+                ].map(f => (
+                  <div key={f.key} style={{ marginBottom: 14 }}>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{f.label}</label>
+                    <input type={f.type} placeholder={f.placeholder} value={createForm[f.key]}
+                      onChange={e => setCreateForm(p => ({ ...p, [f.key]: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                ))}
+                <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 12, marginBottom: 14 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Chapter</label>
+                    <select value={createForm.chapter} onChange={e => setCreateForm(p => ({ ...p, chapter: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none' }}>
+                      {['Ch. 1','Ch. 2','Ch. 3','Ch. 4','Ch. 5','Ch. 6','Ch. 7','Ch. 8','Ch. 9'].map(c => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Linked Dataset</label>
+                    <select value={createForm.datasetId} onChange={e => setCreateForm(p => ({ ...p, datasetId: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none' }}>
+                      <option value="">None</option>
+                      {PREBUILT_DATASETS.map(d => <option key={d.id} value={d.id}>{d.title}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Instructions</label>
+                  <textarea rows={4} placeholder="What should students do for this assignment?" value={createForm.description}
+                    onChange={e => setCreateForm(p => ({ ...p, description: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                </div>
+                {createAssignError && <div style={{ fontSize: 12, color: '#f87171', marginBottom: 10 }}>{createAssignError}</div>}
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                  <button onClick={() => { setShowCreateAssignment(false); setCreateAssignCourseId(null); setAssignStep('template'); setCreateAssignError(''); }} style={{ padding: '10px 18px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                  <button disabled={createAssignLoading || !createForm.title.trim() || !createAssignCourseId} onClick={async () => {
+                    const course = enrolledCourses.find(c => c.id === createAssignCourseId);
+                    const courseCode = course?.code || profCodes.find(c => c.course_id === createAssignCourseId)?.code;
+                    if (!courseCode) return;
+                    setCreateAssignLoading(true); setCreateAssignError('');
+                    try {
+                      const { data } = await api.post('/professor/assignments', {
+                        course_code: courseCode,
+                        title: createForm.title.trim(),
+                        description: createForm.description,
+                        due_date: createForm.dueDate || '',
+                        points: parseInt(createForm.points) || 100,
+                        chapter: createForm.chapter,
+                        dataset_id: createForm.datasetId || '',
+                        week: createForm.week || 'TBD',
+                      });
+                      const a = data.assignment;
+                      setCustomAssignments(prev => [...prev, {
+                        id: a.id, courseId: a.course_id, courseCode: a.course_code,
+                        title: a.title, week: a.week || 'TBD', chapter: a.chapter,
+                        datasetId: a.dataset_id || null, points: a.points,
+                        description: a.description, dueDate: a.due_date || '',
+                        status: 'upcoming', custom: true,
+                      }]);
+                      setCreateForm({ title: '', description: '', chapter: 'Ch. 1', datasetId: '', points: '100', week: '', dueDate: '' });
+                      setCreateAssignCourseId(null);
+                      setShowCreateAssignment(false);
+                      setAssignStep('template');
+                    } catch (err) {
+                      setCreateAssignError(err.response?.data?.error || 'Failed to create assignment');
+                    } finally { setCreateAssignLoading(false); }
+                  }} style={{ padding: '10px 18px', background: createForm.title.trim() && createAssignCourseId ? 'rgba(74,222,128,0.15)' : MUTED, border: createForm.title.trim() && createAssignCourseId ? '1px solid rgba(74,222,128,0.4)' : BORDER, borderRadius: 8, color: createForm.title.trim() && createAssignCourseId ? GREEN : TEXT3, fontSize: 13, fontWeight: 700, cursor: (createAssignLoading || !createForm.title.trim() || !createAssignCourseId) ? 'default' : 'pointer', transition: 'all 0.15s' }}>
+                    {createAssignLoading ? 'Creating…' : 'Create Assignment'}
+                  </button>
+                </div>
               </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Linked Dataset</label>
-                <select value={createForm.datasetId} onChange={e => setCreateForm(p => ({ ...p, datasetId: e.target.value }))}
-                  style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none' }}>
-                  <option value="">None</option>
-                  {PREBUILT_DATASETS.map(d => <option key={d.id} value={d.id}>{d.title}</option>)}
-                </select>
-              </div>
-            </div>
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Description</label>
-              <textarea rows={3} placeholder="Assignment instructions..." value={createForm.description}
-                onChange={e => setCreateForm(p => ({ ...p, description: e.target.value }))}
-                style={{ width: '100%', padding: '10px 12px', background: BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.5 }} />
-            </div>
-            {createAssignError && <div style={{ fontSize: 12, color: '#f87171', marginBottom: 10 }}>{createAssignError}</div>}
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => { setShowCreateAssignment(false); setCreateAssignCourseId(null); setCreateAssignError(''); }} style={{ padding: '10px 18px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button disabled={createAssignLoading || !createForm.title.trim() || !createAssignCourseId} onClick={async () => {
-                const courseCode = profCodes.find(c => c.course_id === createAssignCourseId)?.code;
-                if (!courseCode) return;
-                setCreateAssignLoading(true); setCreateAssignError('');
-                try {
-                  const { data } = await api.post('/professor/assignments', {
-                    course_code: courseCode,
-                    title: createForm.title.trim(),
-                    description: createForm.description,
-                    due_date: '',
-                    points: parseInt(createForm.points) || 100,
-                    chapter: createForm.chapter,
-                    dataset_id: createForm.datasetId || '',
-                    week: createForm.week || 'TBD',
-                  });
-                  const a = data.assignment;
-                  setCustomAssignments(prev => [...prev, {
-                    id: a.id,
-                    courseId: a.course_id,
-                    courseCode: a.course_code,
-                    title: a.title,
-                    week: a.week || 'TBD',
-                    chapter: a.chapter,
-                    datasetId: a.dataset_id || null,
-                    points: a.points,
-                    description: a.description,
-                    dueDate: a.due_date || '',
-                    status: 'upcoming',
-                    custom: true,
-                  }]);
-                  setCreateForm({ title: '', description: '', chapter: 'Ch. 1', datasetId: '', points: '100', week: '' });
-                  setCreateAssignCourseId(null);
-                  setShowCreateAssignment(false);
-                  setPanel('edu-assignments');
-                } catch (err) {
-                  setCreateAssignError(err.response?.data?.error || 'Failed to create assignment');
-                } finally { setCreateAssignLoading(false); }
-              }} style={{ padding: '10px 18px', background: createForm.title.trim() && createAssignCourseId ? 'rgba(74,222,128,0.15)' : MUTED, border: createForm.title.trim() && createAssignCourseId ? '1px solid rgba(74,222,128,0.4)' : BORDER, borderRadius: 8, color: createForm.title.trim() && createAssignCourseId ? GREEN : TEXT3, fontSize: 13, fontWeight: 700, cursor: (createAssignLoading || !createForm.title.trim() || !createAssignCourseId) ? 'default' : 'pointer', transition: 'all 0.15s' }}>
-                {createAssignLoading ? 'Creating…' : 'Create Assignment'}
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}
@@ -4417,7 +4427,6 @@ export default function Dashboard() {
       {showInvite && (() => {
         const COURSE_CODES = {
           fina3000: 'B-FINA3000-26',
-          fina4200: 'B-FINA4200-26',
         };
         const sel = COURSES.find(c => c.id === inviteSelectedCourse);
         const courseCode = sel ? COURSE_CODES[sel.id] : null;
@@ -9404,6 +9413,18 @@ export default function Dashboard() {
                           style={{ padding: '5px 12px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                           {c.active ? 'Deactivate' : 'Activate'}
                         </button>
+                        <button onClick={async () => {
+                          if (!window.confirm(`Delete ${c.code}? This will remove all enrollments. This cannot be undone.`)) return;
+                          try {
+                            await api.delete(`/professor/codes/${c.code}`);
+                            const r = await api.get('/professor/dashboard');
+                            setProfCodes(r.data.codes || []);
+                            if (selectedCourseId === (c.course_id || c.code.toLowerCase())) setSelectedCourseId(null);
+                          } catch (e) { alert(e.response?.data?.error || 'Failed to delete'); }
+                        }}
+                          style={{ padding: '5px 10px', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 6, color: RED, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                          Delete
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -9829,7 +9850,7 @@ export default function Dashboard() {
 
                 <ConnectedAccountsCard onFixConnection={openUpdateMode} />
 
-                {isPremium && !isAdmin && (
+                {isPremium && !isAdmin && !isProfessor && (
                   <div style={{ ...CARD, marginBottom: 16 }}>
                     <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Subscription</div>
                     <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>You're on the Premium plan. Manage or cancel your subscription through the billing portal.</div>
@@ -10578,7 +10599,10 @@ export default function Dashboard() {
                                     </div>
                                     {/* Card body */}
                                     <div style={{ padding: '12px 14px 14px' }}>
-                                      <div style={{ fontSize: 11, fontWeight: 700, color: c.color, letterSpacing: '0.3px', marginBottom: 3 }}>{c.code}</div>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: c.color, letterSpacing: '0.3px' }}>{c.code}</div>
+                                        {c.isTemplate && <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '1px 5px', borderRadius: 3, background: `${c.color}18`, color: c.color, border: `1px solid ${c.color}35` }}>Template</span>}
+                                      </div>
                                       <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.35, marginBottom: 4 }}>{c.name}</div>
                                       <div style={{ fontSize: 11, color: TEXT3 }}>{c.semester}</div>
                                       {effectiveProfessor ? (
