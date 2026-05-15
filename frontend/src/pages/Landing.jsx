@@ -112,7 +112,7 @@ export default function Landing() {
           Free to use · No credit card required
         </div>
 
-        <h1 style={{ fontSize: 'clamp(40px, 7vw, 76px)', fontWeight: 800, letterSpacing: '-2px', lineHeight: 1.05, margin: '0 0 24px', maxWidth: 820, color: TEXT, fontFeatureSettings: '"kern" 1, "liga" 0' }}>
+        <h1 style={{ fontSize: 'clamp(40px, 7vw, 76px)', fontWeight: 800, letterSpacing: '0', lineHeight: 1.05, margin: '0 0 24px', maxWidth: 820, color: TEXT, fontKerning: 'normal', fontFeatureSettings: '"kern" 1, "liga" 0, "calt" 0' }}>
           Your finances,<br />
           <span style={{ color: BLUE_BTN }}>finally in focus.</span>
         </h1>
