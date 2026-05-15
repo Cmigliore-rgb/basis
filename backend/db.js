@@ -132,6 +132,8 @@ try { db.exec('ALTER TABLE users ADD COLUMN two_factor_temp_token TEXT'); } catc
 try { db.exec("UPDATE users SET edu_verified_at = datetime('now') WHERE role = 'student' AND email LIKE '%.edu' AND email_verified = 1 AND edu_verified_at IS NULL"); } catch {}
 // Grant premium to specific users
 try { db.exec("UPDATE users SET tier = 'premium' WHERE email = 'joemigliore@gmail.com'"); } catch {}
+try { db.exec("UPDATE users SET tier = 'premium' WHERE email = 'cis92307@uga.edu'"); } catch {}
+try { db.exec("UPDATE users SET tier = 'premium' WHERE email = 'wdw09359@uga.edu'"); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN item_id TEXT'); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN needs_update INTEGER NOT NULL DEFAULT 0'); } catch {}
 try { db.exec('ALTER TABLE plaid_tokens ADD COLUMN sync_cursor TEXT'); } catch {}
