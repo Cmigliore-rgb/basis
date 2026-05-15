@@ -2536,6 +2536,7 @@ export default function Dashboard() {
   const [cmdQuery, setCmdQuery] = useState('');
   const [cmdIdx, setCmdIdx] = useState(0);
   const cmdInputRef = useRef(null);
+  const [newTxns, setNewTxns] = useState(null); // null = not checked yet, [] = none, [...] = new ones
   const [newsAiLoading, setNewsAiLoading] = useState(false);
   const [newsAiText, setNewsAiText] = useState(null);
   const [showTour, setShowTour] = useState(false);
@@ -3095,6 +3096,17 @@ export default function Dashboard() {
       const tTxns     = tellerTxns.status === 'fulfilled' ? tellerTxns.value.data.transactions || [] : [];
       const allTxns   = [...plaidTxns, ...tTxns].sort((a, b) => new Date(b.date) - new Date(a.date));
       setTransactions(allTxns);
+
+      // New-transaction detection: compare against last-seen date for this user
+      if (user?.id && allTxns.length > 0 && !(acc.value?.data?.demo)) {
+        const key = `pl_last_seen_${user.id}`;
+        const lastSeen = localStorage.getItem(key);
+        if (lastSeen) {
+          const fresh = allTxns.filter(t => t.date > lastSeen);
+          if (fresh.length > 0) setNewTxns(fresh.slice(0, 8));
+        }
+        localStorage.setItem(key, new Date().toISOString().split('T')[0]);
+      }
 
       // Compute budget from all transactions (month-to-date debits only)
       const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -3706,6 +3718,55 @@ export default function Dashboard() {
           </>
         );
       })()}
+
+      {/* ── NEW TRANSACTIONS MODAL ─────────────────────── */}
+      {newTxns && newTxns.length > 0 && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 9500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ background: CARD_BG, border: BORDER, borderRadius: 16, width: '100%', maxWidth: 460, boxShadow: '0 32px 80px rgba(0,0,0,0.6)', overflow: 'hidden' }}>
+            {/* Header */}
+            <div style={{ padding: '20px 24px 16px', borderBottom: BORDER, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(77,163,255,0.12)', border: '1px solid rgba(77,163,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>↕</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: TEXT }}>
+                  {newTxns.length === 1 ? '1 new transaction' : `${newTxns.length} new transactions`} since your last visit
+                </div>
+                <div style={{ fontSize: 12, color: TEXT3, marginTop: 1 }}>Here's what came in while you were away.</div>
+              </div>
+            </div>
+            {/* Transaction list */}
+            <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+              {newTxns.map((t, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 24px', borderBottom: i < newTxns.length - 1 ? BORDER : 'none' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {t.merchant_name || t.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>
+                      {t.date} · {t.personal_finance_category?.primary?.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()) || t.category?.[0] || 'Uncategorized'}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: t.amount > 0 ? RED : GREEN, flexShrink: 0 }}>
+                    {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Footer */}
+            <div style={{ padding: '14px 24px', borderTop: BORDER, display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => { setNewTxns([]); setPanel('cashflow'); setCashFlowTab('banking'); switchEduMode(false); }}
+                style={{ flex: 1, padding: '10px 0', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                View all transactions
+              </button>
+              <button
+                onClick={() => setNewTxns([])}
+                style={{ flex: 1, padding: '10px 0', background: BLUE_BTN, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                Got it ✓
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── ONBOARDING ─────────────────────────────────── */}
       {showOnboarding && (() => {
@@ -4469,6 +4530,7 @@ export default function Dashboard() {
               </a>
             </div>
             {checkoutError && <div style={{ textAlign: 'center', fontSize: 12, color: RED, marginBottom: 8 }}>{checkoutError}</div>}
+            <div style={{ textAlign: 'center', fontSize: 13, color: TEXT2, marginBottom: 8 }}>☕ Less than a Starbucks latte per month.</div>
             <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3, marginBottom: 8 }}>Secured by Stripe. Cancel anytime.</div>
             <div style={{ textAlign: 'center', fontSize: 11, color: TEXT3 }}>
               By subscribing you agree to our{' '}
