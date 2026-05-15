@@ -1637,7 +1637,7 @@ function Tour({ steps, step, onNext, onPrev, onClose, containerRef }) {
     if (container) container.style.overflowY = 'auto';
     const el = document.querySelector(sel);
     if (el) {
-      el.scrollIntoView({ block: 'center', behavior: 'instant' });
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
       setRect(buildRect());
     } else {
       setRect(null);
@@ -1711,7 +1711,8 @@ function Tour({ steps, step, onNext, onPrev, onClose, containerRef }) {
       {extraRects.map((r, i) => (
         <div key={i} style={{ position: 'fixed', top: r.top - 3, left: r.left - 3, width: r.width + 6, height: r.height + 6, borderRadius: 8, border: '2px solid rgba(77,163,255,0.65)', zIndex: 9999, pointerEvents: 'none', boxShadow: '0 0 8px rgba(77,163,255,0.3)' }} />
       ))}
-      <div style={tipStyle}>
+      <div style={{ ...tipStyle, position: 'fixed' }}>
+        <button onClick={onClose} style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT3, fontSize: 12, cursor: 'pointer', lineHeight: 1, padding: 0 }}>✕</button>
         <div style={{ fontSize: 10, color: BLUE, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 8 }}>
           {step + 1} / {steps.length}
         </div>
@@ -3551,12 +3552,12 @@ export default function Dashboard() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: SIDE_BG, borderBottom: BORDER, zIndex: 200, paddingTop: 'env(safe-area-inset-top)' }}>
           <div style={{ height: 52, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <img src="/logo-icon.svg?v=2" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
+              <img src="/logo-icon.svg?v=4" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
               <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
               {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
             </div>
             <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
-              🔔
+              <span style={{ filter: 'grayscale(1) brightness(1.4)' }}>🔔</span>
               {inboxNotifs.filter(n => !n.read).length > 0 && (
                 <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, background: RED, borderRadius: 8, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px', border: `2px solid ${SIDE_BG}` }}>
                   {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
@@ -3574,11 +3575,11 @@ export default function Dashboard() {
       <aside style={{ width: 220, flexShrink: 0, background: SIDE_BG, borderRight: BORDER, display: isMobile ? 'none' : 'flex', flexDirection: 'column' }}>
         <div data-tour="brand" style={{ padding: '18px 16px 16px', borderBottom: BORDER, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/logo-icon.svg?v=2" alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
+            <img src="/logo-icon.svg?v=4" alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
             <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
           </div>
           <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
-            🔔
+            <span style={{ filter: 'grayscale(1) brightness(1.4)' }}>🔔</span>
             {inboxNotifs.filter(n => !n.read).length > 0 && (
               <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 17, height: 17, background: RED, borderRadius: 9, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', border: `2px solid ${SIDE_BG}` }}>
                 {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
@@ -3832,7 +3833,7 @@ export default function Dashboard() {
             <div style={{ overflowY: 'auto', flex: 1 }}>
               {inboxNotifs.length === 0 ? (
                 <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: TEXT3 }}>
-                  <div style={{ fontSize: 24, marginBottom: 8 }}>🔔</div>
+                  <div style={{ fontSize: 24, marginBottom: 8 }}><span style={{ filter: 'grayscale(1) brightness(1.4)' }}>🔔</span></div>
                   No notifications yet
                 </div>
               ) : inboxNotifs.map((n, i) => (
@@ -4157,7 +4158,7 @@ export default function Dashboard() {
                 <div style={{ textAlign: 'center', marginBottom: 24 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 8 }}>Premium</div>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 2 }}>
-                    <span style={{ fontSize: 48, fontWeight: 800, letterSpacing: '-2px', color: TEXT, lineHeight: 1 }}>{isEduVerified ? '$5.99' : '$9.99'}</span>
+                    <span style={{ fontSize: 40, fontWeight: 600, letterSpacing: '-1px', color: TEXT, lineHeight: 1 }}>{isEduVerified ? '$5.99' : '$9.99'}</span>
                     <span style={{ fontSize: 15, color: TEXT2, marginLeft: 4 }}>/month</span>
                   </div>
                   {isEduVerified && <div style={{ fontSize: 12, color: '#4ade80', marginTop: 6 }}>Student discount applied</div>}

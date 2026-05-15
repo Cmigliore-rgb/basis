@@ -46,7 +46,7 @@ export default function ResetPassword() {
     <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36, justifyContent: 'center' }}>
-          <img src="/logo-icon.svg?v=2" alt="" style={{ width: 36, height: 36, borderRadius: 8 }} />
+          <img src="/logo-icon.svg?v=4" alt="" style={{ width: 36, height: 36, borderRadius: 8 }} />
           <span style={{ fontSize: 20, fontWeight: 700, color: TEXT }}>PeakLedger</span>
         </div>
 

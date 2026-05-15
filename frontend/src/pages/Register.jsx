@@ -227,7 +227,7 @@ export default function Register() {
       <div style={{ flex: 1, display: isMobile ? 'none' : 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 64px', background: L_BG, minWidth: 0 }}>
         <div style={{ maxWidth: 440 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
-            <img src="/logo-icon.svg?v=2" alt="" style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0 }} />
+            <img src="/logo-icon.svg?v=4" alt="" style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0 }} />
             <span style={{ fontSize: 26, fontWeight: 700, color: L_TEXT, letterSpacing: '-0.5px' }}>PeakLedger</span>
           </div>
           <div style={{ fontSize: 22, fontWeight: 700, color: L_TEXT, letterSpacing: '-0.5px', marginBottom: 8, lineHeight: 1.3 }}>
@@ -256,7 +256,7 @@ export default function Register() {
       <div style={{ width: isMobile ? '100%' : 480, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: isMobile ? 'flex-start' : 'center', padding: isMobile ? '48px 24px 40px' : '48px 48px', background: R_BG, overflowY: 'auto', minHeight: '100vh' }}>
         {isMobile && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
-            <img src="/logo-icon.svg?v=2" alt="" style={{ width: 32, height: 32, borderRadius: 8 }} />
+            <img src="/logo-icon.svg?v=4" alt="" style={{ width: 32, height: 32, borderRadius: 8 }} />
             <span style={{ fontSize: 20, fontWeight: 700, color: TEXT, letterSpacing: '-0.5px' }}>PeakLedger</span>
           </div>
         )}
