@@ -428,6 +428,13 @@ function BaselineChart({ months, baseline, currentMTD, status, onRefresh, refres
   const toY = v => PAD.top + innerH - ((v - lo) / span) * innerH;
   const zeroY = toY(0);
 
+  const maxAbs = Math.max(Math.abs(lo), Math.abs(hi));
+  const fmtYVal = v => {
+    if (maxAbs >= 1000) return `${v >= 0 ? '+' : ''}${(v / 1000).toFixed(0)}k`;
+    const rounded = Math.round(v);
+    return `${rounded >= 0 ? '+' : '-'}$${Math.abs(rounded)}`;
+  };
+
   const netPts = months.map((m, i) => `${toX(i)},${toY(m.net)}`).join(' ');
   const bandTopPts = months.map((m, i) => `${toX(i)},${toY(m.bandUpper)}`).join(' ');
   const bandBotPts = [...months].reverse().map((m, i) => `${toX(months.length - 1 - i)},${toY(m.bandLower)}`).join(' ');
@@ -509,7 +516,7 @@ function BaselineChart({ months, baseline, currentMTD, status, onRefresh, refres
           const y = PAD.top + (1 - t) * innerH;
           return (
             <text key={t} x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize={9} fill="#555">
-              {v >= 0 ? '+' : ''}{(v / 1000).toFixed(0)}k
+              {fmtYVal(v)}
             </text>
           );
         })}
@@ -1633,16 +1640,30 @@ function Tour({ steps, step, onNext, onPrev, onClose, containerRef }) {
       return r;
     };
 
-    // Temporarily re-enable overflow so scrollIntoView works, then re-lock
+    // Re-enable overflow for slow custom scroll, re-lock when done
     if (container) container.style.overflowY = 'auto';
     const el = document.querySelector(sel);
     if (el) {
-      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      const elB = el.getBoundingClientRect();
+      const cB = container.getBoundingClientRect();
+      const targetTop = container.scrollTop + elB.top - cB.top - (container.clientHeight - elB.height) / 2;
+      const from = container.scrollTop;
+      const dist = targetTop - from;
+      const dur = 900;
+      const t0 = performance.now();
+      const ease = p => p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+      const step = now => {
+        const p = Math.min((now - t0) / dur, 1);
+        container.scrollTop = from + dist * ease(p);
+        if (p < 1) requestAnimationFrame(step);
+        else if (container) container.style.overflowY = 'hidden';
+      };
+      requestAnimationFrame(step);
       setRect(buildRect());
     } else {
       setRect(null);
+      if (container) container.style.overflowY = 'hidden';
     }
-    if (container) container.style.overflowY = 'hidden';
 
     // Keep spotlight synced if any residual browser reflow shifts things
     const measure = () => { const r = buildRect(); if (r) setRect(r); };
@@ -3557,7 +3578,7 @@ export default function Dashboard() {
               {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
             </div>
             <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
-              <span style={{ filter: 'grayscale(1) brightness(1.4)' }}>🔔</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#4b5563" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
               {inboxNotifs.filter(n => !n.read).length > 0 && (
                 <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, background: RED, borderRadius: 8, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px', border: `2px solid ${SIDE_BG}` }}>
                   {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
@@ -3579,7 +3600,7 @@ export default function Dashboard() {
             <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
           </div>
           <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
-            <span style={{ filter: 'grayscale(1) brightness(1.4)' }}>🔔</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="#4b5563" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
             {inboxNotifs.filter(n => !n.read).length > 0 && (
               <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 17, height: 17, background: RED, borderRadius: 9, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', border: `2px solid ${SIDE_BG}` }}>
                 {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
@@ -3833,7 +3854,7 @@ export default function Dashboard() {
             <div style={{ overflowY: 'auto', flex: 1 }}>
               {inboxNotifs.length === 0 ? (
                 <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: TEXT3 }}>
-                  <div style={{ fontSize: 24, marginBottom: 8 }}><span style={{ filter: 'grayscale(1) brightness(1.4)' }}>🔔</span></div>
+                  <div style={{ fontSize: 24, marginBottom: 8 }}><svg width="22" height="22" viewBox="0 0 24 24" fill="#4b5563" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></div>
                   No notifications yet
                 </div>
               ) : inboxNotifs.map((n, i) => (
@@ -4206,24 +4227,35 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
-            <button
-              disabled={checkoutLoading}
-              onClick={async () => {
-                setCheckoutLoading(true);
-                setCheckoutError('');
-                try {
-                  const { data } = await api.post('/stripe/checkout');
-                  window.location.href = data.url;
-                } catch (err) {
-                  setCheckoutError(err.response?.data?.error || 'Something went wrong. Try again.');
-                  setCheckoutLoading(false);
-                }
-              }}
-              style={{ width: '100%', padding: '14px 0', background: BLUE_BTN, border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, cursor: checkoutLoading ? 'default' : 'pointer', opacity: checkoutLoading ? 0.7 : 1, marginBottom: 10 }}>
-              {checkoutLoading ? 'Redirecting to checkout…' : 'Upgrade to Analyst →'}
-            </button>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+              <button
+                disabled={checkoutLoading}
+                onClick={async () => {
+                  setCheckoutLoading(true);
+                  setCheckoutError('');
+                  try {
+                    const { data } = await api.post('/stripe/checkout');
+                    window.location.href = data.url;
+                  } catch (err) {
+                    setCheckoutError(err.response?.data?.error || 'Something went wrong. Try again.');
+                    setCheckoutLoading(false);
+                  }
+                }}
+                style={{ flex: 1, padding: '14px 0', background: BLUE_BTN, border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, cursor: checkoutLoading ? 'default' : 'pointer', opacity: checkoutLoading ? 0.7 : 1 }}>
+                {checkoutLoading ? 'Redirecting…' : 'Upgrade to Analyst →'}
+              </button>
+              <a href="/pricing" style={{ padding: '14px 16px', background: MUTED, border: BORDER, borderRadius: 10, color: TEXT2, fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
+                Learn more
+              </a>
+            </div>
             {checkoutError && <div style={{ textAlign: 'center', fontSize: 12, color: RED, marginBottom: 8 }}>{checkoutError}</div>}
-            <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3 }}>Secured by Stripe. Cancel anytime.</div>
+            <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3, marginBottom: 8 }}>Secured by Stripe. Cancel anytime.</div>
+            <div style={{ textAlign: 'center', fontSize: 11, color: TEXT3 }}>
+              By subscribing you agree to our{' '}
+              <a href="/terms" style={{ color: TEXT2, textDecoration: 'underline' }}>Terms of Service</a>
+              {' '}and{' '}
+              <a href="/privacy" style={{ color: TEXT2, textDecoration: 'underline' }}>Privacy Policy</a>.
+            </div>
           </div>
         </div>
       )}
@@ -6019,7 +6051,7 @@ export default function Dashboard() {
                             { label: 'Total Debt',     value: fmt(totalDebt),            color: RED    },
                             { label: 'Payoff In',      value: fmtMo(active.months),      color: TEXT   },
                             { label: 'Total Interest', value: fmt(active.totalInterest),  color: YELLOW },
-                            { label: interestDiff >= 0 ? `Saved vs ${plannerStrategy === 'avalanche' ? 'Snowball' : 'Avalanche'}` : `Costs More vs ${plannerStrategy === 'avalanche' ? 'Snowball' : 'Avalanche'}`,
+                            { label: `vs ${plannerStrategy === 'avalanche' ? 'Snowball' : 'Avalanche'}`,
                               value: `${interestDiff >= 0 ? '-' : '+'}${fmt(Math.abs(interestDiff))}`, color: interestDiff >= 0 ? GREEN : RED },
                           ].map(({ label, value, color }) => (
                             <div key={label} style={{ background: DARK, border: BORDER, borderRadius: 8, padding: '14px 16px' }}>
