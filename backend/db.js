@@ -158,6 +158,14 @@ try {
     PRIMARY KEY (user_id, account_id)
   )`);
 } catch {}
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS holdings_cache (
+    user_id INTEGER NOT NULL,
+    raw_json TEXT NOT NULL,
+    synced_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id)
+  )`);
+} catch {}
 try { db.exec(`CREATE TABLE IF NOT EXISTS net_worth_snapshots (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id),

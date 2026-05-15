@@ -6,7 +6,8 @@ function getUserTokens(userId) {
   return db.prepare('SELECT * FROM plaid_tokens WHERE user_id = ?').all(userId);
 }
 
-const STALE_MS = 30 * 60 * 1000; // 30 minutes
+const STALE_MS       = 24 * 60 * 60 * 1000; // 24 hours
+const HOLDINGS_TTL   = 24 * 60 * 60 * 1000; // 24 hours
 const syncInProgress = new Set();
 
 function isStale(userId) {
@@ -122,6 +123,19 @@ async function getHoldings(req) {
   const tokens = getUserTokens(req.user.id);
   if (!tokens.length) return { holdings: getDummyData().holdings, demo: true };
 
+  // Check cache first
+  const cached = db.prepare('SELECT raw_json, synced_at FROM holdings_cache WHERE user_id = ?').get(req.user.id);
+  if (cached) {
+    const age = Date.now() - new Date(cached.synced_at).getTime();
+    if (age < HOLDINGS_TTL) {
+      console.log(`[holdings] user=${req.user.id} cache=hit age=${Math.round(age / 60000)}min`);
+      return JSON.parse(cached.raw_json);
+    }
+    console.log(`[holdings] user=${req.user.id} cache=stale — refreshing from Plaid`);
+  } else {
+    console.log(`[holdings] user=${req.user.id} cache=miss — fetching from Plaid`);
+  }
+
   const results = await Promise.all(
     tokens.map(({ access_token, institution_name }) =>
       plaidClient.investmentsHoldingsGet({ access_token })
@@ -147,7 +161,9 @@ async function getHoldings(req) {
   // User has bank accounts connected but no brokerage — don't show demo investments
   if (!holdings.length) return { holdings: [], noBrokerage: true };
 
-  return { holdings };
+  const payload = { holdings };
+  db.prepare('INSERT OR REPLACE INTO holdings_cache (user_id, raw_json, synced_at) VALUES (?, ?, datetime(\'now\'))').run(req.user.id, JSON.stringify(payload));
+  return payload;
 }
 
 function getManualLiabilities(userId) {
