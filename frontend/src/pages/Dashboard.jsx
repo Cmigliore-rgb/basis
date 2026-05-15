@@ -17,7 +17,7 @@ const EXAMPLE_BG = 'var(--example-bg, #0a1628)';
 const OVERLAY  = 'var(--overlay,  rgba(0,0,0,0.6))';
 const BLUE     = 'var(--accent,     #4da3ff)';
 const BLUE_BTN = 'var(--accent-btn, #0066f5)';
-const RED      = 'var(--red,   #f87171)';
+const RED      = 'var(--red,   #ef4444)';
 const GREEN    = 'var(--green, #4ade80)';
 const YELLOW   = '#fbbf24';
 
@@ -60,7 +60,11 @@ function ConnectedAccountsCard({ onFixConnection }) {
           {[80, 60, 70].map(w => <div key={w} className="skel" style={{ height: 14, width: `${w}%` }} />)}
         </div>
       ) : accounts.length === 0 ? (
-        <div style={{ fontSize: 13, color: TEXT2 }}>No accounts connected yet.</div>
+        <div style={{ textAlign: 'center', padding: '12px 0' }}>
+          <div style={{ fontSize: 24, marginBottom: 8 }}>◈</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: TEXT2, marginBottom: 4 }}>No accounts connected</div>
+          <div style={{ fontSize: 12, color: TEXT3 }}>Use the connect button in the sidebar to link a bank or brokerage.</div>
+        </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {accounts.map(a => (
@@ -2427,6 +2431,27 @@ function DragSection({ id, panel, order, onReorder, children, handleTop = 10 }) 
   );
 }
 
+function useCountUp(target, duration = 700) {
+  const [display, setDisplay] = useState(target);
+  const prev = useRef(target);
+  useEffect(() => {
+    const from = prev.current;
+    if (from === target || Math.abs(target - from) < 1) { setDisplay(target); prev.current = target; return; }
+    const start = performance.now();
+    let raf;
+    const tick = (now) => {
+      const t = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      setDisplay(from + (target - from) * ease);
+      if (t < 1) raf = requestAnimationFrame(tick);
+      else { setDisplay(target); prev.current = target; }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return display;
+}
+
 export default function Dashboard() {
   const { user, logout, refreshUser, isPremium, isProfessor, isAdmin, isStudent, isUser } = useAuth();
   const [panel, setPanel] = useState(() => localStorage.getItem('pl_panel') || 'overview');
@@ -2644,6 +2669,7 @@ export default function Dashboard() {
   const [tax401k, setTax401k] = useState('0');
   const [taxItemized, setTaxItemized] = useState('0');
   const mainRef = useRef(null);
+  const scrollPositions = useRef({});
   const [courseView, setCourseView] = useState('schedule'); // 'schedule' | 'calendar'
   const [calMonth, setCalMonth] = useState(3); // 0=Jan … 4=May (default April)
   const [theme, setTheme] = useState(() => localStorage.getItem('pl_theme') || 'light');
@@ -2891,7 +2917,12 @@ export default function Dashboard() {
     if (saved !== null) return saved === 'true';
     return !!(user?.enrollments?.length);
   });
-  const switchEduMode = (val) => { localStorage.setItem('pl_edu_mode', String(val)); setEduMode(val); };
+  const [modeFading, setModeFading] = useState(false);
+  const switchEduMode = (val) => {
+    if (val === eduMode) { localStorage.setItem('pl_edu_mode', String(val)); setEduMode(val); return; }
+    setModeFading(true);
+    setTimeout(() => { localStorage.setItem('pl_edu_mode', String(val)); setEduMode(val); setModeFading(false); }, 160);
+  };
   const EDU_PANELS = new Set(['edu-courses', 'edu-sandbox', 'edu-assignments', 'learn', 'prof-dashboard']);
   useEffect(() => {
     if (hideEduSection && EDU_PANELS.has(panel)) { switchEduMode(false); setPanel('overview'); }
@@ -2964,7 +2995,16 @@ export default function Dashboard() {
     r.style.setProperty('--accent-btn', p.btn);
     localStorage.setItem('pl_accent', accent);
   }, [accent]);
-  useEffect(() => { localStorage.setItem('pl_panel', panel); }, [panel]);
+  const prevPanelRef = useRef(panel);
+  useEffect(() => {
+    localStorage.setItem('pl_panel', panel);
+    const titles = { overview: 'Overview', cashflow: 'Cash Flow', investments: 'Investments', insights: 'Market Insights', learn: 'Learn', settings: 'Settings', assistant: 'AI Assistant', 'edu-courses': 'My Courses', 'edu-assignments': 'Assignments', 'prof-dashboard': 'Professor Hub' };
+    document.title = `${titles[panel] || 'Dashboard'} | PeakLedger`;
+    if (mainRef.current) scrollPositions.current[prevPanelRef.current] = mainRef.current.scrollTop;
+    prevPanelRef.current = panel;
+    const saved = scrollPositions.current[panel] ?? 0;
+    requestAnimationFrame(() => { if (mainRef.current) mainRef.current.scrollTop = saved; });
+  }, [panel]);
   useEffect(() => {
     if (settingsAnchor && panel === 'settings') {
       const el = document.getElementById(`settings-${settingsAnchor}`);
@@ -3437,6 +3477,9 @@ export default function Dashboard() {
   const totalPortfolio   = holdings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
   const totalLiabilities = [...(liabilities.credit || []), ...(liabilities.student || []), ...(liabilities.mortgage || []), ...(liabilities.car || [])].reduce((s, l) => s + (l.balances?.current || 0), 0);
   const netWorth         = totalCash + totalPortfolio - totalLiabilities;
+  const animNetWorth     = useCountUp(netWorth);
+  const animAssets       = useCountUp(totalCash + totalPortfolio);
+  const animLiabilities  = useCountUp(totalLiabilities);
   const monthlySpend   = budget.reduce((s, b) => s + b.total, 0);
 
   const sbData = sandboxDataset ? (SANDBOX_DATA[sandboxDataset] || {}) : {};
@@ -3889,7 +3932,7 @@ export default function Dashboard() {
             <button data-tour="nav-settings" onClick={() => setPanel('settings')}
               title={sidebarCollapsed ? 'Settings' : undefined}
               style={{ width: '100%', padding: '8px 0', background: panel === 'settings' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER_C}`, borderRadius: 8, color: panel === 'settings' ? TEXT : TEXT2, fontSize: sidebarCollapsed ? 14 : 12, fontWeight: panel === 'settings' ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.15s' }}>
-              {sidebarCollapsed ? '⚙' : (<>⚙ Settings{hiddenPanels.size > 0 && <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(251,191,36,0.15)', color: YELLOW, padding: '2px 5px', borderRadius: 4 }}>{hiddenPanels.size} hidden</span>}</>)}
+              {sidebarCollapsed ? '⚙' : (<>⚙ Settings{hiddenPanels.size > 0 && <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(251,191,36,0.15)', color: YELLOW, padding: '2px 5px', borderRadius: 4 }}>{hiddenPanels.size} hidden</span>}<span style={{ marginLeft: 'auto', fontSize: 9, color: TEXT3, background: MUTED, border: BORDER, borderRadius: 3, padding: '1px 5px', letterSpacing: '0.2px' }}>⌘K</span></>)}
             </button>
           </div>
         </div>{/* end sidebar-nav */}
@@ -4761,6 +4804,7 @@ export default function Dashboard() {
               button { transition: opacity 0.15s, transform 0.1s; }
               button:hover:not(:disabled) { opacity: 0.88; }
               button:active:not(:disabled) { transform: scale(0.97); }
+              input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(77,163,255,0.6) !important; box-shadow: 0 0 0 3px rgba(77,163,255,0.12) !important; transition: border-color 0.15s, box-shadow 0.15s; }
               @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
               @media (max-width: 768px) {
                 .tab-bar { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-wrap: nowrap !important; }
@@ -4782,7 +4826,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            <div key={panel} className="panel-enter">
+            <div key={panel} className="panel-enter" style={{ opacity: modeFading ? 0 : 1, transition: 'opacity 0.16s ease' }}>
             {/* ── OVERVIEW ──────────────────────────────── */}
             {panel === 'overview' && eduMode && (() => {
               const activeCourse = enrolledCourses.find(c => c.id === selectedCourseId) || enrolledCourses[0];
@@ -5253,9 +5297,9 @@ export default function Dashboard() {
                 <div data-tour="overview-snapshot">
                 <div data-tour="overview-cards" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : g3, gap: isMobile ? 10 : 16, marginBottom: 24, marginTop: 24 }}>
                   {[
-                    { label: 'Net Worth',         value: fmt(netWorth),                   sub: 'Assets − Liabilities' },
-                    { label: 'Total Assets',      value: fmt(totalCash + totalPortfolio), sub: (() => { const n = accounts.filter(a => !a.closed && a.type !== 'investment').length; return `${n} account${n !== 1 ? 's' : ''} · ${holdings.length} position${holdings.length !== 1 ? 's' : ''}`; })() },
-                    { label: 'Total Liabilities', value: fmt(totalLiabilities),           sub: (() => { const n = (liabilities.credit?.length || 0) + (liabilities.student?.length || 0) + (liabilities.mortgage?.length || 0) + (liabilities.car?.length || 0); return `${n} account${n !== 1 ? 's' : ''}`; })() },
+                    { label: 'Net Worth',         value: fmt(animNetWorth),   sub: 'Assets − Liabilities' },
+                    { label: 'Total Assets',      value: fmt(animAssets),     sub: (() => { const n = accounts.filter(a => !a.closed && a.type !== 'investment').length; return `${n} account${n !== 1 ? 's' : ''} · ${holdings.length} position${holdings.length !== 1 ? 's' : ''}`; })() },
+                    { label: 'Total Liabilities', value: fmt(animLiabilities), sub: (() => { const n = (liabilities.credit?.length || 0) + (liabilities.student?.length || 0) + (liabilities.mortgage?.length || 0) + (liabilities.car?.length || 0); return `${n} account${n !== 1 ? 's' : ''}`; })() },
                   ].map(({ label, value, sub, color }) => (
                     <div key={label} className="lc" style={{ ...CARD, ...(isMobile ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } : {}) }}>
                       <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
@@ -5531,7 +5575,11 @@ export default function Dashboard() {
                   <div data-tour="overview-txns" className="lc" style={CARD}>
                     <div style={{ fontWeight: 600, marginBottom: 16 }}>Recent Transactions</div>
                     {transactions.length === 0 ? (
-                      <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>No transactions yet</div>
+                      <div style={{ textAlign: 'center', padding: '28px 16px' }}>
+                        <div style={{ fontSize: 28, marginBottom: 8 }}>↕</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: TEXT2, marginBottom: 4 }}>No transactions yet</div>
+                        <div style={{ fontSize: 12, color: TEXT3 }}>Connect a bank account to see your spending here.</div>
+                      </div>
                     ) : (
                       <div className="card-scroll" style={{ maxHeight: 260 }}>
                         {transactions.map((t, i, arr) => (
@@ -8600,7 +8648,11 @@ export default function Dashboard() {
                 {(() => {
                   const displayArticles = articles;
                   return displayArticles.length === 0 ? (
-                  <div style={{ ...CARD, textAlign: 'center', padding: 48, color: TEXT2 }}>No articles found</div>
+                  <div style={{ ...CARD, textAlign: 'center', padding: '48px 24px' }}>
+                    <div style={{ fontSize: 32, marginBottom: 12 }}>◬</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: TEXT2, marginBottom: 6 }}>No articles found</div>
+                    <div style={{ fontSize: 13, color: TEXT3 }}>{tickerFilter ? `No news for "${tickerFilter}" — try a different ticker.` : 'Check back soon for the latest market news.'}</div>
+                  </div>
                 ) : (
                   <div data-tour="news-articles" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 16 }}>
                     {displayArticles.map((a, i) => (
