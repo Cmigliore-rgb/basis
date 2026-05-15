@@ -58,7 +58,13 @@ router.post('/register', async (req, res) => {
   }
 
   let role = inferRole(email);
-  if (requestedRole === 'professor' && role === 'user') role = 'professor';
+  if (requestedRole === 'professor' && role === 'user') {
+    const validCode = process.env.PROFESSOR_INVITE_CODE;
+    if (!validCode || req.body.professorCode !== validCode) {
+      return res.status(400).json({ error: 'Invalid professor access code' });
+    }
+    role = 'professor';
+  }
   // A valid course code elevates to student role regardless of email domain
   if (courseRow && role === 'user') role = 'student';
 

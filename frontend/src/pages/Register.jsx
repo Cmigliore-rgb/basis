@@ -48,75 +48,33 @@ export default function Register() {
     window.addEventListener('resize', h);
     return () => window.removeEventListener('resize', h);
   }, []);
-  const [form, setForm]           = useState({ name: '', email: '', password: '', role: 'user', courseCode: '' });
+  const [form, setForm]           = useState({ name: '', email: '', password: '', role: 'user', courseCode: '', professorCode: '' });
   const [error, setError]         = useState('');
   const [loading, setLoading]     = useState(false);
-  const [oauthLoading, setOauthLoading] = useState(null);
   const [codeState, setCodeState] = useState(null);
   const codeTimer = useRef(null);
-  const googleBtnRef = useRef(null);
 
   const isEdu         = form.email.toLowerCase().endsWith('.edu');
-  const showCodeField = form.role === 'student' || form.role === 'professor' || isEdu;
+  const showCodeField = form.role === 'student' || isEdu;
   const showOAuth     = GOOGLE_CLIENT_ID || MICROSOFT_CLIENT_ID;
 
-  // Initialize Google Sign-In button
+  // Read OAuth errors from URL (set by callback pages on failure)
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID || !googleBtnRef.current) return;
-    const init = () => {
-      if (!window.google?.accounts?.id) return;
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredential,
-      });
-      window.google.accounts.id.renderButton(googleBtnRef.current, {
-        theme: 'filled_black',
-        size: 'large',
-        text: 'signup_with',
-        shape: 'rectangular',
-        width: googleBtnRef.current.offsetWidth || 380,
-      });
-    };
-    if (window.google?.accounts?.id) { init(); }
-    else {
-      const script = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
-      if (script) script.addEventListener('load', init);
-    }
+    const params = new URLSearchParams(window.location.search);
+    const oauthError = params.get('ms_error') || params.get('google_error');
+    if (oauthError) setError(oauthError);
   }, []);
 
-  const handleGoogleCredential = async ({ credential }) => {
-    setError(''); setOauthLoading('google');
-    try {
-      const { data } = await api.post('/auth/google', { credential });
-      login(data.token, data.user);
-      navigate('/app');
-    } catch (err) {
-      setError(err.response?.data?.error || 'Google sign-up failed');
-    } finally { setOauthLoading(null); }
+  const handleGoogle = () => {
+    const redirectUri = `${window.location.origin}/auth/google/callback`;
+    const nonce = Math.random().toString(36).slice(2);
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&response_type=id_token&scope=openid%20email%20profile&nonce=${nonce}&redirect_uri=${encodeURIComponent(redirectUri)}&response_mode=fragment`;
   };
 
   const handleMicrosoft = () => {
-    setError(''); setOauthLoading('microsoft');
     const redirectUri = `${window.location.origin}/auth/microsoft/callback`;
     const nonce = Math.random().toString(36).slice(2);
-    const url = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=id_token&scope=openid%20email%20profile&nonce=${nonce}&redirect_uri=${encodeURIComponent(redirectUri)}&response_mode=fragment`;
-    const popup = window.open(url, 'ms_auth', 'width=480,height=640,scrollbars=yes,resizable=yes');
-    const handler = async (e) => {
-      if (e.origin !== window.location.origin || e.data?.type !== 'ms_auth') return;
-      window.removeEventListener('message', handler);
-      if (e.data.error) { setError(e.data.error); setOauthLoading(null); return; }
-      try {
-        const { data } = await api.post('/auth/microsoft', { id_token: e.data.id_token });
-        login(data.token, data.user);
-        navigate('/app');
-      } catch (err) {
-        setError(err.response?.data?.error || 'Microsoft sign-up failed');
-      } finally { setOauthLoading(null); }
-    };
-    window.addEventListener('message', handler);
-    const timer = setInterval(() => {
-      if (popup?.closed) { clearInterval(timer); window.removeEventListener('message', handler); setOauthLoading(null); }
-    }, 500);
+    window.location.href = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=id_token&scope=openid%20email%20profile&nonce=${nonce}&redirect_uri=${encodeURIComponent(redirectUri)}&response_mode=fragment`;
   };
 
 
@@ -150,6 +108,7 @@ export default function Register() {
       const { data } = await api.post('/auth/register', {
         name: form.name, email: form.email, password: form.password,
         role: form.role, courseCode: form.courseCode.trim().toUpperCase() || undefined,
+        professorCode: form.professorCode || undefined,
       });
       login(data.token, data.user);
       navigate('/app');
@@ -214,20 +173,27 @@ export default function Register() {
         {showOAuth && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
             {GOOGLE_CLIENT_ID && (
-              <div ref={googleBtnRef} style={{ width: '100%', minHeight: 44, borderRadius: 8, overflow: 'hidden', opacity: oauthLoading === 'google' ? 0.6 : 1, transition: 'opacity 0.15s' }} />
+              <button onClick={handleGoogle}
+                style={{ width: '100%', padding: '11px 14px', background: '#fff', border: 'none', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer' }}>
+                <svg width="18" height="18" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                <span style={{ fontSize: 15, fontWeight: 600, color: '#000' }}>Continue with Google</span>
+              </button>
             )}
             {MICROSOFT_CLIENT_ID && (
-              <button onClick={handleMicrosoft} disabled={!!oauthLoading}
-                style={{ width: '100%', padding: '11px 14px', background: '#fff', border: 'none', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: oauthLoading ? 'default' : 'pointer', opacity: oauthLoading === 'microsoft' ? 0.6 : 1, transition: 'opacity 0.15s' }}>
+              <button onClick={handleMicrosoft}
+                style={{ width: '100%', padding: '11px 14px', background: '#fff', border: 'none', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer' }}>
                 <svg width="18" height="18" viewBox="0 0 21 21">
                   <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
                   <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
                   <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
                   <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
                 </svg>
-                <span style={{ fontSize: 15, fontWeight: 600, color: '#000' }}>
-                  {oauthLoading === 'microsoft' ? 'Signing up…' : 'Continue with Microsoft'}
-                </span>
+                <span style={{ fontSize: 15, fontWeight: 600, color: '#000' }}>Continue with Microsoft</span>
               </button>
             )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '4px 0' }}>
@@ -300,6 +266,20 @@ export default function Register() {
                 </div>
               )}
               {codeState?.error && <div style={{ marginTop: 6, fontSize: 12, color: '#f87171' }}>{codeState.error}</div>}
+            </div>
+          )}
+
+          {form.role === 'professor' && (
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>
+                Professor Access Code
+              </label>
+              <input
+                type="text" placeholder="Enter your access code" value={form.professorCode}
+                onChange={e => setForm(p => ({ ...p, professorCode: e.target.value }))}
+                style={{ ...inp, border: BORDER }}
+              />
+              <div style={{ marginTop: 6, fontSize: 12, color: TEXT3 }}>Contact your institution or PeakLedger to get an access code.</div>
             </div>
           )}
 
