@@ -59,7 +59,8 @@ router.post('/register', async (req, res) => {
 
   let role = inferRole(email);
   if (requestedRole === 'professor' && role === 'user') {
-    const validCode = process.env.PROFESSOR_INVITE_CODE;
+    const dbRow = db.prepare("SELECT value FROM app_settings WHERE key = 'professor_invite_code'").get();
+    const validCode = dbRow?.value || process.env.PROFESSOR_INVITE_CODE;
     if (!validCode || req.body.professorCode !== validCode) {
       return res.status(400).json({ error: 'Invalid professor access code' });
     }
@@ -618,6 +619,34 @@ router.post('/microsoft', async (req, res) => {
     console.error('Microsoft auth error:', err.message);
     res.status(401).json({ error: 'Invalid Microsoft token' });
   }
+});
+
+// ── Professor access code management (admin only) ─────────────────────────
+
+function getProfessorCode() {
+  const row = db.prepare("SELECT value FROM app_settings WHERE key = 'professor_invite_code'").get();
+  return row?.value || process.env.PROFESSOR_INVITE_CODE || null;
+}
+
+router.get('/admin/professor-code', requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  const code = getProfessorCode();
+  res.json({ code });
+});
+
+router.post('/admin/professor-code', requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  const code = req.body.code?.trim().toUpperCase();
+  if (!code || code.length < 4) return res.status(400).json({ error: 'Code must be at least 4 characters' });
+  db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('professor_invite_code', ?)").run(code);
+  res.json({ code });
+});
+
+router.post('/admin/professor-code/regenerate', requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  const code = 'PROF-' + crypto.randomBytes(3).toString('hex').toUpperCase();
+  db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('professor_invite_code', ?)").run(code);
+  res.json({ code });
 });
 
 module.exports = router;

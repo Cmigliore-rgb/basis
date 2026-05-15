@@ -207,6 +207,14 @@ try {
     )
   `);
 } catch {}
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `);
+} catch {}
 
 // Auto-verify admin and professor accounts
 db.prepare("UPDATE users SET email_verified = 1 WHERE role IN ('admin', 'professor') AND email_verified = 0").run();

@@ -2862,6 +2862,10 @@ export default function Dashboard() {
   const [eduReverifyLoading, setEduReverifyLoading] = useState(false);
   const [eduExpireResult, setEduExpireResult] = useState(null);
   const [eduExpireLoading, setEduExpireLoading] = useState(false);
+  const [profCode, setProfCode] = useState(null);
+  const [profCodeInput, setProfCodeInput] = useState('');
+  const [profCodeSaving, setProfCodeSaving] = useState(false);
+  const [profCodeMsg, setProfCodeMsg] = useState('');
   const fetchAdminUsers = async () => {
     setAdminUsersLoading(true);
     try { const r = await api.get('/auth/users'); setAdminUsers(r.data.users || []); }
@@ -9886,6 +9890,67 @@ export default function Dashboard() {
                       <div style={{ fontSize: 13, color: TEXT3, textAlign: 'center', padding: '16px 0' }}>
                         Click "Load Users" to fetch the full user list.
                       </div>
+                    )}
+                  </div>
+                )}
+
+                {isAdmin && (
+                  <div style={{ ...CARD, marginBottom: 16, border: `1px solid rgba(167,139,250,0.25)` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>Professor Access Code</div>
+                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>Admin Only</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Anyone registering as a professor must enter this code. Set it here or regenerate a new one.</div>
+                    {profCode === null ? (
+                      <button onClick={async () => {
+                        try { const r = await api.get('/auth/admin/professor-code'); setProfCode(r.data.code || ''); setProfCodeInput(r.data.code || ''); }
+                        catch { setProfCode(''); }
+                      }} style={{ padding: '8px 16px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                        Show Current Code
+                      </button>
+                    ) : (
+                      <>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+                          <div style={{ flex: 1, padding: '10px 14px', background: DARK, border: BORDER, borderRadius: 8, fontFamily: 'monospace', fontSize: 16, fontWeight: 700, color: profCode ? TEXT : TEXT3, letterSpacing: '2px' }}>
+                            {profCode || 'No code set'}
+                          </div>
+                          {profCode && (
+                            <button onClick={() => { navigator.clipboard.writeText(profCode); setProfCodeMsg('Copied!'); setTimeout(() => setProfCodeMsg(''), 2000); }}
+                              style={{ padding: '10px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                              {profCodeMsg || 'Copy'}
+                            </button>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, marginBottom: 0 }}>
+                          <input value={profCodeInput} onChange={e => setProfCodeInput(e.target.value.toUpperCase())}
+                            placeholder="Set a custom code…"
+                            style={{ flex: 1, padding: '9px 12px', background: DARK, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'monospace', letterSpacing: '1px' }}
+                          />
+                          <button disabled={profCodeSaving || !profCodeInput.trim() || profCodeInput.trim() === profCode}
+                            onClick={async () => {
+                              setProfCodeSaving(true);
+                              try { const r = await api.post('/auth/admin/professor-code', { code: profCodeInput }); setProfCode(r.data.code); setProfCodeMsg('Saved!'); setTimeout(() => setProfCodeMsg(''), 2000); }
+                              catch (e) { setProfCodeMsg(e.response?.data?.error || 'Error'); setTimeout(() => setProfCodeMsg(''), 3000); }
+                              finally { setProfCodeSaving(false); }
+                            }}
+                            style={{ padding: '9px 14px', background: '#0066f5', border: 'none', borderRadius: 7, color: '#fff', fontSize: 13, fontWeight: 600, cursor: (profCodeSaving || !profCodeInput.trim() || profCodeInput.trim() === profCode) ? 'default' : 'pointer', opacity: (profCodeSaving || !profCodeInput.trim() || profCodeInput.trim() === profCode) ? 0.5 : 1 }}>
+                            Save
+                          </button>
+                          <button disabled={profCodeSaving}
+                            onClick={async () => {
+                              setProfCodeSaving(true);
+                              try { const r = await api.post('/auth/admin/professor-code/regenerate'); setProfCode(r.data.code); setProfCodeInput(r.data.code); setProfCodeMsg('Regenerated!'); setTimeout(() => setProfCodeMsg(''), 2000); }
+                              catch { setProfCodeMsg('Error'); setTimeout(() => setProfCodeMsg(''), 3000); }
+                              finally { setProfCodeSaving(false); }
+                            }}
+                            style={{ padding: '9px 14px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 13, fontWeight: 600, cursor: profCodeSaving ? 'default' : 'pointer', opacity: profCodeSaving ? 0.5 : 1, whiteSpace: 'nowrap' }}>
+                            Regen
+                          </button>
+                        </div>
+                        {profCodeMsg && !['Copied!', 'Saved!', 'Regenerated!'].includes(profCodeMsg) && (
+                          <div style={{ marginTop: 8, fontSize: 12, color: '#f87171' }}>{profCodeMsg}</div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
