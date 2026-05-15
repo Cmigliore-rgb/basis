@@ -807,7 +807,7 @@ function AIInsightCard({ isDemoData, demoKey, onGetAdvice, loading, text }) {
   const [demoRevealed, setDemoRevealed] = React.useState(false);
   const demoText = DEMO_AI[demoKey];
   if (!demoText && !onGetAdvice) return null;
-  const revealed = isDemoData ? demoRevealed : !!text;
+  const revealed = isDemoData ? demoRevealed : (!!text || loading);
   const displayText = isDemoData ? demoText : text;
   return (
     <div style={{ marginTop: 16, padding: '14px 16px', background: EXAMPLE_BG, border: `1px solid var(--example-border, #1a3a6b)`, borderRadius: 10 }}>
@@ -827,11 +827,14 @@ function AIInsightCard({ isDemoData, demoKey, onGetAdvice, loading, text }) {
       </div>
       {revealed && (
         <>
-          <div style={{ fontSize: 13, lineHeight: 1.7, color: TEXT, whiteSpace: 'pre-wrap' }}>{displayText}</div>
-          {!isDemoData && (
-            <button onClick={onGetAdvice} disabled={loading}
-              style={{ marginTop: 10, padding: '5px 12px', background: 'transparent', color: TEXT3, border: `1px solid ${MUTED}`, borderRadius: 6, cursor: loading ? 'default' : 'pointer', fontSize: 11, fontWeight: 600, opacity: loading ? 0.7 : 1 }}>
-              {loading ? 'Refreshing...' : 'Refresh'}
+          <div style={{ fontSize: 13, lineHeight: 1.7, color: TEXT, whiteSpace: 'pre-wrap' }}>
+            {displayText}
+            {loading && <span className="ai-cursor" />}
+          </div>
+          {!isDemoData && !loading && (
+            <button onClick={onGetAdvice}
+              style={{ marginTop: 10, padding: '5px 12px', background: 'transparent', color: TEXT3, border: `1px solid ${MUTED}`, borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>
+              Refresh
             </button>
           )}
           <div style={{ marginTop: 10, fontSize: 10, color: TEXT3, lineHeight: 1.5, borderTop: `1px solid var(--example-border, #1a3a6b)`, paddingTop: 8 }}>
@@ -3349,6 +3352,35 @@ export default function Dashboard() {
     setLimitInput('');
   }, []);
 
+  const streamChat = useCallback(async (payload, onDelta, onDone, onError) => {
+    const token = localStorage.getItem('pl_token');
+    try {
+      const res = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) { onError?.(); return; }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (data === '[DONE]') { onDone?.(); return; }
+          try { const { delta, error } = JSON.parse(data); if (error) { onError?.(); return; } if (delta) onDelta(delta); } catch {}
+        }
+      }
+      onDone?.();
+    } catch { onError?.(); }
+  }, []);
+
   const getAdvice = useCallback(async (panelKey) => {
     setAdviceState(s => ({ ...s, [panelKey]: { loading: true, text: '' } }));
     const prompts = {
@@ -3374,16 +3406,16 @@ export default function Dashboard() {
           extraContext.performanceVsSP500 = { portfolioPct: +pfChg.toFixed(2), sp500Pct: +spChg.toFixed(2), alphaPct: +(pfChg - spChg).toFixed(2), period: perfPeriod };
         }
       }
-      const res = await api.post('/chat', {
-        message: prompts[panelKey] || 'Give me financial recommendations based on my data.',
-        history: [],
-        context: { accounts: slimAccounts, transactions: slimTxns, holdings: slimHoldings, budget: budgetMap, ...extraContext },
-      });
-      setAdviceState(s => ({ ...s, [panelKey]: { loading: false, text: res.data.reply } }));
+      await streamChat(
+        { message: prompts[panelKey] || 'Give me financial recommendations based on my data.', history: [], context: { accounts: slimAccounts, transactions: slimTxns, holdings: slimHoldings, budget: budgetMap, ...extraContext } },
+        delta => setAdviceState(s => ({ ...s, [panelKey]: { loading: false, text: (s[panelKey]?.text || '') + delta } })),
+        () => setAdviceState(s => ({ ...s, [panelKey]: { ...s[panelKey], loading: false } })),
+        () => setAdviceState(s => ({ ...s, [panelKey]: { loading: false, text: 'Could not get advice. Check GROQ_API_KEY in backend .env.' } })),
+      );
     } catch {
       setAdviceState(s => ({ ...s, [panelKey]: { loading: false, text: 'Could not get advice. Check GROQ_API_KEY in backend .env.' } }));
     }
-  }, [accounts, transactions, holdings, budget, budgetLimits, sectorData, portfolioPerf, perfPeriod]);
+  }, [accounts, transactions, holdings, budget, budgetLimits, sectorData, portfolioPerf, perfPeriod, streamChat]);
 
   const totalCash        = accounts.filter(a => !a.closed && a.type !== 'investment' && a.type !== 'credit').reduce((s, a) => s + (a.balances?.current || 0), 0);
   const totalPortfolio   = holdings.reduce((s, h) => s + ((h.quantity || 0) * (h.institution_price || 0)), 0);
@@ -3486,18 +3518,19 @@ export default function Dashboard() {
       const slimAccounts = accounts.map(a => ({ name: a.name, type: a.type, subtype: a.subtype, balance: a.balances?.current ?? a.balance }));
       const slimTxns     = transactions.slice(0, 40).map(t => ({ date: t.date, name: t.merchant_name || t.name, amount: t.amount, category: fmtCat(t.personal_finance_category?.primary || t.category?.[0]) }));
       const slimHoldings = holdings.map(h => ({ name: h.security?.name || h.name, ticker: h.security?.ticker_symbol || h.ticker_symbol, quantity: h.quantity, price: h.institution_price, value: (h.quantity || 0) * (h.institution_price || 0) }));
-      const res = await api.post('/chat', {
-        message: text,
-        history: chatMessages.map(m => ({ role: m.role, content: m.content })),
-        context: { accounts: slimAccounts, transactions: slimTxns, holdings: slimHoldings, budget: budgetMap },
-      });
-      setChatMessages([...newHistory, { role: 'assistant', content: res.data.reply }]);
+      const placeholder = { role: 'assistant', content: '' };
+      setChatMessages([...newHistory, placeholder]);
+      await streamChat(
+        { message: text, history: chatMessages.map(m => ({ role: m.role, content: m.content })), context: { accounts: slimAccounts, transactions: slimTxns, holdings: slimHoldings, budget: budgetMap } },
+        delta => setChatMessages(prev => { const next = [...prev]; next[next.length - 1] = { role: 'assistant', content: (next[next.length - 1].content || '') + delta }; return next; }),
+        () => setChatLoading(false),
+        () => { setChatMessages(prev => { const next = [...prev]; next[next.length - 1] = { role: 'assistant', content: 'Sorry, couldn\'t get a response. Check GROQ_API_KEY in backend .env.' }; return next; }); setChatLoading(false); },
+      );
     } catch {
       setChatMessages([...newHistory, { role: 'assistant', content: 'Sorry, couldn\'t get a response. Check GROQ_API_KEY in backend .env.' }]);
-    } finally {
       setChatLoading(false);
     }
-  }, [chatInput, chatLoading, chatMessages, accounts, transactions, holdings, budget, budgetLimits]);
+  }, [chatInput, chatLoading, chatMessages, accounts, transactions, holdings, budget, budgetLimits, streamChat]);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -4611,6 +4644,10 @@ export default function Dashboard() {
               .card-scroll::-webkit-scrollbar { display: none; }
               .drag-section:hover .drag-handle { opacity: 1 !important; }
               .drag-section[draggable] { cursor: default; }
+              @keyframes panelFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+              .panel-enter { animation: panelFade 0.18s ease forwards; }
+              @keyframes aiCursorBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+              .ai-cursor { display: inline-block; width: 2px; height: 1em; background: var(--accent, #4da3ff); margin-left: 2px; vertical-align: text-bottom; animation: aiCursorBlink 0.8s ease infinite; border-radius: 1px; }
               .lc { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
               .lc:hover { border-color: var(--border-c, #3d3d3d) !important; box-shadow: 0 4px 22px rgba(0,0,0,0.25); }
               .lr { transition: background 0.1s; }
@@ -4639,6 +4676,7 @@ export default function Dashboard() {
               </div>
             )}
 
+            <div key={panel} className="panel-enter">
             {/* ── OVERVIEW ──────────────────────────────── */}
             {panel === 'overview' && eduMode && (() => {
               const activeCourse = enrolledCourses.find(c => c.id === selectedCourseId) || enrolledCourses[0];
@@ -8407,18 +8445,19 @@ export default function Dashboard() {
                           if (newsAiLoading) return;
                           if (newsAiText) { setNewsAiText(null); return; }
                           setNewsAiLoading(true);
+                          setNewsAiText('');
                           try {
                             const headlines = articles.slice(0, 12).map(a => `• ${a.headline}`).join('\n');
-                            const res = await api.post('/chat', {
-                              message: `You are a financial analyst. Based on these recent market news headlines, write 2 short paragraphs summarizing the key market themes and what they might mean for investors. Be concise and direct. No bullet points, no headers.\n\nHeadlines:\n${headlines}`,
-                              history: [],
-                              context: {},
-                            });
-                            setNewsAiText(res.data.reply);
+                            await streamChat(
+                              { message: `You are a financial analyst. Based on these recent market news headlines, write 2 short paragraphs summarizing the key market themes and what they might mean for investors. Be concise and direct. No bullet points, no headers.\n\nHeadlines:\n${headlines}`, history: [], context: {} },
+                              delta => setNewsAiText(prev => (prev || '') + delta),
+                              () => setNewsAiLoading(false),
+                              () => { setNewsAiText('Could not generate insights. Please try again.'); setNewsAiLoading(false); },
+                            );
                           } catch {
                             setNewsAiText('Could not generate insights. Please try again.');
+                            setNewsAiLoading(false);
                           }
-                          setNewsAiLoading(false);
                         }}
                         style={{ padding: '8px 14px', background: newsAiText ? 'rgba(77,163,255,0.15)' : 'rgba(77,163,255,0.08)', border: newsAiText ? `1px solid rgba(77,163,255,0.5)` : '1px solid rgba(77,163,255,0.3)', borderRadius: 6, color: BLUE, cursor: newsAiLoading ? 'wait' : 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ fontSize: 12 }}>✦</span>
@@ -8447,7 +8486,7 @@ export default function Dashboard() {
                       <span style={{ fontSize: 12, color: BLUE }}>✦</span>
                       <span style={{ fontSize: 12, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '0.8px' }}>AI Market Insights</span>
                     </div>
-                    <p style={{ margin: 0, fontSize: 14, color: TEXT, lineHeight: 1.7 }}>{newsAiText}</p>
+                    <p style={{ margin: 0, fontSize: 14, color: TEXT, lineHeight: 1.7 }}>{newsAiText}{newsAiLoading && <span className="ai-cursor" />}</p>
                   </div>
                 )}
                 {(() => {
@@ -9786,20 +9825,24 @@ export default function Dashboard() {
                         </div>
                       </div>
                     )}
-                    {chatMessages.map((msg, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                        <div style={{
-                          maxWidth: '72%', padding: '12px 16px',
-                          borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                          background: msg.role === 'user' ? BLUE_BTN : MUTED,
-                          color: msg.role === 'user' ? '#fff' : TEXT,
-                          fontSize: 14, lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                        }}>
-                          {msg.content}
+                    {chatMessages.map((msg, i) => {
+                      const isStreamingThis = chatLoading && i === chatMessages.length - 1 && msg.role === 'assistant';
+                      return (
+                        <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                          <div style={{
+                            maxWidth: '72%', padding: '12px 16px',
+                            borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                            background: msg.role === 'user' ? BLUE_BTN : MUTED,
+                            color: msg.role === 'user' ? '#fff' : TEXT,
+                            fontSize: 14, lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                          }}>
+                            {msg.content}
+                            {isStreamingThis && <span className="ai-cursor" />}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    {chatLoading && (
+                      );
+                    })}
+                    {chatLoading && !chatMessages.some((m, i) => i === chatMessages.length - 1 && m.role === 'assistant') && (
                       <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                         <div style={{ padding: '12px 16px', borderRadius: '18px 18px 18px 4px', background: MUTED, display: 'flex', gap: 5, alignItems: 'center' }}>
                           {[0, 1, 2].map(j => (
@@ -16806,6 +16849,7 @@ export default function Dashboard() {
               );
             })()}
 
+            </div>{/* end panel-enter */}
           </>
         )}
         </div>

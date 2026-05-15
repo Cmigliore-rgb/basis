@@ -32,6 +32,47 @@ You can help with spending analysis, budget tracking, investment portfolio revie
 
 Write in plain conversational paragraphs like a knowledgeable friend, not a financial advisor. No bullet points, no numbered lists, no headers, no em dashes. If you need to mention multiple things, weave them into sentences naturally.`;
 
+router.post('/stream', requireAuth, async (req, res) => {
+  const user = db.prepare('SELECT tier FROM users WHERE id = ?').get(req.user.id);
+  if (user?.tier !== 'premium') return res.status(403).json({ error: 'Premium required' });
+  if (!checkRateLimit(req.user.id)) return res.status(429).json({ error: 'Daily message limit reached. Try again tomorrow.' });
+
+  const { message, history = [], context = {} } = req.body;
+  if (!message) return res.status(400).json({ error: 'message is required' });
+
+  const { accounts = [], transactions = [], holdings = [], budget = {} } = context;
+  const contextBlock = buildContextBlock(accounts, transactions, holdings, budget);
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT + '\n\n' + contextBlock },
+    ...history.map(msg => ({ role: msg.role === 'assistant' ? 'assistant' : 'user', content: msg.content })),
+    { role: 'user', content: message },
+  ];
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  try {
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const stream = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages,
+      max_tokens: 1024,
+      stream: true,
+    });
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta?.content;
+      if (delta) res.write(`data: ${JSON.stringify({ delta })}\n\n`);
+    }
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (err) {
+    console.error('Groq stream error:', err.message);
+    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    res.end();
+  }
+});
+
 router.post('/', requireAuth, async (req, res) => {
   const user = db.prepare('SELECT tier FROM users WHERE id = ?').get(req.user.id);
   if (user?.tier !== 'premium') return res.status(403).json({ error: 'Premium required' });
