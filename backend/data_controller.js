@@ -207,6 +207,24 @@ async function getLiabilities(req) {
     };
   }
 
+  // Check cache — manual entries are always re-merged fresh so edits are instant
+  const cached = db.prepare('SELECT raw_json, synced_at FROM liabilities_cache WHERE user_id = ?').get(req.user.id);
+  if (cached) {
+    const age = Date.now() - new Date(cached.synced_at).getTime();
+    if (age < HOLDINGS_TTL) {
+      console.log(`[liabilities] user=${req.user.id} cache=hit age=${Math.round(age / 60000)}min`);
+      const plaid = JSON.parse(cached.raw_json);
+      return {
+        credit:   [...plaid.credit,   ...manualByType.credit],
+        student:  [...plaid.student,  ...manualByType.student],
+        mortgage: [...plaid.mortgage, ...manualByType.mortgage],
+      };
+    }
+    console.log(`[liabilities] user=${req.user.id} cache=stale — refreshing from Plaid`);
+  } else {
+    console.log(`[liabilities] user=${req.user.id} cache=miss — fetching from Plaid`);
+  }
+
   const results = await Promise.all(
     tokens.map(({ access_token }) =>
       plaidClient.liabilitiesGet({ access_token })
@@ -221,10 +239,18 @@ async function getLiabilities(req) {
     (r?.accounts || []).forEach(a => { balanceMap[a.account_id] = a.balances; });
   });
 
+  const plaidData = {
+    credit:   results.flatMap(r => (r?.liabilities?.credit   || []).map(c => ({ ...c, balances: balanceMap[c.account_id] || c.balances }))),
+    student:  results.flatMap(r => (r?.liabilities?.student  || []).map(s => ({ ...s, balances: balanceMap[s.account_id] || s.balances }))),
+    mortgage: results.flatMap(r => (r?.liabilities?.mortgage || []).map(m => ({ ...m, balances: balanceMap[m.account_id] || m.balances }))),
+  };
+
+  db.prepare("INSERT OR REPLACE INTO liabilities_cache (user_id, raw_json, synced_at) VALUES (?, ?, datetime('now'))").run(req.user.id, JSON.stringify(plaidData));
+
   return {
-    credit:   [...results.flatMap(r => (r?.liabilities?.credit   || []).map(c => ({ ...c, balances: balanceMap[c.account_id] || c.balances }))), ...manualByType.credit],
-    student:  [...results.flatMap(r => (r?.liabilities?.student  || []).map(s => ({ ...s, balances: balanceMap[s.account_id] || s.balances }))), ...manualByType.student],
-    mortgage: [...results.flatMap(r => (r?.liabilities?.mortgage || []).map(m => ({ ...m, balances: balanceMap[m.account_id] || m.balances }))), ...manualByType.mortgage],
+    credit:   [...plaidData.credit,   ...manualByType.credit],
+    student:  [...plaidData.student,  ...manualByType.student],
+    mortgage: [...plaidData.mortgage, ...manualByType.mortgage],
   };
 }
 
