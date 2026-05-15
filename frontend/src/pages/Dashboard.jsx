@@ -3992,8 +3992,8 @@ export default function Dashboard() {
             )}
             <button data-tour="nav-settings" onClick={() => setPanel('settings')}
               title={sidebarCollapsed ? 'Settings' : undefined}
-              style={{ width: '100%', padding: '8px 0', background: panel === 'settings' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER_C}`, borderRadius: 8, color: panel === 'settings' ? TEXT : TEXT2, fontSize: sidebarCollapsed ? 14 : 12, fontWeight: panel === 'settings' ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.15s' }}>
-              {sidebarCollapsed ? '⚙' : (<>⚙ Settings{hiddenPanels.size > 0 && <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(251,191,36,0.15)', color: YELLOW, padding: '2px 5px', borderRadius: 4 }}>{hiddenPanels.size} hidden</span>}<span style={{ marginLeft: 'auto', fontSize: 9, color: TEXT3, background: MUTED, border: BORDER, borderRadius: 3, padding: '1px 5px', letterSpacing: '0.2px' }}>⌘K</span></>)}
+              style={{ width: '100%', padding: sidebarCollapsed ? '8px 0' : '8px 10px', background: panel === 'settings' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER_C}`, borderRadius: 8, color: panel === 'settings' ? TEXT : TEXT2, fontSize: sidebarCollapsed ? 14 : 12, fontWeight: panel === 'settings' ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: 6, transition: 'all 0.15s', boxSizing: 'border-box' }}>
+              {sidebarCollapsed ? '⚙' : (<>⚙<span style={{ flex: 1, textAlign: 'left' }}>Settings</span>{hiddenPanels.size > 0 && <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(251,191,36,0.15)', color: YELLOW, padding: '2px 5px', borderRadius: 4, flexShrink: 0 }}>{hiddenPanels.size} hidden</span>}<span style={{ fontSize: 9, color: TEXT3, background: MUTED, border: BORDER, borderRadius: 3, padding: '1px 5px', flexShrink: 0 }}>⌘K</span></>)}
             </button>
           </div>
         </div>{/* end sidebar-nav */}
