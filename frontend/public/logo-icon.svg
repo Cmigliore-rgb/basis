@@ -4,8 +4,8 @@
   <line x1="298" y1="113" x2="382" y2="113" stroke="#3b82f6" stroke-width="0.6" stroke-opacity="0.35"/>
   <line x1="298" y1="100" x2="316" y2="100" stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.2"/>
   <line x1="298" y1="87"  x2="316" y2="87"  stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.2"/>
-  <polygon points="302,115 340,69 378,115" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linejoin="round"/>
-  <polyline points="305,115 318,106 330,99 340,92 352,96 364,89 376,83" fill="none" stroke="#0066f5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="340" cy="92" r="3.2" fill="#0066f5"/>
-  <circle cx="376" cy="83" r="2.6" fill="#3b82f6"/>
+  <polygon points="302,115 340,55 378,115" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linejoin="round"/>
+  <polyline points="305,115 318,105 330,97 340,85 352,90 364,84 376,78" fill="none" stroke="#0066f5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="340" cy="85" r="3.2" fill="#0066f5"/>
+  <circle cx="376" cy="78" r="2.6" fill="#3b82f6"/>
 </svg>
