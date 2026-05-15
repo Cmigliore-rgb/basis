@@ -2918,12 +2918,7 @@ export default function Dashboard() {
     if (saved !== null) return saved === 'true';
     return !!(user?.enrollments?.length);
   });
-  const [modeFading, setModeFading] = useState(false);
-  const switchEduMode = (val) => {
-    if (val === eduMode) { localStorage.setItem('pl_edu_mode', String(val)); setEduMode(val); return; }
-    setModeFading(true);
-    setTimeout(() => { localStorage.setItem('pl_edu_mode', String(val)); setEduMode(val); setModeFading(false); }, 160);
-  };
+  const switchEduMode = (val) => { localStorage.setItem('pl_edu_mode', String(val)); setEduMode(val); };
   const EDU_PANELS = new Set(['edu-courses', 'edu-sandbox', 'edu-assignments', 'learn', 'prof-dashboard']);
   useEffect(() => {
     if (hideEduSection && EDU_PANELS.has(panel)) { switchEduMode(false); setPanel('overview'); }
@@ -4888,7 +4883,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            <div key={panel} className="panel-enter" style={{ opacity: modeFading ? 0 : 1, transition: 'opacity 0.16s ease' }}>
+            <div key={panel} className="panel-enter">
             {/* ── OVERVIEW ──────────────────────────────── */}
             {panel === 'overview' && eduMode && (() => {
               const activeCourse = enrolledCourses.find(c => c.id === selectedCourseId) || enrolledCourses[0];
