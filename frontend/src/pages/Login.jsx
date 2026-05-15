@@ -40,6 +40,7 @@ export default function Login() {
   const [twoFactor, setTwoFactor] = useState(null); // { tempToken }
   const [tfCode, setTfCode]     = useState('');
   const [tfLoading, setTfLoading] = useState(false);
+  const [verified, setVerified] = useState(false);
 
   const handleGoogle = () => {
     const redirectUri = `${window.location.origin}/auth/google/callback`;
@@ -48,11 +49,12 @@ export default function Login() {
     window.location.href = url;
   };
 
-  // Read OAuth errors from URL (set by callback pages on failure)
+  // Read OAuth errors and verification status from URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const oauthError = params.get('ms_error') || params.get('google_error');
     if (oauthError) setError(oauthError);
+    if (params.get('verified') === '1') setVerified(true);
   }, []);
 
   const handleMicrosoft = () => {
@@ -174,6 +176,12 @@ export default function Login() {
           <div style={{ fontSize: 24, fontWeight: 700, color: TEXT, letterSpacing: '-0.5px' }}>Welcome back</div>
           <div style={{ fontSize: 14, color: TEXT2, marginTop: 6 }}>Sign in to your account</div>
         </div>
+
+        {verified && (
+          <div style={{ background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, padding: '10px 14px', color: '#4ade80', fontSize: 13, marginBottom: 20 }}>
+            ✓ Email verified! You can now sign in.
+          </div>
+        )}
 
         {/* OAuth buttons */}
         {showOAuth && (

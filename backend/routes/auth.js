@@ -49,6 +49,7 @@ router.post('/register', async (req, res) => {
   const { email, password, name, role: requestedRole, courseCode } = req.body;
   if (!email || !password || !name) return res.status(400).json({ error: 'email, password, and name are required' });
   if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  if (!/[^A-Za-z0-9]/.test(password)) return res.status(400).json({ error: 'Password must contain at least one special character' });
 
   // Validate course code before doing anything else
   let courseRow = null;
@@ -271,9 +272,9 @@ router.patch('/me', requireAuth, (req, res) => {
 // Email verification
 router.get('/verify-email', (req, res) => {
   const { token } = req.query;
-  if (!token) return res.redirect(`${APP_URL}/app?verify_error=1`);
+  if (!token) return res.redirect(`${APP_URL}/login?verify_error=1`);
   const user = db.prepare('SELECT * FROM users WHERE verification_token = ?').get(token);
-  if (!user) return res.redirect(`${APP_URL}/app?verify_error=1`);
+  if (!user) return res.redirect(`${APP_URL}/login?verify_error=1`);
   const isEdu = user.email.toLowerCase().endsWith('.edu');
   if (isEdu && user.role === 'user') {
     db.prepare("UPDATE users SET email_verified = 1, verification_token = NULL, role = 'student', edu_verified_at = datetime('now') WHERE id = ?").run(user.id);
@@ -282,7 +283,7 @@ router.get('/verify-email', (req, res) => {
   } else {
     db.prepare('UPDATE users SET email_verified = 1, verification_token = NULL WHERE id = ?').run(user.id);
   }
-  res.redirect(`${APP_URL}/app?verified=1`);
+  res.redirect(`${APP_URL}/login?verified=1`);
 });
 
 // Resend verification email

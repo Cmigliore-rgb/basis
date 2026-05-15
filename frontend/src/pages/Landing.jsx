@@ -87,13 +87,17 @@ export default function Landing() {
           <img src="/logo-icon.svg" alt="" style={{ width: 32, height: 32, borderRadius: 8 }} />
           <span style={{ fontSize: 20, fontWeight: 700, color: TEXT, letterSpacing: '-0.5px' }}>PeakLedger</span>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button onClick={() => navigate('/login')}
-            style={{ padding: '8px 18px', background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, color: TEXT2, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
+            style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, color: TEXT2, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
             Sign In
           </button>
+          <button onClick={() => navigate('/register')}
+            style={{ padding: '8px 16px', background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, color: '#60a5fa', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+            Register
+          </button>
           <a href={DOWNLOAD_URL} download
-            style={{ padding: '8px 18px', background: BLUE_BTN, borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+            style={{ padding: '8px 16px', background: BLUE_BTN, borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
             Download
           </a>
         </div>
@@ -108,7 +112,7 @@ export default function Landing() {
           Free to use · No credit card required
         </div>
 
-        <h1 style={{ fontSize: 'clamp(40px, 7vw, 76px)', fontWeight: 800, letterSpacing: '-3px', lineHeight: 1.05, margin: '0 0 24px', maxWidth: 820, color: TEXT }}>
+        <h1 style={{ fontSize: 'clamp(40px, 7vw, 76px)', fontWeight: 800, letterSpacing: '-2px', lineHeight: 1.05, margin: '0 0 24px', maxWidth: 820, color: TEXT, fontFeatureSettings: '"kern" 1, "liga" 0' }}>
           Your finances,<br />
           <span style={{ color: BLUE_BTN }}>finally in focus.</span>
         </h1>

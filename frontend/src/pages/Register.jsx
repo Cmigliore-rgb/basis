@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -16,7 +17,6 @@ const TEXT2   = '#94a3b8';
 const TEXT3   = '#475569';
 const BORDER  = '1px solid rgba(255,255,255,0.08)';
 const INPUT_BG = '#141414';
-const BLUE    = '#2563eb';
 const BLUE_BTN = '#0066f5';
 const GREEN   = '#16a34a';
 const RED     = '#dc2626';
@@ -39,6 +39,20 @@ const HIGHLIGHTS = [
   { icon: '⊞', color: '#c084fc', label: 'Professor analytics',          sub: 'Live class progress, submissions, and grades.' },
 ];
 
+function pwStrength(pwd) {
+  if (!pwd) return 0;
+  let s = 0;
+  if (pwd.length >= 8) s++;
+  if (pwd.length >= 12) s++;
+  if (/[A-Z]/.test(pwd)) s++;
+  if (/[0-9]/.test(pwd)) s++;
+  if (/[^A-Za-z0-9]/.test(pwd)) s++;
+  return s;
+}
+
+const STRENGTH_LABELS = ['', 'Too weak', 'Weak', 'Fair', 'Good', 'Strong'];
+const STRENGTH_COLORS = ['', '#ef4444', '#f97316', '#fbbf24', '#22c55e', '#16a34a'];
+
 export default function Register() {
   const { login } = useAuth();
   const navigate  = useNavigate();
@@ -48,17 +62,29 @@ export default function Register() {
     window.addEventListener('resize', h);
     return () => window.removeEventListener('resize', h);
   }, []);
-  const [form, setForm]           = useState({ name: '', email: '', password: '', role: 'user', courseCode: '', professorCode: '' });
+
+  const [form, setForm] = useState({
+    name: '', email: '', password: '', confirmPassword: '',
+    role: 'user', courseCode: '', professorCode: '',
+  });
   const [error, setError]         = useState('');
   const [loading, setLoading]     = useState(false);
   const [codeState, setCodeState] = useState(null);
   const codeTimer = useRef(null);
 
+  // Post-registration "check email" state
+  const [pendingEmail, setPendingEmail] = useState(null);
+  const [regToken, setRegToken]         = useState(null);
+  const [resendState, setResendState]   = useState(null);
+
+  const strength     = pwStrength(form.password);
+  const strengthColor = STRENGTH_COLORS[strength] || '#444';
+  const strengthLabel = STRENGTH_LABELS[strength] || '';
+
   const isEdu         = form.email.toLowerCase().endsWith('.edu');
   const showCodeField = form.role === 'student' || isEdu;
   const showOAuth     = GOOGLE_CLIENT_ID || MICROSOFT_CLIENT_ID;
 
-  // Read OAuth errors from URL (set by callback pages on failure)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const oauthError = params.get('ms_error') || params.get('google_error');
@@ -77,7 +103,6 @@ export default function Register() {
     window.location.href = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${MICROSOFT_CLIENT_ID}&response_type=id_token&scope=openid%20email%20profile&nonce=${nonce}&redirect_uri=${encodeURIComponent(redirectUri)}&response_mode=fragment`;
   };
 
-
   useEffect(() => {
     const raw = form.courseCode.trim().toUpperCase();
     if (!raw) { setCodeState(null); return; }
@@ -88,7 +113,7 @@ export default function Register() {
         const { data } = await api.post('/auth/validate-code', { code: raw });
         setCodeState({ course: data.course });
       } catch {
-        setCodeState({ error: 'Code not found — check with your professor' });
+        setCodeState({ error: 'Code not found, check with your professor' });
       }
     }, 500);
     return () => clearTimeout(codeTimer.current);
@@ -100,9 +125,21 @@ export default function Register() {
 
   const submit = async (e) => {
     e.preventDefault();
+
+    // Client-side password validation
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters'); return;
+    }
+    if (!/[^A-Za-z0-9]/.test(form.password)) {
+      setError('Password must contain at least one special character (e.g. ! @ # $ %)'); return;
+    }
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match'); return;
+    }
     if (form.courseCode.trim() && !codeState?.course) {
       setError('Enter a valid course code or leave it blank'); return;
     }
+
     setError(''); setLoading(true);
     try {
       const { data } = await api.post('/auth/register', {
@@ -110,34 +147,89 @@ export default function Register() {
         role: form.role, courseCode: form.courseCode.trim().toUpperCase() || undefined,
         professorCode: form.professorCode || undefined,
       });
-      login(data.token, data.user);
-      navigate('/app');
+
+      if (data.user.email_verified) {
+        // Admins and professors are auto-verified, log in immediately
+        login(data.token, data.user);
+        navigate('/app');
+      } else {
+        // Everyone else: must verify email before accessing the app
+        setPendingEmail(form.email);
+        setRegToken(data.token);
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed');
     } finally { setLoading(false); }
   };
+
+  const resendVerification = async () => {
+    setResendState('sending');
+    try {
+      await axios.post('/api/auth/resend-verification', {}, {
+        headers: { Authorization: `Bearer ${regToken}` },
+      });
+      setResendState('sent');
+    } catch {
+      setResendState('error');
+    }
+  };
+
+  // Check email screen
+  if (pendingEmail) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: R_BG, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', padding: 24 }}>
+        <div style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
+          <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, margin: '0 auto 24px' }}>
+            ✉
+          </div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: TEXT, marginBottom: 10, letterSpacing: '-0.5px' }}>Check your email</div>
+          <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 28 }}>
+            We sent a verification link to{' '}
+            <span style={{ color: TEXT, fontWeight: 600 }}>{pendingEmail}</span>.
+            Click the link to verify your account and sign in.
+          </div>
+          <div style={{ fontSize: 13, color: TEXT3, marginBottom: 20 }}>
+            Didn't receive it? Check your spam folder.
+          </div>
+          {resendState !== 'sent' ? (
+            <button
+              onClick={resendVerification}
+              disabled={resendState === 'sending'}
+              style={{ padding: '10px 24px', background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, color: '#60a5fa', fontSize: 13, fontWeight: 600, cursor: resendState === 'sending' ? 'default' : 'pointer', opacity: resendState === 'sending' ? 0.7 : 1, marginBottom: 20 }}>
+              {resendState === 'sending' ? 'Sending...' : 'Resend verification email'}
+            </button>
+          ) : (
+            <div style={{ fontSize: 13, color: '#4ade80', marginBottom: 20 }}>Sent! Check your inbox.</div>
+          )}
+          {resendState === 'error' && (
+            <div style={{ fontSize: 12, color: '#f87171', marginBottom: 12 }}>Failed to resend. Try again shortly.</div>
+          )}
+          <div style={{ fontSize: 13, color: TEXT3 }}>
+            <Link to="/login" style={{ color: BLUE_BTN, textDecoration: 'none', fontWeight: 600 }}>Back to sign in</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const selectedRole = ROLES.find(r => r.val === form.role);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
 
-      {/* ── Left: dark brand panel ─────────────────────────── */}
+      {/* Left: dark brand panel */}
       <div style={{ flex: 1, display: isMobile ? 'none' : 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 64px', background: L_BG, minWidth: 0 }}>
         <div style={{ maxWidth: 440 }}>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
             <img src="/logo-icon.svg" alt="" style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0 }} />
             <span style={{ fontSize: 26, fontWeight: 700, color: L_TEXT, letterSpacing: '-0.5px' }}>PeakLedger</span>
           </div>
-
           <div style={{ fontSize: 22, fontWeight: 700, color: L_TEXT, letterSpacing: '-0.5px', marginBottom: 8, lineHeight: 1.3 }}>
             One platform.<br />Finance, education, and markets.
           </div>
           <div style={{ fontSize: 14, color: L_TEXT2, marginBottom: 48, lineHeight: 1.6 }}>
             Join students, instructors, and individuals building real financial literacy.
           </div>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {HIGHLIGHTS.map(f => (
               <div key={f.label} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
@@ -154,7 +246,7 @@ export default function Register() {
         </div>
       </div>
 
-      {/* ── Right: dark registration form ────────────────── */}
+      {/* Right: registration form */}
       <div style={{ width: isMobile ? '100%' : 480, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: isMobile ? 'flex-start' : 'center', padding: isMobile ? '48px 24px 40px' : '48px 48px', background: R_BG, overflowY: 'auto', minHeight: '100vh' }}>
         {isMobile && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
@@ -236,15 +328,55 @@ export default function Register() {
             <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required autoComplete="email" style={inp} />
           </div>
           {isEdu
-            ? <div style={{ marginBottom: 14, fontSize: 12, color: '#4ade80', display: 'flex', alignItems: 'center', gap: 5 }}>✓ Student email — you qualify for the student discount</div>
+            ? <div style={{ marginBottom: 14, fontSize: 12, color: '#4ade80', display: 'flex', alignItems: 'center', gap: 5 }}>✓ Student email, you qualify for the student discount</div>
             : <div style={{ marginBottom: 14 }} />
           }
 
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>
-              Password <span style={{ color: TEXT3, fontWeight: 400, textTransform: 'none' }}>(min. 8 characters)</span>
-            </label>
+          {/* Password */}
+          <div style={{ marginBottom: 8 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>Password</label>
             <input type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required autoComplete="new-password" style={inp} />
+          </div>
+
+          {/* Strength bar */}
+          {form.password.length > 0 && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+                {[1, 2, 3, 4, 5].map(i => (
+                  <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= strength ? strengthColor : 'rgba(255,255,255,0.1)', transition: 'background 0.2s' }} />
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: strengthColor, fontWeight: 600 }}>{strengthLabel}</div>
+            </div>
+          )}
+
+          {/* Password requirements */}
+          <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {[
+              { ok: form.password.length >= 8,          label: 'At least 8 characters' },
+              { ok: /[^A-Za-z0-9]/.test(form.password), label: 'At least one special character (! @ # $ % ...)' },
+            ].map(({ ok, label }) => (
+              <div key={label} style={{ fontSize: 11, color: ok ? '#4ade80' : TEXT3, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span>{ok ? '✓' : '○'}</span> {label}
+              </div>
+            ))}
+          </div>
+
+          {/* Confirm Password */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>Confirm Password</label>
+            <input
+              type="password" value={form.confirmPassword}
+              onChange={e => setForm(p => ({ ...p, confirmPassword: e.target.value }))}
+              required autoComplete="new-password"
+              style={{ ...inp, border: form.confirmPassword && form.confirmPassword !== form.password ? '1px solid rgba(248,113,113,0.5)' : form.confirmPassword && form.confirmPassword === form.password ? '1px solid rgba(74,222,128,0.4)' : BORDER }}
+            />
+            {form.confirmPassword && form.confirmPassword !== form.password && (
+              <div style={{ marginTop: 5, fontSize: 11, color: '#f87171' }}>Passwords do not match</div>
+            )}
+            {form.confirmPassword && form.confirmPassword === form.password && (
+              <div style={{ marginTop: 5, fontSize: 11, color: '#4ade80' }}>✓ Passwords match</div>
+            )}
           </div>
 
           {showCodeField && (
