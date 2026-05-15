@@ -84,7 +84,7 @@ export default function Landing() {
         transition: 'all 0.2s',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src="/logo-icon.svg?v=5" alt="" style={{ width: 32, height: 32, borderRadius: 8 }} />
+          <img src="/logo-icon.svg?v=6" alt="" style={{ width: 32, height: 32, borderRadius: 8 }} />
           <span style={{ fontSize: 20, fontWeight: 700, color: TEXT, letterSpacing: '-0.5px' }}>PeakLedger</span>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -195,7 +195,7 @@ export default function Landing() {
       {/* Footer */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, padding: '32px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, background: BG }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <img src="/logo-icon.svg?v=5" alt="" style={{ width: 24, height: 24, borderRadius: 6 }} />
+          <img src="/logo-icon.svg?v=6" alt="" style={{ width: 24, height: 24, borderRadius: 6 }} />
           <span style={{ fontSize: 15, fontWeight: 700, color: TEXT, letterSpacing: '-0.3px' }}>PeakLedger</span>
         </div>
         <div style={{ fontSize: 13, color: TEXT3 }}>Personal finance, built for real life.</div>

@@ -2500,6 +2500,10 @@ export default function Dashboard() {
   const [selectedIncomeMonth, setSelectedIncomeMonth] = useState(0); // 0 = current month, 1 = last month, etc.
   const [selectedExpenseMonth, setSelectedExpenseMonth] = useState(0); // 0 = current month, 1 = last month, etc.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [settingsAnchor, setSettingsAnchor] = useState(null);
+  const [hoveredNav, setHoveredNav] = useState(null);
+  const [newsAiLoading, setNewsAiLoading] = useState(false);
+  const [newsAiText, setNewsAiText] = useState(null);
   const [showTour, setShowTour] = useState(false);
   const [tourStep, setTourStep] = useState(0);
   const [holdingsExpanded, setHoldingsExpanded] = useState(false);
@@ -2952,6 +2956,13 @@ export default function Dashboard() {
     localStorage.setItem('pl_accent', accent);
   }, [accent]);
   useEffect(() => { localStorage.setItem('pl_panel', panel); }, [panel]);
+  useEffect(() => {
+    if (settingsAnchor && panel === 'settings') {
+      const el = document.getElementById(`settings-${settingsAnchor}`);
+      if (el) { setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); }
+      setSettingsAnchor(null);
+    }
+  }, [settingsAnchor, panel]);
 
   // Handle return from Stripe checkout or email verification
   useEffect(() => {
@@ -3646,9 +3657,11 @@ export default function Dashboard() {
                       onDragOver={e => e.preventDefault()}
                       onDrop={e => { e.preventDefault(); const [, srcId] = e.dataTransfer.getData('text/plain').split('|||'); if (srcId !== key) handleReorder('nav-order', _NAV_DEF)(srcId, key); }}
                       onClick={() => { setPanel(key); switchEduMode(false); }}
+                      onMouseEnter={() => setHoveredNav(key)}
+                      onMouseLeave={() => setHoveredNav(null)}
                       title={sidebarCollapsed ? label : undefined}
                       style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: sidebarCollapsed ? 0 : 10, padding: sidebarCollapsed ? '10px 0' : '10px 20px', background: (panel === key && !eduMode) ? 'rgba(255,255,255,0.06)' : 'transparent', border: 'none', borderLeft: (panel === key && !eduMode) ? `2px solid ${BLUE}` : '2px solid transparent', color: (panel === key && !eduMode) ? TEXT : TEXT2, cursor: 'grab', fontSize: 13, fontWeight: (panel === key && !eduMode) ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
-                      <span style={{ fontSize: 14, opacity: locked ? 0.4 : 1 }}>{icon}</span>
+                      <span style={{ fontSize: 14, opacity: locked ? 0.4 : 1, display: 'inline-block', transition: 'transform 0.15s', transform: hoveredNav === key ? 'translateX(3px) scale(1.15)' : 'none' }}>{icon}</span>
                       {!sidebarCollapsed && <span style={{ flex: 1 }}>{label}</span>}
                       {!sidebarCollapsed && locked && <span style={{ fontSize: 9, fontWeight: 700, color: '#fbbf24', background: 'rgba(251,191,36,0.12)', padding: '2px 5px', borderRadius: 4 }}>PRO</span>}
                     </button>
@@ -3675,17 +3688,21 @@ export default function Dashboard() {
               </div>}
               {NAV.filter(n => n.section === 'education' && !hiddenPanels.has(n.key)).map(({ key, label, icon }) => (
                 <button key={key} data-tour={`nav-${key}`} onClick={() => { setPanel(key); switchEduMode(true); }}
+                  onMouseEnter={() => setHoveredNav(key)}
+                  onMouseLeave={() => setHoveredNav(null)}
                   title={sidebarCollapsed ? label : undefined}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: sidebarCollapsed ? 0 : 10, padding: sidebarCollapsed ? '10px 0' : '10px 20px', background: panel === key ? 'rgba(74,222,128,0.07)' : 'transparent', border: 'none', borderLeft: panel === key ? `2px solid ${GREEN}` : '2px solid transparent', color: panel === key ? GREEN : TEXT2, cursor: 'pointer', fontSize: 13, fontWeight: panel === key ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
-                  <span style={{ fontSize: 14 }}>{icon}</span>
+                  <span style={{ fontSize: 14, display: 'inline-block', transition: 'transform 0.15s', transform: hoveredNav === key ? 'translateX(3px) scale(1.15)' : 'none' }}>{icon}</span>
                   {!sidebarCollapsed && <span>{label}</span>}
                 </button>
               ))}
               {effectiveProfessor && (
                 <button onClick={() => { setPanel('prof-dashboard'); switchEduMode(true); }}
+                  onMouseEnter={() => setHoveredNav('prof-dashboard')}
+                  onMouseLeave={() => setHoveredNav(null)}
                   title={sidebarCollapsed ? 'Professor Hub' : undefined}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: sidebarCollapsed ? 0 : 10, padding: sidebarCollapsed ? '10px 0' : '10px 20px', background: panel === 'prof-dashboard' ? 'rgba(74,222,128,0.07)' : 'transparent', border: 'none', borderLeft: panel === 'prof-dashboard' ? `2px solid ${GREEN}` : '2px solid transparent', color: panel === 'prof-dashboard' ? GREEN : TEXT2, cursor: 'pointer', fontSize: 13, fontWeight: panel === 'prof-dashboard' ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
-                  <span style={{ fontSize: 14 }}>⊟</span>
+                  <span style={{ fontSize: 14, display: 'inline-block', transition: 'transform 0.15s', transform: hoveredNav === 'prof-dashboard' ? 'translateX(3px) scale(1.15)' : 'none' }}>⊟</span>
                   {!sidebarCollapsed && <span>Professor Hub</span>}
                 </button>
               )}
@@ -5072,7 +5089,7 @@ export default function Dashboard() {
                       <div style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>Add a backup email</div>
                       <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>Keep access to your account after your student email is deactivated.</div>
                     </div>
-                    <button onClick={() => setPanel('settings')}
+                    <button onClick={() => { setPanel('settings'); setSettingsAnchor('account'); }}
                       style={{ padding: '7px 14px', background: 'rgba(77,163,255,0.12)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 7, color: '#4da3ff', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                       Add in Settings
                     </button>
@@ -5513,7 +5530,20 @@ export default function Dashboard() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                         <button onClick={() => setCalViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
                           style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '4px 10px', cursor: 'pointer', fontSize: 14, fontWeight: 700 }}>‹</button>
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>{monthLabel}</div>
+                        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                          <select value={mo} onChange={e => setCalViewDate(new Date(yr, parseInt(e.target.value), 1))}
+                            style={{ background: MUTED, border: BORDER, borderRadius: 5, color: TEXT, fontSize: 13, fontWeight: 700, padding: '3px 6px', cursor: 'pointer', outline: 'none' }}>
+                            {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
+                              <option key={m} value={i}>{m}</option>
+                            ))}
+                          </select>
+                          <select value={yr} onChange={e => setCalViewDate(new Date(parseInt(e.target.value), mo, 1))}
+                            style={{ background: MUTED, border: BORDER, borderRadius: 5, color: TEXT, fontSize: 13, fontWeight: 700, padding: '3px 6px', cursor: 'pointer', outline: 'none' }}>
+                            {Array.from({ length: 7 }, (_, i) => new Date().getFullYear() - 3 + i).map(y => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </select>
+                        </div>
                         <button onClick={() => setCalViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
                           style={{ background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, padding: '4px 10px', cursor: 'pointer', fontSize: 14, fontWeight: 700 }}>›</button>
                       </div>
@@ -8368,9 +8398,33 @@ export default function Dashboard() {
 
             {insightsTab === 'news' && (
               <div>
-                <div data-tour="news-feed-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <div data-tour="news-feed-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: newsAiText ? 16 : 24, flexWrap: 'wrap', gap: 10 }}>
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>News Feed</h1>
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {isPremium && (
+                      <button
+                        onClick={async () => {
+                          if (newsAiLoading) return;
+                          if (newsAiText) { setNewsAiText(null); return; }
+                          setNewsAiLoading(true);
+                          try {
+                            const headlines = articles.slice(0, 12).map(a => `• ${a.headline}`).join('\n');
+                            const res = await api.post('/chat', {
+                              message: `You are a financial analyst. Based on these recent market news headlines, write 2 short paragraphs summarizing the key market themes and what they might mean for investors. Be concise and direct. No bullet points, no headers.\n\nHeadlines:\n${headlines}`,
+                              history: [],
+                              context: {},
+                            });
+                            setNewsAiText(res.data.reply);
+                          } catch {
+                            setNewsAiText('Could not generate insights. Please try again.');
+                          }
+                          setNewsAiLoading(false);
+                        }}
+                        style={{ padding: '8px 14px', background: newsAiText ? 'rgba(77,163,255,0.15)' : 'rgba(77,163,255,0.08)', border: newsAiText ? `1px solid rgba(77,163,255,0.5)` : '1px solid rgba(77,163,255,0.3)', borderRadius: 6, color: BLUE, cursor: newsAiLoading ? 'wait' : 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 12 }}>✦</span>
+                        {newsAiLoading ? 'Analyzing…' : newsAiText ? 'Hide Insights' : 'AI Insights'}
+                      </button>
+                    )}
                     <input
                       value={tickerFilter}
                       onChange={e => setTickerFilter(e.target.value)}
@@ -8387,6 +8441,15 @@ export default function Dashboard() {
                     )}
                   </div>
                 </div>
+                {newsAiText && (
+                  <div style={{ ...CARD, marginBottom: 20, background: 'rgba(77,163,255,0.04)', border: '1px solid rgba(77,163,255,0.2)', borderLeft: `3px solid ${BLUE}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                      <span style={{ fontSize: 12, color: BLUE }}>✦</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '0.8px' }}>AI Market Insights</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: 14, color: TEXT, lineHeight: 1.7 }}>{newsAiText}</p>
+                  </div>
+                )}
                 {(() => {
                   const displayArticles = articles;
                   return displayArticles.length === 0 ? (
@@ -9883,6 +9946,110 @@ export default function Dashboard() {
                   )}
                 </div>
 
+                <div id="settings-account" style={{ ...CARD, marginBottom: 16 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Account</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 500 }}>{user?.name}</div>
+                      <div style={{ fontSize: 12, color: TEXT2 }}>{user?.email}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '3px 7px', borderRadius: 4, background: isPremium ? 'rgba(74,222,128,0.12)' : 'rgba(142,142,147,0.12)', color: isPremium ? GREEN : TEXT2 }}>{user?.tier}</span>
+                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '3px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>{user?.role}</span>
+                    </div>
+                  </div>
+
+                  {/* Two-factor authentication */}
+                  <div style={{ padding: '14px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>Two-Factor Authentication</div>
+                        <div style={{ fontSize: 12, color: TEXT3, lineHeight: 1.5 }}>
+                          {user?.two_factor_enabled ? 'A code is emailed to you each time you sign in.' : 'Get a one-time code by email whenever you sign in.'}
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          try {
+                            if (user?.two_factor_enabled) {
+                              await api.post('/auth/2fa/disable');
+                              refreshUser();
+                            } else {
+                              await api.post('/auth/2fa/enable');
+                              refreshUser();
+                            }
+                          } catch {}
+                        }}
+                        style={{ width: 42, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', background: user?.two_factor_enabled ? BLUE_BTN : 'rgba(255,255,255,0.12)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
+                      >
+                        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: user?.two_factor_enabled ? 21 : 3, transition: 'left 0.18s' }} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Backup email */}
+                  <div style={{ padding: '14px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: TEXT2, marginBottom: 4 }}>Backup Email</div>
+                    <div style={{ fontSize: 12, color: TEXT3, marginBottom: 10, lineHeight: 1.5 }}>
+                      Keep access to your account after your student email is deactivated. Use a personal email you'll always have.
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        type="email"
+                        placeholder={user?.backup_email || 'your@personal-email.com'}
+                        value={backupEmail}
+                        onChange={e => { setBackupEmail(e.target.value); setBackupEmailSaved(false); setBackupEmailErr(''); }}
+                        style={{ flex: 1, padding: '8px 12px', background: MUTED, border: backupEmailErr ? '1px solid rgba(248,113,113,0.5)' : BORDER, borderRadius: 7, color: TEXT, fontSize: 12, outline: 'none', fontFamily: 'inherit' }}
+                      />
+                      <button onClick={async () => {
+                        const trimmed = backupEmail.trim();
+                        if (!trimmed) return;
+                        setBackupEmailErr('');
+                        try {
+                          const { data } = await api.patch('/auth/me', { backup_email: trimmed });
+                          const token = localStorage.getItem('pl_token');
+                          if (token) login(token, data.user);
+                          setBackupEmailSaved(true);
+                          setBackupEmail('');
+                          setTimeout(() => setBackupEmailSaved(false), 3000);
+                        } catch (err) {
+                          setBackupEmailErr(err.response?.data?.error || 'Failed to save; please try again');
+                        }
+                      }} style={{ padding: '8px 14px', background: BLUE_BTN, border: 'none', borderRadius: 7, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        {backupEmailSaved ? 'Saved ✓' : user?.backup_email ? 'Update' : 'Save'}
+                      </button>
+                    </div>
+                    {backupEmailErr && <div style={{ fontSize: 11, color: RED, marginTop: 6 }}>{backupEmailErr}</div>}
+                    {user?.backup_email && !backupEmailSaved && (
+                      <div style={{ fontSize: 11, color: GREEN, marginTop: 6 }}>Current: {user.backup_email}</div>
+                    )}
+                  </div>
+
+                  {isStudent && hideEduSection && (
+                    <div style={{ ...CARD, marginTop: 16, border: '1px solid rgba(74,222,128,0.2)', background: 'rgba(74,222,128,0.025)' }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Education Section</div>
+                      <div style={{ fontSize: 13, color: TEXT2, marginBottom: 14 }}>You've hidden the Education section. Restore it to access courses, datasets, and assignments.</div>
+                      <button onClick={() => { setHideEduSection(false); localStorage.removeItem('pl_hide_edu'); }}
+                        style={{ padding: '8px 18px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 7, color: GREEN, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                        Show Education Section
+                      </button>
+                    </div>
+                  )}
+
+                  <div style={{ paddingTop: 14, display: 'flex', gap: 8 }}>
+                    <button onClick={logout} style={{ padding: '8px 16px', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 7, color: RED, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Sign out</button>
+                    <button onClick={async () => {
+                      if (!window.confirm('Are you sure? This will permanently delete your account and all data. This cannot be undone.')) return;
+                      try {
+                        await api.delete('/auth/me');
+                        logout();
+                      } catch {
+                        alert('Failed to delete account. Please try again.');
+                      }
+                    }} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 7, color: 'rgba(248,113,113,0.6)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Delete Account</button>
+                  </div>
+                </div>
+
                 <ConnectedAccountsCard onFixConnection={openUpdateMode} />
 
                 {isPremium && !isAdmin && !isProfessor && (
@@ -10287,110 +10454,6 @@ export default function Dashboard() {
                     </>
                   )}
                 </div>}
-
-                <div style={{ ...CARD }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Account</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER_C}` }}>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 500 }}>{user?.name}</div>
-                      <div style={{ fontSize: 12, color: TEXT2 }}>{user?.email}</div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '3px 7px', borderRadius: 4, background: isPremium ? 'rgba(74,222,128,0.12)' : 'rgba(142,142,147,0.12)', color: isPremium ? GREEN : TEXT2 }}>{user?.tier}</span>
-                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '3px 7px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>{user?.role}</span>
-                    </div>
-                  </div>
-
-                  {/* Two-factor authentication */}
-                  <div style={{ padding: '14px 0', borderBottom: `1px solid ${BORDER_C}` }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>Two-Factor Authentication</div>
-                        <div style={{ fontSize: 12, color: TEXT3, lineHeight: 1.5 }}>
-                          {user?.two_factor_enabled ? 'A code is emailed to you each time you sign in.' : 'Get a one-time code by email whenever you sign in.'}
-                        </div>
-                      </div>
-                      <button
-                        onClick={async () => {
-                          try {
-                            if (user?.two_factor_enabled) {
-                              await api.post('/auth/2fa/disable');
-                              refreshUser();
-                            } else {
-                              await api.post('/auth/2fa/enable');
-                              refreshUser();
-                            }
-                          } catch {}
-                        }}
-                        style={{ width: 42, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', background: user?.two_factor_enabled ? BLUE_BTN : 'rgba(255,255,255,0.12)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
-                      >
-                        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: user?.two_factor_enabled ? 21 : 3, transition: 'left 0.18s' }} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Backup email */}
-                  <div style={{ padding: '14px 0', borderBottom: `1px solid ${BORDER_C}` }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: TEXT2, marginBottom: 4 }}>Backup Email</div>
-                    <div style={{ fontSize: 12, color: TEXT3, marginBottom: 10, lineHeight: 1.5 }}>
-                      Keep access to your account after your student email is deactivated. Use a personal email you'll always have.
-                    </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <input
-                        type="email"
-                        placeholder={user?.backup_email || 'your@personal-email.com'}
-                        value={backupEmail}
-                        onChange={e => { setBackupEmail(e.target.value); setBackupEmailSaved(false); setBackupEmailErr(''); }}
-                        style={{ flex: 1, padding: '8px 12px', background: MUTED, border: backupEmailErr ? '1px solid rgba(248,113,113,0.5)' : BORDER, borderRadius: 7, color: TEXT, fontSize: 12, outline: 'none', fontFamily: 'inherit' }}
-                      />
-                      <button onClick={async () => {
-                        const trimmed = backupEmail.trim();
-                        if (!trimmed) return;
-                        setBackupEmailErr('');
-                        try {
-                          const { data } = await api.patch('/auth/me', { backup_email: trimmed });
-                          const token = localStorage.getItem('pl_token');
-                          if (token) login(token, data.user);
-                          setBackupEmailSaved(true);
-                          setBackupEmail('');
-                          setTimeout(() => setBackupEmailSaved(false), 3000);
-                        } catch (err) {
-                          setBackupEmailErr(err.response?.data?.error || 'Failed to save — please try again');
-                        }
-                      }} style={{ padding: '8px 14px', background: BLUE_BTN, border: 'none', borderRadius: 7, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                        {backupEmailSaved ? 'Saved ✓' : user?.backup_email ? 'Update' : 'Save'}
-                      </button>
-                    </div>
-                    {backupEmailErr && <div style={{ fontSize: 11, color: RED, marginTop: 6 }}>{backupEmailErr}</div>}
-                    {user?.backup_email && !backupEmailSaved && (
-                      <div style={{ fontSize: 11, color: GREEN, marginTop: 6 }}>Current: {user.backup_email}</div>
-                    )}
-                  </div>
-
-                  {isStudent && hideEduSection && (
-                    <div style={{ ...CARD, marginTop: 16, border: '1px solid rgba(74,222,128,0.2)', background: 'rgba(74,222,128,0.025)' }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Education Section</div>
-                      <div style={{ fontSize: 13, color: TEXT2, marginBottom: 14 }}>You've hidden the Education section. Restore it to access courses, datasets, and assignments.</div>
-                      <button onClick={() => { setHideEduSection(false); localStorage.removeItem('pl_hide_edu'); }}
-                        style={{ padding: '8px 18px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 7, color: GREEN, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                        Show Education Section
-                      </button>
-                    </div>
-                  )}
-
-                  <div style={{ paddingTop: 14, display: 'flex', gap: 8 }}>
-                    <button onClick={logout} style={{ padding: '8px 16px', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 7, color: RED, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Sign out</button>
-                    <button onClick={async () => {
-                      if (!window.confirm('Are you sure? This will permanently delete your account and all data. This cannot be undone.')) return;
-                      try {
-                        await api.delete('/auth/me');
-                        logout();
-                      } catch {
-                        alert('Failed to delete account. Please try again.');
-                      }
-                    }} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 7, color: 'rgba(248,113,113,0.6)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Delete Account</button>
-                  </div>
-                </div>
               </div>
             )}
 
