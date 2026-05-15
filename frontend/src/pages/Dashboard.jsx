@@ -3478,7 +3478,7 @@ export default function Dashboard() {
   }, [canSeeAI]);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: BG, fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 14, color: TEXT, overflowX: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', background: BG, fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 14, color: TEXT, overflow: 'hidden' }}>
 
       {/* ── TOAST ──────────────────────────────────────── */}
       {toast && (
@@ -4149,12 +4149,24 @@ export default function Dashboard() {
           <div style={{ position: 'relative', background: CARD_BG, border: '1px solid rgba(77,163,255,0.3)', borderRadius: 16, padding: 32, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.6)' }}>
             <button onClick={() => setShowUpgrade(false)} style={{ position: 'absolute', top: 14, right: 14, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: TEXT2, fontSize: 16, cursor: 'pointer', lineHeight: 1, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
 
-            <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <div style={{ fontWeight: 800, fontSize: 22, marginBottom: 6 }}>Upgrade to Premium</div>
-              <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.6 }}>Connect real accounts, unlock AI insights, and get a complete picture of your finances.</div>
-            </div>
+            {/* Price — top */}
+            {(() => {
+              const isEduVerified = user?.email_verified && user?.email?.toLowerCase().endsWith('.edu');
+              const isEduUnverified = !user?.email_verified && user?.email?.toLowerCase().endsWith('.edu');
+              return (
+                <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 8 }}>Premium</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 2 }}>
+                    <span style={{ fontSize: 48, fontWeight: 800, letterSpacing: '-2px', color: TEXT, lineHeight: 1 }}>{isEduVerified ? '$5.99' : '$9.99'}</span>
+                    <span style={{ fontSize: 15, color: TEXT2, marginLeft: 4 }}>/month</span>
+                  </div>
+                  {isEduVerified && <div style={{ fontSize: 12, color: '#4ade80', marginTop: 6 }}>Student discount applied</div>}
+                  {isEduUnverified && <div style={{ fontSize: 12, color: YELLOW, marginTop: 6 }}>Verify your .edu email to unlock $5.99/mo student pricing</div>}
+                </div>
+              );
+            })()}
 
-            <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 28 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 16, marginBottom: 24 }}>
               {/* Free */}
               <div style={{ padding: '16px 18px', background: DARK, borderRadius: 12, border: BORDER }}>
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: TEXT3, marginBottom: 14 }}>Free</div>
@@ -4182,7 +4194,6 @@ export default function Dashboard() {
                   'Personalized budget analysis',
                   'Live portfolio P&L',
                   'Financial assistant',
-                  'Market Insights (charts, screener, news)',
                   'Video lessons & walkthroughs',
                   'Practice quizzes',
                   'Downloadable templates',
@@ -4194,43 +4205,6 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
-
-            {/* Resource library */}
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 12 }}>Curated Resource Library</div>
-              <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 8 }}>
-                {[
-                  { name: 'Investopedia',        icon: '📚', color: BLUE   },
-                  { name: 'NerdWallet',          icon: '🧮', color: GREEN  },
-                  { name: 'Khan Academy',        icon: '🎓', color: '#10b981' },
-                  { name: 'IRS.gov',             icon: '🏛️', color: RED    },
-                  { name: 'FRED, St. Louis Fed',icon: '📈', color: YELLOW },
-                  { name: 'SEC Investor Ed.',    icon: '⚖️', color: '#a78bfa' },
-                ].map(r => (
-                  <div key={r.name} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 10px', background: DARK, borderRadius: 8, border: BORDER }}>
-                    <span style={{ fontSize: 14 }}>{r.icon}</span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: r.color, lineHeight: 1.3 }}>{r.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {(() => {
-              const isEduVerified = user?.email_verified && user?.email?.toLowerCase().endsWith('.edu');
-              const isEduUnverified = !user?.email_verified && user?.email?.toLowerCase().endsWith('.edu');
-              return (
-                <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                  <span style={{ fontSize: 28, fontWeight: 800, color: TEXT }}>{isEduVerified ? '$5.99' : '$9.99'}</span>
-                  <span style={{ fontSize: 14, color: TEXT2 }}>/month</span>
-                  {isEduVerified && <div style={{ fontSize: 12, color: '#4ade80', marginTop: 4 }}>Student discount applied</div>}
-                  {isEduUnverified && (
-                    <div style={{ fontSize: 12, color: YELLOW, marginTop: 4 }}>
-                      Verify your .edu email to unlock $5.99/mo student pricing
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
             <button
               disabled={checkoutLoading}
               onClick={async () => {
