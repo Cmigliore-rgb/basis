@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="290 30 100 100" width="100" height="100" role="img">
   <title>PeakLedger</title>
   <rect x="290" y="30" width="100" height="100" rx="22" fill="#0f172a"/>
-  <line x1="298" y1="117" x2="382" y2="117" stroke="#3b82f6" stroke-width="0.6" stroke-opacity="0.35"/>
-  <line x1="298" y1="104" x2="316" y2="104" stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.2"/>
-  <line x1="298" y1="91"  x2="316" y2="91"  stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.2"/>
-  <polygon points="302,120 340,76 378,120" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linejoin="round"/>
-  <polyline points="305,120 318,109 330,100 340,76 352,88 364,81 376,72" fill="none" stroke="#0066f5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="340" cy="76" r="3.2" fill="#0066f5"/>
-  <circle cx="376" cy="72" r="2.6" fill="#3b82f6"/>
+  <line x1="298" y1="113" x2="382" y2="113" stroke="#3b82f6" stroke-width="0.6" stroke-opacity="0.35"/>
+  <line x1="298" y1="100" x2="316" y2="100" stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.2"/>
+  <line x1="298" y1="87"  x2="316" y2="87"  stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.2"/>
+  <polygon points="302,115 340,69 378,115" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linejoin="round"/>
+  <polyline points="305,115 318,106 330,99 340,92 352,96 364,89 376,83" fill="none" stroke="#0066f5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="340" cy="92" r="3.2" fill="#0066f5"/>
+  <circle cx="376" cy="83" r="2.6" fill="#3b82f6"/>
 </svg>

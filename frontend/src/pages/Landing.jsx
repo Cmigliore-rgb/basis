@@ -113,7 +113,7 @@ export default function Landing() {
         </div>
 
         <h1 style={{ fontSize: 'clamp(40px, 7vw, 76px)', fontWeight: 800, letterSpacing: '0', lineHeight: 1.05, margin: '0 0 24px', maxWidth: 820, color: TEXT, fontKerning: 'normal', fontFeatureSettings: '"kern" 1, "liga" 0, "calt" 0', textRendering: 'optimizeLegibility' }}>
-          <span style={{ letterSpacing: '-0.04em' }}>Y</span>our finances,<br />
+          <span style={{ letterSpacing: '-0.07em' }}>Y</span>our finances,<br />
           <span style={{ color: BLUE_BTN }}>finally in focus.</span>
         </h1>
 
