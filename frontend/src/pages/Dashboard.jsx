@@ -3303,6 +3303,22 @@ export default function Dashboard() {
     }).catch(() => {}).finally(() => setProfLoadingCode(''));
   }, [effectiveProfessor, selectedProfCode]);
 
+  // Load students when professor navigates into a course from the Courses tab
+  useEffect(() => {
+    if (!effectiveProfessor || !selectedCourseId) return;
+    const course = enrolledCourses.find(c => c.id === selectedCourseId);
+    if (!course?.code || profStudents[course.code]) return;
+    Promise.all([
+      api.get(`/professor/students/${course.code}`),
+      api.get(`/professor/submissions/${course.code}`),
+    ]).then(([sr, subr]) => {
+      setProfStudents(prev => ({
+        ...prev,
+        [course.code]: { students: sr.data.students || [], submissions: subr.data.submissions || [] },
+      }));
+    }).catch(() => {});
+  }, [effectiveProfessor, selectedCourseId]);
+
   const fetchNews = useCallback(async (tickers) => {
     try {
       const r = await api.get('/news', { params: tickers ? { tickers } : {} });
@@ -10734,14 +10750,19 @@ export default function Dashboard() {
                             </div>
                             {/* Sub-nav tabs */}
                             <div style={{ display: 'flex', padding: '0 20px', gap: 2, overflowX: 'auto' }}>
-                              {[
+                              {(profView ? [
+                                ['assignments', 'Assignments'],
+                                ['students',    'Students'],
+                                ['content',     'Content'],
+                                ['syllabus',    'Course Info'],
+                                ['admin',       'Manage'],
+                              ] : [
                                 ['syllabus',    'Syllabus'],
                                 ['schedule',    'Schedule'],
                                 ['content',     'Content'],
                                 ['assignments', 'Assignments'],
-                                ...(!effectiveProfessor ? [['grades', 'Grades']] : []),
-                                ...(effectiveProfessor && !mirrorStudentView ? [['admin', 'Course Admin']] : []),
-                              ].map(([tab, label]) => (
+                                ['grades',      'Grades'],
+                              ]).map(([tab, label]) => (
                                 <button key={tab} onClick={() => setEduInnerTab(tab)}
                                   style={{ padding: '8px 16px', background: 'none', border: 'none', borderBottom: `2px solid ${eduInnerTab === tab ? activeCourse.color : 'transparent'}`, color: eduInnerTab === tab ? TEXT : TEXT2, fontSize: 13, fontWeight: eduInnerTab === tab ? 600 : 400, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
                                   {label}
@@ -10767,7 +10788,16 @@ export default function Dashboard() {
                                 </div>
 
                                 {/* SLIDES — collapsible rows */}
-                                {contentFolder === 'slides' && (
+                                {contentFolder === 'slides' && modules.length === 0 && (
+                                  <div style={{ textAlign: 'center', padding: '48px 24px', border: `1px dashed ${BORDER_C}`, borderRadius: 10 }}>
+                                    <div style={{ fontSize: 28, marginBottom: 12 }}>📂</div>
+                                    <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>No slides yet</div>
+                                    <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6 }}>
+                                      {profView ? 'Upload course slides or link weekly lecture materials here. Students will see them in this tab.' : 'Your instructor hasn\'t added slides yet.'}
+                                    </div>
+                                  </div>
+                                )}
+                                {contentFolder === 'slides' && modules.length > 0 && (
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                                     {modules.map((mod, i) => {
                                       const slideItemId = `slide-${i}`;
@@ -10815,6 +10845,7 @@ export default function Dashboard() {
                                 )}
 
                                 {/* DATASETS */}
+
                                 {contentFolder === 'datasets' && (
                                   <div>
                                     <div data-tour="edu-datasets-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, alignItems: 'start' }}>
@@ -10928,14 +10959,8 @@ export default function Dashboard() {
                               <div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                                   <div style={{ fontSize: 13, color: TEXT2 }}>{activeCourse.name} · {baseAssign.length + extraAssign.length} assignments</div>
-                                  {effectiveProfessor && selectedCourseId === 'fina3000' && (
-                                    <div style={{ display: 'flex', gap: 8 }}>
-                                      <label style={{ padding: '7px 14px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <input type="file" style={{ display: 'none' }} accept=".pdf,.docx" onChange={e => setSyllabusFile(e.target.files[0]?.name || null)} />
-                                        ↑ Upload Assignment
-                                      </label>
-                                      <button onClick={() => setShowCreateAssignment(true)} style={{ padding: '7px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ New Assignment</button>
-                                    </div>
+                                  {profView && (
+                                    <button onClick={() => { setCreateAssignCourseId(activeCourse.id); setShowCreateAssignment(true); }} style={{ padding: '7px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ Add Assignment</button>
                                   )}
                                 </div>
                                 <div data-tour="edu-assignments-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -11167,6 +11192,56 @@ export default function Dashboard() {
                               </div>
                             )}
 
+                            {/* ── STUDENTS TAB (professor only) ── */}
+                            {eduInnerTab === 'students' && profView && (() => {
+                              const courseStudents = (profStudents[activeCourse.code] || {}).students || [];
+                              const courseSubs = (profStudents[activeCourse.code] || {}).submissions || [];
+                              return (
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                                    <div style={{ fontSize: 13, color: TEXT2 }}>{courseStudents.length} enrolled</div>
+                                    <button onClick={() => setPanel('prof-dashboard')} style={{ padding: '6px 14px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Full Roster in Hub →</button>
+                                  </div>
+                                  {courseStudents.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '48px 24px', border: `1px dashed ${BORDER_C}`, borderRadius: 10 }}>
+                                      <div style={{ fontSize: 28, marginBottom: 12 }}>👥</div>
+                                      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>No students yet</div>
+                                      <div style={{ fontSize: 13, color: TEXT2 }}>Share your course code <span style={{ fontFamily: 'monospace', fontWeight: 700, color: activeCourse.color }}>{activeCourse.code}</span> so students can enroll.</div>
+                                    </div>
+                                  ) : (
+                                    <div style={CARD}>
+                                      {courseStudents.map((s, i) => {
+                                        const subs = courseSubs.filter(sub => sub.user_id === s.id);
+                                        const graded = subs.filter(sub => sub.grade != null);
+                                        const avgPct = graded.length ? Math.round(graded.reduce((sum, sub) => {
+                                          const a = activeCourse.assignments.find(a => a.id === sub.assignment_id);
+                                          return sum + (sub.grade / (a?.points ?? 100)) * 100;
+                                        }, 0) / graded.length) : null;
+                                        return (
+                                          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < courseStudents.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
+                                            <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${activeCourse.color}20`, border: `1px solid ${activeCourse.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: activeCourse.color, flexShrink: 0 }}>
+                                              {(s.name || '?')[0].toUpperCase()}
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                              <div style={{ fontSize: 13, fontWeight: 600 }}>{s.name}</div>
+                                              <div style={{ fontSize: 11, color: TEXT3 }}>{s.email}</div>
+                                            </div>
+                                            <div style={{ fontSize: 12, color: TEXT2, textAlign: 'right' }}>
+                                              <div style={{ fontWeight: 700, color: TEXT }}>{subs.length} / {activeCourse.assignments.length}</div>
+                                              <div style={{ fontSize: 11 }}>submitted</div>
+                                            </div>
+                                            {avgPct != null && (
+                                              <div style={{ fontSize: 13, fontWeight: 700, color: avgPct >= 90 ? GREEN : avgPct >= 70 ? YELLOW : RED, width: 44, textAlign: 'right' }}>{avgPct}%</div>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
+
                             {/* ── SCHEDULE TAB ── */}
                             {eduInnerTab === 'schedule' && (
                               <div data-tour="edu-schedule" style={CARD}>
@@ -11181,6 +11256,9 @@ export default function Dashboard() {
                                   </div>
                                 </div>
 
+                                {courseView === 'schedule' && modules.length === 0 && (
+                                  <div style={{ textAlign: 'center', padding: '32px 0', color: TEXT3, fontSize: 13 }}>No schedule posted yet.</div>
+                                )}
                                 {courseView === 'schedule' && modules.map((mod, i) => (
                                   <div key={i} style={{ display: 'flex', gap: 14, padding: mod.current ? '12px 10px' : '10px 0', marginLeft: mod.current ? -10 : 0, marginRight: mod.current ? -10 : 0, borderBottom: i < modules.length - 1 ? `1px solid ${BORDER_C}` : 'none', background: mod.current ? `${activeCourse.color}06` : 'transparent', borderRadius: mod.current ? 8 : 0 }}>
                                     <div style={{ width: 100, flexShrink: 0, fontSize: 11, color: mod.current ? activeCourse.color : TEXT3, fontFamily: 'monospace', paddingTop: 2 }}>{mod.week}</div>
