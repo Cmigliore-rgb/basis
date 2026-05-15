@@ -2781,8 +2781,6 @@ export default function Dashboard() {
     } catch { return 'markets'; }
   });
   const [signalFilter, setSignalFilter] = useState(null);
-  const [showAllTxns, setShowAllTxns] = useState(false);
-  const [showAllNews, setShowAllNews] = useState(false);
   const [marketView, setMarketView]         = useState('most_actives');
   const [marketViewData, setMarketViewData] = useState([]);
   const [loadingMarketView, setLoadingMarketView] = useState(false);
@@ -3553,7 +3551,7 @@ export default function Dashboard() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: SIDE_BG, borderBottom: BORDER, zIndex: 200, paddingTop: 'env(safe-area-inset-top)' }}>
           <div style={{ height: 52, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <img src="/logo-icon.svg" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
+              <img src="/logo-icon.svg?v=2" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
               <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
               {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
             </div>
@@ -3576,7 +3574,7 @@ export default function Dashboard() {
       <aside style={{ width: 220, flexShrink: 0, background: SIDE_BG, borderRight: BORDER, display: isMobile ? 'none' : 'flex', flexDirection: 'column' }}>
         <div data-tour="brand" style={{ padding: '18px 16px 16px', borderBottom: BORDER, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/logo-icon.svg" alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
+            <img src="/logo-icon.svg?v=2" alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
             <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
           </div>
           <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
@@ -4562,6 +4560,8 @@ export default function Dashboard() {
                 will-change: transform;
               }
               .ticker-scroll:hover { animation-play-state: paused; }
+              .card-scroll { overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+              .card-scroll::-webkit-scrollbar { display: none; }
               .drag-section:hover .drag-handle { opacity: 1 !important; }
               .drag-section[draggable] { cursor: default; }
               .lc { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
@@ -5338,43 +5338,35 @@ export default function Dashboard() {
                 <DragSection id="txns" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
                 <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16 }}>
                   <div data-tour="overview-txns" className="lc" style={CARD}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                      <div style={{ fontWeight: 600 }}>Recent Transactions</div>
-                      {transactions.length > 5 && (
-                        <button onClick={() => setShowAllTxns(v => !v)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 12, cursor: 'pointer', padding: 0 }}>
-                          {showAllTxns ? 'Show less ↑' : `+${transactions.length - 5} more ↓`}
-                        </button>
-                      )}
-                    </div>
+                    <div style={{ fontWeight: 600, marginBottom: 16 }}>Recent Transactions</div>
                     {transactions.length === 0 ? (
                       <div style={{ color: TEXT2, textAlign: 'center', padding: 24 }}>No transactions yet</div>
-                    ) : (showAllTxns ? transactions : transactions.slice(0, 5)).map((t, i, arr) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
-                        <div>
-                          <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
-                          <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} · {fmtCat(t.personal_finance_category?.primary || t.category?.[0])}</div>
-                        </div>
-                        <div style={{ fontWeight: 600, color: t.amount > 0 ? RED : GREEN, fontFamily: 'monospace' }}>
-                          {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
-                        </div>
+                    ) : (
+                      <div className="card-scroll" style={{ maxHeight: 260 }}>
+                        {transactions.map((t, i, arr) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
+                            <div>
+                              <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
+                              <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} · {fmtCat(t.personal_finance_category?.primary || t.category?.[0])}</div>
+                            </div>
+                            <div style={{ fontWeight: 600, color: t.amount > 0 ? RED : GREEN, fontFamily: 'monospace' }}>
+                              {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                   <div className="lc" style={CARD}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                      <div style={{ fontWeight: 600 }}>Market Alerts</div>
-                      {articles.length > 5 && (
-                        <button onClick={() => setShowAllNews(v => !v)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 12, cursor: 'pointer', padding: 0 }}>
-                          {showAllNews ? 'Show less ↑' : `+${articles.length - 5} more ↓`}
-                        </button>
-                      )}
+                    <div style={{ fontWeight: 600, marginBottom: 12 }}>Market Alerts</div>
+                    <div className="card-scroll" style={{ maxHeight: 260 }}>
+                      {articles.map((a, i, arr) => (
+                        <div key={i} style={{ padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
+                          <a href={a.url !== '#' ? a.url : undefined} target={a.url !== '#' ? '_blank' : undefined} rel="noreferrer" style={{ color: TEXT, textDecoration: 'none', fontSize: 13, fontWeight: 500, lineHeight: 1.4, display: 'block' }}>{a.headline}</a>
+                          <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{a.source} · {fmtDate(a.created_at)}</div>
+                        </div>
+                      ))}
                     </div>
-                    {(showAllNews ? articles : articles.slice(0, 5)).map((a, i, arr) => (
-                      <div key={i} style={{ padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
-                        <a href={a.url !== '#' ? a.url : undefined} target={a.url !== '#' ? '_blank' : undefined} rel="noreferrer" style={{ color: TEXT, textDecoration: 'none', fontSize: 13, fontWeight: 500, lineHeight: 1.4, display: 'block' }}>{a.headline}</a>
-                        <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{a.source} · {fmtDate(a.created_at)}</div>
-                      </div>
-                    ))}
                   </div>
                 </div>
                 </DragSection>

@@ -233,6 +233,19 @@ try {
 } catch {}
 try { db.exec(`ALTER TABLE course_codes ADD COLUMN selected_assignments TEXT`); } catch {}
 try { db.exec(`ALTER TABLE course_codes ADD COLUMN color TEXT`); } catch {}
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS goals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      target REAL NOT NULL,
+      account_id TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `);
+} catch {}
 
 // Auto-verify admin and professor accounts
 db.prepare("UPDATE users SET email_verified = 1 WHERE role IN ('admin', 'professor') AND email_verified = 0").run();
