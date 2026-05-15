@@ -3579,7 +3579,7 @@ export default function Dashboard() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: SIDE_BG, borderBottom: BORDER, zIndex: 200, paddingTop: 'env(safe-area-inset-top)' }}>
           <div style={{ height: 52, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <img src="/logo-icon.svg?v=5" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
+              <img src="/logo-icon.svg?v=6" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
               <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
               {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
             </div>
@@ -3599,36 +3599,40 @@ export default function Dashboard() {
       )}
 
       {/* ── SIDEBAR ─────────────────────────────────────── */}
-      <aside style={{ width: sidebarCollapsed ? 0 : 220, flexShrink: 0, background: SIDE_BG, borderRight: sidebarCollapsed ? 'none' : BORDER, display: isMobile ? 'none' : 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width 0.25s ease, border 0.25s ease' }}>
-        <div data-tour="brand" style={{ width: 220, padding: '18px 16px 16px', borderBottom: BORDER, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/logo-icon.svg?v=5" alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
-            <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
+      <aside style={{ width: sidebarCollapsed ? 48 : 220, flexShrink: 0, background: SIDE_BG, borderRight: BORDER, display: isMobile ? 'none' : 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width 0.25s ease' }}>
+        <div data-tour="brand" style={{ width: sidebarCollapsed ? 48 : 220, padding: sidebarCollapsed ? '12px 0' : '18px 16px 16px', borderBottom: BORDER, display: 'flex', flexDirection: sidebarCollapsed ? 'column' : 'row', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <div style={{ flex: sidebarCollapsed ? 'none' : 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src="/logo-icon.svg?v=6" alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
+            {!sidebarCollapsed && <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>}
           </div>
-          <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : 'transparent', border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : '1px solid transparent', borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="#4b5563" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-            {inboxNotifs.filter(n => !n.read).length > 0 && (
-              <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 17, height: 17, background: RED, borderRadius: 9, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', border: `2px solid ${SIDE_BG}` }}>
-                {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
-              </span>
-            )}
-          </button>
-          <button onClick={() => setSidebarCollapsed(true)} title="Collapse sidebar" style={{ background: 'transparent', border: '1px solid transparent', borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: TEXT3, fontSize: 16, flexShrink: 0, transition: 'color 0.15s' }}>‹</button>
+          {!sidebarCollapsed && (
+            <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : 'transparent', border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : '1px solid transparent', borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="#4b5563" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+              {inboxNotifs.filter(n => !n.read).length > 0 && (
+                <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 17, height: 17, background: RED, borderRadius: 9, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', border: `2px solid ${SIDE_BG}` }}>
+                  {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
+                </span>
+              )}
+            </button>
+          )}
+          <button onClick={() => setSidebarCollapsed(v => !v)} title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} style={{ background: 'transparent', border: '1px solid transparent', borderRadius: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: TEXT3, fontSize: 16, flexShrink: 0 }}>{sidebarCollapsed ? '›' : '‹'}</button>
         </div>
         <nav style={{ flex: 1, paddingTop: 10, overflowY: 'auto' }}>
         <div data-tour="sidebar-nav">
 
           {/* ── PERSONAL FINANCE SECTION ── */}
           {eduMode ? (
-            /* Collapsed — single switch pill */
-            <button onClick={() => { switchEduMode(false); setPanel('overview'); }}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', margin: '4px 0', background: 'transparent', border: 'none', color: BLUE, cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: 'left', borderBottom: `1px solid ${BORDER_C}`, paddingBottom: 10, marginBottom: 4, transition: 'all 0.15s' }}>
-              <span style={{ flex: 1, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Personal Finance</span>
-              <span style={{ fontSize: 11, fontWeight: 600 }}>← Switch</span>
-            </button>
+            /* Collapsed — single switch pill (hidden when sidebar is icon-only) */
+            !sidebarCollapsed && (
+              <button onClick={() => { switchEduMode(false); setPanel('overview'); }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', margin: '4px 0', background: 'transparent', border: 'none', color: BLUE, cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: 'left', borderBottom: `1px solid ${BORDER_C}`, paddingBottom: 10, marginBottom: 4, transition: 'all 0.15s' }}>
+                <span style={{ flex: 1, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Personal Finance</span>
+                <span style={{ fontSize: 11, fontWeight: 600 }}>← Switch</span>
+              </button>
+            )
           ) : (
             <>
-              <div style={{ padding: '4px 20px 6px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: BLUE }}>Personal Finance</div>
+              {!sidebarCollapsed && <div style={{ padding: '4px 20px 6px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: BLUE }}>Personal Finance</div>}
               {(() => {
                 const _NAV_DEF = NAV.filter(n => n.section === 'finance').map(n => n.key);
                 const _navOrder = getOrder('nav-order', _NAV_DEF);
@@ -3642,10 +3646,11 @@ export default function Dashboard() {
                       onDragOver={e => e.preventDefault()}
                       onDrop={e => { e.preventDefault(); const [, srcId] = e.dataTransfer.getData('text/plain').split('|||'); if (srcId !== key) handleReorder('nav-order', _NAV_DEF)(srcId, key); }}
                       onClick={() => { setPanel(key); switchEduMode(false); }}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 20px', background: (panel === key && !eduMode) ? 'rgba(255,255,255,0.06)' : 'transparent', border: 'none', borderLeft: (panel === key && !eduMode) ? `2px solid ${BLUE}` : '2px solid transparent', color: (panel === key && !eduMode) ? TEXT : TEXT2, cursor: 'grab', fontSize: 13, fontWeight: (panel === key && !eduMode) ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
+                      title={sidebarCollapsed ? label : undefined}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: sidebarCollapsed ? 0 : 10, padding: sidebarCollapsed ? '10px 0' : '10px 20px', background: (panel === key && !eduMode) ? 'rgba(255,255,255,0.06)' : 'transparent', border: 'none', borderLeft: (panel === key && !eduMode) ? `2px solid ${BLUE}` : '2px solid transparent', color: (panel === key && !eduMode) ? TEXT : TEXT2, cursor: 'grab', fontSize: 13, fontWeight: (panel === key && !eduMode) ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
                       <span style={{ fontSize: 14, opacity: locked ? 0.4 : 1 }}>{icon}</span>
-                      <span style={{ flex: 1 }}>{label}</span>
-                      {locked && <span style={{ fontSize: 9, fontWeight: 700, color: '#fbbf24', background: 'rgba(251,191,36,0.12)', padding: '2px 5px', borderRadius: 4 }}>PRO</span>}
+                      {!sidebarCollapsed && <span style={{ flex: 1 }}>{label}</span>}
+                      {!sidebarCollapsed && locked && <span style={{ fontSize: 9, fontWeight: 700, color: '#fbbf24', background: 'rgba(251,191,36,0.12)', padding: '2px 5px', borderRadius: 4 }}>PRO</span>}
                     </button>
                   );
                 });
@@ -3655,58 +3660,63 @@ export default function Dashboard() {
 
           {/* ── EDUCATION SECTION ── */}
           {!isUser && !hideEduSection && (!eduMode ? (
-            /* Collapsed — single switch pill */
-            <button onClick={() => { switchEduMode(true); setPanel('edu-courses'); }}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', margin: '4px 0', background: 'transparent', border: 'none', color: GREEN, cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: 'left', borderTop: `1px solid ${BORDER_C}`, marginTop: 6, transition: 'all 0.15s' }}>
-              <span style={{ flex: 1, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Education</span>
-              <span style={{ fontSize: 11, fontWeight: 600 }}>Switch →</span>
-            </button>
+            /* Switch to edu pill — hidden when sidebar is icon-only */
+            !sidebarCollapsed && (
+              <button onClick={() => { switchEduMode(true); setPanel('edu-courses'); }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', margin: '4px 0', background: 'transparent', border: 'none', color: GREEN, cursor: 'pointer', fontSize: 12, fontWeight: 500, textAlign: 'left', borderTop: `1px solid ${BORDER_C}`, marginTop: 6, transition: 'all 0.15s' }}>
+                <span style={{ flex: 1, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Education</span>
+                <span style={{ fontSize: 11, fontWeight: 600 }}>Switch →</span>
+              </button>
+            )
           ) : (
             <>
-              <div style={{ padding: '12px 20px 6px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: GREEN, borderTop: `1px solid ${BORDER_C}`, marginTop: 6 }}>
+              {!sidebarCollapsed && <div style={{ padding: '12px 20px 6px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: GREEN, borderTop: `1px solid ${BORDER_C}`, marginTop: 6 }}>
                 <span style={{ flex: 1 }}>Education</span>
-              </div>
+              </div>}
               {NAV.filter(n => n.section === 'education' && !hiddenPanels.has(n.key)).map(({ key, label, icon }) => (
                 <button key={key} data-tour={`nav-${key}`} onClick={() => { setPanel(key); switchEduMode(true); }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 20px', background: panel === key ? 'rgba(74,222,128,0.07)' : 'transparent', border: 'none', borderLeft: panel === key ? `2px solid ${GREEN}` : '2px solid transparent', color: panel === key ? GREEN : TEXT2, cursor: 'pointer', fontSize: 13, fontWeight: panel === key ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
+                  title={sidebarCollapsed ? label : undefined}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: sidebarCollapsed ? 0 : 10, padding: sidebarCollapsed ? '10px 0' : '10px 20px', background: panel === key ? 'rgba(74,222,128,0.07)' : 'transparent', border: 'none', borderLeft: panel === key ? `2px solid ${GREEN}` : '2px solid transparent', color: panel === key ? GREEN : TEXT2, cursor: 'pointer', fontSize: 13, fontWeight: panel === key ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
                   <span style={{ fontSize: 14 }}>{icon}</span>
-                  <span>{label}</span>
+                  {!sidebarCollapsed && <span>{label}</span>}
                 </button>
               ))}
               {effectiveProfessor && (
                 <button onClick={() => { setPanel('prof-dashboard'); switchEduMode(true); }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 20px', background: panel === 'prof-dashboard' ? 'rgba(74,222,128,0.07)' : 'transparent', border: 'none', borderLeft: panel === 'prof-dashboard' ? `2px solid ${GREEN}` : '2px solid transparent', color: panel === 'prof-dashboard' ? GREEN : TEXT2, cursor: 'pointer', fontSize: 13, fontWeight: panel === 'prof-dashboard' ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
+                  title={sidebarCollapsed ? 'Professor Hub' : undefined}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: sidebarCollapsed ? 0 : 10, padding: sidebarCollapsed ? '10px 0' : '10px 20px', background: panel === 'prof-dashboard' ? 'rgba(74,222,128,0.07)' : 'transparent', border: 'none', borderLeft: panel === 'prof-dashboard' ? `2px solid ${GREEN}` : '2px solid transparent', color: panel === 'prof-dashboard' ? GREEN : TEXT2, cursor: 'pointer', fontSize: 13, fontWeight: panel === 'prof-dashboard' ? 600 : 400, textAlign: 'left', transition: 'all 0.15s' }}>
                   <span style={{ fontSize: 14 }}>⊟</span>
-                  <span>Professor Hub</span>
+                  {!sidebarCollapsed && <span>Professor Hub</span>}
                 </button>
               )}
             </>
           ))}
           {/* Get Premium / Connect Account + Tour + Settings — anchored under Education section */}
-          <div style={{ padding: '10px 14px 4px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div style={{ padding: sidebarCollapsed ? '10px 0' : '10px 14px 4px', display: 'flex', flexDirection: 'column', gap: 7, alignItems: sidebarCollapsed ? 'center' : 'stretch' }}>
             {!viewAs && (
-              <div data-tour="connect">
+              <div data-tour="connect" style={{ width: '100%' }}>
                 <button
                   onClick={() => isPremium ? setShowConnectModal(true) : setShowUpgrade(true)}
+                  title={sidebarCollapsed ? (isPremium ? 'Connect Account' : 'Get Premium') : undefined}
                   style={{
-                    width: '100%', padding: '9px 0',
+                    width: '100%', padding: sidebarCollapsed ? '8px 0' : '9px 0',
                     background: isPremium ? 'rgba(77,163,255,0.08)' : 'rgba(77,163,255,0.12)',
                     color: '#4da3ff',
                     border: isPremium ? '1px solid rgba(77,163,255,0.25)' : '1px solid rgba(77,163,255,0.4)',
                     borderRadius: 6, cursor: 'pointer',
-                    fontSize: 13, fontWeight: isPremium ? 600 : 700,
+                    fontSize: sidebarCollapsed ? 15 : 13, fontWeight: isPremium ? 600 : 700,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}
                 >
-                  {isPremium ? '+ Connect Account' : 'Get Premium'}
+                  {sidebarCollapsed ? (isPremium ? '+' : '★') : (isPremium ? '+ Connect Account' : 'Get Premium')}
                 </button>
               </div>
             )}
             {!viewAs && !isAdmin && (
               <button
+                title={sidebarCollapsed ? 'Take a Tour' : undefined}
                 onClick={() => {
                   const steps = effectiveProfessor ? PROFESSOR_TOUR_STEPS : effectiveStudent ? STUDENT_TOUR_STEPS : FINANCE_TOUR_STEPS;
-                  // Find first step matching current panel + tab + subtab (progressively less specific)
                   let idx = steps.findIndex(s =>
                     s.panel === panel &&
                     (!s.tab || s.tab === cashFlowTab) &&
@@ -3717,46 +3727,43 @@ export default function Dashboard() {
                   if (idx < 0) idx = steps.findIndex(s => s.panel === panel);
                   openTourAt(idx >= 0 ? idx : 0);
                 }}
-                style={{ width: '100%', padding: '8px 0', background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.25)', borderRadius: 8, color: BLUE, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                style={{ width: '100%', padding: '8px 0', background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.25)', borderRadius: 8, color: BLUE, fontSize: sidebarCollapsed ? 13 : 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
-                ✦ Take a Tour
+                {sidebarCollapsed ? '✦' : '✦ Take a Tour'}
               </button>
             )}
             <button data-tour="nav-settings" onClick={() => setPanel('settings')}
-              style={{ width: '100%', padding: '8px 0', background: panel === 'settings' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: panel === 'settings' ? `1px solid ${BORDER_C}` : `1px solid ${BORDER_C}`, borderRadius: 8, color: panel === 'settings' ? TEXT : TEXT2, fontSize: 12, fontWeight: panel === 'settings' ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.15s' }}>
-              ⚙ Settings
-              {hiddenPanels.size > 0 && <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(251,191,36,0.15)', color: YELLOW, padding: '2px 5px', borderRadius: 4 }}>{hiddenPanels.size} hidden</span>}
+              title={sidebarCollapsed ? 'Settings' : undefined}
+              style={{ width: '100%', padding: '8px 0', background: panel === 'settings' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER_C}`, borderRadius: 8, color: panel === 'settings' ? TEXT : TEXT2, fontSize: sidebarCollapsed ? 14 : 12, fontWeight: panel === 'settings' ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.15s' }}>
+              {sidebarCollapsed ? '⚙' : (<>⚙ Settings{hiddenPanels.size > 0 && <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(251,191,36,0.15)', color: YELLOW, padding: '2px 5px', borderRadius: 4 }}>{hiddenPanels.size} hidden</span>}</>)}
             </button>
           </div>
         </div>{/* end sidebar-nav */}
         </nav>
-        <div style={{ padding: '12px 16px 16px', borderTop: BORDER, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ marginTop: 0, padding: '10px 12px', background: DARK, borderRadius: 8, border: viewAs ? '1px solid rgba(251,191,36,0.4)' : BORDER }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 2 }}>{user?.name}</div>
-            <div style={{ fontSize: 11, color: TEXT2 }}>{user?.email}</div>
-            <div style={{ display: 'flex', gap: 6, marginTop: 6, alignItems: 'center' }}>
-              {viewAs ? (
-                <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: 'rgba(251,191,36,0.15)', color: YELLOW }}>Viewing as {viewAs}</span>
-              ) : (
-                <>
-                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: isPremium ? 'rgba(74,222,128,0.12)' : 'rgba(142,142,147,0.12)', color: isPremium ? '#4ade80' : TEXT2 }}>{user?.tier}</span>
-                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>{user?.role}</span>
-                </>
-              )}
-              <button onClick={logout} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: TEXT3, fontSize: 11, cursor: 'pointer', padding: 0 }}>Sign out</button>
+        {sidebarCollapsed ? (
+          <div style={{ padding: '10px 0', borderTop: BORDER, display: 'flex', justifyContent: 'center' }}>
+            <button onClick={logout} title="Sign out" style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 16, cursor: 'pointer', padding: 4 }}>↪</button>
+          </div>
+        ) : (
+          <div style={{ padding: '12px 16px 16px', borderTop: BORDER, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ marginTop: 0, padding: '10px 12px', background: DARK, borderRadius: 8, border: viewAs ? '1px solid rgba(251,191,36,0.4)' : BORDER }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 2 }}>{user?.name}</div>
+              <div style={{ fontSize: 11, color: TEXT2 }}>{user?.email}</div>
+              <div style={{ display: 'flex', gap: 6, marginTop: 6, alignItems: 'center' }}>
+                {viewAs ? (
+                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: 'rgba(251,191,36,0.15)', color: YELLOW }}>Viewing as {viewAs}</span>
+                ) : (
+                  <>
+                    <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: isPremium ? 'rgba(74,222,128,0.12)' : 'rgba(142,142,147,0.12)', color: isPremium ? '#4ade80' : TEXT2 }}>{user?.tier}</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>{user?.role}</span>
+                  </>
+                )}
+                <button onClick={logout} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: TEXT3, fontSize: 11, cursor: 'pointer', padding: 0 }}>Sign out</button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </aside>
-
-      {/* ── SIDEBAR EXPAND TAB (when collapsed) ─────────── */}
-      {!isMobile && sidebarCollapsed && (
-        <button
-          onClick={() => setSidebarCollapsed(false)}
-          title="Expand sidebar"
-          style={{ position: 'fixed', left: 0, top: '50%', transform: 'translateY(-50%)', background: SIDE_BG, border: BORDER, borderLeft: 'none', borderRadius: '0 8px 8px 0', padding: '14px 7px', cursor: 'pointer', color: TEXT2, fontSize: 15, zIndex: 200, display: 'flex', alignItems: 'center', transition: 'color 0.15s' }}
-        >›</button>
-      )}
 
       {/* ── MOBILE BOTTOM TAB BAR + MORE SHEET ─────────── */}
       {isMobile && (() => {
@@ -8098,9 +8105,9 @@ export default function Dashboard() {
                           <div style={{ color: TEXT2, fontSize: 13, textAlign: 'center', padding: 24 }}>Loading sector data...</div>
                         ) : (
                           <>
-                            {/* Stacked bar */}
+                            {/* Stacked bar — only sectors with actual allocation */}
                             <div style={{ display: 'flex', height: 10, borderRadius: 6, overflow: 'hidden', marginBottom: 18, gap: 1 }}>
-                              {sectors.map(s => (
+                              {sectors.filter(s => s.val > 0).map(s => (
                                 <div key={s.name} style={{ flex: s.pct, background: sectorColor(s.name), minWidth: 2 }} title={`${s.name}: ${s.pct.toFixed(1)}%`} />
                               ))}
                             </div>

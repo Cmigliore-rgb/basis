@@ -9,6 +9,7 @@ import Privacy from './pages/Privacy.jsx';
 import Terms from './pages/Terms.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
+import Pricing from './pages/Pricing.jsx';
 import MicrosoftCallback from './pages/MicrosoftCallback.jsx';
 import GoogleCallback from './pages/GoogleCallback.jsx';
 import OAuthReturn from './pages/OAuthReturn.jsx';
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/login"     element={<GuestRoute><Login /></GuestRoute>} />
           <Route path="/register"  element={<GuestRoute><Register /></GuestRoute>} />
           <Route path="/app/*"     element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/pricing"         element={<Pricing />} />
           <Route path="/privacy"         element={<Privacy />} />
           <Route path="/terms"           element={<Terms />} />
           <Route path="/forgot-password"           element={<ForgotPassword />} />
