@@ -5,7 +5,6 @@
   <line x1="298" y1="95"  x2="316" y2="95"  stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.2"/>
   <line x1="298" y1="77"  x2="316" y2="77"  stroke="#3b82f6" stroke-width="0.5" stroke-opacity="0.2"/>
   <polygon points="302,115 340,48 378,115" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linejoin="round"/>
-  <polyline points="305,112 318,96 330,80 340,65 352,60 364,57 376,55" fill="none" stroke="#0066f5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="340" cy="65" r="3.2" fill="#0066f5"/>
-  <circle cx="376" cy="55" r="2.6" fill="#3b82f6"/>
+  <polyline points="298,115 308,104 305,109 318,94 315,99 328,83 340,68 354,53 366,42 374,36" fill="none" stroke="#0066f5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="374" cy="36" r="2.6" fill="#3b82f6"/>
 </svg>

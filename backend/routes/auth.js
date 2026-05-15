@@ -380,7 +380,7 @@ router.delete('/me', requireAuth, async (req, res) => {
 // Admin: list all users
 router.get('/users', requireAuth, (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
-  const users = db.prepare('SELECT id, email, name, role, tier, created_at FROM users WHERE is_demo = 0 OR is_demo IS NULL ORDER BY created_at DESC').all();
+  const users = db.prepare('SELECT id, email, name, role, tier, email_verified, created_at FROM users WHERE is_demo = 0 OR is_demo IS NULL ORDER BY created_at DESC').all();
   res.json({ users });
 });
 
@@ -403,6 +403,31 @@ router.patch('/users/:id', requireAuth, (req, res) => {
   db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
   const user = db.prepare('SELECT id, email, name, role, tier, created_at FROM users WHERE id = ?').get(parseInt(req.params.id));
   res.json({ user: safeUser(user) });
+});
+
+// Admin: delete a user and their data
+router.delete('/users/:id', requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+  const id = parseInt(req.params.id);
+  const target = db.prepare('SELECT id, role FROM users WHERE id = ?').get(id);
+  if (!target) return res.status(404).json({ error: 'User not found' });
+  if (target.role === 'admin') return res.status(400).json({ error: 'Cannot delete admin accounts' });
+  db.prepare('DELETE FROM enrollments WHERE user_id = ?').run(id);
+  db.prepare('DELETE FROM submissions WHERE user_id = ?').run(id);
+  db.prepare('DELETE FROM notifications WHERE user_id = ?').run(id);
+  db.prepare('DELETE FROM plaid_tokens WHERE user_id = ?').run(id);
+  db.prepare('DELETE FROM baselines WHERE user_id = ?').run(id);
+  db.prepare('DELETE FROM monthly_actuals WHERE user_id = ?').run(id);
+  db.prepare('DELETE FROM goals WHERE user_id = ?').run(id);
+  try { db.prepare('DELETE FROM transactions_cache WHERE user_id = ?').run(id); } catch {}
+  try { db.prepare('DELETE FROM accounts_cache WHERE user_id = ?').run(id); } catch {}
+  try { db.prepare('DELETE FROM holdings_cache WHERE user_id = ?').run(id); } catch {}
+  try { db.prepare('DELETE FROM liabilities_cache WHERE user_id = ?').run(id); } catch {}
+  try { db.prepare('DELETE FROM net_worth_snapshots WHERE user_id = ?').run(id); } catch {}
+  try { db.prepare('DELETE FROM budget_limits WHERE user_id = ?').run(id); } catch {}
+  try { db.prepare('DELETE FROM manual_liabilities WHERE user_id = ?').run(id); } catch {}
+  db.prepare('DELETE FROM users WHERE id = ?').run(id);
+  res.json({ ok: true });
 });
 
 // Admin: send annual re-verification emails to students with expired .edu verification

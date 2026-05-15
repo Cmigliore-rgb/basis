@@ -2499,6 +2499,7 @@ export default function Dashboard() {
   const [budgetSummaryView, setBudgetSummaryView] = useState(true);
   const [selectedIncomeMonth, setSelectedIncomeMonth] = useState(0); // 0 = current month, 1 = last month, etc.
   const [selectedExpenseMonth, setSelectedExpenseMonth] = useState(0); // 0 = current month, 1 = last month, etc.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showTour, setShowTour] = useState(false);
   const [tourStep, setTourStep] = useState(0);
   const [holdingsExpanded, setHoldingsExpanded] = useState(false);
@@ -2855,6 +2856,11 @@ export default function Dashboard() {
   const patchUser = async (id, patch) => {
     await api.patch(`/auth/users/${id}`, patch);
     setAdminUsers(prev => prev.map(u => u.id === id ? { ...u, ...patch } : u));
+  };
+  const deleteUser = async (id, name) => {
+    if (!window.confirm(`Delete ${name}? This cannot be undone.`)) return;
+    await api.delete(`/auth/users/${id}`);
+    setAdminUsers(prev => prev.filter(u => u.id !== id));
   };
   const [showInvite, setShowInvite] = useState(false);
   const [inviteSelectedCourse, setInviteSelectedCourse] = useState(null);
@@ -3573,11 +3579,11 @@ export default function Dashboard() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: SIDE_BG, borderBottom: BORDER, zIndex: 200, paddingTop: 'env(safe-area-inset-top)' }}>
           <div style={{ height: 52, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <img src="/logo-icon.svg?v=4" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
+              <img src="/logo-icon.svg?v=5" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
               <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
               {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
             </div>
-            <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
+            <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : 'transparent', border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : '1px solid transparent', borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="#4b5563" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
               {inboxNotifs.filter(n => !n.read).length > 0 && (
                 <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, background: RED, borderRadius: 8, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px', border: `2px solid ${SIDE_BG}` }}>
@@ -3593,13 +3599,13 @@ export default function Dashboard() {
       )}
 
       {/* ── SIDEBAR ─────────────────────────────────────── */}
-      <aside style={{ width: 220, flexShrink: 0, background: SIDE_BG, borderRight: BORDER, display: isMobile ? 'none' : 'flex', flexDirection: 'column' }}>
-        <div data-tour="brand" style={{ padding: '18px 16px 16px', borderBottom: BORDER, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <aside style={{ width: sidebarCollapsed ? 0 : 220, flexShrink: 0, background: SIDE_BG, borderRight: sidebarCollapsed ? 'none' : BORDER, display: isMobile ? 'none' : 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width 0.25s ease, border 0.25s ease' }}>
+        <div data-tour="brand" style={{ width: 220, padding: '18px 16px 16px', borderBottom: BORDER, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/logo-icon.svg?v=4" alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
+            <img src="/logo-icon.svg?v=5" alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
             <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
           </div>
-          <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : MUTED, border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : BORDER, borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
+          <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : 'transparent', border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : '1px solid transparent', borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="#4b5563" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
             {inboxNotifs.filter(n => !n.read).length > 0 && (
               <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 17, height: 17, background: RED, borderRadius: 9, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', border: `2px solid ${SIDE_BG}` }}>
@@ -3607,6 +3613,7 @@ export default function Dashboard() {
               </span>
             )}
           </button>
+          <button onClick={() => setSidebarCollapsed(true)} title="Collapse sidebar" style={{ background: 'transparent', border: '1px solid transparent', borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: TEXT3, fontSize: 16, flexShrink: 0, transition: 'color 0.15s' }}>‹</button>
         </div>
         <nav style={{ flex: 1, paddingTop: 10, overflowY: 'auto' }}>
         <div data-tour="sidebar-nav">
@@ -3741,6 +3748,15 @@ export default function Dashboard() {
           </div>
         </div>
       </aside>
+
+      {/* ── SIDEBAR EXPAND TAB (when collapsed) ─────────── */}
+      {!isMobile && sidebarCollapsed && (
+        <button
+          onClick={() => setSidebarCollapsed(false)}
+          title="Expand sidebar"
+          style={{ position: 'fixed', left: 0, top: '50%', transform: 'translateY(-50%)', background: SIDE_BG, border: BORDER, borderLeft: 'none', borderRadius: '0 8px 8px 0', padding: '14px 7px', cursor: 'pointer', color: TEXT2, fontSize: 15, zIndex: 200, display: 'flex', alignItems: 'center', transition: 'color 0.15s' }}
+        >›</button>
+      )}
 
       {/* ── MOBILE BOTTOM TAB BAR + MORE SHEET ─────────── */}
       {isMobile && (() => {
@@ -7340,7 +7356,7 @@ export default function Dashboard() {
               return (
                 <div>
                   <h1 data-tour="taxes-header" style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 700 }}>Taxes</h1>
-                  <p style={{ margin: '0 0 20px', color: TEXT2, fontSize: 14 }}>2025 federal income tax estimator: brackets, effective rate, and the impact of pre-tax contributions.</p>
+                  <p style={{ margin: '0 0 20px', color: TEXT2, fontSize: 14 }}>{new Date().getFullYear()} federal income tax estimator: brackets, effective rate, and the impact of pre-tax contributions.</p>
 
                   {/* Pulled from linked accounts */}
                   <div style={{ ...CARD, marginBottom: 24, background: 'rgba(77,163,255,0.03)', border: '1px solid rgba(77,163,255,0.18)' }}>
@@ -7420,7 +7436,7 @@ export default function Dashboard() {
 
                   {/* Bracket breakdown */}
                   <div data-tour="taxes-brackets" style={{ ...CARD, marginBottom: 24 }}>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>2025 Tax Bracket Breakdown: {filingLabels[taxFiling]}</div>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>{new Date().getFullYear()} Tax Bracket Breakdown: {filingLabels[taxFiling]}</div>
                     <div style={{ fontSize: 12, color: TEXT2, marginBottom: 20 }}>Taxable income: {fmt(taxable)} (after {deduction > stdDed ? 'itemized' : 'standard'} deduction of {fmt(deduction)}{pre401k > 0 ? ` + ${fmt(pre401k)} 401k` : ''})</div>
                     {breakdown.map((b, i) => {
                       const pct = tax > 0 ? (b.amount / tax) * 100 : 0;
@@ -7952,6 +7968,17 @@ export default function Dashboard() {
                     VHT:'Healthcare', VFH:'Financial Services', VDE:'Energy', VNQ:'Real Estate',
                     ARKK:'Technology', ARKG:'Healthcare', ARKW:'Technology', ARKF:'Technology',
                     VEA:'International', VXUS:'International', EFA:'International', EEM:'Emerging Markets',
+                    AAPL:'Technology', MSFT:'Technology', NVDA:'Technology', AMD:'Technology', INTC:'Technology', ORCL:'Technology', CRM:'Technology', ADBE:'Technology', QCOM:'Technology', AVGO:'Technology',
+                    GOOGL:'Communication Services', GOOG:'Communication Services', META:'Communication Services', DIS:'Communication Services', NFLX:'Communication Services', CMCSA:'Communication Services', T:'Communication Services', VZ:'Communication Services',
+                    AMZN:'Consumer Cyclical', TSLA:'Consumer Cyclical', HD:'Consumer Cyclical', NKE:'Consumer Cyclical', MCD:'Consumer Cyclical', SBUX:'Consumer Cyclical', F:'Consumer Cyclical', GM:'Consumer Cyclical', BKNG:'Consumer Cyclical',
+                    KO:'Consumer Defensive', PEP:'Consumer Defensive', WMT:'Consumer Defensive', PG:'Consumer Defensive', COST:'Consumer Defensive', MDLZ:'Consumer Defensive', CL:'Consumer Defensive',
+                    JPM:'Financial Services', BAC:'Financial Services', V:'Financial Services', MA:'Financial Services', GS:'Financial Services', MS:'Financial Services', WFC:'Financial Services', C:'Financial Services', AXP:'Financial Services', 'BRK.B':'Financial Services',
+                    JNJ:'Healthcare', UNH:'Healthcare', PFE:'Healthcare', ABBV:'Healthcare', MRK:'Healthcare', LLY:'Healthcare', TMO:'Healthcare', ABT:'Healthcare', DHR:'Healthcare',
+                    XOM:'Energy', CVX:'Energy', COP:'Energy', SLB:'Energy', EOG:'Energy',
+                    CAT:'Industrials', BA:'Industrials', GE:'Industrials', HON:'Industrials', LMT:'Industrials', RTX:'Industrials', UPS:'Industrials', FDX:'Industrials',
+                    AMT:'Real Estate', PLD:'Real Estate', CCI:'Real Estate', EQIX:'Real Estate',
+                    LIN:'Basic Materials', APD:'Basic Materials', FCX:'Basic Materials', NEM:'Basic Materials',
+                    NEE:'Utilities', SO:'Utilities', DUK:'Utilities', AEP:'Utilities',
                   };
                   const SECTOR_COLORS = {
                     'Technology':'#4da3ff', 'Healthcare':'#34d399', 'Financial Services':'#a78bfa',
@@ -7973,6 +8000,8 @@ export default function Dashboard() {
                     const val = (h.quantity || 0) * (h.institution_price || 0);
                     sectorGroups[sect] = (sectorGroups[sect] || 0) + val;
                   });
+                  const CORE_SECTORS = ['Technology','Healthcare','Financial Services','Consumer Cyclical','Consumer Defensive','Energy','Industrials','Communication Services','Basic Materials','Real Estate','Utilities'];
+                  CORE_SECTORS.forEach(s => { if (!(s in sectorGroups)) sectorGroups[s] = 0; });
                   const totalVal = Object.values(sectorGroups).reduce((s, v) => s + v, 0) || 1;
                   const sectors = Object.entries(sectorGroups)
                     .sort((a, b) => b[1] - a[1])
@@ -8078,7 +8107,7 @@ export default function Dashboard() {
                             {/* Rows */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                               {sectors.map(s => (
-                                <div key={s.name} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 48px' : '160px 1fr 56px 80px', alignItems: 'center', gap: 8 }}>
+                                <div key={s.name} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 48px' : '160px 1fr 56px 80px', alignItems: 'center', gap: 8, opacity: s.val === 0 ? 0.35 : 1 }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                                     <div style={{ width: 9, height: 9, borderRadius: '50%', background: sectorColor(s.name), flexShrink: 0 }} />
                                     <span style={{ fontSize: 13, color: TEXT, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
@@ -8144,7 +8173,7 @@ export default function Dashboard() {
                   <div data-tour="markets-fg" className="lc" style={CARD}>
                     <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 10 }}>Fear & Greed Index</div>
                     <FearGreedGauge score={fearGreed?.score ?? SNAPSHOT_FEAR_GREED.score} rating={fearGreed?.rating ?? SNAPSHOT_FEAR_GREED.rating} />
-                    <div style={{ fontSize: 11, color: TEXT3, marginTop: 8, textAlign: 'center' }}>CNN composite · 7 sentiment indicators</div>
+                    <div style={{ fontSize: 11, color: TEXT3, marginTop: 8, textAlign: 'center' }}><a href="https://money.cnn.com/data/fear-and-greed/" target="_blank" rel="noopener noreferrer" style={{ color: BLUE, textDecoration: 'none' }}>CNN composite</a> · 7 sentiment indicators</div>
                   </div>
                 </div>
 
@@ -9964,11 +9993,13 @@ export default function Dashboard() {
                           placeholder="Search by name or email…"
                           style={{ width: '100%', padding: '8px 12px', background: DARK, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }}
                         />
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 90px 90px', gap: '0', fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', padding: '0 4px 8px', borderBottom: BORDER }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 80px 70px 70px 40px', gap: '0', fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px', padding: '0 4px 8px', borderBottom: BORDER }}>
                           <span>Name / Email</span>
                           <span style={{ textAlign: 'center' }}>Role</span>
                           <span style={{ textAlign: 'center' }}>Plan</span>
+                          <span style={{ textAlign: 'center' }}>Verified</span>
                           <span style={{ textAlign: 'center' }}>Joined</span>
+                          <span />
                         </div>
                         <div style={{ maxHeight: 380, overflowY: 'auto' }}>
                           {adminUsers
@@ -9980,7 +10011,7 @@ export default function Dashboard() {
                               const roleColor = u.role === 'admin' ? '#a78bfa' : u.role === 'professor' ? GREEN : u.role === 'student' ? BLUE : TEXT3;
                               const isPrem = u.tier === 'premium';
                               return (
-                                <div key={u.id} style={{ display: 'grid', gridTemplateColumns: '1fr 110px 90px 90px', gap: 0, alignItems: 'center', padding: '10px 4px', borderBottom: BORDER }}>
+                                <div key={u.id} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 80px 70px 70px 40px', gap: 0, alignItems: 'center', padding: '10px 4px', borderBottom: BORDER }}>
                                   <div>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{u.name}</div>
                                     <div style={{ fontSize: 11, color: TEXT2, marginTop: 1 }}>{u.email}</div>
@@ -9999,8 +10030,16 @@ export default function Dashboard() {
                                       {isPrem ? 'Premium' : 'Free'}
                                     </button>
                                   </div>
+                                  <div style={{ textAlign: 'center', fontSize: 12 }}>
+                                    {u.email_verified ? <span style={{ color: GREEN }}>✓</span> : <span style={{ color: TEXT3 }}>—</span>}
+                                  </div>
                                   <div style={{ textAlign: 'center', fontSize: 11, color: TEXT3 }}>
                                     {new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                                  </div>
+                                  <div style={{ textAlign: 'center' }}>
+                                    {u.role !== 'admin' && (
+                                      <button onClick={() => deleteUser(u.id, u.name)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: 14, cursor: 'pointer', padding: '2px 4px', lineHeight: 1 }} title="Delete user">✕</button>
+                                    )}
                                   </div>
                                 </div>
                               );
