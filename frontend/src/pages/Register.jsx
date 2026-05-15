@@ -336,8 +336,8 @@ export default function Register() {
             {submitted && !form.email.trim() && <div style={{ marginTop: 4, fontSize: 11, color: '#ef4444' }}>Required</div>}
           </div>
           {isEdu
-            ? <div style={{ marginBottom: 14, fontSize: 12, color: '#4ade80', display: 'flex', alignItems: 'center', gap: 5 }}>✓ Student email detected, you qualify for $5.99/mo student pricing</div>
-            : <div style={{ marginBottom: 14, fontSize: 12, color: '#a78bfa', display: 'flex', alignItems: 'center', gap: 5 }}>🎓 Have a .edu email? Get Premium for $5.99/mo instead of $9.99/mo</div>
+            ? <div style={{ marginBottom: 14, fontSize: 12, color: '#4ade80', display: 'flex', alignItems: 'center', gap: 5 }}>✓ Student email detected, you qualify for a student discount on Premium</div>
+            : <div style={{ marginBottom: 14, fontSize: 12, color: '#a78bfa', display: 'flex', alignItems: 'center', gap: 5 }}>🎓 Have a .edu email? Get Premium at a student discount</div>
           }
 
           {/* Password */}

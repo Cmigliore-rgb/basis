@@ -76,7 +76,8 @@ export default function Pricing() {
               <span style={{ fontSize: 14, color: TEXT2 }}>/month</span>
             </div>
             <div style={{ fontSize: 12, color: TEXT2, marginBottom: 4, fontStyle: 'italic' }}>Less than your monthly Netflix.</div>
-            <div style={{ fontSize: 12, color: GREEN, marginBottom: 8, fontWeight: 600 }}>$5.99/mo with a verified .edu email</div>
+            <div style={{ fontSize: 12, color: GREEN, marginBottom: 4, fontWeight: 600 }}>$5.99/mo with a verified .edu email</div>
+            <div style={{ fontSize: 12, color: TEXT2, marginBottom: 8, fontStyle: 'italic' }}>Less than Spotify Premium.</div>
             <p style={{ fontSize: 13, color: TEXT2, marginBottom: 28, lineHeight: 1.6 }}>Connect your real accounts and get the full picture of your finances.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
