@@ -56,7 +56,9 @@ function ConnectedAccountsCard({ onFixConnection }) {
       <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Connected Accounts</div>
       <div style={{ fontSize: 13, color: TEXT2, marginBottom: 16 }}>Bank and investment accounts linked via Plaid.</div>
       {loading ? (
-        <div style={{ fontSize: 13, color: TEXT2 }}>Loading…</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {[80, 60, 70].map(w => <div key={w} className="skel" style={{ height: 14, width: `${w}%` }} />)}
+        </div>
       ) : accounts.length === 0 ? (
         <div style={{ fontSize: 13, color: TEXT2 }}>No accounts connected yet.</div>
       ) : (
@@ -2505,6 +2507,10 @@ export default function Dashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [settingsAnchor, setSettingsAnchor] = useState(null);
   const [hoveredNav, setHoveredNav] = useState(null);
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [cmdQuery, setCmdQuery] = useState('');
+  const [cmdIdx, setCmdIdx] = useState(0);
+  const cmdInputRef = useRef(null);
   const [newsAiLoading, setNewsAiLoading] = useState(false);
   const [newsAiText, setNewsAiText] = useState(null);
   const [showTour, setShowTour] = useState(false);
@@ -2966,6 +2972,16 @@ export default function Dashboard() {
       setSettingsAnchor(null);
     }
   }, [settingsAnchor, panel]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setCmdOpen(v => !v); setCmdQuery(''); setCmdIdx(0); }
+      if (e.key === 'Escape') setCmdOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+  useEffect(() => { if (cmdOpen) setTimeout(() => cmdInputRef.current?.focus(), 30); }, [cmdOpen]);
 
   // Handle return from Stripe checkout or email verification
   useEffect(() => {
@@ -3536,18 +3552,6 @@ export default function Dashboard() {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, chatLoading]);
 
-  useEffect(() => {
-    if (!canSeeAI) return;
-    const handler = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setPanel('assistant');
-        switchEduMode(false);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [canSeeAI]);
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: BG, fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 14, color: TEXT, overflow: 'hidden' }}>
@@ -3559,6 +3563,106 @@ export default function Dashboard() {
           {toast.message}
         </div>
       )}
+
+      {/* ── COMMAND PALETTE ────────────────────────────── */}
+      {cmdOpen && (() => {
+        const navItems = [
+          { label: 'Overview',        icon: '⊞', action: () => { setPanel('overview'); switchEduMode(false); } },
+          { label: 'Cash Flow',       icon: '⬡', action: () => { setPanel('cashflow'); switchEduMode(false); } },
+          { label: 'Investments',     icon: '◈', action: () => { setPanel('investments'); switchEduMode(false); } },
+          { label: 'Market Insights', icon: '◬', action: () => { setPanel('insights'); switchEduMode(false); } },
+          { label: 'Learn',           icon: '✦', action: () => { setPanel('learn'); switchEduMode(false); } },
+          { label: 'Settings',        icon: '⚙', action: () => { setPanel('settings'); switchEduMode(false); } },
+          ...(isPremium ? [{ label: 'AI Assistant', icon: '✦', action: () => { setPanel('assistant'); switchEduMode(false); } }] : []),
+          ...(isStudent || isAdmin ? [{ label: 'My Courses', icon: '◫', action: () => { setPanel('edu-courses'); switchEduMode(true); } }] : []),
+        ];
+        const txnItems = cmdQuery.length >= 2
+          ? transactions.filter(t => {
+              const q = cmdQuery.toLowerCase();
+              return (t.merchant_name || t.name || '').toLowerCase().includes(q)
+                  || (t.personal_finance_category?.primary || '').toLowerCase().includes(q);
+            }).slice(0, 5).map(t => ({
+              label: t.merchant_name || t.name,
+              sub: `${t.date} · ${t.amount > 0 ? '+' : ''}$${Math.abs(t.amount).toFixed(2)}`,
+              icon: '↕',
+              action: () => { setPanel('cashflow'); setCashFlowTab('banking'); switchEduMode(false); },
+            }))
+          : [];
+        const q = cmdQuery.toLowerCase();
+        const filteredNav = navItems.filter(n => !cmdQuery || n.label.toLowerCase().includes(q));
+        const results = [...filteredNav, ...txnItems];
+        const safeIdx = Math.min(cmdIdx, results.length - 1);
+
+        const runItem = (item) => { item.action(); setCmdOpen(false); setCmdQuery(''); setCmdIdx(0); };
+
+        return (
+          <>
+            <div onClick={() => setCmdOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9800 }} />
+            <div style={{ position: 'fixed', top: '18vh', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 560, zIndex: 9900, padding: '0 16px' }}>
+              <div style={{ background: CARD_BG, border: BORDER, borderRadius: 14, boxShadow: '0 32px 80px rgba(0,0,0,0.6)', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: results.length ? BORDER : 'none' }}>
+                  <span style={{ color: TEXT3, fontSize: 16 }}>⌘</span>
+                  <input
+                    ref={cmdInputRef}
+                    value={cmdQuery}
+                    onChange={e => { setCmdQuery(e.target.value); setCmdIdx(0); }}
+                    onKeyDown={e => {
+                      if (e.key === 'ArrowDown') { e.preventDefault(); setCmdIdx(i => Math.min(i + 1, results.length - 1)); }
+                      if (e.key === 'ArrowUp')   { e.preventDefault(); setCmdIdx(i => Math.max(i - 1, 0)); }
+                      if (e.key === 'Enter' && results[safeIdx]) runItem(results[safeIdx]);
+                    }}
+                    placeholder="Go to panel, search transactions…"
+                    style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 15, color: TEXT, fontFamily: 'inherit' }}
+                  />
+                  <kbd style={{ fontSize: 10, color: TEXT3, background: MUTED, border: BORDER, borderRadius: 4, padding: '2px 6px' }}>Esc</kbd>
+                </div>
+                {results.length > 0 && (
+                  <div style={{ maxHeight: 340, overflowY: 'auto', padding: '6px 0' }}>
+                    {filteredNav.length > 0 && txnItems.length > 0 && (
+                      <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', padding: '6px 16px 4px' }}>Navigation</div>
+                    )}
+                    {filteredNav.map((item, i) => (
+                      <div key={item.label} onClick={() => runItem(item)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 16px', cursor: 'pointer', background: i === safeIdx ? 'rgba(255,255,255,0.06)' : 'transparent', borderRadius: 6, margin: '0 4px' }}>
+                        <span style={{ fontSize: 14, color: TEXT2, width: 18, textAlign: 'center' }}>{item.icon}</span>
+                        <span style={{ fontSize: 14, color: i === safeIdx ? TEXT : TEXT2, fontWeight: i === safeIdx ? 500 : 400 }}>{item.label}</span>
+                        <span style={{ marginLeft: 'auto', fontSize: 10, color: TEXT3 }}>↵</span>
+                      </div>
+                    ))}
+                    {txnItems.length > 0 && (
+                      <>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', padding: '10px 16px 4px' }}>Transactions</div>
+                        {txnItems.map((item, i) => {
+                          const gi = filteredNav.length + i;
+                          return (
+                            <div key={i} onClick={() => runItem(item)}
+                              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 16px', cursor: 'pointer', background: gi === safeIdx ? 'rgba(255,255,255,0.06)' : 'transparent', borderRadius: 6, margin: '0 4px' }}>
+                              <span style={{ fontSize: 14, color: TEXT2, width: 18, textAlign: 'center' }}>{item.icon}</span>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 13, color: gi === safeIdx ? TEXT : TEXT2, fontWeight: gi === safeIdx ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</div>
+                                <div style={{ fontSize: 11, color: TEXT3 }}>{item.sub}</div>
+                              </div>
+                              <span style={{ fontSize: 10, color: TEXT3 }}>↵</span>
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
+                  </div>
+                )}
+                {cmdQuery && results.length === 0 && (
+                  <div style={{ padding: '20px 16px', textAlign: 'center', color: TEXT3, fontSize: 13 }}>No results for "{cmdQuery}"</div>
+                )}
+                <div style={{ padding: '8px 16px', borderTop: BORDER, display: 'flex', gap: 16, fontSize: 11, color: TEXT3 }}>
+                  <span><kbd style={{ background: MUTED, border: BORDER, borderRadius: 3, padding: '1px 5px', fontSize: 10 }}>↑↓</kbd> navigate</span>
+                  <span><kbd style={{ background: MUTED, border: BORDER, borderRadius: 3, padding: '1px 5px', fontSize: 10 }}>↵</kbd> open</span>
+                  <span><kbd style={{ background: MUTED, border: BORDER, borderRadius: 3, padding: '1px 5px', fontSize: 10 }}>⌘K</kbd> toggle</span>
+                </div>
+              </div>
+            </div>
+          </>
+        );
+      })()}
 
       {/* ── ONBOARDING ─────────────────────────────────── */}
       {showOnboarding && (() => {
@@ -4648,6 +4752,8 @@ export default function Dashboard() {
               .panel-enter { animation: panelFade 0.18s ease forwards; }
               @keyframes aiCursorBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
               .ai-cursor { display: inline-block; width: 2px; height: 1em; background: var(--accent, #4da3ff); margin-left: 2px; vertical-align: text-bottom; animation: aiCursorBlink 0.8s ease infinite; border-radius: 1px; }
+              @keyframes skelShimmer { from { background-position: -400px 0; } to { background-position: 400px 0; } }
+              .skel { border-radius: 5px; background: linear-gradient(90deg, var(--muted, #2a2a2a) 25%, rgba(255,255,255,0.06) 50%, var(--muted, #2a2a2a) 75%); background-size: 800px 100%; animation: skelShimmer 1.4s ease-in-out infinite; }
               .lc { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
               .lc:hover { border-color: var(--border-c, #3d3d3d) !important; box-shadow: 0 4px 22px rgba(0,0,0,0.25); }
               .lr { transition: background 0.1s; }
@@ -5654,7 +5760,7 @@ export default function Dashboard() {
               const _CF_DEF = ['banking', 'budgeting', 'taxes', 'scholarship'];
               const _cfOrder = getOrder('cashflow-tabs', _CF_DEF);
               return (
-                <div data-tour="cashflow-tab-bar" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+                <div data-tour="cashflow-tab-bar" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, position: 'sticky', top: 0, zIndex: 10, background: BG, paddingTop: 4, paddingBottom: 12, marginTop: -4 }}>
                   <div style={{ display: 'flex', gap: 2, background: DARK, borderRadius: 9, padding: 3, width: 'fit-content' }}>
                     {_cfOrder.filter(v => !isSubtabHidden('cashflow', v)).map(v => {
                       const l = { banking: 'Banking', budgeting: 'Budgeting', taxes: 'Taxes', scholarship: 'Scholarship' }[v];
@@ -8170,7 +8276,9 @@ export default function Dashboard() {
                       <div className="lc" style={{ ...CARD, marginTop: 16 }}>
                         <div style={{ fontWeight: 600, marginBottom: 14 }}>Sector Allocation</div>
                         {sectors.length === 0 ? (
-                          <div style={{ color: TEXT2, fontSize: 13, textAlign: 'center', padding: 24 }}>Loading sector data...</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 0' }}>
+                            {[90, 70, 55, 80, 65].map((w, i) => <div key={i} className="skel" style={{ height: 12, width: `${w}%` }} />)}
+                          </div>
                         ) : (
                           <>
                             {/* Stacked bar — only sectors with actual allocation */}
@@ -8209,7 +8317,7 @@ export default function Dashboard() {
             {/* ── INSIGHTS ──────────────────────────────── */}
             {panel === 'insights' && (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, overflowX: 'auto', WebkitOverflowScrolling: 'touch', position: 'sticky', top: 0, zIndex: 10, background: BG, paddingTop: 4, paddingBottom: 12, marginTop: -4 }}>
               <div style={{ display: 'flex', gap: 2, background: DARK, borderRadius: 9, padding: 3, flexShrink: 0 }}>
                 {(() => {
                   const _IN_DEF = ['markets', 'news', 'signals', 'options'];
@@ -8329,7 +8437,7 @@ export default function Dashboard() {
                     const rows = marketView === 'your_list'
                       ? customTickerData
                       : marketViewData.length ? marketViewData : marketTickers.active;
-                    if (loadingMarketView) return <div style={{ color: TEXT2, textAlign: 'center', padding: 24, fontSize: 13 }}>Loading…</div>;
+                    if (loadingMarketView) return <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '8px 0' }}>{[100,85,90,75,80].map((w,i) => <div key={i} className="skel" style={{ height: 36, width: `${w}%` }} />)}</div>;
                     if (!rows.length && marketView === 'your_list') return (
                       <div style={{ color: TEXT3, textAlign: 'center', padding: 24, fontSize: 13 }}>Add tickers above to track them here.</div>
                     );
