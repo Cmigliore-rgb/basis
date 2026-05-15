@@ -5392,7 +5392,7 @@ export default function Dashboard() {
                   };
 
                   return (
-                    <div data-tour="overview-calendar" className="lc" style={{ ...CARD, marginTop: 16 }}>
+                    <div data-tour="overview-calendar" className="lc" style={{ ...CARD, marginTop: 16, padding: isMobile ? 14 : 24 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                         <div style={{ fontWeight: 600 }}>Calendar</div>
                         <div style={{ display: 'flex', gap: 8 }}>
@@ -5450,14 +5450,14 @@ export default function Dashboard() {
                       </div>
 
                       {/* Day headers */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
-                        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-                          <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.5px', paddingBottom: 4 }}>{d}</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 2, marginBottom: 4 }}>
+                        {['S','M','T','W','T','F','S'].map((d, i) => (
+                          <div key={i} style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: TEXT3, paddingBottom: 4 }}>{d}</div>
                         ))}
                       </div>
 
                       {/* Day grid */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 2 }}>
                         {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
                         {Array.from({ length: daysInMonth }).map((_, i) => {
                           const day = i + 1;
@@ -5467,15 +5467,15 @@ export default function Dashboard() {
                           const isSel = selectedDay === dateStr;
                           return (
                             <div key={day} onClick={() => { setSelectedDay(isSel ? null : dateStr); setEventForm(f => ({ ...f, date: dateStr })); setShowEventForm(true); setEditingEvent(null); }}
-                              style={{ minHeight: 56, padding: '4px 5px', borderRadius: 7, border: isToday ? `1px solid ${BLUE}` : isSel ? `1px solid ${GREEN}` : `1px solid ${BORDER_C}`, background: isToday ? 'rgba(77,163,255,0.06)' : isSel ? 'rgba(74,222,128,0.04)' : 'transparent', cursor: 'pointer', transition: 'background 0.1s' }}>
-                              <div style={{ fontSize: 11, fontWeight: isToday ? 700 : 400, color: isToday ? BLUE : TEXT2, marginBottom: 3 }}>{day}</div>
-                              {dayEvents.slice(0, 2).map(ev => (
+                              style={{ minHeight: isMobile ? 44 : 56, padding: isMobile ? '3px 2px' : '4px 5px', borderRadius: 7, border: isToday ? `1px solid ${BLUE}` : isSel ? `1px solid ${GREEN}` : `1px solid ${BORDER_C}`, background: isToday ? 'rgba(77,163,255,0.06)' : isSel ? 'rgba(74,222,128,0.04)' : 'transparent', cursor: 'pointer', transition: 'background 0.1s', overflow: 'hidden' }}>
+                              <div style={{ fontSize: isMobile ? 10 : 11, fontWeight: isToday ? 700 : 400, color: isToday ? BLUE : TEXT2, marginBottom: 2 }}>{day}</div>
+                              {dayEvents.slice(0, isMobile ? 1 : 2).map(ev => (
                                 <div key={ev.id} onClick={e => { e.stopPropagation(); if (ev._auto) return; setEditingEvent(ev); setEventForm({ title: ev.title, date: ev.date, type: ev.type, note: ev.note || '' }); setShowEventForm(true); }}
-                                  style={{ fontSize: 9, fontWeight: 600, color: '#fff', background: EVENT_TYPES[ev.type]?.color || BLUE, borderRadius: 3, padding: '1px 4px', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: ev._auto ? 'default' : 'pointer' }}>
+                                  style={{ fontSize: 8, fontWeight: 600, color: '#fff', background: EVENT_TYPES[ev.type]?.color || BLUE, borderRadius: 3, padding: '1px 3px', marginBottom: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: ev._auto ? 'default' : 'pointer', maxWidth: '100%' }}>
                                   {ev.title}
                                 </div>
                               ))}
-                              {dayEvents.length > 2 && <div style={{ fontSize: 9, color: TEXT3 }}>+{dayEvents.length - 2}</div>}
+                              {dayEvents.length > (isMobile ? 1 : 2) && <div style={{ fontSize: 8, color: TEXT3 }}>+{dayEvents.length - (isMobile ? 1 : 2)}</div>}
                             </div>
                           );
                         })}
