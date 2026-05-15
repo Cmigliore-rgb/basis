@@ -18,7 +18,10 @@ router.get('/dashboard', requireAuth, requireProfessor, (req, res) => {
       (SELECT COUNT(*) FROM submissions s WHERE s.course_code = c.code) AS submission_count
     FROM course_codes c
     ORDER BY c.created_at DESC
-  `).all();
+  `).all().map(c => ({
+    ...c,
+    selected_assignments: c.selected_assignments ? JSON.parse(c.selected_assignments) : null,
+  }));
   res.json({ codes });
 });
 
@@ -48,20 +51,22 @@ router.get('/submissions/:code', requireAuth, requireProfessor, (req, res) => {
 
 // POST /professor/codes — create a new course code
 router.post('/codes', requireAuth, requireProfessor, (req, res) => {
-  const { code, course_id, course_name, semester } = req.body;
+  const { code, course_id, course_name, semester, selected_assignments, color } = req.body;
   if (!code || !course_id || !course_name) {
     return res.status(400).json({ error: 'code, course_id, and course_name are required' });
   }
   try {
     db.prepare(`
-      INSERT INTO course_codes (code, course_id, course_name, instructor_name, semester)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO course_codes (code, course_id, course_name, instructor_name, semester, selected_assignments, color)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(
       code.toUpperCase().trim(),
       course_id.trim(),
       course_name.trim(),
       req.user.name || 'Staff',
-      semester || 'Spring 2026'
+      semester || 'Spring 2026',
+      selected_assignments ? JSON.stringify(selected_assignments) : null,
+      color || null
     );
     const row = db.prepare('SELECT * FROM course_codes WHERE code = ?').get(code.toUpperCase().trim());
     res.status(201).json({ code: row });

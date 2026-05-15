@@ -2880,9 +2880,12 @@ export default function Dashboard() {
   const [profCodes, setProfCodes] = useState([]);
   const [profStudents, setProfStudents] = useState({});
   const [selectedProfCode, setSelectedProfCode] = useState('');
-  const [newCodeForm, setNewCodeForm] = useState({ code: '', course_id: '', course_name: '', semester: (() => { const d = new Date(); const m = d.getMonth(); const y = d.getFullYear(); return m < 4 ? `Spring ${y}` : m < 6 ? `Summer ${y}` : `Fall ${y}`; })() });
+  const DEFAULT_SEM = (() => { const d = new Date(); const m = d.getMonth(); const y = d.getFullYear(); return m < 4 ? `Spring ${y}` : m < 6 ? `Summer ${y}` : `Fall ${y}`; })();
+  const [newCodeForm, setNewCodeForm] = useState({ code: '', course_id: '', course_name: '', semester: DEFAULT_SEM });
   const [showNewCode, setShowNewCode] = useState(false);
   const [newCodeError, setNewCodeError] = useState('');
+  const [newCodeAssignments, setNewCodeAssignments] = useState([]);
+  const [newCodeColor, setNewCodeColor] = useState('#4ade80');
   const [eduMode, setEduMode] = useState(() => {
     const saved = localStorage.getItem('pl_edu_mode');
     if (saved !== null) return saved === 'true';
@@ -2894,8 +2897,23 @@ export default function Dashboard() {
     if (hideEduSection && EDU_PANELS.has(panel)) { switchEduMode(false); setPanel('overview'); }
   }, [hideEduSection]);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const PROF_COLORS = ['#4ade80', '#4da3ff', '#c084fc', '#fbbf24', '#f97316', '#f472b6'];
   const enrolledCourses = (() => {
-    if (isProfessor || isAdmin) return COURSES;
+    if (isProfessor || isAdmin) {
+      return profCodes.map((c, i) => ({
+        id: c.course_id || c.code.toLowerCase(),
+        code: c.code,
+        name: c.course_name,
+        instructor: c.instructor_name,
+        semester: c.semester,
+        color: c.color || PROF_COLORS[i % PROF_COLORS.length],
+        classTimes: '', classDays: [], location: '', officeHours: '',
+        modules: [],
+        assignments: Array.isArray(c.selected_assignments) ? c.selected_assignments : [],
+        studentCount: c.student_count || 0,
+        submissionCount: c.submission_count || 0,
+      }));
+    }
     const ids = new Set(
       (user?.enrollments || []).map(e => (e.course_id || '').toLowerCase().replace(/\s+/g, ''))
     );
@@ -8835,10 +8853,16 @@ export default function Dashboard() {
                   setNewCodeError('Code, Course ID, and Course Name are required'); return;
                 }
                 try {
-                  await api.post('/professor/codes', newCodeForm);
+                  await api.post('/professor/codes', {
+                    ...newCodeForm,
+                    selected_assignments: newCodeAssignments.length > 0 ? newCodeAssignments : undefined,
+                    color: newCodeColor,
+                  });
                   const r = await api.get('/professor/dashboard');
                   setProfCodes(r.data.codes || []);
-                  setNewCodeForm({ code: '', course_id: '', course_name: '', semester: (() => { const d = new Date(); const m = d.getMonth(); const y = d.getFullYear(); return m < 4 ? `Spring ${y}` : m < 6 ? `Summer ${y}` : `Fall ${y}`; })() });
+                  setNewCodeForm({ code: '', course_id: '', course_name: '', semester: DEFAULT_SEM });
+                  setNewCodeAssignments([]);
+                  setNewCodeColor('#4ade80');
                   setShowNewCode(false);
                 } catch (err) {
                   setNewCodeError(err.response?.data?.error || 'Failed to create code');
@@ -9253,14 +9277,22 @@ export default function Dashboard() {
                       </button>
                     </div>
 
-                    {showNewCode && (
-                      <div style={{ padding: 16, background: DARK, borderRadius: 10, border: BORDER, marginBottom: 16 }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 12, marginBottom: 12 }}>
+                    {showNewCode && (() => {
+                      const colorOptions = ['#4ade80','#4da3ff','#c084fc','#fbbf24','#f97316','#f472b6'];
+                      const addAssignment = () => setNewCodeAssignments(p => [...p, { id: `new-${Date.now()}`, title: '', week: '', chapter: '', dueDate: '', points: 100, description: '' }]);
+                      const removeAssignment = (id) => setNewCodeAssignments(p => p.filter(a => a.id !== id));
+                      const patchAssignment = (id, key, val) => setNewCodeAssignments(p => p.map(a => a.id === id ? { ...a, [key]: val } : a));
+                      const loadTemplate = () => setNewCodeAssignments(MAJOR_ASSIGNMENTS.map(a => ({ ...a, id: `t-${a.id}` })));
+                      return (
+                      <div style={{ padding: 20, background: DARK, borderRadius: 10, border: BORDER, marginBottom: 16 }}>
+                        {/* Basic info */}
+                        <div style={{ fontSize: 12, fontWeight: 700, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 12 }}>Course Info</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: g2, gap: 12, marginBottom: 16 }}>
                           {[
-                            { key: 'code', label: 'Code', placeholder: 'e.g. B-FIN-26' },
-                            { key: 'course_id', label: 'Course ID', placeholder: 'e.g. fina3010' },
-                            { key: 'course_name', label: 'Course Name', placeholder: 'e.g. Personal Finance' },
-                            { key: 'semester', label: 'Semester', placeholder: 'e.g. Fall 2026' },
+                            { key: 'code',        label: 'Invite Code',   placeholder: 'e.g. B-FIN-26' },
+                            { key: 'course_id',   label: 'Course ID',     placeholder: 'e.g. fina3010' },
+                            { key: 'course_name', label: 'Course Name',   placeholder: 'e.g. Personal Finance' },
+                            { key: 'semester',    label: 'Semester',      placeholder: 'e.g. Fall 2026' },
                           ].map(f => (
                             <div key={f.key}>
                               <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5 }}>{f.label}</div>
@@ -9270,13 +9302,68 @@ export default function Dashboard() {
                             </div>
                           ))}
                         </div>
+
+                        {/* Color picker */}
+                        <div style={{ marginBottom: 20 }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Course Color</div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            {colorOptions.map(c => (
+                              <button key={c} onClick={() => setNewCodeColor(c)} style={{ width: 26, height: 26, borderRadius: '50%', background: c, border: newCodeColor === c ? `2px solid ${c}` : '2px solid transparent', outline: newCodeColor === c ? `2px solid ${c}` : 'none', outlineOffset: 2, cursor: 'pointer', padding: 0 }} />
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Assignments */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Assignments ({newCodeAssignments.length})</div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            {newCodeAssignments.length === 0 && (
+                              <button onClick={loadTemplate} style={{ padding: '5px 12px', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 6, color: YELLOW, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                                Load template
+                              </button>
+                            )}
+                            <button onClick={addAssignment} style={{ padding: '5px 12px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 6, color: GREEN, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                              + Add
+                            </button>
+                          </div>
+                        </div>
+
+                        {newCodeAssignments.length === 0 ? (
+                          <div style={{ padding: '20px', textAlign: 'center', color: TEXT3, fontSize: 13, border: `1px dashed ${BORDER_C}`, borderRadius: 8, marginBottom: 16 }}>
+                            No assignments yet. Add your own or load the template to start.
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                            {/* Header row */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 120px 110px 70px 28px', gap: 8, padding: '0 4px' }}>
+                              {['Title','Due Date','Chapter / Week','Points',''].map(h => (
+                                <div key={h} style={{ fontSize: 10, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{h}</div>
+                              ))}
+                            </div>
+                            {newCodeAssignments.map((a, idx) => (
+                              <div key={a.id} style={{ display: 'grid', gridTemplateColumns: '2fr 120px 110px 70px 28px', gap: 8, alignItems: 'center', padding: '8px', background: BG, borderRadius: 7, border: BORDER }}>
+                                <input value={a.title} onChange={e => patchAssignment(a.id, 'title', e.target.value)} placeholder={`Assignment ${idx + 1}`}
+                                  style={{ padding: '6px 8px', background: 'transparent', border: BORDER, borderRadius: 5, color: TEXT, fontSize: 12, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                                <input type="date" value={a.dueDate} onChange={e => patchAssignment(a.id, 'dueDate', e.target.value)}
+                                  style={{ padding: '6px 8px', background: 'transparent', border: BORDER, borderRadius: 5, color: TEXT, fontSize: 12, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                                <input value={a.week || a.chapter || ''} onChange={e => patchAssignment(a.id, 'week', e.target.value)} placeholder="e.g. Week 3"
+                                  style={{ padding: '6px 8px', background: 'transparent', border: BORDER, borderRadius: 5, color: TEXT, fontSize: 12, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                                <input type="number" value={a.points} onChange={e => patchAssignment(a.id, 'points', parseInt(e.target.value) || 0)} min={0}
+                                  style={{ padding: '6px 8px', background: 'transparent', border: BORDER, borderRadius: 5, color: TEXT, fontSize: 12, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                                <button onClick={() => removeAssignment(a.id)} style={{ background: 'none', border: 'none', color: TEXT3, fontSize: 16, cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
                         {newCodeError && <div style={{ fontSize: 12, color: RED, marginBottom: 10 }}>{newCodeError}</div>}
                         <button onClick={createCode}
                           style={{ padding: '8px 20px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 8, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                          Create Code →
+                          Create Course →
                         </button>
                       </div>
-                    )}
+                      );
+                    })()}
 
                     {profCodes.length === 0 ? (
                       <div style={{ fontSize: 13, color: TEXT3, padding: '16px 0' }}>No course codes yet. Create one above.</div>
@@ -10291,6 +10378,20 @@ export default function Dashboard() {
                         </div>
                       </div>
                     )}
+                    {/* Professor empty state */}
+                    {!selectedCourseId && enrolledCourses.length === 0 && (effectiveProfessor || isAdmin) && (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 480, padding: isMobile ? '40px 16px' : '40px 28px' }}>
+                        <div style={{ fontSize: 44, marginBottom: 16 }}>⊟</div>
+                        <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Set up your first course</div>
+                        <div style={{ fontSize: 13, color: TEXT2, maxWidth: 380, lineHeight: 1.7, marginBottom: 28, textAlign: 'center' }}>
+                          Create a course code and add your assignments. Students use the code to enroll and submit work directly here.
+                        </div>
+                        <button onClick={() => { setPanel('prof-dashboard'); setProfHubTab('analytics'); setShowNewCode(true); setTimeout(() => document.getElementById('prof-course-codes')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100); }}
+                          style={{ padding: '12px 28px', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.35)', borderRadius: 10, color: GREEN, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                          Create Your First Course →
+                        </button>
+                      </div>
+                    )}
                     {!selectedCourseId && (enrolledCourses.length > 0 || effectiveProfessor || isAdmin) && (
                       <div style={{ padding: 28 }}>
                         {/* Hero: greeting + semester progress + stats */}
@@ -10302,7 +10403,7 @@ export default function Dashboard() {
                                   {effectiveProfessor ? 'Instructor Overview' : `${lGreet}, ${lFirst}!`}
                                 </h1>
                               </div>
-                              <div style={{ fontSize: 13, color: TEXT2 }}>Education Mode · {enrolledCourses.length} {enrolledCourses.length === 1 ? 'course' : 'courses'} enrolled</div>
+                              <div style={{ fontSize: 13, color: TEXT2 }}>{effectiveProfessor ? `Instructor view · ${enrolledCourses.length} ${enrolledCourses.length === 1 ? 'course' : 'courses'}` : `Education Mode · ${enrolledCourses.length} ${enrolledCourses.length === 1 ? 'course' : 'courses'} enrolled`}</div>
                             </div>
                             {effectiveProfessor && (
                               <div style={{ display: 'flex', gap: 8 }}>
@@ -10426,18 +10527,26 @@ export default function Dashboard() {
                           {/* LEFT: Course cards grid */}
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                              <div style={{ fontSize: 13, fontWeight: 700 }}>My Courses</div>
-                              <div style={{ fontSize: 11, color: TEXT3 }}>{enrolledCourses.length} enrolled</div>
+                              <div style={{ fontSize: 13, fontWeight: 700 }}>{effectiveProfessor ? 'My Courses' : 'My Courses'}</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                {effectiveProfessor && (
+                                  <button onClick={() => { setPanel('prof-dashboard'); setProfHubTab('analytics'); setShowNewCode(true); setTimeout(() => document.getElementById('prof-course-codes')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100); }}
+                                    style={{ padding: '4px 10px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 6, color: GREEN, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                                    + New Course
+                                  </button>
+                                )}
+                                <div style={{ fontSize: 11, color: TEXT3 }}>{enrolledCourses.length} {enrolledCourses.length === 1 ? 'course' : 'courses'}</div>
+                              </div>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
                               {enrolledCourses.map(c => {
-                                const overdueCount = effectiveProfessor || isAdmin ? 0 : c.assignments.filter(a => {
+                                const overdueCount = effectiveProfessor ? 0 : c.assignments.filter(a => {
                                   const due = a.dueDate ? new Date(a.dueDate) : null;
                                   return due && due < now && !submittedAssignments.has(a.id) && a.status !== 'completed';
                                 }).length;
-                                const activeAssign = c.assignments.find(a => a.status === 'active');
+                                const activeAssign = !effectiveProfessor && c.assignments.find(a => a.status === 'active');
                                 return (
-                                  <div key={c.id} onClick={() => { setSelectedCourseId(c.id); setEduInnerTab('content'); setContentFolder('slides'); setOpenSlideIdx(null); }}
+                                  <div key={c.id} onClick={() => { setSelectedCourseId(c.id); setEduInnerTab(effectiveProfessor ? 'assignments' : 'content'); setContentFolder('slides'); setOpenSlideIdx(null); }}
                                     style={{ borderRadius: 10, border: BORDER, overflow: 'hidden', cursor: 'pointer', background: CARD_BG, transition: 'border-color 0.15s' }}
                                     className="lc">
                                     {/* Banner */}
@@ -10456,11 +10565,16 @@ export default function Dashboard() {
                                       <div style={{ fontSize: 11, fontWeight: 700, color: c.color, letterSpacing: '0.3px', marginBottom: 3 }}>{c.code}</div>
                                       <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.35, marginBottom: 4 }}>{c.name}</div>
                                       <div style={{ fontSize: 11, color: TEXT3 }}>{c.semester}</div>
-                                      {activeAssign && (
+                                      {effectiveProfessor ? (
+                                        <div style={{ marginTop: 10, display: 'flex', gap: 12 }}>
+                                          <div style={{ fontSize: 11, color: TEXT2 }}><span style={{ fontWeight: 700, color: TEXT }}>{c.studentCount || 0}</span> students</div>
+                                          <div style={{ fontSize: 11, color: TEXT2 }}><span style={{ fontWeight: 700, color: TEXT }}>{c.assignments.length}</span> assignments</div>
+                                        </div>
+                                      ) : activeAssign ? (
                                         <div style={{ marginTop: 10, padding: '6px 10px', background: DARK, borderRadius: 6, border: BORDER, fontSize: 11, color: TEXT2 }}>
                                           <span style={{ fontWeight: 600 }}>Active: </span>{activeAssign.title}
                                         </div>
-                                      )}
+                                      ) : null}
                                     </div>
                                   </div>
                                 );

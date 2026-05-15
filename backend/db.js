@@ -215,6 +215,8 @@ try {
     )
   `);
 } catch {}
+try { db.exec(`ALTER TABLE course_codes ADD COLUMN selected_assignments TEXT`); } catch {}
+try { db.exec(`ALTER TABLE course_codes ADD COLUMN color TEXT`); } catch {}
 
 // Auto-verify admin and professor accounts
 db.prepare("UPDATE users SET email_verified = 1 WHERE role IN ('admin', 'professor') AND email_verified = 0").run();
