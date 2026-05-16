@@ -758,8 +758,9 @@ Performance-wise, you are tracking almost exactly with the S&P 500, which makes 
 };
 
 const CATEGORY_LABEL = {
-  FOOD_AND_DRINK:            'Food & Dining',
+  FOOD_AND_DRINK:            'Dining Out',
   GROCERIES:                 'Groceries',
+  GAS_STATIONS:              'Gas',
   HOME_IMPROVEMENT:          'Home & Housing',
   RENT_AND_UTILITIES:        'Rent & Utilities',
   GENERAL_MERCHANDISE:       'Shopping',
@@ -785,6 +786,18 @@ const CATEGORY_LABEL = {
 function fmtCat(raw) {
   if (!raw) return 'Other';
   return CATEGORY_LABEL[raw] || raw.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+const GROCERY_RE = /publix|kroger(?! gas| fuel)| aldi |^aldi$|trader joe|whole foods|walmart(?! gas| fuel| murph)|target(?! gas)|h-e-b|^heb |wegmans|safeway|albertsons|food lion|piggly wiggly|winn.dixie|meijer|giant food|stop & shop|harris teeter|fresh market|sprouts farmers|market basket|lidl|sam.s club(?! gas)|bj.s wholesale|hy-vee|food city|ingles market|winco|stater bros|smart & final|save.a.lot|vons|ralphs|pavilions|jewel.osco|acme market|hannaford|price chopper|cub foods|weis market|shoprite|food 4 less|grocery outlet|lucky supermarket|cardenas|northgate|supermercado|price rite|festival foods|coborn|dierbergs|brookshire|united supermarket|homeland|ramey|super 1 foods|price cutter/i;
+
+const GAS_RE = /\bshell\b|exxon|mobil(?! supermarket)|\bbp\b|chevron|marathon gas|sunoco|circle k|speedway|pilot flying|love.s travel|kwik trip|kwiktrip|kwik star|wawa(?! supermarket)|casey.s|racetrac|murphy gas|murphy usa|quiktrip|\bqt\b(?= gas)|buc-ee|costco gas|costco fuel|sam.s club gas|kroger gas|kroger fuel|walmart gas|walmart fuel|gas station|\bfuel\b|\bpetroleum\b|hearts gas|sheetz|holiday station|kum & go|road ranger|flash foods|weigel|thornton|minit mart|pak.a.sak|road runner/i;
+
+function resolveCategory(txn) {
+  const base = txn.personal_finance_category?.primary || txn.category?.[0] || 'OTHER';
+  const name = (txn.merchant_name || txn.name || '').toLowerCase();
+  if (GAS_RE.test(name)) return 'GAS_STATIONS';
+  if (GROCERY_RE.test(name)) return 'GROCERIES';
+  return base;
 }
 
 const ACCOUNT_TYPE_LABEL = {
@@ -3115,7 +3128,7 @@ export default function Dashboard() {
       allTxns
         .filter(t => t.amount > 0 && new Date(t.date) >= monthStart)
         .forEach(t => {
-          const cat = t.personal_finance_category?.primary || t.category?.[0] || 'Other';
+          const cat = resolveCategory(t);
           byCategory[cat] = (byCategory[cat] || 0) + t.amount;
         });
       const budgetData = Object.entries(byCategory)
@@ -3505,7 +3518,7 @@ export default function Dashboard() {
       const budgetMap = {};
       budget.forEach(b => { budgetMap[fmtCat(b.category)] = { spent: b.total, limit: budgetLimits[b.category] }; });
       const slimAccounts = accounts.map(a => ({ name: a.name, type: a.type, balance: a.balances?.current ?? a.balance }));
-      const slimTxns = transactions.slice(0, 40).map(t => ({ date: t.date, name: t.merchant_name || t.name, amount: t.amount, category: fmtCat(t.personal_finance_category?.primary || t.category?.[0]) }));
+      const slimTxns = transactions.slice(0, 40).map(t => ({ date: t.date, name: t.merchant_name || t.name, amount: t.amount, category: fmtCat(resolveCategory(t)) }));
       const slimHoldings = holdings.map(h => ({ name: h.security?.name || h.name, ticker: h.security?.ticker_symbol || h.ticker_symbol, value: (h.quantity || 0) * (h.institution_price || 0) }));
       const extraContext = {};
       if (panelKey === 'investments') {
@@ -3540,7 +3553,7 @@ export default function Dashboard() {
   const sbBudget = sbData.transactions ? (() => {
     const byCategory = {};
     sbData.transactions.filter(t => t.amount > 0).forEach(t => {
-      const cat = t.personal_finance_category?.primary || t.category?.[0] || 'Other';
+      const cat = resolveCategory(t);
       byCategory[cat] = (byCategory[cat] || 0) + t.amount;
     });
     return Object.entries(byCategory)
@@ -3629,7 +3642,7 @@ export default function Dashboard() {
       const budgetMap = {};
       budget.forEach(b => { budgetMap[fmtCat(b.category)] = { spent: b.total, limit: budgetLimits[b.category] }; });
       const slimAccounts = accounts.map(a => ({ name: a.name, type: a.type, subtype: a.subtype, balance: a.balances?.current ?? a.balance }));
-      const slimTxns     = transactions.slice(0, 40).map(t => ({ date: t.date, name: t.merchant_name || t.name, amount: t.amount, category: fmtCat(t.personal_finance_category?.primary || t.category?.[0]) }));
+      const slimTxns     = transactions.slice(0, 40).map(t => ({ date: t.date, name: t.merchant_name || t.name, amount: t.amount, category: fmtCat(resolveCategory(t)) }));
       const slimHoldings = holdings.map(h => ({ name: h.security?.name || h.name, ticker: h.security?.ticker_symbol || h.ticker_symbol, quantity: h.quantity, price: h.institution_price, value: (h.quantity || 0) * (h.institution_price || 0) }));
       const placeholder = { role: 'assistant', content: '' };
       setChatMessages([...newHistory, placeholder]);
@@ -3677,7 +3690,7 @@ export default function Dashboard() {
           ? transactions.filter(t => {
               const q = cmdQuery.toLowerCase();
               return (t.merchant_name || t.name || '').toLowerCase().includes(q)
-                  || (t.personal_finance_category?.primary || '').toLowerCase().includes(q);
+                  || resolveCategory(t).toLowerCase().includes(q);
             }).slice(0, 5).map(t => ({
               label: t.merchant_name || t.name,
               sub: `${t.date} · ${t.amount > 0 ? '+' : ''}$${Math.abs(t.amount).toFixed(2)}`,
@@ -3784,7 +3797,7 @@ export default function Dashboard() {
                       {t.merchant_name || t.name}
                     </div>
                     <div style={{ fontSize: 11, color: TEXT3, marginTop: 2 }}>
-                      {t.date} · {t.personal_finance_category?.primary?.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()) || t.category?.[0] || 'Uncategorized'}
+                      {t.date} · {fmtCat(resolveCategory(t)) || 'Uncategorized'}
                     </div>
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: t.amount > 0 ? RED : GREEN, flexShrink: 0 }}>
@@ -5714,7 +5727,7 @@ export default function Dashboard() {
                           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
                             <div>
                               <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
-                              <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} · {fmtCat(t.personal_finance_category?.primary || t.category?.[0])}</div>
+                              <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} · {fmtCat(resolveCategory(t))}</div>
                             </div>
                             <div style={{ fontWeight: 600, color: t.amount > 0 ? RED : GREEN, fontFamily: 'monospace' }}>
                               {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
@@ -6011,7 +6024,7 @@ export default function Dashboard() {
                                 <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
                                   <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(t.date)}</td>
                                   <td style={{ padding: '8px 12px', fontSize: 13, fontWeight: 500 }}>{t.merchant_name || t.name}</td>
-                                  <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12 }}>{fmtCat(t.personal_finance_category?.primary || t.category?.[0]) || '—'}</td>
+                                  <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12 }}>{fmtCat(resolveCategory(t)) || '—'}</td>
                                   <td style={{ padding: '8px 12px', fontWeight: 600, color: t.amount > 0 ? RED : GREEN, textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>
                                     {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
                                   </td>
@@ -6562,7 +6575,7 @@ export default function Dashboard() {
                   const INCOME_CATS = new Set(['income', 'transfer in', 'payroll', 'wages', 'salary', 'deposit', 'interest', 'dividends', 'rent', 'financial aid']);
                   const isIncomeTxn = t => {
                     if (t.amount >= 0) return false;
-                    const cat = (t.personal_finance_category?.primary || t.category?.[0] || '').toLowerCase().replace(/_/g, ' ');
+                    const cat = resolveCategory(t).toLowerCase().replace(/_/g, ' ');
                     return [...INCOME_CATS].some(k => cat.includes(k));
                   };
 
@@ -6575,7 +6588,7 @@ export default function Dashboard() {
                     const txns  = activeTxns.filter(t => { const td = new Date(t.date); return td >= start && td <= end && isIncomeTxn(t); });
                     const srcMap = {};
                     txns.forEach(t => {
-                      const c = fmtCat(t.personal_finance_category?.primary || t.category?.[0]);
+                      const c = fmtCat(resolveCategory(t));
                       srcMap[c] = (srcMap[c] || 0) + Math.abs(t.amount);
                     });
                     const topSrc = Object.entries(srcMap).sort((a, b) => b[1] - a[1])[0]?.[0]?.split(' ').slice(0, 2).join(' ') || null;
@@ -6611,7 +6624,7 @@ export default function Dashboard() {
                   if (useReal) {
                     const sourceMap = {};
                     selMonth.txns.forEach(t => {
-                      const cat = fmtCat(t.personal_finance_category?.primary || t.category?.[0]);
+                      const cat = fmtCat(resolveCategory(t));
                       sourceMap[cat] = (sourceMap[cat] || 0) + Math.abs(t.amount);
                     });
                     sources = Object.entries(sourceMap).map(([cat, amt]) => ({ cat, amt })).sort((a, b) => b.amt - a.amt);
@@ -6716,13 +6729,13 @@ export default function Dashboard() {
                     const txns  = activeTxns.filter(t => { const td = new Date(t.date); return td >= start && td <= end && t.amount > 0; });
                     const total = txns.reduce((s, t) => s + t.amount, 0);
                     const catMap = {};
-                    txns.forEach(t => { const c = fmtCat(t.personal_finance_category?.primary || t.category?.[0]); catMap[c] = (catMap[c] || 0) + t.amount; });
+                    txns.forEach(t => { const c = fmtCat(resolveCategory(t)); catMap[c] = (catMap[c] || 0) + t.amount; });
                     const topCat = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
                     expMonths.push({ label, fullLabel, total, topCat, txns, isCurrent: i === 0, monthOffset: i });
                   }
                   const hasRealIncomeCheck = activeTxns.some(t => {
                     if (t.amount >= 0) return false;
-                    const cat = (t.personal_finance_category?.primary || t.category?.[0] || '').toLowerCase().replace(/_/g, ' ');
+                    const cat = resolveCategory(t).toLowerCase().replace(/_/g, ' ');
                     return ['income','payroll','wages','salary','deposit','financial aid'].some(k => cat.includes(k)) && Math.abs(t.amount) > 50;
                   });
                   const hasRealExp = hasRealIncomeCheck && expMonths.some(m => m.total > 20);
@@ -6758,7 +6771,7 @@ export default function Dashboard() {
                   } else {
                     const catTotals = {};
                     selExp.txns.forEach(t => {
-                      const cat = t.personal_finance_category?.primary || t.category?.[0] || 'Other';
+                      const cat = resolveCategory(t);
                       catTotals[cat] = (catTotals[cat] || 0) + t.amount;
                     });
                     displayBudget = Object.entries(catTotals)
@@ -6823,7 +6836,7 @@ export default function Dashboard() {
                       total = (MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5]).find(c => c.category === selectedCategory)?.total || catTxns.reduce((s, t) => s + t.amount, 0);
                     } else {
                       catTxns = activeTxns.filter(t => {
-                        const cat = t.personal_finance_category?.primary || t.category?.[0] || 'Other';
+                        const cat = resolveCategory(t);
                         const td  = new Date(t.date);
                         return cat === selectedCategory && t.amount > 0 && td >= selStart && td <= selEnd;
                       });
@@ -7097,7 +7110,7 @@ export default function Dashboard() {
                   const lastIncome = income(lastTxns),  lastExpenses = expenses(lastTxns);
                   const thisNet = thisIncome - thisExpenses, lastNet = lastIncome - lastExpenses;
                   const cashFlowMax = Math.max(thisIncome, thisExpenses, lastIncome, lastExpenses, 1);
-                  const catSpend = txns => { const m = {}; txns.filter(t => t.amount > 0).forEach(t => { const c = t.personal_finance_category?.primary || t.category?.[0] || 'Other'; m[c] = (m[c] || 0) + t.amount; }); return m; };
+                  const catSpend = txns => { const m = {}; txns.filter(t => t.amount > 0).forEach(t => { const c = resolveCategory(t); m[c] = (m[c] || 0) + t.amount; }); return m; };
                   const thisSpend = catSpend(thisTxns), lastSpend = catSpend(lastTxns);
                   const allCats = [...new Set([...Object.keys(thisSpend), ...Object.keys(lastSpend)])].sort((a, b) => (thisSpend[b] || 0) - (thisSpend[a] || 0));
                   const thisMonthLabel = now.toLocaleDateString('en-US', { month: 'long' });
@@ -7722,7 +7735,7 @@ export default function Dashboard() {
               const INCOME_CATS_TAX = ['income','payroll','wages','salary','deposit','financial aid','dividends','interest'];
               const hasRealIncomeTax = activeTxns.some(t => {
                 if (t.amount >= 0) return false;
-                const cat = (t.personal_finance_category?.primary || t.category?.[0] || '').toLowerCase().replace(/_/g, ' ');
+                const cat = resolveCategory(t).toLowerCase().replace(/_/g, ' ');
                 return INCOME_CATS_TAX.some(k => cat.includes(k)) && Math.abs(t.amount) > 50;
               });
               const txnIncomeLast12 = (() => {
@@ -7730,7 +7743,7 @@ export default function Dashboard() {
                 const cutoff = new Date(); cutoff.setFullYear(cutoff.getFullYear() - 1);
                 return activeTxns.filter(t => {
                   if (t.amount >= 0) return false;
-                  const cat = (t.personal_finance_category?.primary || t.category?.[0] || '').toLowerCase().replace(/_/g, ' ');
+                  const cat = resolveCategory(t).toLowerCase().replace(/_/g, ' ');
                   return new Date(t.date) >= cutoff && INCOME_CATS_TAX.some(k => cat.includes(k));
                 }).reduce((s, t) => s + Math.abs(t.amount), 0);
               })();
@@ -13306,7 +13319,7 @@ export default function Dashboard() {
                 };
                 const catTotals = {};
                 txns.forEach(t => {
-                  const cat = t.personal_finance_category?.primary || 'OTHER';
+                  const cat = resolveCategory(t);
                   catTotals[cat] = (catTotals[cat] || 0) + Math.abs(t.amount);
                 });
                 const totalSpending = Object.values(catTotals).reduce((s, v) => s + v, 0);
@@ -13433,7 +13446,7 @@ export default function Dashboard() {
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>All Transactions This Month</div>
                       <div style={{ maxHeight: 320, overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}>
                         {txns.sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, i) => {
-                          const meta = CAT_META[t.personal_finance_category?.primary] || { label: 'Other', color: TEXT3 };
+                          const meta = CAT_META[resolveCategory(t)] || { label: 'Other', color: TEXT3 };
                           return (
                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: `1px solid ${BORDER_C}` }}>
                               <div style={{ flex: 1, minWidth: 0 }}>
