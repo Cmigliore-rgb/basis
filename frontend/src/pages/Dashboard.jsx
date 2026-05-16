@@ -68,19 +68,20 @@ function ConnectedAccountsCard({ onFixConnection }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {accounts.map(a => (
-            <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: DARK, borderRadius: 8, border: `1px solid ${a.needs_update ? 'rgba(251,191,36,0.35)' : BORDER_C}` }}>
+            <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: DARK, borderRadius: 8, border: `1px solid ${!!a.needs_update ? 'rgba(251,191,36,0.35)' : BORDER_C}` }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: a.needs_update ? '#ef4444' : '#22c55e', flexShrink: 0 }} title={a.needs_update ? 'Not synced' : 'Synced'} />
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: !!a.needs_update ? '#ef4444' : '#22c55e', flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: !!a.needs_update ? RED : GREEN }}>{!!a.needs_update ? 'Not synced' : 'Synced'}</span>
                   <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{a.institution_name}</div>
-                  {a.needs_update && <span style={{ fontSize: 10, fontWeight: 700, color: YELLOW, background: 'rgba(251,191,36,0.12)', padding: '2px 7px', borderRadius: 4 }}>Needs Reconnect</span>}
+                  {!!a.needs_update && <span style={{ fontSize: 10, fontWeight: 700, color: YELLOW, background: 'rgba(251,191,36,0.12)', padding: '2px 7px', borderRadius: 4 }}>Needs Reconnect</span>}
                 </div>
                 <div style={{ fontSize: 11, color: TEXT2, marginTop: 2 }}>
                   Connected {new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                {a.needs_update && (
+                {!!a.needs_update && (
                   <button
                     onClick={() => handleFix(a.id)}
                     disabled={fixingId === a.id}
@@ -7335,7 +7336,7 @@ export default function Dashboard() {
                                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, minWidth: 0 }}>
                                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
                                     <span style={{ color: TEXT2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{s.label}</span>
-                                    <span style={{ color: TEXT3, fontWeight: 600, flexShrink: 0 }}>{((s.value / sliceTotal) * 100).toFixed(0)}%</span>
+                                    <span style={{ color: TEXT3, fontWeight: 600, flexShrink: 0 }}>{((s.value / sliceTotal) * 100).toFixed(1)}%</span>
                                   </div>
                                 ))}
                               </div>

@@ -140,18 +140,18 @@ function getDummyData() {
 
   // ── Securities ────────────────────────────────────────────────────────────
   const securities = [
-    { security_id: 'demo_sec_aapl',  name: 'Apple Inc',                          ticker_symbol: 'AAPL',  type: 'equity', close_price: 189.50, iso_currency_code: 'USD' },
-    { security_id: 'demo_sec_vti',   name: 'Vanguard Total Stock Market ETF',    ticker_symbol: 'VTI',   type: 'etf',    close_price: 243.20, iso_currency_code: 'USD' },
-    { security_id: 'demo_sec_spy',   name: 'SPDR S&P 500 ETF Trust',             ticker_symbol: 'SPY',   type: 'etf',    close_price: 557.00, iso_currency_code: 'USD' },
-    { security_id: 'demo_sec_schd',  name: 'Schwab US Dividend Equity ETF',      ticker_symbol: 'SCHD',  type: 'etf',    close_price: 79.00,  iso_currency_code: 'USD' },
+    { security_id: 'demo_sec_aapl',  name: 'Apple Inc',                          ticker_symbol: 'AAPL',  type: 'equity', close_price: 211.26, iso_currency_code: 'USD' },
+    { security_id: 'demo_sec_vti',   name: 'Vanguard Total Stock Market ETF',    ticker_symbol: 'VTI',   type: 'etf',    close_price: 289.14, iso_currency_code: 'USD' },
+    { security_id: 'demo_sec_spy',   name: 'SPDR S&P 500 ETF Trust',             ticker_symbol: 'SPY',   type: 'etf',    close_price: 591.42, iso_currency_code: 'USD' },
+    { security_id: 'demo_sec_schd',  name: 'Schwab US Dividend Equity ETF',      ticker_symbol: 'SCHD',  type: 'etf',    close_price:  84.36, iso_currency_code: 'USD' },
   ];
 
   // ── Holdings ──────────────────────────────────────────────────────────────
   const holdings = [
-    { account_id: BROKERAGE, security_id: 'demo_sec_aapl',  quantity:  5, institution_value:  947.50, institution_price: 189.50, cost_basis:  820.00, security: securities.find(s => s.security_id === 'demo_sec_aapl')  },
-    { account_id: BROKERAGE, security_id: 'demo_sec_vti',   quantity: 12, institution_value: 2918.40, institution_price: 243.20, cost_basis: 2640.00, security: securities.find(s => s.security_id === 'demo_sec_vti')   },
-    { account_id: BROKERAGE, security_id: 'demo_sec_spy',   quantity:  4, institution_value: 2228.00, institution_price: 557.00, cost_basis: 2040.00, security: securities.find(s => s.security_id === 'demo_sec_spy')   },
-    { account_id: BROKERAGE, security_id: 'demo_sec_schd',  quantity: 22, institution_value: 1738.00, institution_price:  79.00, cost_basis: 1540.00, security: securities.find(s => s.security_id === 'demo_sec_schd')  },
+    { account_id: BROKERAGE, security_id: 'demo_sec_aapl',  quantity:  5, institution_value: 1056.30, institution_price: 211.26, cost_basis:  820.00, security: securities.find(s => s.security_id === 'demo_sec_aapl')  },
+    { account_id: BROKERAGE, security_id: 'demo_sec_vti',   quantity: 12, institution_value: 3469.68, institution_price: 289.14, cost_basis: 2640.00, security: securities.find(s => s.security_id === 'demo_sec_vti')   },
+    { account_id: BROKERAGE, security_id: 'demo_sec_spy',   quantity:  4, institution_value: 2365.68, institution_price: 591.42, cost_basis: 2040.00, security: securities.find(s => s.security_id === 'demo_sec_spy')   },
+    { account_id: BROKERAGE, security_id: 'demo_sec_schd',  quantity: 22, institution_value: 1855.92, institution_price:  84.36, cost_basis: 1540.00, security: securities.find(s => s.security_id === 'demo_sec_schd')  },
   ];
 
   // ── Liabilities ───────────────────────────────────────────────────────────
