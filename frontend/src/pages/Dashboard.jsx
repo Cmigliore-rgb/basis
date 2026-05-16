@@ -2883,6 +2883,9 @@ export default function Dashboard() {
   const [adminUsers, setAdminUsers] = useState(null);
   const [adminUsersLoading, setAdminUsersLoading] = useState(false);
   const [adminUserSearch, setAdminUserSearch] = useState('');
+  const [setTierEmail, setSetTierEmail] = useState('');
+  const [setTierResult, setSetTierResult] = useState(null);
+  const [setTierLoading, setSetTierLoading] = useState(false);
   const [eduReverifyResult, setEduReverifyResult] = useState(null);
   const [eduReverifyLoading, setEduReverifyLoading] = useState(false);
   const [eduExpireResult, setEduExpireResult] = useState(null);
@@ -10582,6 +10585,33 @@ export default function Dashboard() {
                         </div>
                       </>
                     )}
+
+                    {/* Quick set by email */}
+                    <div style={{ marginTop: 16, paddingTop: 16, borderTop: BORDER }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Set tier by email</div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <input value={setTierEmail} onChange={e => { setSetTierEmail(e.target.value); setSetTierResult(null); }}
+                          placeholder="user@example.com"
+                          style={{ flex: 1, minWidth: 180, padding: '8px 12px', background: DARK, border: BORDER, borderRadius: 7, color: TEXT, fontSize: 13, outline: 'none' }} />
+                        {['premium', 'free'].map(t => (
+                          <button key={t} disabled={setTierLoading || !setTierEmail.trim()} onClick={async () => {
+                            setSetTierLoading(true); setSetTierResult(null);
+                            try {
+                              const r = await api.post('/auth/admin/set-tier', { email: setTierEmail.trim(), tier: t });
+                              setSetTierResult({ ok: true, text: `${r.data.user.name} set to ${t}.` });
+                              if (adminUsers) setAdminUsers(prev => prev.map(u => u.email === r.data.user.email ? { ...u, tier: t } : u));
+                            } catch (err) {
+                              setSetTierResult({ ok: false, text: err.response?.data?.error || 'Failed' });
+                            } finally { setSetTierLoading(false); }
+                          }} style={{ padding: '8px 14px', background: t === 'premium' ? 'rgba(251,191,36,0.12)' : MUTED, border: t === 'premium' ? '1px solid rgba(251,191,36,0.3)' : BORDER, borderRadius: 7, color: t === 'premium' ? YELLOW : TEXT2, fontSize: 12, fontWeight: 700, cursor: setTierLoading || !setTierEmail.trim() ? 'default' : 'pointer', opacity: !setTierEmail.trim() ? 0.5 : 1, textTransform: 'capitalize' }}>
+                            {t === 'premium' ? '★ Set Premium' : 'Set Free'}
+                          </button>
+                        ))}
+                      </div>
+                      {setTierResult && (
+                        <div style={{ marginTop: 8, fontSize: 12, color: setTierResult.ok ? GREEN : RED }}>{setTierResult.ok ? '✓ ' : '✕ '}{setTierResult.text}</div>
+                      )}
+                    </div>
 
                     {!adminUsers && (
                       <div style={{ fontSize: 13, color: TEXT3, textAlign: 'center', padding: '16px 0' }}>

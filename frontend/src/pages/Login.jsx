@@ -35,6 +35,7 @@ export default function Login() {
     return () => window.removeEventListener('resize', h);
   }, []);
   const [form, setForm]         = useState({ email: '', password: '' });
+  const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [twoFactor, setTwoFactor] = useState(null); // { tempToken }
@@ -225,16 +226,24 @@ export default function Login() {
             </div>
           )}
 
-          {[{ label: 'Email', key: 'email', type: 'email' }, { label: 'Password', key: 'password', type: 'password' }].map(f => (
-            <div key={f.key} style={{ marginBottom: 18 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>{f.label}</label>
-              <input
-                type={f.type} value={form[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                required autoComplete={f.key === 'password' ? 'current-password' : 'email'}
-                style={{ width: '100%', padding: '11px 14px', background: INPUT_BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
-              />
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>Email</label>
+            <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+              required autoComplete="email"
+              style={{ width: '100%', padding: '11px 14px', background: INPUT_BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>Password</label>
+            <div style={{ position: 'relative' }}>
+              <input type={showPw ? 'text' : 'password'} value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
+                required autoComplete="current-password"
+                style={{ width: '100%', padding: '11px 42px 11px 14px', background: INPUT_BG, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+              <button type="button" onClick={() => setShowPw(p => !p)}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: TEXT2, fontSize: 14, padding: 0, lineHeight: 1 }}>
+                {showPw ? '🙈' : '👁'}
+              </button>
             </div>
-          ))}
+          </div>
 
           <button type="submit" disabled={loading}
             style={{ width: '100%', padding: '13px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 9, fontSize: 15, fontWeight: 700, cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1, marginTop: 4 }}>

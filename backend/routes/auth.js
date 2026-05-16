@@ -675,4 +675,15 @@ router.post('/admin/professor-code/regenerate', requireAuth, (req, res) => {
   res.json({ code });
 });
 
+// Admin: set any user's tier
+router.post('/admin/set-tier', requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+  const { email, tier } = req.body;
+  if (!email || !['free', 'premium'].includes(tier)) return res.status(400).json({ error: 'email and tier (free|premium) required' });
+  const target = db.prepare('SELECT id, name, email, tier FROM users WHERE email = ?').get(email.trim().toLowerCase());
+  if (!target) return res.status(404).json({ error: 'User not found' });
+  db.prepare('UPDATE users SET tier = ? WHERE id = ?').run(tier, target.id);
+  res.json({ ok: true, user: { id: target.id, name: target.name, email: target.email, tier } });
+});
+
 module.exports = router;

@@ -67,6 +67,8 @@ export default function Register() {
     name: '', email: '', password: '', confirmPassword: '',
     role: 'user', courseCode: '', professorCode: '',
   });
+  const [showPw, setShowPw]       = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [error, setError]         = useState('');
   const [loading, setLoading]     = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -343,7 +345,13 @@ export default function Register() {
           {/* Password */}
           <div style={{ marginBottom: 8 }}>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>Password</label>
-            <input type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} autoComplete="new-password" style={inp} />
+            <div style={{ position: 'relative' }}>
+              <input type={showPw ? 'text' : 'password'} value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} autoComplete="new-password" style={{ ...inp, paddingRight: 42 }} />
+              <button type="button" onClick={() => setShowPw(p => !p)}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: TEXT2, fontSize: 14, padding: 0, lineHeight: 1 }}>
+                {showPw ? '🙈' : '👁'}
+              </button>
+            </div>
             {submitted && !form.password && <div style={{ marginTop: 4, fontSize: 11, color: '#ef4444' }}>Required</div>}
           </div>
 
@@ -374,12 +382,18 @@ export default function Register() {
           {/* Confirm Password */}
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT2, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>Confirm Password</label>
-            <input
-              type="password" value={form.confirmPassword}
-              onChange={e => setForm(p => ({ ...p, confirmPassword: e.target.value }))}
-              autoComplete="new-password"
-              style={{ ...inp, border: form.confirmPassword && form.confirmPassword !== form.password ? '1px solid rgba(248,113,113,0.5)' : form.confirmPassword && form.confirmPassword === form.password ? '1px solid rgba(74,222,128,0.4)' : BORDER }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showConfirmPw ? 'text' : 'password'} value={form.confirmPassword}
+                onChange={e => setForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                autoComplete="new-password"
+                style={{ ...inp, paddingRight: 42, border: form.confirmPassword && form.confirmPassword !== form.password ? '1px solid rgba(248,113,113,0.5)' : form.confirmPassword && form.confirmPassword === form.password ? '1px solid rgba(74,222,128,0.4)' : BORDER }}
+              />
+              <button type="button" onClick={() => setShowConfirmPw(p => !p)}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: TEXT2, fontSize: 14, padding: 0, lineHeight: 1 }}>
+                {showConfirmPw ? '🙈' : '👁'}
+              </button>
+            </div>
             {submitted && !form.confirmPassword && <div style={{ marginTop: 5, fontSize: 11, color: '#ef4444' }}>Required</div>}
             {form.confirmPassword && form.confirmPassword !== form.password && (
               <div style={{ marginTop: 5, fontSize: 11, color: '#f87171' }}>Passwords do not match</div>
