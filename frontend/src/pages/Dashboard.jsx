@@ -339,7 +339,7 @@ function CompanyLogo({ name, ticker, size = 26, radius = 6 }) {
 }
 
 // ── Interactive portfolio performance chart ──────────────────────────────────
-function PerfChartInteractive({ pfData, spData, showBenchmark, perfLoading, isMobile, totalPortfolio }) {
+function PerfChartInteractive({ pfData, spData, showBenchmark, perfLoading, isMobile, totalPortfolio, perfPeriod }) {
   const [hoverIdx, setHoverIdx] = useState(null);
   const svgRef = useRef(null);
 
@@ -372,6 +372,15 @@ function PerfChartInteractive({ pfData, spData, showBenchmark, perfLoading, isMo
     pfData.map((d, i) => `L ${toX(i).toFixed(1)} ${toY(d.value).toFixed(1)}`).join(' ') +
     ` L ${toX(n - 1).toFixed(1)} ${baseY} Z`;
 
+  // Smart x-axis label format based on period
+  const longPeriod = ['5y','max'].includes(perfPeriod);
+  const medPeriod  = ['1y','ytd','6mo'].includes(perfPeriod);
+  const fmtLbl = (dateStr) => {
+    const d = new Date((dateStr || '') + 'T12:00:00');
+    if (longPeriod) return d.toLocaleDateString('en-US', { year: 'numeric' });
+    if (medPeriod)  return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
   const lblCnt = isMobile ? 3 : 6;
   const lblIdxs = Array.from({ length: lblCnt }, (_, i) => Math.round((i / (lblCnt - 1)) * (n - 1)));
   const b100Y = toY(100);
@@ -482,7 +491,7 @@ function PerfChartInteractive({ pfData, spData, showBenchmark, perfLoading, isMo
         )}
         {lblIdxs.map(i => (
           <text key={i} x={toX(i)} y={H - 4} textAnchor="middle" fill={TEXT3} fontSize={10} fontFamily="sans-serif">
-            {new Date((pfData[i]?.date || '') + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            {fmtLbl(pfData[i]?.date)}
           </text>
         ))}
         {[minV, (minV + maxV) / 2, maxV].map((v, i) => (
@@ -8670,8 +8679,8 @@ export default function Dashboard() {
                         <table style={{ width:'100%', borderCollapse:'collapse', minWidth:480 }}>
                           <thead>
                             <tr style={{ borderBottom:BORDER }}>
-                              {['Ticker','Name','Shares','Price','Value',holdingPeriod+' %'].map(col=>(
-                                <th key={col} style={{ padding:'8px 12px', textAlign:['Shares','Price','Value',holdingPeriod+' %'].includes(col)?'right':'left', fontSize:11, color:TEXT2, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.5px' }}>{col}</th>
+                              {['Ticker','Name','Shares','Price','Value','Change'].map(col=>(
+                                <th key={col} style={{ padding:'8px 12px', textAlign:['Shares','Price','Value','Change'].includes(col)?'right':'left', fontSize:11, color:TEXT2, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.5px' }}>{col}</th>
                               ))}
                             </tr>
                           </thead>
@@ -8682,6 +8691,8 @@ export default function Dashboard() {
                               const qty=h.quantity||0, price=h.institution_price||0, value=qty*price;
                               const ext=extendedTickerData[ticker]||{};
                               const periodPct=ticker!=='—'?ext[activePeriodField]??null:null;
+                              // Dollar change: exact formula (value * p/100 / (1 + p/100))
+                              const dollarChg=periodPct!=null ? value*(periodPct/100)/(1+periodPct/100) : null;
                               const clickable=ticker!=='—';
                               return (
                                 <tr key={i} className="lr" style={{ borderBottom:`1px solid ${BORDER_C}`, cursor:clickable?'pointer':'default' }}
@@ -8696,7 +8707,20 @@ export default function Dashboard() {
                                   <td style={{ padding:'10px 12px', textAlign:'right', fontFamily:'monospace', fontSize:13 }}>{qty.toFixed(3)}</td>
                                   <td style={{ padding:'10px 12px', textAlign:'right', fontFamily:'monospace', fontSize:13 }}>{fmt(price)}</td>
                                   <td style={{ padding:'10px 12px', textAlign:'right', fontWeight:600, fontFamily:'monospace' }}>{fmt(value)}</td>
-                                  <td style={{ padding:'10px 12px', textAlign:'right', fontSize:13 }}>{pctCell(periodPct)}</td>
+                                  <td style={{ padding:'10px 12px', textAlign:'right' }}>
+                                    {periodPct==null ? <span style={{ color:TEXT3 }}>—</span> : (
+                                      <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:1 }}>
+                                        <span style={{ fontWeight:700, fontSize:12, color:periodPct>=0?GREEN:RED }}>
+                                          {periodPct>=0?'▲':'▼'} {Math.abs(periodPct).toFixed(2)}%
+                                        </span>
+                                        {dollarChg!=null&&(
+                                          <span style={{ fontSize:11, color:dollarChg>=0?GREEN:RED, fontFamily:'monospace' }}>
+                                            {dollarChg>=0?'+':''}{dollarChg>=0?'':'-'}{fmt(Math.abs(dollarChg))}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </td>
                                 </tr>
                               );
                             })}
@@ -8870,6 +8894,7 @@ export default function Dashboard() {
                             pfData={pfData} spData={spData}
                             showBenchmark={showBenchmark} perfLoading={perfLoading}
                             isMobile={isMobile} totalPortfolio={activeTotalPortfolio}
+                            perfPeriod={perfPeriod}
                           />
                         </div>
                       )}

@@ -341,28 +341,34 @@ router.get('/portfolio-perf', async (req, res) => {
     if (!sp500.length) return res.json({ portfolio: [], sp500: [] });
     const spFirst = sp500[0].close;
 
+    // Use full ISO timestamp as key for hourly data so each candle gets its own slot
+    const toKey  = c => (c.date instanceof Date ? c.date : new Date(c.date)).toISOString().slice(0, interval === '1h' ? 13 : 10);
     const toDate = c => (c.date instanceof Date ? c.date : new Date(c.date)).toISOString().slice(0, 10);
-    const qtyMap  = {};
-    const firstPx = {};
+
+    const firstPx  = {};
     const dateMaps = {};
     positions.forEach(p => {
-      qtyMap[p.sym] = p.qty;
       if (charts[p.sym]?.length) firstPx[p.sym] = charts[p.sym][0].close;
       dateMaps[p.sym] = {};
-      (charts[p.sym] || []).forEach(c => { dateMaps[p.sym][toDate(c)] = c.close; });
+      (charts[p.sym] || []).forEach(c => { dateMaps[p.sym][toKey(c)] = c.close; });
     });
 
     const startVal = positions.reduce((s, p) => s + p.qty * (firstPx[p.sym] || 0), 0);
     if (!startVal) return res.json({ portfolio: [], sp500: [] });
 
+    // Carry-forward: maintain last-known price per symbol so missing dates never
+    // snap back to the period-start price (the source of flat segments).
+    const carryPx = {};
+    positions.forEach(p => { carryPx[p.sym] = firstPx[p.sym] || 0; });
+
     const portfolio = sp500.map(c => {
-      const date = toDate(c);
+      const key = toKey(c);
       let dayVal = 0;
       positions.forEach(p => {
-        const px = dateMaps[p.sym]?.[date] ?? firstPx[p.sym] ?? 0;
-        dayVal += p.qty * px;
+        if (dateMaps[p.sym][key] != null) carryPx[p.sym] = dateMaps[p.sym][key];
+        dayVal += p.qty * carryPx[p.sym];
       });
-      return { date, value: +((dayVal / startVal) * 100).toFixed(2) };
+      return { date: toDate(c), value: +((dayVal / startVal) * 100).toFixed(2) };
     });
 
     const sp500Series = sp500.map(c => ({ date: toDate(c), value: +((c.close / spFirst) * 100).toFixed(2) }));
