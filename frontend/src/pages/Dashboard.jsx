@@ -2866,6 +2866,8 @@ export default function Dashboard() {
   const [eventForm, setEventForm]           = useState({ title: '', date: '', type: 'reminder', note: '' });
   const [editingEvent, setEditingEvent]     = useState(null);
   const [showLinkCal, setShowLinkCal]       = useState(false);
+  const [icsImportMsg, setIcsImportMsg]     = useState(null);
+  const icsInputRef = useRef(null);
   const [selectedDay, setSelectedDay]       = useState(null);
   const [showCreateAssignment, setShowCreateAssignment] = useState(false);
   const [assignStep, setAssignStep] = useState('template'); // 'template' | 'form'
@@ -3213,7 +3215,16 @@ export default function Dashboard() {
       goals.forEach(g => {
         const acct = accounts.find(a => a.account_id === g.accountId);
         const current = acct ? (acct.balances?.current || 0) : 0;
-        if (current >= g.target) trigger('goal_reached', `Goal reached: ${g.name}`, { goalName: g.name }, `goal_${g.id}`);
+        const pct = g.target > 0 ? (current / g.target) * 100 : 0;
+        if (pct >= 100) {
+          trigger('goal_reached', `You reached your goal: ${g.name}!`, { goalName: g.name, current: fmt(current), target: fmt(g.target), message: "You did it! Goal complete." }, `goal_100_${g.id}`);
+        } else if (pct >= 75) {
+          trigger('goal_milestone', `Almost there on ${g.name}`, { goalName: g.name, pct: 75, current: fmt(current), target: fmt(g.target), message: "75% of the way there, keep going!" }, `goal_75_${g.id}`);
+        } else if (pct >= 50) {
+          trigger('goal_milestone', `Halfway to ${g.name}`, { goalName: g.name, pct: 50, current: fmt(current), target: fmt(g.target), message: "Halfway there, you're on track!" }, `goal_50_${g.id}`);
+        } else if (pct >= 25) {
+          trigger('goal_milestone', `Great start on ${g.name}`, { goalName: g.name, pct: 25, current: fmt(current), target: fmt(g.target), message: "25% saved, great start!" }, `goal_25_${g.id}`);
+        }
       });
     }
     if (notifPrefs.lowBalanceAlert) {
@@ -3227,8 +3238,10 @@ export default function Dashboard() {
         const limit = budgetLimits[b.category];
         if (!limit) return;
         const pct = (b.total / limit) * 100;
-        if (pct >= notifPrefs.budgetThreshold) {
-          trigger('budget_alert', `Budget alert: ${fmtCat(b.category)}`, { category: fmtCat(b.category), spent: fmt(b.total), limit: fmt(limit), pct: Math.round(pct) }, `budget_${b.category}`);
+        if (pct >= 100) {
+          trigger('budget_over', `Over budget: ${fmtCat(b.category)}`, { category: fmtCat(b.category), spent: fmt(b.total), limit: fmt(limit), pct: Math.round(pct) }, `budget_over_${b.category}`);
+        } else if (pct >= notifPrefs.budgetThreshold) {
+          trigger('budget_alert', `Budget warning: ${fmtCat(b.category)}`, { category: fmtCat(b.category), spent: fmt(b.total), limit: fmt(limit), pct: Math.round(pct) }, `budget_warn_${b.category}`);
         }
       });
     }
@@ -3414,6 +3427,36 @@ export default function Dashboard() {
     }
     setEditingLimit(null);
     setLimitInput('');
+  }, []);
+
+  const handleIcsImport = useCallback((file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const blocks = text.split('BEGIN:VEVENT');
+      const imported = [];
+      for (let i = 1; i < blocks.length; i++) {
+        const block = blocks[i];
+        const get = (key) => { const m = block.match(new RegExp(`${key}[^:\\r\\n]*:([^\\r\\n]+)`)); return m ? m[1].trim() : ''; };
+        const dtraw = get('DTSTART');
+        const summary = get('SUMMARY');
+        if (!dtraw || !summary) continue;
+        const digits = dtraw.replace(/[^0-9]/g, '').slice(0, 8);
+        if (digits.length < 8) continue;
+        const date = `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+        const desc = get('DESCRIPTION').replace(/\\n/g, ' ').replace(/\\,/g, ',');
+        imported.push({ id: `ics_${Date.now()}_${i}`, title: summary, date, type: 'reminder', note: desc, _imported: true });
+      }
+      if (imported.length === 0) { setIcsImportMsg({ ok: false, text: 'No events found in that file.' }); return; }
+      setCalendarEvents(prev => {
+        const existing = new Set(prev.map(e => `${e.title}|${e.date}`));
+        const fresh = imported.filter(e => !existing.has(`${e.title}|${e.date}`));
+        return [...prev, ...fresh];
+      });
+      setIcsImportMsg({ ok: true, text: `Imported ${imported.length} event${imported.length !== 1 ? 's' : ''}.` });
+    };
+    reader.readAsText(file);
   }, []);
 
   const streamChat = useCallback(async (payload, onDelta, onDone, onError) => {
@@ -4408,35 +4451,59 @@ export default function Dashboard() {
               <button onClick={() => setShowLinkCal(false)} style={{ background: 'none', border: 'none', color: TEXT2, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
             </div>
             <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, marginBottom: 20 }}>
-              Connect an external calendar to sync your financial events, bill due dates, and reminders.
+              Import events from any calendar app, or export your PeakLedger events. Imported events appear alongside your bill due dates.
             </div>
-            {[
-              { name: 'Apple Calendar', icon: '🗓', desc: 'Export as .ics file', color: '#888', available: true },
-            ].map(opt => (
-              <div key={opt.name} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: DARK, border: BORDER, borderRadius: 10, marginBottom: 10 }}>
-                <span style={{ fontSize: 22 }}>{opt.icon}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: TEXT }}>{opt.name}</div>
-                  <div style={{ fontSize: 11, color: TEXT3 }}>{opt.desc}</div>
-                </div>
-                {opt.available ? (
-                  <button onClick={() => {
-                    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//PeakLedger//EN'];
-                    calendarEvents.forEach(ev => {
-                      const d = ev.date.replace(/-/g, '');
-                      lines.push('BEGIN:VEVENT', `DTSTART;VALUE=DATE:${d}`, `SUMMARY:${ev.title}`, `DESCRIPTION:${ev.note || ''}`, 'END:VEVENT');
-                    });
-                    lines.push('END:VCALENDAR');
-                    const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar' });
-                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'PeakLedger-calendar.ics'; a.click();
-                  }} style={{ padding: '7px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 7, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
-                    Export .ics
-                  </button>
-                ) : (
-                  <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, background: MUTED, color: TEXT3 }}>Coming soon</span>
-                )}
+
+            {/* Import row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: DARK, border: BORDER, borderRadius: 10, marginBottom: 10 }}>
+              <span style={{ fontSize: 22 }}>📥</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: TEXT }}>Import calendar</div>
+                <div style={{ fontSize: 11, color: TEXT3 }}>Works with Apple Calendar, Google Calendar, Outlook (.ics)</div>
               </div>
-            ))}
+              <input ref={icsInputRef} type="file" accept=".ics,text/calendar" style={{ display: 'none' }}
+                onChange={e => { handleIcsImport(e.target.files?.[0]); e.target.value = ''; }} />
+              <button onClick={() => { setIcsImportMsg(null); icsInputRef.current?.click(); }}
+                style={{ padding: '7px 14px', background: 'rgba(77,163,255,0.1)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 7, color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+                Choose file
+              </button>
+            </div>
+            {icsImportMsg && (
+              <div style={{ fontSize: 12, marginBottom: 10, marginLeft: 4, color: icsImportMsg.ok ? GREEN : RED }}>
+                {icsImportMsg.ok ? '✓ ' : '✕ '}{icsImportMsg.text}
+              </div>
+            )}
+
+            {/* Export row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: DARK, border: BORDER, borderRadius: 10, marginBottom: 10 }}>
+              <span style={{ fontSize: 22 }}>📤</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: TEXT }}>Export calendar</div>
+                <div style={{ fontSize: 11, color: TEXT3 }}>Download your events as an .ics file</div>
+              </div>
+              <button onClick={() => {
+                const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//PeakLedger//EN'];
+                calendarEvents.forEach(ev => {
+                  const d = ev.date.replace(/-/g, '');
+                  lines.push('BEGIN:VEVENT', `DTSTART;VALUE=DATE:${d}`, `SUMMARY:${ev.title}`, `DESCRIPTION:${ev.note || ''}`, 'END:VEVENT');
+                });
+                lines.push('END:VCALENDAR');
+                const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'PeakLedger-calendar.ics'; a.click();
+              }} style={{ padding: '7px 14px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 7, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+                Export .ics
+              </button>
+            </div>
+
+            {calendarEvents.filter(e => e._imported).length > 0 && (
+              <div style={{ fontSize: 12, color: TEXT3, marginTop: 8 }}>
+                {calendarEvents.filter(e => e._imported).length} imported event{calendarEvents.filter(e => e._imported).length !== 1 ? 's' : ''} in your calendar.{' '}
+                <button onClick={() => { setCalendarEvents(prev => prev.filter(e => !e._imported)); setIcsImportMsg(null); }}
+                  style={{ background: 'none', border: 'none', color: RED, cursor: 'pointer', fontSize: 12, padding: 0, textDecoration: 'underline' }}>
+                  Remove all imported
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
