@@ -338,6 +338,163 @@ function CompanyLogo({ name, ticker, size = 26, radius = 6 }) {
   return <img src={urls[idx]} onError={() => setIdx(i => i + 1)} alt="" style={{ width: size, height: size, borderRadius: radius, objectFit: 'contain', background: '#fff', flexShrink: 0 }} />;
 }
 
+// ── Interactive portfolio performance chart ──────────────────────────────────
+function PerfChartInteractive({ pfData, spData, showBenchmark, perfLoading, isMobile, totalPortfolio }) {
+  const [hoverIdx, setHoverIdx] = useState(null);
+  const svgRef = useRef(null);
+
+  const hasPerf = pfData.length >= 2;
+  const showSP  = showBenchmark && spData.length >= 2;
+
+  if (!hasPerf) return (
+    <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT2, fontSize: 13 }}>
+      {perfLoading ? 'Loading chart...' : 'Chart unavailable'}
+    </div>
+  );
+
+  const W = 600, H = 180, PAD = { top: 16, right: 32, bottom: 28, left: 44 };
+  const iW = W - PAD.left - PAD.right, iH = H - PAD.top - PAD.bottom;
+  const allV = [...pfData.map(d => d.value), ...(showSP ? spData.map(d => d.value) : [])];
+  const minV = Math.min(...allV), maxV = Math.max(...allV), range = maxV - minV || 1;
+  const n = pfData.length;
+  const toX = i => PAD.left + (i / Math.max(n - 1, 1)) * iW;
+  const toY = v => PAD.top + iH - ((v - minV) / range) * iH;
+
+  const pfChg = pfData[pfData.length - 1].value - 100;
+  const lineColor = pfChg >= 0 ? GREEN : RED;
+  const fillColor = pfChg >= 0 ? '#22c55e' : '#ef4444';
+  const fillId = pfChg >= 0 ? 'pfIG' : 'pfIR';
+
+  const pfPts = pfData.map((d, i) => `${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' ');
+  const spPts = showSP ? spData.map((d, i) => `${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' ') : '';
+  const baseY = Math.min(toY(100), PAD.top + iH);
+  const fillPath = `M ${toX(0).toFixed(1)} ${baseY} ` +
+    pfData.map((d, i) => `L ${toX(i).toFixed(1)} ${toY(d.value).toFixed(1)}`).join(' ') +
+    ` L ${toX(n - 1).toFixed(1)} ${baseY} Z`;
+
+  const lblCnt = isMobile ? 3 : 6;
+  const lblIdxs = Array.from({ length: lblCnt }, (_, i) => Math.round((i / (lblCnt - 1)) * (n - 1)));
+  const b100Y = toY(100);
+
+  const getIdx = (clientX) => {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    const svgX = (clientX - rect.left) * (W / rect.width) - PAD.left;
+    return Math.max(0, Math.min(n - 1, Math.round((svgX / iW) * (n - 1))));
+  };
+
+  const hPf  = hoverIdx != null ? pfData[hoverIdx]  : null;
+  const hSp  = (hoverIdx != null && showSP && spData[hoverIdx]) ? spData[hoverIdx] : null;
+  const hPct = hPf ? hPf.value - 100 : null;
+  const hSpPct = hSp ? hSp.value - 100 : null;
+  const hAlpha = hPct != null && hSpPct != null ? hPct - hSpPct : null;
+
+  const lastVal = pfData[pfData.length - 1].value;
+  const startPortfolio = totalPortfolio && lastVal ? totalPortfolio / (lastVal / 100) : null;
+  const hDollar = hPf && startPortfolio ? startPortfolio * (hPf.value / 100) : null;
+  const hDollarChange = hDollar && startPortfolio ? hDollar - startPortfolio : null;
+
+  const hoverScreenPct = hoverIdx != null ? (toX(hoverIdx) / W) : 0;
+  const tipOnLeft = hoverScreenPct > 0.55;
+
+  return (
+    <div style={{ position: 'relative', userSelect: 'none' }}>
+      {hPf && (
+        <div style={{
+          position: 'absolute', top: 6, pointerEvents: 'none', zIndex: 10,
+          ...(tipOnLeft
+            ? { right: `${((1 - hoverScreenPct) * 100).toFixed(1)}%`, marginRight: 14 }
+            : { left:  `${(hoverScreenPct * 100).toFixed(1)}%`,       marginLeft: 14 }),
+          background: CARD_BG, border: `1px solid ${BORDER_C}`, borderRadius: 8,
+          padding: '8px 12px', minWidth: 148, boxShadow: '0 4px 16px rgba(0,0,0,0.45)',
+        }}>
+          <div style={{ color: TEXT2, fontSize: 11, marginBottom: 6 }}>
+            {new Date((hPf.date || '') + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 3 }}>
+            <span style={{ color: TEXT2, fontSize: 12 }}>Portfolio</span>
+            <span style={{ fontWeight: 700, fontSize: 12, color: hPct >= 0 ? GREEN : RED }}>
+              {hPct >= 0 ? '+' : ''}{hPct.toFixed(2)}%
+            </span>
+          </div>
+          {hDollar != null && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 3 }}>
+              <span style={{ color: TEXT2, fontSize: 12 }}>Value</span>
+              <span style={{ fontWeight: 600, fontSize: 12, color: TEXT }}>${Math.round(hDollar).toLocaleString()}</span>
+            </div>
+          )}
+          {hDollarChange != null && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: hSp ? 3 : 0 }}>
+              <span style={{ color: TEXT2, fontSize: 12 }}>P&L</span>
+              <span style={{ fontWeight: 600, fontSize: 12, color: hDollarChange >= 0 ? GREEN : RED }}>
+                {hDollarChange >= 0 ? '+' : ''}${Math.round(Math.abs(hDollarChange)).toLocaleString()}
+              </span>
+            </div>
+          )}
+          {hSp && hSpPct != null && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: hAlpha != null ? 3 : 0 }}>
+              <span style={{ color: TEXT2, fontSize: 12 }}>S&P 500</span>
+              <span style={{ fontWeight: 700, fontSize: 12, color: hSpPct >= 0 ? GREEN : RED }}>
+                {hSpPct >= 0 ? '+' : ''}{hSpPct.toFixed(2)}%
+              </span>
+            </div>
+          )}
+          {hAlpha != null && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+              <span style={{ color: TEXT2, fontSize: 12 }}>Alpha</span>
+              <span style={{ fontWeight: 700, fontSize: 12, color: hAlpha >= 0 ? GREEN : RED }}>
+                {hAlpha >= 0 ? '+' : ''}{hAlpha.toFixed(2)}%
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`}
+        style={{ width: '100%', height: 'auto', display: 'block', cursor: 'crosshair' }}
+        onMouseMove={e => setHoverIdx(getIdx(e.clientX))}
+        onMouseLeave={() => setHoverIdx(null)}
+        onTouchMove={e => { e.preventDefault(); setHoverIdx(getIdx(e.touches[0].clientX)); }}
+        onTouchEnd={() => setHoverIdx(null)}>
+        <defs>
+          <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor={fillColor} stopOpacity="0.28"/>
+            <stop offset="100%" stopColor={fillColor} stopOpacity="0.02"/>
+          </linearGradient>
+        </defs>
+        <path d={fillPath} fill={`url(#${fillId})`}/>
+        {b100Y >= PAD.top && b100Y <= H - PAD.bottom && (
+          <line x1={PAD.left} y1={b100Y} x2={W - PAD.right} y2={b100Y} stroke={BORDER_C} strokeWidth={1} strokeDasharray="4,3"/>
+        )}
+        {showSP && <polyline fill="none" stroke="#6b7280" strokeWidth={1.5} strokeDasharray="5,3" points={spPts}/>}
+        <polyline fill="none" stroke={lineColor} strokeWidth={2.5} points={pfPts}/>
+        {hoverIdx != null && (
+          <>
+            <line x1={toX(hoverIdx)} y1={PAD.top} x2={toX(hoverIdx)} y2={H - PAD.bottom}
+              stroke={BORDER_C} strokeWidth={1} strokeDasharray="3,2"/>
+            <circle cx={toX(hoverIdx)} cy={toY(pfData[hoverIdx].value)} r={4.5}
+              fill={lineColor} stroke={CARD_BG} strokeWidth={2}/>
+            {showSP && spData[hoverIdx] && (
+              <circle cx={toX(hoverIdx)} cy={toY(spData[hoverIdx].value)} r={3.5}
+                fill="#6b7280" stroke={CARD_BG} strokeWidth={1.5}/>
+            )}
+          </>
+        )}
+        {lblIdxs.map(i => (
+          <text key={i} x={toX(i)} y={H - 4} textAnchor="middle" fill={TEXT3} fontSize={10} fontFamily="sans-serif">
+            {new Date((pfData[i]?.date || '') + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </text>
+        ))}
+        {[minV, (minV + maxV) / 2, maxV].map((v, i) => (
+          <text key={i} x={PAD.left - 5} y={toY(v) + 4} textAnchor="end" fill={TEXT3} fontSize={10} fontFamily="sans-serif">
+            {v.toFixed(0)}
+          </text>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 // Simple SVG line chart
 function NetWorthChart({ snapshots }) {
   if (!snapshots || snapshots.length === 0) {
@@ -8564,51 +8721,6 @@ export default function Dashboard() {
                   const pfChg=hasPerf?pfData[pfData.length-1].value-100:0;
                   const spChg=spData.length>=2?spData[spData.length-1].value-100:0;
                   const alpha=pfChg-spChg;
-                  const PerfChart = () => {
-                    if(!hasPerf) return <div style={{ height:180, display:'flex', alignItems:'center', justifyContent:'center', color:TEXT2, fontSize:13 }}>{perfLoading?'Loading chart...':'Chart unavailable'}</div>;
-                    const W=600,H=180,PAD={top:16,right:32,bottom:28,left:44};
-                    const iW=W-PAD.left-PAD.right,iH=H-PAD.top-PAD.bottom;
-                    const showSP=showBenchmark&&spData.length>=2;
-                    const allV=[...pfData.map(d=>d.value),...(showSP?spData.map(d=>d.value):[])];
-                    const minV=Math.min(...allV),maxV=Math.max(...allV),range=maxV-minV||1;
-                    const n=pfData.length;
-                    const toX=i=>PAD.left+(i/(Math.max(n-1,1)))*iW;
-                    const toY=v=>PAD.top+iH-((v-minV)/range)*iH;
-                    const pfPts=pfData.map((d,i)=>`${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' ');
-                    const spPts=showSP?spData.map((d,i)=>`${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' '):'';
-                    // Fill path: line points + baseline back to start
-                    const baseY=Math.min(toY(100),PAD.top+iH);
-                    const fillPath=`M ${toX(0).toFixed(1)} ${baseY} `+
-                      pfData.map((d,i)=>`L ${toX(i).toFixed(1)} ${toY(d.value).toFixed(1)}`).join(' ')+
-                      ` L ${toX(n-1).toFixed(1)} ${baseY} Z`;
-                    const fillId=pfChg>=0?'pfFillGreen':'pfFillRed';
-                    const fillColor=pfChg>=0?'#22c55e':'#ef4444';
-                    const lblCnt=isMobile?3:6;
-                    const lblIdxs=Array.from({length:lblCnt},(_,i)=>Math.round((i/(lblCnt-1))*(n-1)));
-                    const b100Y=toY(100);
-                    return (
-                      <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', height:'auto', display:'block' }}>
-                        <defs>
-                          <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={fillColor} stopOpacity="0.25"/>
-                            <stop offset="100%" stopColor={fillColor} stopOpacity="0.02"/>
-                          </linearGradient>
-                        </defs>
-                        <path d={fillPath} fill={`url(#${fillId})`}/>
-                        {b100Y>=PAD.top&&b100Y<=H-PAD.bottom&&<line x1={PAD.left} y1={b100Y} x2={W-PAD.right} y2={b100Y} stroke={BORDER_C} strokeWidth={1} strokeDasharray="4,3"/>}
-                        {showSP&&<polyline fill="none" stroke="#6b7280" strokeWidth={1.5} strokeDasharray="5,3" points={spPts}/>}
-                        <polyline fill="none" stroke={pfChg>=0?GREEN:RED} strokeWidth={2.5} points={pfPts}/>
-                        {lblIdxs.map(i=>(
-                          <text key={i} x={toX(i)} y={H-4} textAnchor="middle" fill={TEXT3} fontSize={10} fontFamily="sans-serif">
-                            {new Date((pfData[i]?.date||'')+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}
-                          </text>
-                        ))}
-                        {[minV,(minV+maxV)/2,maxV].map((v,i)=>(
-                          <text key={i} x={PAD.left-5} y={toY(v)+4} textAnchor="end" fill={TEXT3} fontSize={10} fontFamily="sans-serif">{v.toFixed(0)}</text>
-                        ))}
-                      </svg>
-                    );
-                  };
 
                   return (
                     <>
@@ -8754,7 +8866,11 @@ export default function Dashboard() {
                               </div>
                             </div>
                           </div>
-                          {PerfChart()}
+                          <PerfChartInteractive
+                            pfData={pfData} spData={spData}
+                            showBenchmark={showBenchmark} perfLoading={perfLoading}
+                            isMobile={isMobile} totalPortfolio={activeTotalPortfolio}
+                          />
                         </div>
                       )}
                     </>
