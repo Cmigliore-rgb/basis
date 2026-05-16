@@ -2476,6 +2476,7 @@ export default function Dashboard() {
   const [baselineData, setBaselineData] = useState(null);
   const [baselineRefreshing, setBaselineRefreshing] = useState(false);
   const [budgetLimits, setBudgetLimits] = useState({});
+  const [demoBudgetLimits, setDemoBudgetLimits] = useState({});
   const [editingLimit, setEditingLimit] = useState(null);
   const [limitInput, setLimitInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -6915,21 +6916,54 @@ export default function Dashboard() {
                         })() : displayBudget.length === 0 ? (
                           (() => {
                             const cats = MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5];
-                            const maxCat = Math.max(...cats.map(c => c.total), 1);
-                            return cats.map((b, i) => (
-                              <div key={i} style={{ marginBottom: 20 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                  <button onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
-                                    <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>{b.category}</span>
-                                  </button>
-                                  <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: TEXT }}>{fmt(b.total)}</span>
+                            return cats.map((b, i) => {
+                              const limit     = demoBudgetLimits[b.category];
+                              const pct       = limit ? Math.min((b.total / limit) * 100, 100) : null;
+                              const over      = limit && b.total > limit;
+                              const warn      = limit && pct >= 80 && !over;
+                              const barColor  = over ? RED : warn ? YELLOW : BLUE_BTN;
+                              const isEditing = editingLimit === b.category;
+                              const saveDemoLimit = (val) => {
+                                const v = parseFloat(val);
+                                setDemoBudgetLimits(p => { const n = { ...p }; if (isNaN(v) || val === '') delete n[b.category]; else n[b.category] = v; return n; });
+                                setEditingLimit(null); setLimitInput('');
+                              };
+                              return (
+                                <div key={i} style={{ marginBottom: 20 }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                    <button onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+                                      <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>{b.category}</span>
+                                    </button>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                      <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: over ? RED : TEXT }}>
+                                        {fmt(b.total)}{limit && !isEditing ? ` / ${fmt(limit)}` : ''}
+                                      </span>
+                                      {isEditing ? (
+                                        <>
+                                          <input autoFocus value={limitInput} onChange={e => setLimitInput(e.target.value)}
+                                            onKeyDown={e => { if (e.key === 'Enter') saveDemoLimit(limitInput); if (e.key === 'Escape') { setEditingLimit(null); setLimitInput(''); } }}
+                                            placeholder="Monthly limit $"
+                                            style={{ width: 120, padding: '4px 8px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, outline: 'none' }} />
+                                          <button onClick={() => saveDemoLimit(limitInput)} style={{ padding: '4px 10px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Save</button>
+                                          {limit && <button onClick={() => saveDemoLimit('')} style={{ padding: '4px 8px', background: MUTED, color: RED, border: BORDER, borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Remove</button>}
+                                          <button onClick={() => { setEditingLimit(null); setLimitInput(''); }} style={{ padding: '4px 8px', background: 'none', color: TEXT2, border: 'none', cursor: 'pointer', fontSize: 12 }}>Cancel</button>
+                                        </>
+                                      ) : (
+                                        <button onClick={() => { setEditingLimit(b.category); setLimitInput(limit ? String(limit) : ''); }}
+                                          style={{ padding: '3px 9px', background: MUTED, border: BORDER, borderRadius: 6, color: limit ? TEXT2 : BLUE, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                                          {limit ? 'Edit limit' : '+ Set limit'}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', width: `${pct !== null ? pct : Math.min((b.total / (cats[0]?.total || 1)) * 100, 100)}%`, background: barColor, borderRadius: 3, transition: 'width 0.3s ease' }} />
+                                  </div>
+                                  {over && <div style={{ fontSize: 11, color: RED, marginTop: 4 }}>Over budget by {fmt(b.total - limit)}</div>}
                                 </div>
-                                <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
-                                  <div style={{ height: '100%', width: `${(b.total / maxCat) * 100}%`, background: BLUE_BTN, borderRadius: 3, opacity: 0.6 }} />
-                                </div>
-                              </div>
-                            ));
+                              );
+                            });
                           })()
                         ) : displayBudget.map((b, i) => {
                           const limit    = budgetLimits[b.category];
