@@ -224,39 +224,88 @@ function EduEnrollCard({ user, onEnrolled }) {
 }
 
 // ── Company logo helpers ────────────────────────────────────────────────────
-function logoUrl(name, ticker) {
-  if (ticker) return `https://financialmodelingprep.com/image-stock/${ticker}.png`;
-  const KNOWN = {
-    'chase':'chase','bank of america':'bankofamerica','wells fargo':'wellsfargo',
-    'capital one':'capitalone','citibank':'citi','citi':'citi',
-    'american express':'americanexpress','discover':'discover',
-    'ally':'ally','sofi':'sofi','robinhood':'robinhood','webull':'webull',
-    'fidelity':'fidelity','vanguard':'vanguard','schwab':'schwab',
-    'td bank':'td','us bank':'usbank','pnc':'pnc','navy federal':'navyfederal','usaa':'usaa',
-    'amazon':'amazon','apple':'apple','google':'google','microsoft':'microsoft',
-    'walmart':'walmart','target':'target','starbucks':'starbucks','mcdonalds':'mcdonalds',
-    'chipotle':'chipotle','costco':'costco','kroger':'kroger','publix':'publix',
-    'netflix':'netflix','spotify':'spotify','uber':'uber','lyft':'lyft',
-    'airbnb':'airbnb','doordash':'doordash','grubhub':'grubhub','instacart':'instacart',
-    'venmo':'venmo','paypal':'paypal','hulu':'hulu','disney':'disneyplus',
-    'chick-fil-a':'chick-fil-a','taco bell':'tacobell','burger king':'burgerking',
-    'subway':'subway','wendys':'wendys','pizza hut':'pizzahut','dominos':'dominos',
-    'panera':'panerabread','dunkin':'dunkindonuts','panda express':'pandaexpress',
-    'five guys':'fiveguys','popeyes':'popeyes','raising cane':'raisingcanes',
-    'delta':'delta','american airlines':'aa','southwest':'southwest','united':'united',
-    'marriott':'marriott','hilton':'hilton','hyatt':'hyatt',
-    'best buy':'bestbuy','home depot':'homedepot','lowes':'lowes',
-    'cvs':'cvs','walgreens':'walgreens','planet fitness':'planetfitness',
-    'at&t':'att','verizon':'verizon','t-mobile':'t-mobile','comcast':'comcast',
-    'shell':'shell','exxon':'exxon','bp':'bp','chevron':'chevron',
-    'tesla':'tesla','nvidia':'nvidia','meta':'meta','facebook':'facebook',
-  };
-  const lower = (name || '').toLowerCase();
-  for (const [k, d] of Object.entries(KNOWN)) {
-    if (lower.includes(k)) return `https://logo.clearbit.com/${d}.com`;
+const TICKER_DOMAIN = {
+  AAPL:'apple.com',MSFT:'microsoft.com',GOOGL:'google.com',GOOG:'google.com',
+  AMZN:'amazon.com',TSLA:'tesla.com',META:'meta.com',NVDA:'nvidia.com',
+  JPM:'jpmorganchase.com',V:'visa.com',MA:'mastercard.com',JNJ:'jnj.com',
+  WMT:'walmart.com',PG:'pg.com',HD:'homedepot.com',BAC:'bankofamerica.com',
+  XOM:'exxonmobil.com',CVX:'chevron.com',KO:'coca-cola.com',PEP:'pepsico.com',
+  ABBV:'abbvie.com',MRK:'merck.com',UNH:'unitedhealthgroup.com',LLY:'lilly.com',
+  COST:'costco.com',TMO:'thermofisher.com',DIS:'disney.com',NFLX:'netflix.com',
+  NKE:'nike.com',ADBE:'adobe.com',CRM:'salesforce.com',ORCL:'oracle.com',
+  QCOM:'qualcomm.com',AMD:'amd.com',INTC:'intel.com',AVGO:'broadcom.com',
+  WFC:'wellsfargo.com',GS:'goldmansachs.com',MS:'morganstanley.com',
+  AXP:'americanexpress.com',C:'citi.com',USB:'usbank.com',
+  SBUX:'starbucks.com',MCD:'mcdonalds.com',TGT:'target.com',
+  F:'ford.com',GM:'gm.com',BA:'boeing.com',CAT:'caterpillar.com',
+  GE:'ge.com',HON:'honeywell.com',RTX:'rtx.com',LMT:'lockheedmartin.com',
+  UPS:'ups.com',FDX:'fedex.com',T:'att.com',VZ:'verizon.com',
+  CMCSA:'comcast.com',ABT:'abbott.com',DHR:'danaher.com',
+  PYPL:'paypal.com',UBER:'uber.com',LYFT:'lyft.com',SHOP:'shopify.com',
+  SNAP:'snap.com',COIN:'coinbase.com',HOOD:'robinhood.com',
+  SPY:'ssga.com',QQQ:'invesco.com',VOO:'vanguard.com',VTI:'vanguard.com',
+  SCHD:'schwab.com',SCHB:'schwab.com',IVV:'ishares.com',GLD:'spdrgoldshares.com',
+  TLT:'ishares.com',BND:'vanguard.com',AGG:'ishares.com',
+};
+
+const NAME_DOMAIN = {
+  'chase':'chase.com','bank of america':'bankofamerica.com','wells fargo':'wellsfargo.com',
+  'capital one':'capitalone.com','citibank':'citi.com','citi':'citi.com',
+  'american express':'americanexpress.com','discover':'discover.com',
+  'ally':'ally.com','sofi':'sofi.com','robinhood':'robinhood.com','webull':'webull.com',
+  'fidelity':'fidelity.com','vanguard':'vanguard.com','schwab':'schwab.com',
+  'td bank':'td.com','us bank':'usbank.com','pnc':'pnc.com',
+  'navy federal':'navyfederal.org','usaa':'usaa.com','merrill':'ml.com',
+  'amazon':'amazon.com','apple':'apple.com','google':'google.com','microsoft':'microsoft.com',
+  'walmart':'walmart.com','target':'target.com','costco':'costco.com','kroger':'kroger.com',
+  'publix':'publix.com','whole foods':'wholefoodsmarket.com','trader joe':'traderjoes.com',
+  'aldi':'aldi.us','safeway':'safeway.com','heb':'heb.com','wegmans':'wegmans.com',
+  'starbucks':'starbucks.com','mcdonalds':'mcdonalds.com','chick-fil-a':'chick-fil-a.com',
+  'chipotle':'chipotle.com','taco bell':'tacobell.com','burger king':'bk.com',
+  'subway':'subway.com','wendys':'wendys.com','pizza hut':'pizzahut.com',
+  'dominos':'dominos.com','domino':'dominos.com','panera':'panerabread.com',
+  'dunkin':'dunkindonuts.com','panda express':'pandaexpress.com','five guys':'fiveguys.com',
+  'popeyes':'popeyes.com','raising cane':'raisingcanes.com','wingstop':'wingstop.com',
+  'netflix':'netflix.com','spotify':'spotify.com','hulu':'hulu.com',
+  'disney':'disney.com','apple tv':'apple.com','youtube':'youtube.com',
+  'uber':'uber.com','lyft':'lyft.com','doordash':'doordash.com',
+  'grubhub':'grubhub.com','instacart':'instacart.com','airbnb':'airbnb.com',
+  'venmo':'venmo.com','paypal':'paypal.com','cashapp':'cash.app','zelle':'zellepay.com',
+  'delta':'delta.com','american airlines':'aa.com','southwest':'southwest.com',
+  'united':'united.com','spirit':'spirit.com','frontier':'flyfrontier.com',
+  'marriott':'marriott.com','hilton':'hilton.com','hyatt':'hyatt.com',
+  'best buy':'bestbuy.com','home depot':'homedepot.com','lowes':'lowes.com',
+  'cvs':'cvs.com','walgreens':'walgreens.com','rite aid':'riteaid.com',
+  'planet fitness':'planetfitness.com','la fitness':'lafitness.com',
+  'at&t':'att.com','verizon':'verizon.com','t-mobile':'t-mobile.com','comcast':'xfinity.com',
+  'shell':'shell.com','exxon':'exxon.com','bp':'bp.com','chevron':'chevron.com',
+  'tesla':'tesla.com','nvidia':'nvidia.com','meta':'meta.com','facebook':'facebook.com',
+  'wm ':'walmart.com','wholefds':'wholefoodsmarket.com','sq ':'squareup.com',
+};
+
+function logoUrls(name, ticker) {
+  const urls = [];
+  if (ticker) {
+    urls.push(`https://financialmodelingprep.com/image-stock/${ticker}.png`);
+    const d = TICKER_DOMAIN[ticker];
+    if (d) {
+      urls.push(`https://logo.clearbit.com/${d}`);
+      urls.push(`https://www.google.com/s2/favicons?domain=${d}&sz=128`);
+    }
+    return urls;
   }
-  const slug = lower.replace(/[^a-z0-9]/g, '').slice(0, 24);
-  return slug ? `https://logo.clearbit.com/${slug}.com` : '';
+  const lower = (name || '').toLowerCase();
+  for (const [k, d] of Object.entries(NAME_DOMAIN)) {
+    if (lower.includes(k)) {
+      urls.push(`https://logo.clearbit.com/${d}`);
+      urls.push(`https://www.google.com/s2/favicons?domain=${d}&sz=128`);
+      return urls;
+    }
+  }
+  // Last-ditch: try Clearbit with a cleaned slug
+  const slug = lower.replace(/[^a-z]/g, '').slice(0, 20);
+  if (slug.length > 2) urls.push(`https://logo.clearbit.com/${slug}.com`);
+  return urls;
 }
 
 function classifyHolding(h) {
@@ -274,19 +323,19 @@ function classifyHolding(h) {
 }
 
 function CompanyLogo({ name, ticker, size = 26, radius = 6 }) {
-  const [err, setErr] = useState(false);
-  const src = logoUrl(name, ticker);
+  const [idx, setIdx] = useState(0);
+  const urls = logoUrls(name, ticker);
   const label = (ticker || name || '?')[0].toUpperCase();
   const LOGO_COLORS = ['#4da3ff','#34d399','#a78bfa','#fb923c','#f87171','#22d3ee','#fbbf24','#60a5fa','#c084fc'];
   const bg = LOGO_COLORS[(label.charCodeAt(0) + (name || '').length) % LOGO_COLORS.length];
-  if (err || !src) {
+  if (idx >= urls.length) {
     return (
       <div style={{ width: size, height: size, borderRadius: radius, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: Math.round(size * 0.42), fontWeight: 700, flexShrink: 0 }}>
         {label}
       </div>
     );
   }
-  return <img src={src} onError={() => setErr(true)} alt="" style={{ width: size, height: size, borderRadius: radius, objectFit: 'contain', background: '#fff', flexShrink: 0 }} />;
+  return <img src={urls[idx]} onError={() => setIdx(i => i + 1)} alt="" style={{ width: size, height: size, borderRadius: radius, objectFit: 'contain', background: '#fff', flexShrink: 0 }} />;
 }
 
 // Simple SVG line chart
@@ -5794,12 +5843,15 @@ export default function Dashboard() {
                     ) : (
                       <div className="card-scroll" style={{ maxHeight: 260 }}>
                         {transactions.map((t, i, arr) => (
-                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
-                            <div>
-                              <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
-                              <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} · {fmtCat(resolveCategory(t))}</div>
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none', gap: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                              <CompanyLogo name={t.merchant_name || t.name} size={32} radius={8} />
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.merchant_name || t.name}</div>
+                                <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} · {fmtCat(resolveCategory(t))}</div>
+                              </div>
                             </div>
-                            <div style={{ fontWeight: 600, color: t.amount > 0 ? RED : GREEN, fontFamily: 'monospace' }}>
+                            <div style={{ fontWeight: 600, color: t.amount > 0 ? RED : GREEN, fontFamily: 'monospace', flexShrink: 0 }}>
                               {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
                             </div>
                           </div>
@@ -8473,7 +8525,7 @@ export default function Dashboard() {
                   const alpha=pfChg-spChg;
                   const PerfChart = () => {
                     if(!hasPerf) return <div style={{ height:160, display:'flex', alignItems:'center', justifyContent:'center', color:TEXT2, fontSize:13 }}>{perfLoading?'Loading chart...':'Chart unavailable'}</div>;
-                    const W=600,H=160,PAD={top:12,right:12,bottom:28,left:44};
+                    const W=600,H=160,PAD={top:12,right:32,bottom:28,left:44};
                     const iW=W-PAD.left-PAD.right,iH=H-PAD.top-PAD.bottom;
                     const allV=[...pfData.map(d=>d.value),...spData.map(d=>d.value)];
                     const minV=Math.min(...allV),maxV=Math.max(...allV),range=maxV-minV||1;
