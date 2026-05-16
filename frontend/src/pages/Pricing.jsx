@@ -23,7 +23,7 @@ export default function Pricing() {
 
       {/* Nav */}
       <div style={{ padding: '20px 32px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: BORDER }}>
-        <img src="/logo-icon.svg?v=6" alt="" style={{ width: 30, height: 30, borderRadius: 7 }} />
+        <img src="/logo-icon.png?v=7" alt="" style={{ width: 30, height: 30, borderRadius: 7 }} />
         <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px' }}>PeakLedger</span>
         <Link to="/login" style={{ marginLeft: 'auto', fontSize: 13, color: TEXT2, textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
       </div>

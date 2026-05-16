@@ -3870,7 +3870,7 @@ export default function Dashboard() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: SIDE_BG, borderBottom: BORDER, zIndex: 200, paddingTop: 'env(safe-area-inset-top)' }}>
           <div style={{ height: 52, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <img src="/logo-icon.svg?v=6" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
+              <img src="/logo-icon.png?v=7" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
               <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
               {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
             </div>
@@ -3893,7 +3893,7 @@ export default function Dashboard() {
       <aside style={{ width: sidebarCollapsed ? 48 : 220, flexShrink: 0, background: SIDE_BG, borderRight: BORDER, display: isMobile ? 'none' : 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width 0.25s ease' }}>
         <div data-tour="brand" style={{ width: sidebarCollapsed ? 48 : 220, padding: sidebarCollapsed ? '12px 0' : '18px 16px 16px', borderBottom: BORDER, display: 'flex', flexDirection: sidebarCollapsed ? 'column' : 'row', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <div style={{ flex: sidebarCollapsed ? 'none' : 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/logo-icon.svg?v=6" alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
+            <img src="/logo-icon.png?v=7" alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
             {!sidebarCollapsed && <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>}
           </div>
           {!sidebarCollapsed && (
