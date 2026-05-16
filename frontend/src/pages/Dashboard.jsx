@@ -71,6 +71,7 @@ function ConnectedAccountsCard({ onFixConnection }) {
             <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: DARK, borderRadius: 8, border: `1px solid ${a.needs_update ? 'rgba(251,191,36,0.35)' : BORDER_C}` }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: a.needs_update ? '#ef4444' : '#22c55e', flexShrink: 0 }} title={a.needs_update ? 'Not synced' : 'Synced'} />
                   <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{a.institution_name}</div>
                   {a.needs_update && <span style={{ fontSize: 10, fontWeight: 700, color: YELLOW, background: 'rgba(251,191,36,0.12)', padding: '2px 7px', borderRadius: 4 }}>Needs Reconnect</span>}
                 </div>
@@ -501,6 +502,26 @@ function PerfChartInteractive({ pfData, spData, showBenchmark, perfLoading, isMo
         ))}
       </svg>
     </div>
+  );
+}
+
+// ── Generic donut pie chart (slices: [{label, value, color}]) ────────────────
+function PieDonut({ slices, size = 140 }) {
+  const R = size / 2, r = R * 0.55, cx = R, cy = R;
+  let angle = -Math.PI / 2;
+  const tot = slices.reduce((s, x) => s + x.value, 0) || 1;
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} style={{ width: size, height: 'auto', display: 'block' }}>
+      {slices.map((s, i) => {
+        const frac = s.value / tot, sa = angle, ea = angle + frac * Math.PI * 2; angle = ea;
+        const la = frac > 0.5 ? 1 : 0;
+        const x1 = cx + R * Math.cos(sa), y1 = cy + R * Math.sin(sa);
+        const x2 = cx + R * Math.cos(ea), y2 = cy + R * Math.sin(ea);
+        const x3 = cx + r * Math.cos(ea), y3 = cy + r * Math.sin(ea);
+        const x4 = cx + r * Math.cos(sa), y4 = cy + r * Math.sin(sa);
+        return <path key={i} d={`M ${x1} ${y1} A ${R} ${R} 0 ${la} 1 ${x2} ${y2} L ${x3} ${y3} A ${r} ${r} 0 ${la} 0 ${x4} ${y4} Z`} fill={s.color} stroke="transparent" strokeWidth={1.5} />;
+      })}
+    </svg>
   );
 }
 
@@ -7297,101 +7318,123 @@ export default function Dashboard() {
                               })}
                             </div>
                           );
-                        })() : displayBudget.length === 0 ? (
-                          (() => {
-                            const cats = MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5];
-                            return cats.map((b, i) => {
-                              const limit     = demoBudgetLimits[b.category];
-                              const pct       = limit ? Math.min((b.total / limit) * 100, 100) : null;
-                              const over      = limit && b.total > limit;
-                              const warn      = limit && pct >= 80 && !over;
-                              const barColor  = over ? RED : warn ? YELLOW : BLUE_BTN;
-                              const isEditing = editingLimit === b.category;
-                              const saveDemoLimit = (val) => {
-                                const v = parseFloat(val);
-                                setDemoBudgetLimits(p => { const n = { ...p }; if (isNaN(v) || val === '') delete n[b.category]; else n[b.category] = v; return n; });
-                                setEditingLimit(null); setLimitInput('');
-                              };
-                              return (
-                                <div key={i} style={{ marginBottom: 20 }}>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                    <button onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
-                                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
-                                      <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>{b.category}</span>
-                                    </button>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                      <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: over ? RED : TEXT }}>
-                                        {fmt(b.total)}{limit && !isEditing ? ` / ${fmt(limit)}` : ''}
-                                      </span>
-                                      {isEditing ? (
-                                        <>
-                                          <input autoFocus value={limitInput} onChange={e => setLimitInput(e.target.value)}
-                                            onKeyDown={e => { if (e.key === 'Enter') saveDemoLimit(limitInput); if (e.key === 'Escape') { setEditingLimit(null); setLimitInput(''); } }}
-                                            placeholder="Monthly limit $"
-                                            style={{ width: 120, padding: '4px 8px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, outline: 'none' }} />
-                                          <button onClick={() => saveDemoLimit(limitInput)} style={{ padding: '4px 10px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Save</button>
-                                          {limit && <button onClick={() => saveDemoLimit('')} style={{ padding: '4px 8px', background: MUTED, color: RED, border: BORDER, borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Remove</button>}
-                                          <button onClick={() => { setEditingLimit(null); setLimitInput(''); }} style={{ padding: '4px 8px', background: 'none', color: TEXT2, border: 'none', cursor: 'pointer', fontSize: 12 }}>Cancel</button>
-                                        </>
-                                      ) : (
-                                        <button onClick={() => { setEditingLimit(b.category); setLimitInput(limit ? String(limit) : ''); }}
-                                          style={{ padding: '3px 9px', background: MUTED, border: BORDER, borderRadius: 6, color: limit ? TEXT2 : BLUE, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-                                          {limit ? 'Edit limit' : '+ Set limit'}
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
-                                    <div style={{ height: '100%', width: `${pct !== null ? pct : Math.min((b.total / (cats[0]?.total || 1)) * 100, 100)}%`, background: barColor, borderRadius: 3, transition: 'width 0.3s ease' }} />
-                                  </div>
-                                  {over && <div style={{ fontSize: 11, color: RED, marginTop: 4 }}>Over budget by {fmt(b.total - limit)}</div>}
-                                </div>
-                              );
-                            });
-                          })()
-                        ) : displayBudget.map((b, i) => {
-                          const limit    = budgetLimits[b.category];
-                          const pct      = limit ? Math.min((b.total / limit) * 100, 100) : null;
-                          const over     = limit && b.total > limit;
-                          const warn     = limit && pct >= 80 && !over;
-                          const barColor = over ? RED : warn ? YELLOW : BLUE_BTN;
-                          const isEditing = editingLimit === b.category;
+                        })() : (() => {
+                          const activeCats = displayBudget.length === 0 ? (MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5]) : displayBudget;
+                          const CAT_COLORS = ['#4da3ff','#34d399','#fb923c','#a78bfa','#f87171','#22d3ee','#fbbf24','#60a5fa'];
+                          const catSlices = activeCats.slice(0, 8).map((b, i) => ({ label: fmtCat(b.category), value: b.total, color: CAT_COLORS[i % CAT_COLORS.length] }));
+                          const sliceTotal = catSlices.reduce((s, x) => s + x.value, 0) || 1;
                           return (
-                            <div key={i} style={{ marginBottom: 20 }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                <button onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
-                                  <span style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{fmtCat(b.category)}</span>
-                                </button>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                  <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: over ? RED : TEXT }}>
-                                    {fmt(b.total)}{limit && !isEditing ? ` / ${fmt(limit)}` : ''}
-                                  </span>
-                                  {isEditing ? (
-                                    <>
-                                      <input autoFocus value={limitInput} onChange={e => setLimitInput(e.target.value)}
-                                        onKeyDown={e => { if (e.key === 'Enter') saveLimit(b.category, limitInput); if (e.key === 'Escape') { setEditingLimit(null); setLimitInput(''); } }}
-                                        placeholder="Monthly limit $"
-                                        style={{ width: 120, padding: '4px 8px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, outline: 'none' }} />
-                                      <button onClick={() => saveLimit(b.category, limitInput)} style={{ padding: '4px 10px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Save</button>
-                                      {limit && <button onClick={() => saveLimit(b.category, '')} style={{ padding: '4px 8px', background: MUTED, color: RED, border: BORDER, borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Remove</button>}
-                                      <button onClick={() => { setEditingLimit(null); setLimitInput(''); }} style={{ padding: '4px 8px', background: 'none', color: TEXT2, border: 'none', cursor: 'pointer', fontSize: 12 }}>Cancel</button>
-                                    </>
-                                  ) : (
-                                    <button onClick={() => { setEditingLimit(b.category); setLimitInput(limit ? String(limit) : ''); }}
-                                      style={{ padding: '3px 9px', background: MUTED, border: BORDER, borderRadius: 6, color: limit ? TEXT2 : BLUE, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-                                      {limit ? 'Edit limit' : '+ Set limit'}
-                                    </button>
-                                  )}
-                                </div>
+                            <>
+                              <div style={{ height: 18, display: 'flex', borderRadius: 9, overflow: 'hidden', marginBottom: 14, gap: 2 }}>
+                                {catSlices.map((s, i) => (
+                                  <div key={i} style={{ flex: s.value / sliceTotal, background: s.color, minWidth: s.value / sliceTotal > 0.02 ? 4 : 0 }} title={`${s.label}: ${((s.value / sliceTotal) * 100).toFixed(1)}%`} />
+                                ))}
                               </div>
-                              <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: `${pct !== null ? pct : Math.min((b.total / (displayBudget[0]?.total || 1)) * 100, 100)}%`, background: barColor, borderRadius: 3, transition: 'width 0.3s ease' }} />
+                              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '6px 12px', marginBottom: 20 }}>
+                                {catSlices.map((s, i) => (
+                                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, minWidth: 0 }}>
+                                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                                    <span style={{ color: TEXT2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{s.label}</span>
+                                    <span style={{ color: TEXT3, fontWeight: 600, flexShrink: 0 }}>{((s.value / sliceTotal) * 100).toFixed(0)}%</span>
+                                  </div>
+                                ))}
                               </div>
-                              {over && <div style={{ fontSize: 11, color: RED, marginTop: 4 }}>Over budget by {fmt(b.total - limit)}</div>}
-                            </div>
+                              {displayBudget.length === 0 ? (() => {
+                                const cats = activeCats;
+                                return cats.map((b, i) => {
+                                  const limit     = demoBudgetLimits[b.category];
+                                  const pct       = limit ? Math.min((b.total / limit) * 100, 100) : null;
+                                  const over      = limit && b.total > limit;
+                                  const warn      = limit && pct >= 80 && !over;
+                                  const barColor  = over ? RED : warn ? YELLOW : BLUE_BTN;
+                                  const isEditing = editingLimit === b.category;
+                                  const saveDemoLimit = (val) => {
+                                    const v = parseFloat(val);
+                                    setDemoBudgetLimits(p => { const n = { ...p }; if (isNaN(v) || val === '') delete n[b.category]; else n[b.category] = v; return n; });
+                                    setEditingLimit(null); setLimitInput('');
+                                  };
+                                  return (
+                                    <div key={i} style={{ marginBottom: 20 }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                        <button onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
+                                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+                                          <span style={{ fontSize: 13, fontWeight: 500, textTransform: 'capitalize', color: TEXT }}>{b.category}</span>
+                                        </button>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                          <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: over ? RED : TEXT }}>
+                                            {fmt(b.total)}{limit && !isEditing ? ` / ${fmt(limit)}` : ''}
+                                          </span>
+                                          {isEditing ? (
+                                            <>
+                                              <input autoFocus value={limitInput} onChange={e => setLimitInput(e.target.value)}
+                                                onKeyDown={e => { if (e.key === 'Enter') saveDemoLimit(limitInput); if (e.key === 'Escape') { setEditingLimit(null); setLimitInput(''); } }}
+                                                placeholder="Monthly limit $"
+                                                style={{ width: 120, padding: '4px 8px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, outline: 'none' }} />
+                                              <button onClick={() => saveDemoLimit(limitInput)} style={{ padding: '4px 10px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Save</button>
+                                              {limit && <button onClick={() => saveDemoLimit('')} style={{ padding: '4px 8px', background: MUTED, color: RED, border: BORDER, borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Remove</button>}
+                                              <button onClick={() => { setEditingLimit(null); setLimitInput(''); }} style={{ padding: '4px 8px', background: 'none', color: TEXT2, border: 'none', cursor: 'pointer', fontSize: 12 }}>Cancel</button>
+                                            </>
+                                          ) : (
+                                            <button onClick={() => { setEditingLimit(b.category); setLimitInput(limit ? String(limit) : ''); }}
+                                              style={{ padding: '3px 9px', background: MUTED, border: BORDER, borderRadius: 6, color: limit ? TEXT2 : BLUE, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                                              {limit ? 'Edit limit' : '+ Set limit'}
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', width: `${pct !== null ? pct : Math.min((b.total / (cats[0]?.total || 1)) * 100, 100)}%`, background: barColor, borderRadius: 3, transition: 'width 0.3s ease' }} />
+                                      </div>
+                                      {over && <div style={{ fontSize: 11, color: RED, marginTop: 4 }}>Over budget by {fmt(b.total - limit)}</div>}
+                                    </div>
+                                  );
+                                });
+                              })() : displayBudget.map((b, i) => {
+                                const limit    = budgetLimits[b.category];
+                                const pct      = limit ? Math.min((b.total / limit) * 100, 100) : null;
+                                const over     = limit && b.total > limit;
+                                const warn     = limit && pct >= 80 && !over;
+                                const barColor = over ? RED : warn ? YELLOW : BLUE_BTN;
+                                const isEditing = editingLimit === b.category;
+                                return (
+                                  <div key={i} style={{ marginBottom: 20 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                      <button onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+                                        <span style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{fmtCat(b.category)}</span>
+                                      </button>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: over ? RED : TEXT }}>
+                                          {fmt(b.total)}{limit && !isEditing ? ` / ${fmt(limit)}` : ''}
+                                        </span>
+                                        {isEditing ? (
+                                          <>
+                                            <input autoFocus value={limitInput} onChange={e => setLimitInput(e.target.value)}
+                                              onKeyDown={e => { if (e.key === 'Enter') saveLimit(b.category, limitInput); if (e.key === 'Escape') { setEditingLimit(null); setLimitInput(''); } }}
+                                              placeholder="Monthly limit $"
+                                              style={{ width: 120, padding: '4px 8px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT, fontSize: 12, outline: 'none' }} />
+                                            <button onClick={() => saveLimit(b.category, limitInput)} style={{ padding: '4px 10px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Save</button>
+                                            {limit && <button onClick={() => saveLimit(b.category, '')} style={{ padding: '4px 8px', background: MUTED, color: RED, border: BORDER, borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Remove</button>}
+                                            <button onClick={() => { setEditingLimit(null); setLimitInput(''); }} style={{ padding: '4px 8px', background: 'none', color: TEXT2, border: 'none', cursor: 'pointer', fontSize: 12 }}>Cancel</button>
+                                          </>
+                                        ) : (
+                                          <button onClick={() => { setEditingLimit(b.category); setLimitInput(limit ? String(limit) : ''); }}
+                                            style={{ padding: '3px 9px', background: MUTED, border: BORDER, borderRadius: 6, color: limit ? TEXT2 : BLUE, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                                            {limit ? 'Edit limit' : '+ Set limit'}
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div style={{ height: 6, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                      <div style={{ height: '100%', width: `${pct !== null ? pct : Math.min((b.total / (displayBudget[0]?.total || 1)) * 100, 100)}%`, background: barColor, borderRadius: 3, transition: 'width 0.3s ease' }} />
+                                    </div>
+                                    {over && <div style={{ fontSize: 11, color: RED, marginTop: 4 }}>Over budget by {fmt(b.total - limit)}</div>}
+                                  </div>
+                                );
+                              })}
+                            </>
                           );
-                        })}
+                        })()}
                       </div>
                     </div>
                   );
@@ -8626,22 +8669,6 @@ export default function Dashboard() {
                     ? classified.filter(h=>{ const t=h.security?.ticker_symbol; return t&&(ETF_SECTOR[t]||sectorData[t]||'Other')===selectedSector; })
                     : [];
 
-                  const PieDonut = ({ slices, size=140 }) => {
-                    const R=size/2, r=R*0.55, cx=R, cy=R;
-                    let angle=-Math.PI/2;
-                    const tot=slices.reduce((s,x)=>s+x.value,0)||1;
-                    return (
-                      <svg viewBox={`0 0 ${size} ${size}`} style={{ width:size, height:'auto', display:'block' }}>
-                        {slices.map((s,i)=>{
-                          const frac=s.value/tot, sa=angle, ea=angle+frac*Math.PI*2; angle=ea;
-                          const la=frac>0.5?1:0;
-                          const x1=cx+R*Math.cos(sa),y1=cy+R*Math.sin(sa),x2=cx+R*Math.cos(ea),y2=cy+R*Math.sin(ea);
-                          const x3=cx+r*Math.cos(ea),y3=cy+r*Math.sin(ea),x4=cx+r*Math.cos(sa),y4=cy+r*Math.sin(sa);
-                          return <path key={i} d={`M ${x1} ${y1} A ${R} ${R} 0 ${la} 1 ${x2} ${y2} L ${x3} ${y3} A ${r} ${r} 0 ${la} 0 ${x4} ${y4} Z`} fill={s.color} stroke="transparent" strokeWidth={1.5}/>;
-                        })}
-                      </svg>
-                    );
-                  };
 
                   const HOLDING_PERIODS = [
                     { key:'1D', field:'changePct1d' },

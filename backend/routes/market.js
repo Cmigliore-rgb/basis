@@ -314,7 +314,7 @@ router.get('/portfolio-perf', async (req, res) => {
   }
 
   try {
-    const daysMap = { '1d': 4, '5d': 9, '1mo': 35, '3mo': 95, '6mo': 185, 'ytd': null, '1y': 370, '5y': 1830, 'max': 7300 };
+    const daysMap = { '1d': 2, '5d': 7, '1mo': 35, '3mo': 95, '6mo': 185, 'ytd': null, '1y': 370, '5y': 1830, 'max': 7300 };
     let period1;
     if (period === 'ytd') {
       period1 = new Date(new Date().getFullYear(), 0, 1);
@@ -337,13 +337,25 @@ router.get('/portfolio-perf', async (req, res) => {
         : [];
     });
 
-    const sp500 = charts['^GSPC'];
+    let sp500 = charts['^GSPC'];
     if (!sp500.length) return res.json({ portfolio: [], sp500: [] });
-    const spFirst = sp500[0].close;
 
     // Use full ISO timestamp as key for hourly data so each candle gets its own slot
     const toKey  = c => (c.date instanceof Date ? c.date : new Date(c.date)).toISOString().slice(0, interval === '1h' ? 13 : 10);
     const toDate = c => (c.date instanceof Date ? c.date : new Date(c.date)).toISOString().slice(0, 10);
+
+    // For 1D, restrict all chart data to today's trading session only (open to close)
+    if (period === '1d') {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      Object.keys(charts).forEach(sym => {
+        const today = charts[sym].filter(c => toDate(c) === todayStr);
+        if (today.length) charts[sym] = today;
+      });
+      sp500 = charts['^GSPC'];
+      if (!sp500.length) return res.json({ portfolio: [], sp500: [] });
+    }
+
+    const spFirst = sp500[0].close;
 
     const firstPx  = {};
     const dateMaps = {};
