@@ -16,7 +16,7 @@
   "build": {
     "appId": "com.PeakLedger.app",
     "productName": "PeakLedger",
-    "electronVersion": "30.5.1",
+    "electronVersion": "42.1.0",
     "directories": {
       "output": "release"
     },
@@ -34,9 +34,9 @@
     }
   },
   "devDependencies": {
-    "@electron/rebuild": "^3.6.0",
+    "@electron/rebuild": "^4.0.4",
     "concurrently": "^9.2.1",
-    "electron": "^30.0.0",
-    "electron-builder": "^24.13.0"
+    "electron": "^42.1.0",
+    "electron-builder": "^26.8.1"
   }
 }
