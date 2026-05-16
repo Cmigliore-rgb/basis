@@ -2673,6 +2673,8 @@ export default function Dashboard() {
   const [holdingsExpanded, setHoldingsExpanded] = useState(false);
   const [invTab, setInvTab] = useState('stocks');
   const [selectedSector, setSelectedSector] = useState(null);
+  const [holdingPeriod, setHoldingPeriod] = useState('1D');
+  const [showBenchmark, setShowBenchmark] = useState(true);
   const [expandedDataset, setExpandedDataset] = useState(null);
   const [sandboxDataset, setSandboxDataset] = useState(null);
   const [sandboxSource, setSandboxSource]   = useState('edu'); // 'edu' | 'learn'
@@ -2990,7 +2992,7 @@ export default function Dashboard() {
   const [extendedTickerData, setExtendedTickerData] = useState({});
   const [portfolioPerf, setPortfolioPerf]   = useState({ portfolio: [], sp500: [] });
   const [sectorData, setSectorData]         = useState({});
-  const [perfPeriod, setPerfPeriod]         = useState('3mo');
+  const [perfPeriod, setPerfPeriod]         = useState('1y');
   const [perfLoading, setPerfLoading]       = useState(false);
   const [calendarEvents, setCalendarEvents] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_calendar') || '[]'); } catch { return []; } });
   const [calViewDate, setCalViewDate]       = useState(() => new Date());
@@ -8475,76 +8477,130 @@ export default function Dashboard() {
                     );
                   };
 
+                  const HOLDING_PERIODS = [
+                    { key:'1D', field:'changePct1d' },
+                    { key:'5D', field:'changePct5d' },
+                    { key:'1M', field:'changePct1mo' },
+                    { key:'6M', field:'changePct6mo' },
+                    { key:'YTD', field:'changePctYTD' },
+                    { key:'1Y', field:'changePct1y' },
+                    { key:'5Y', field:'changePct5y' },
+                  ];
+                  const pctCell = (v) => {
+                    if (v==null) return <span style={{ color:TEXT3 }}>—</span>;
+                    const up=v>=0;
+                    return <span style={{ color:up?GREEN:RED, fontWeight:700 }}>{up?'▲':'▼'} {Math.abs(v).toFixed(2)}%</span>;
+                  };
+                  const activePeriodField = HOLDING_PERIODS.find(p=>p.key===holdingPeriod)?.field || 'changePct1d';
+
                   const HoldingsTable = ({ holdings }) => holdings.length===0 ? (
                     <div style={{ padding:'24px 0', textAlign:'center', color:TEXT2, fontSize:13 }}>No holdings in this category</div>
                   ) : (
-                    <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
-                      <table style={{ width:'100%', borderCollapse:'collapse', minWidth:480 }}>
-                        <thead>
-                          <tr style={{ borderBottom:BORDER }}>
-                            {['Ticker','Name','Shares','Price','Value','P&L'].map(col=>(
-                              <th key={col} style={{ padding:'8px 12px', textAlign:['Shares','Price','Value','P&L'].includes(col)?'right':'left', fontSize:11, color:TEXT2, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.5px' }}>{col}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {holdings.map((h,i)=>{
-                            const ticker=h.security?.ticker_symbol||'—';
-                            const name=h.security?.name||'—';
-                            const qty=h.quantity||0, price=h.institution_price||0, value=qty*price;
-                            const pnl=h.cost_basis>0?value-h.cost_basis:null;
-                            const clickable=ticker!=='—';
-                            return (
-                              <tr key={i} className="lr" style={{ borderBottom:`1px solid ${BORDER_C}`, cursor:clickable?'pointer':'default' }}
-                                onClick={()=>{ if(!clickable) return; setSelectedTicker({symbol:ticker,name,price}); setTickerChartPeriod('3mo'); fetchTickerChart(ticker,'3mo'); }}>
-                                <td style={{ padding:'10px 12px' }}>
-                                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                                    <CompanyLogo name={name} ticker={ticker!=='—'?ticker:undefined} size={26} radius={6}/>
-                                    <span style={{ fontWeight:700, color:BLUE, fontSize:13 }}>{ticker}</span>
-                                  </div>
-                                </td>
-                                <td style={{ padding:'10px 12px', fontSize:13, color:TEXT2, maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</td>
-                                <td style={{ padding:'10px 12px', textAlign:'right', fontFamily:'monospace', fontSize:13 }}>{qty.toFixed(3)}</td>
-                                <td style={{ padding:'10px 12px', textAlign:'right', fontFamily:'monospace', fontSize:13 }}>{fmt(price)}</td>
-                                <td style={{ padding:'10px 12px', textAlign:'right', fontWeight:600, fontFamily:'monospace' }}>{fmt(value)}</td>
-                                <td style={{ padding:'10px 12px', textAlign:'right', fontFamily:'monospace', fontSize:13, color:pnl===null?TEXT3:pnl>=0?GREEN:RED }}>
-                                  {pnl===null?'—':`${pnl>=0?'+':''}${fmt(pnl)}`}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
+                    <>
+                      {/* Period tabs */}
+                      <div style={{ display:'flex', gap:3, marginBottom:12, flexWrap:'wrap' }}>
+                        {HOLDING_PERIODS.map(p=>{
+                          const active=holdingPeriod===p.key;
+                          return (
+                            <button key={p.key} onClick={()=>setHoldingPeriod(p.key)}
+                              style={{ padding:'4px 10px', borderRadius:5, border:'none', fontSize:11, fontWeight:600, cursor:'pointer', background:active?BLUE_BTN:MUTED, color:active?'#fff':TEXT2 }}>
+                              {p.key}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
+                        <table style={{ width:'100%', borderCollapse:'collapse', minWidth:480 }}>
+                          <thead>
+                            <tr style={{ borderBottom:BORDER }}>
+                              {['Ticker','Name','Shares','Price','Value',holdingPeriod+' %'].map(col=>(
+                                <th key={col} style={{ padding:'8px 12px', textAlign:['Shares','Price','Value',holdingPeriod+' %'].includes(col)?'right':'left', fontSize:11, color:TEXT2, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.5px' }}>{col}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {holdings.map((h,i)=>{
+                              const ticker=h.security?.ticker_symbol||'—';
+                              const name=h.security?.name||'—';
+                              const qty=h.quantity||0, price=h.institution_price||0, value=qty*price;
+                              const ext=extendedTickerData[ticker]||{};
+                              const periodPct=ticker!=='—'?ext[activePeriodField]??null:null;
+                              const clickable=ticker!=='—';
+                              return (
+                                <tr key={i} className="lr" style={{ borderBottom:`1px solid ${BORDER_C}`, cursor:clickable?'pointer':'default' }}
+                                  onClick={()=>{ if(!clickable) return; setSelectedTicker({symbol:ticker,name,price}); setTickerChartPeriod('3mo'); fetchTickerChart(ticker,'3mo'); }}>
+                                  <td style={{ padding:'10px 12px' }}>
+                                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                                      <CompanyLogo name={name} ticker={ticker!=='—'?ticker:undefined} size={26} radius={6}/>
+                                      <span style={{ fontWeight:700, color:BLUE, fontSize:13 }}>{ticker}</span>
+                                    </div>
+                                  </td>
+                                  <td style={{ padding:'10px 12px', fontSize:13, color:TEXT2, maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</td>
+                                  <td style={{ padding:'10px 12px', textAlign:'right', fontFamily:'monospace', fontSize:13 }}>{qty.toFixed(3)}</td>
+                                  <td style={{ padding:'10px 12px', textAlign:'right', fontFamily:'monospace', fontSize:13 }}>{fmt(price)}</td>
+                                  <td style={{ padding:'10px 12px', textAlign:'right', fontWeight:600, fontFamily:'monospace' }}>{fmt(value)}</td>
+                                  <td style={{ padding:'10px 12px', textAlign:'right', fontSize:13 }}>{pctCell(periodPct)}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
                   );
 
+                  const PERF_PERIODS = [
+                    { key:'1d',  label:'1D'  },
+                    { key:'5d',  label:'5D'  },
+                    { key:'1mo', label:'1M'  },
+                    { key:'6mo', label:'6M'  },
+                    { key:'ytd', label:'YTD' },
+                    { key:'1y',  label:'1Y'  },
+                    { key:'5y',  label:'5Y'  },
+                    { key:'max', label:'All' },
+                  ];
                   const pfData=portfolioPerf.portfolio, spData=portfolioPerf.sp500;
-                  const hasPerf=pfData.length>=2&&spData.length>=2;
+                  const hasPerf=pfData.length>=2;
                   const pfChg=hasPerf?pfData[pfData.length-1].value-100:0;
-                  const spChg=hasPerf?spData[spData.length-1].value-100:0;
+                  const spChg=spData.length>=2?spData[spData.length-1].value-100:0;
                   const alpha=pfChg-spChg;
                   const PerfChart = () => {
-                    if(!hasPerf) return <div style={{ height:160, display:'flex', alignItems:'center', justifyContent:'center', color:TEXT2, fontSize:13 }}>{perfLoading?'Loading chart...':'Chart unavailable'}</div>;
-                    const W=600,H=160,PAD={top:12,right:32,bottom:28,left:44};
+                    if(!hasPerf) return <div style={{ height:180, display:'flex', alignItems:'center', justifyContent:'center', color:TEXT2, fontSize:13 }}>{perfLoading?'Loading chart...':'Chart unavailable'}</div>;
+                    const W=600,H=180,PAD={top:16,right:32,bottom:28,left:44};
                     const iW=W-PAD.left-PAD.right,iH=H-PAD.top-PAD.bottom;
-                    const allV=[...pfData.map(d=>d.value),...spData.map(d=>d.value)];
+                    const showSP=showBenchmark&&spData.length>=2;
+                    const allV=[...pfData.map(d=>d.value),...(showSP?spData.map(d=>d.value):[])];
                     const minV=Math.min(...allV),maxV=Math.max(...allV),range=maxV-minV||1;
                     const n=pfData.length;
-                    const toX=i=>PAD.left+(i/(n-1))*iW;
+                    const toX=i=>PAD.left+(i/(Math.max(n-1,1)))*iW;
                     const toY=v=>PAD.top+iH-((v-minV)/range)*iH;
                     const pfPts=pfData.map((d,i)=>`${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' ');
-                    const spPts=spData.map((d,i)=>`${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' ');
-                    const lblCnt=isMobile?3:5;
+                    const spPts=showSP?spData.map((d,i)=>`${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' '):'';
+                    // Fill path: line points + baseline back to start
+                    const baseY=Math.min(toY(100),PAD.top+iH);
+                    const fillPath=`M ${toX(0).toFixed(1)} ${baseY} `+
+                      pfData.map((d,i)=>`L ${toX(i).toFixed(1)} ${toY(d.value).toFixed(1)}`).join(' ')+
+                      ` L ${toX(n-1).toFixed(1)} ${baseY} Z`;
+                    const fillId=pfChg>=0?'pfFillGreen':'pfFillRed';
+                    const fillColor=pfChg>=0?'#22c55e':'#ef4444';
+                    const lblCnt=isMobile?3:6;
                     const lblIdxs=Array.from({length:lblCnt},(_,i)=>Math.round((i/(lblCnt-1))*(n-1)));
                     const b100Y=toY(100);
                     return (
                       <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', height:'auto', display:'block' }}>
+                        <defs>
+                          <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={fillColor} stopOpacity="0.25"/>
+                            <stop offset="100%" stopColor={fillColor} stopOpacity="0.02"/>
+                          </linearGradient>
+                        </defs>
+                        <path d={fillPath} fill={`url(#${fillId})`}/>
                         {b100Y>=PAD.top&&b100Y<=H-PAD.bottom&&<line x1={PAD.left} y1={b100Y} x2={W-PAD.right} y2={b100Y} stroke={BORDER_C} strokeWidth={1} strokeDasharray="4,3"/>}
-                        <polyline fill="none" stroke="#6b7280" strokeWidth={1.5} points={spPts}/>
-                        <polyline fill="none" stroke={BLUE} strokeWidth={2.5} points={pfPts}/>
+                        {showSP&&<polyline fill="none" stroke="#6b7280" strokeWidth={1.5} strokeDasharray="5,3" points={spPts}/>}
+                        <polyline fill="none" stroke={pfChg>=0?GREEN:RED} strokeWidth={2.5} points={pfPts}/>
                         {lblIdxs.map(i=>(
                           <text key={i} x={toX(i)} y={H-4} textAnchor="middle" fill={TEXT3} fontSize={10} fontFamily="sans-serif">
-                            {new Date(pfData[i]?.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+                            {new Date((pfData[i]?.date||'')+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}
                           </text>
                         ))}
                         {[minV,(minV+maxV)/2,maxV].map((v,i)=>(
@@ -8659,34 +8715,44 @@ export default function Dashboard() {
                         </div>
                       )}
 
-                      {/* Portfolio vs S&P 500 */}
+                      {/* Portfolio Performance */}
                       {activeHoldings.length>0&&(
                         <div className="lc" style={{ ...CARD, marginBottom:16 }}>
-                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14, flexWrap:'wrap', gap:8 }}>
-                            <div style={{ fontWeight:600 }}>Portfolio vs S&P 500</div>
-                            <div style={{ display:'flex', gap:4 }}>
-                              {[['1mo','1M'],['3mo','3M'],['6mo','6M'],['1y','1Y']].map(([k,l])=>(
-                                <button key={k} onClick={()=>setPerfPeriod(k)} style={{ padding:'4px 11px', borderRadius:6, border:'none', fontSize:11, fontWeight:600, cursor:'pointer', background:perfPeriod===k?BLUE_BTN:MUTED, color:perfPeriod===k?'#fff':TEXT2 }}>{l}</button>
-                              ))}
-                            </div>
-                          </div>
-                          <div style={{ display:'flex', gap:20, marginBottom:12, flexWrap:'wrap' }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                              <div style={{ width:20, height:2.5, background:BLUE, borderRadius:1 }}/>
-                              <span style={{ fontSize:12, color:TEXT2 }}>Portfolio</span>
-                              {hasPerf&&<span style={{ fontSize:13, fontWeight:700, color:pfChg>=0?GREEN:RED, marginLeft:2 }}>{pfChg>=0?'+':''}{pfChg.toFixed(2)}%</span>}
-                            </div>
-                            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                              <div style={{ width:20, height:2, background:'#6b7280', borderRadius:1 }}/>
-                              <span style={{ fontSize:12, color:TEXT2 }}>S&P 500</span>
-                              {hasPerf&&<span style={{ fontSize:13, fontWeight:700, color:spChg>=0?GREEN:RED, marginLeft:2 }}>{spChg>=0?'+':''}{spChg.toFixed(2)}%</span>}
-                            </div>
-                            {hasPerf&&(
-                              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                                <span style={{ fontSize:12, color:TEXT2 }}>vs Benchmark</span>
-                                <span style={{ fontSize:13, fontWeight:700, color:alpha>=0?GREEN:RED }}>{alpha>=0?'+':''}{alpha.toFixed(2)}%</span>
+                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:14, flexWrap:'wrap', gap:8 }}>
+                            <div>
+                              <div style={{ fontWeight:600, marginBottom:4 }}>Portfolio Performance</div>
+                              <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+                                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                                  <div style={{ width:20, height:2.5, background:pfChg>=0?GREEN:RED, borderRadius:1 }}/>
+                                  <span style={{ fontSize:12, color:TEXT2 }}>Portfolio</span>
+                                  {hasPerf&&<span style={{ fontSize:13, fontWeight:700, color:pfChg>=0?GREEN:RED }}>{pfChg>=0?'+':''}{pfChg.toFixed(2)}%</span>}
+                                </div>
+                                {showBenchmark&&spData.length>=2&&(
+                                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                                    <div style={{ width:20, height:2, background:'#6b7280', borderRadius:1, borderTop:'1px dashed #6b7280' }}/>
+                                    <span style={{ fontSize:12, color:TEXT2 }}>S&P 500</span>
+                                    <span style={{ fontSize:13, fontWeight:700, color:spChg>=0?GREEN:RED }}>{spChg>=0?'+':''}{spChg.toFixed(2)}%</span>
+                                  </div>
+                                )}
+                                {hasPerf&&showBenchmark&&spData.length>=2&&(
+                                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                                    <span style={{ fontSize:12, color:TEXT2 }}>Alpha</span>
+                                    <span style={{ fontSize:13, fontWeight:700, color:alpha>=0?GREEN:RED }}>{alpha>=0?'+':''}{alpha.toFixed(2)}%</span>
+                                  </div>
+                                )}
                               </div>
-                            )}
+                            </div>
+                            <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+                              <button onClick={()=>setShowBenchmark(b=>!b)}
+                                style={{ padding:'4px 10px', borderRadius:6, border:showBenchmark?`1px solid #6b7280`:BORDER, fontSize:11, fontWeight:600, cursor:'pointer', background:showBenchmark?'rgba(107,114,128,0.15)':MUTED, color:showBenchmark?TEXT:TEXT2 }}>
+                                S&P 500
+                              </button>
+                              <div style={{ display:'flex', gap:3 }}>
+                                {PERF_PERIODS.map(({key,label})=>(
+                                  <button key={key} onClick={()=>setPerfPeriod(key)} style={{ padding:'4px 9px', borderRadius:5, border:'none', fontSize:11, fontWeight:600, cursor:'pointer', background:perfPeriod===key?BLUE_BTN:MUTED, color:perfPeriod===key?'#fff':TEXT2 }}>{label}</button>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                           {PerfChart()}
                         </div>

@@ -151,7 +151,7 @@ router.get('/quotes', async (req, res) => {
   }
 });
 
-// ── Quotes extended: 1D / 1W / 1M % changes ──────────────────────────────────
+// ── Quotes extended: 1D / 5D / 1M / 6M / YTD / 1Y / 5Y % changes ────────────
 const extendedCache = {};
 router.get('/quotes-extended', async (req, res) => {
   const symbols = (req.query.symbols || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean).slice(0, 20);
@@ -160,24 +160,44 @@ router.get('/quotes-extended', async (req, res) => {
   if (extendedCache[key] && Date.now() - extendedCache[key].ts < CACHE.TICKERS) return res.json(extendedCache[key].data);
   if (!yahooFinance) return res.json({ quotes: [] });
   try {
-    const period1 = new Date(Date.now() - 35 * 24 * 60 * 60 * 1000);
+    // Fetch 5y+1mo of daily data to cover all periods including 5Y
+    const period1 = new Date(Date.now() - (5 * 365 + 35) * 24 * 60 * 60 * 1000);
     const period2 = new Date();
     const results = await Promise.allSettled(
       symbols.map(s => yahooFinance.chart(s, { period1, period2, interval: '1d' }))
     );
+    const ytdStart = new Date(new Date().getFullYear(), 0, 1);
+    const empty = s => ({ symbol: s, changePct1d: null, changePct5d: null, changePct1mo: null, changePct6mo: null, changePctYTD: null, changePct1y: null, changePct5y: null });
     const quotes = results.map((r, i) => {
-      if (r.status !== 'fulfilled') return { symbol: symbols[i], changePct1d: null, changePct1w: null, changePct1m: null };
+      if (r.status !== 'fulfilled') return empty(symbols[i]);
       const candles = (r.value.quotes || []).filter(c => c.close != null);
-      if (candles.length < 2) return { symbol: symbols[i], changePct1d: null, changePct1w: null, changePct1m: null };
-      const last   = candles[candles.length - 1].close;
-      const prev1d = candles[candles.length - 2].close;
-      const prev1w = (candles.length >= 6 ? candles[candles.length - 6] : candles[0]).close;
-      const prev1m = candles[0].close;
+      if (candles.length < 2) return empty(symbols[i]);
+      const last = candles[candles.length - 1].close;
+      const ago = (days) => {
+        const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+        for (let j = candles.length - 2; j >= 0; j--) {
+          const d = new Date(candles[j].date).getTime();
+          if (d <= cutoff) return candles[j].close;
+        }
+        return candles[0].close;
+      };
+      const agoDate = (d) => {
+        const cutoff = d.getTime();
+        for (let j = candles.length - 2; j >= 0; j--) {
+          if (new Date(candles[j].date).getTime() <= cutoff) return candles[j].close;
+        }
+        return candles[0].close;
+      };
+      const pct = (prev) => prev ? ((last - prev) / prev) * 100 : null;
       return {
         symbol: symbols[i],
-        changePct1d: ((last - prev1d) / prev1d) * 100,
-        changePct1w: ((last - prev1w) / prev1w) * 100,
-        changePct1m: ((last - prev1m) / prev1m) * 100,
+        changePct1d:  pct(candles[candles.length - 2].close),
+        changePct5d:  pct(ago(7)),
+        changePct1mo: pct(ago(35)),
+        changePct6mo: pct(ago(185)),
+        changePctYTD: pct(agoDate(ytdStart)),
+        changePct1y:  pct(ago(370)),
+        changePct5y:  pct(ago(1830)),
       };
     });
     const data = { quotes };
@@ -278,7 +298,8 @@ router.get('/yield-curve', async (req, res) => {
 const portfolioPerfCache = {};
 router.get('/portfolio-perf', async (req, res) => {
   const rawPos = (req.query.positions || '').split(',').filter(Boolean);
-  const period = ['1mo','3mo','6mo','1y'].includes(req.query.period) ? req.query.period : '3mo';
+  const VALID_PERIODS = ['1d','5d','1mo','3mo','6mo','ytd','1y','5y','max'];
+  const period = VALID_PERIODS.includes(req.query.period) ? req.query.period : '3mo';
   if (!rawPos.length || !yahooFinance) return res.json({ portfolio: [], sp500: [] });
 
   const positions = rawPos.map(p => {
@@ -293,14 +314,20 @@ router.get('/portfolio-perf', async (req, res) => {
   }
 
   try {
-    const daysMap = { '1mo': 35, '3mo': 95, '6mo': 185, '1y': 370 };
-    const period1 = new Date(Date.now() - (daysMap[period] || 95) * 24 * 60 * 60 * 1000);
+    const daysMap = { '1d': 4, '5d': 9, '1mo': 35, '3mo': 95, '6mo': 185, 'ytd': null, '1y': 370, '5y': 1830, 'max': 7300 };
+    let period1;
+    if (period === 'ytd') {
+      period1 = new Date(new Date().getFullYear(), 0, 1);
+    } else {
+      period1 = new Date(Date.now() - (daysMap[period] || 95) * 24 * 60 * 60 * 1000);
+    }
+    const interval = (period === '1d' || period === '5d') ? '1h' : '1d';
     const period2 = new Date();
     const symbols  = positions.map(p => p.sym);
     const allSyms  = [...symbols, '^GSPC'];
 
     const results = await Promise.allSettled(
-      allSyms.map(s => yahooFinance.chart(s, { period1, period2, interval: '1d' }))
+      allSyms.map(s => yahooFinance.chart(s, { period1, period2, interval }))
     );
 
     const charts = {};
