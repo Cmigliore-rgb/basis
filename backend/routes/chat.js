@@ -68,7 +68,7 @@ router.post('/stream', requireAuth, async (req, res) => {
     res.end();
   } catch (err) {
     console.error('Groq stream error:', err.message);
-    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    res.write(`data: ${JSON.stringify({ error: 'Something went wrong. Please try again.' })}\n\n`);
     res.end();
   }
 });
@@ -108,7 +108,7 @@ router.post('/', requireAuth, async (req, res) => {
     res.json({ reply: text });
   } catch (err) {
     console.error('Groq API error:', err.message);
-    res.status(500).json({ error: 'Failed to get response', details: err.message });
+    res.status(500).json({ error: 'Failed to get response' });
   }
 });
 

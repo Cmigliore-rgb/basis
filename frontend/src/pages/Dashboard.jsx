@@ -223,6 +223,72 @@ function EduEnrollCard({ user, onEnrolled }) {
   );
 }
 
+// ── Company logo helpers ────────────────────────────────────────────────────
+function logoUrl(name, ticker) {
+  if (ticker) return `https://financialmodelingprep.com/image-stock/${ticker}.png`;
+  const KNOWN = {
+    'chase':'chase','bank of america':'bankofamerica','wells fargo':'wellsfargo',
+    'capital one':'capitalone','citibank':'citi','citi':'citi',
+    'american express':'americanexpress','discover':'discover',
+    'ally':'ally','sofi':'sofi','robinhood':'robinhood','webull':'webull',
+    'fidelity':'fidelity','vanguard':'vanguard','schwab':'schwab',
+    'td bank':'td','us bank':'usbank','pnc':'pnc','navy federal':'navyfederal','usaa':'usaa',
+    'amazon':'amazon','apple':'apple','google':'google','microsoft':'microsoft',
+    'walmart':'walmart','target':'target','starbucks':'starbucks','mcdonalds':'mcdonalds',
+    'chipotle':'chipotle','costco':'costco','kroger':'kroger','publix':'publix',
+    'netflix':'netflix','spotify':'spotify','uber':'uber','lyft':'lyft',
+    'airbnb':'airbnb','doordash':'doordash','grubhub':'grubhub','instacart':'instacart',
+    'venmo':'venmo','paypal':'paypal','hulu':'hulu','disney':'disneyplus',
+    'chick-fil-a':'chick-fil-a','taco bell':'tacobell','burger king':'burgerking',
+    'subway':'subway','wendys':'wendys','pizza hut':'pizzahut','dominos':'dominos',
+    'panera':'panerabread','dunkin':'dunkindonuts','panda express':'pandaexpress',
+    'five guys':'fiveguys','popeyes':'popeyes','raising cane':'raisingcanes',
+    'delta':'delta','american airlines':'aa','southwest':'southwest','united':'united',
+    'marriott':'marriott','hilton':'hilton','hyatt':'hyatt',
+    'best buy':'bestbuy','home depot':'homedepot','lowes':'lowes',
+    'cvs':'cvs','walgreens':'walgreens','planet fitness':'planetfitness',
+    'at&t':'att','verizon':'verizon','t-mobile':'t-mobile','comcast':'comcast',
+    'shell':'shell','exxon':'exxon','bp':'bp','chevron':'chevron',
+    'tesla':'tesla','nvidia':'nvidia','meta':'meta','facebook':'facebook',
+  };
+  const lower = (name || '').toLowerCase();
+  for (const [k, d] of Object.entries(KNOWN)) {
+    if (lower.includes(k)) return `https://logo.clearbit.com/${d}.com`;
+  }
+  const slug = lower.replace(/[^a-z0-9]/g, '').slice(0, 24);
+  return slug ? `https://logo.clearbit.com/${slug}.com` : '';
+}
+
+function classifyHolding(h) {
+  const ticker = (h.security?.ticker_symbol || '').toUpperCase();
+  const type   = (h.security?.type || '').toLowerCase();
+  const name   = (h.security?.name || '').toLowerCase();
+  const CRYPTO = new Set(['BTC','ETH','SOL','BNB','XRP','ADA','DOGE','MATIC','AVAX','DOT','LINK','LTC','BCH','SHIB']);
+  const BONDS  = new Set(['TLT','BND','AGG','HYG','LQD','BNDX','SHY','IEF','TIP','MUB','VCSH','VCIT','BSV','BIV','BLV','VGSH','VMBS','FBND','FXNAX']);
+  const ETFS   = new Set(['SPY','QQQ','VOO','VTI','IVV','SCHB','SCHD','VGT','XLK','XLE','XLF','XLV','XLI','XLC','XLY','XLP','XLB','XLRE','XLU','GLD','SLV','GDX','VHT','VFH','VDE','VNQ','ARKK','ARKG','ARKW','ARKF','VEA','VXUS','EFA','EEM','TQQQ','DVY','VYM','ITOT','VEU','IEFA','ACWI','IEMG','IJR','IWM','DIA','MDY','VB','VO','VTV','VUG']);
+  if (CRYPTO.has(ticker) || type.includes('crypto')) return 'crypto';
+  if (type.includes('cash') || type.includes('money market') || name.includes('money market')) return 'cash';
+  if (BONDS.has(ticker) || type.includes('fixed income') || type.includes('bond') || name.includes(' bond') || name.includes('treasury')) return 'bonds';
+  if (ETFS.has(ticker) || type.includes('etf') || type.includes('mutual fund') || name.includes(' etf') || name.includes(' fund')) return 'etf';
+  return 'stocks';
+}
+
+function CompanyLogo({ name, ticker, size = 26, radius = 6 }) {
+  const [err, setErr] = useState(false);
+  const src = logoUrl(name, ticker);
+  const label = (ticker || name || '?')[0].toUpperCase();
+  const LOGO_COLORS = ['#4da3ff','#34d399','#a78bfa','#fb923c','#f87171','#22d3ee','#fbbf24','#60a5fa','#c084fc'];
+  const bg = LOGO_COLORS[(label.charCodeAt(0) + (name || '').length) % LOGO_COLORS.length];
+  if (err || !src) {
+    return (
+      <div style={{ width: size, height: size, borderRadius: radius, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: Math.round(size * 0.42), fontWeight: 700, flexShrink: 0 }}>
+        {label}
+      </div>
+    );
+  }
+  return <img src={src} onError={() => setErr(true)} alt="" style={{ width: size, height: size, borderRadius: radius, objectFit: 'contain', background: '#fff', flexShrink: 0 }} />;
+}
+
 // Simple SVG line chart
 function NetWorthChart({ snapshots }) {
   if (!snapshots || snapshots.length === 0) {
@@ -2556,6 +2622,8 @@ export default function Dashboard() {
   const [showTour, setShowTour] = useState(false);
   const [tourStep, setTourStep] = useState(0);
   const [holdingsExpanded, setHoldingsExpanded] = useState(false);
+  const [invTab, setInvTab] = useState('stocks');
+  const [selectedSector, setSelectedSector] = useState(null);
   const [expandedDataset, setExpandedDataset] = useState(null);
   const [sandboxDataset, setSandboxDataset] = useState(null);
   const [sandboxSource, setSandboxSource]   = useState('edu'); // 'edu' | 'learn'
@@ -2713,6 +2781,8 @@ export default function Dashboard() {
     }
     localStorage.setItem('pl_theme', theme);
   }, [theme]);
+
+  const logoSrc = theme === 'light' ? '/logo_icon_light_mode.png?v=1' : '/logo-icon.png?v=7';
 
   const [hiddenPanels, setHiddenPanels] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('pl_hidden') || '[]')); } catch { return new Set(); }
@@ -3886,7 +3956,7 @@ export default function Dashboard() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: SIDE_BG, borderBottom: BORDER, zIndex: 200, paddingTop: 'env(safe-area-inset-top)' }}>
           <div style={{ height: 52, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <img src="/logo-icon.png?v=7" alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
+              <img src={logoSrc} alt="" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
               <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
               {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
             </div>
@@ -3909,7 +3979,7 @@ export default function Dashboard() {
       <aside style={{ width: sidebarCollapsed ? 48 : 220, flexShrink: 0, background: SIDE_BG, borderRight: BORDER, display: isMobile ? 'none' : 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width 0.25s ease' }}>
         <div data-tour="brand" style={{ width: sidebarCollapsed ? 48 : 220, padding: sidebarCollapsed ? '12px 0' : '18px 16px 16px', borderBottom: BORDER, display: 'flex', flexDirection: sidebarCollapsed ? 'column' : 'row', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <div style={{ flex: sidebarCollapsed ? 'none' : 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/logo-icon.png?v=7" alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
+            <img src={logoSrc} alt="" style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0 }} />
             {!sidebarCollapsed && <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>}
           </div>
           {!sidebarCollapsed && (
@@ -6023,7 +6093,12 @@ export default function Dashboard() {
                               {acctTxns.map((t, i) => (
                                 <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}` }}>
                                   <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(t.date)}</td>
-                                  <td style={{ padding: '8px 12px', fontSize: 13, fontWeight: 500 }}>{t.merchant_name || t.name}</td>
+                                  <td style={{ padding: '8px 12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                      <CompanyLogo name={t.merchant_name || t.name} size={22} radius={5} />
+                                      <span style={{ fontSize: 13, fontWeight: 500 }}>{t.merchant_name || t.name}</span>
+                                    </div>
+                                  </td>
                                   <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12 }}>{fmtCat(resolveCategory(t)) || '—'}</td>
                                   <td style={{ padding: '8px 12px', fontWeight: 600, color: t.amount > 0 ? RED : GREEN, textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>
                                     {t.amount > 0 ? '−' : '+'}{fmt(Math.abs(t.amount))}
@@ -6078,8 +6153,11 @@ export default function Dashboard() {
                                 : a.mask && <span style={{ fontSize: 11, color: TEXT3 }}>••••{a.mask}</span>
                               }
                             </div>
-                            {/* Row 2: institution name */}
-                            <div style={{ fontSize: 12, color: TEXT2, fontWeight: 500, marginBottom: 4 }}>{a.institution_name}</div>
+                            {/* Row 2: institution logo + name */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
+                              <CompanyLogo name={a.institution_name} size={20} radius={4} />
+                              <div style={{ fontSize: 12, color: TEXT2, fontWeight: 500 }}>{a.institution_name}</div>
+                            </div>
                             {/* Row 3: clean account name */}
                             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10, color: TEXT }}>{cleanAcctName(a.name, a.subtype, a.type, a.mask)}</div>
                             {/* Row 4: balance */}
@@ -6865,9 +6943,12 @@ export default function Dashboard() {
                           </div>
                           {catTxns.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, i) => (
                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < catTxns.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
-                              <div>
-                                <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
-                                <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)}</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <CompanyLogo name={t.merchant_name || t.name} size={34} radius={8} />
+                                <div>
+                                  <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
+                                  <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)}</div>
+                                </div>
                               </div>
                               <div style={{ fontWeight: 600, color: RED, fontFamily: 'monospace' }}>
                                 -{fmt(Math.abs(t.amount))}
@@ -8257,205 +8338,165 @@ export default function Dashboard() {
                     </div>
                   ))}
                 </div>
-                <div data-tour="investments-holdings" className="lc" style={CARD}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                    <div style={{ fontWeight: 600 }}>Holdings</div>
-                    {activeHoldings.length > 4 && (
-                      <span style={{ fontSize: 12, color: TEXT2 }}>{holdingsExpanded ? activeHoldings.length : 4} of {activeHoldings.length} positions</span>
-                    )}
-                  </div>
-                  {activeHoldings.length === 0 ? (
-                    (() => {
-                      const hasBrokerageAcct = !isDemoData && activeAccounts.some(a => a.type === 'investment');
-                      return (
-                        <div style={{ textAlign: 'center', padding: '32px 24px' }}>
-                          <div style={{ fontSize: 28, marginBottom: 12 }}>📈</div>
-                          <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 8 }}>
-                            {hasBrokerageAcct ? 'Investment data syncing' : 'No brokerage account connected'}
-                          </div>
-                          <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.6, maxWidth: 360, margin: '0 auto 20px' }}>
-                            {hasBrokerageAcct
-                              ? 'Your brokerage is connected but holdings are still loading. Plaid can take a few minutes to sync investment data for the first time. Click Refresh to check again.'
-                              : 'Connect an investment account to track your portfolio, holdings, and performance in real time.'}
-                          </div>
-                          {isAdmin && !viewAs && (
-                            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-                              {hasBrokerageAcct ? (
-                                <button onClick={() => fetchAll()}
-                                  style={{ padding: '10px 24px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                                  Refresh
-                                </button>
-                              ) : (
-                                <button onClick={() => isPremium ? setShowConnectModal(true) : setShowUpgrade(true)}
-                                  style={{ padding: '10px 24px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                                  {isPremium ? '+ Connect Brokerage' : 'Get Premium'}
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()
+                {/* ── Investment tabs + pie + sector grid ──────────────── */}
+                {(() => {
+                  const ETF_SECTOR = {
+                    SPY:'Broad Market',VOO:'Broad Market',VTI:'Broad Market',IVV:'Broad Market',SCHB:'Broad Market',ITOT:'Broad Market',SCHD:'Broad Market',DVY:'Broad Market',VYM:'Broad Market',
+                    QQQ:'Technology',VGT:'Technology',XLK:'Technology',TQQQ:'Technology',
+                    XLE:'Energy',XLF:'Financial Services',XLV:'Healthcare',XLI:'Industrials',
+                    XLC:'Communication Services',XLY:'Consumer Cyclical',XLP:'Consumer Defensive',
+                    XLB:'Basic Materials',XLRE:'Real Estate',XLU:'Utilities',
+                    GLD:'Commodities',SLV:'Commodities',GDX:'Commodities',
+                    TLT:'Bonds',BND:'Bonds',AGG:'Bonds',HYG:'Bonds',LQD:'Bonds',BNDX:'Bonds',
+                    VHT:'Healthcare',VFH:'Financial Services',VDE:'Energy',VNQ:'Real Estate',
+                    ARKK:'Technology',ARKG:'Healthcare',ARKW:'Technology',ARKF:'Technology',
+                    VEA:'International',VXUS:'International',EFA:'International',EEM:'Emerging Markets',
+                    AAPL:'Technology',MSFT:'Technology',NVDA:'Technology',AMD:'Technology',INTC:'Technology',ORCL:'Technology',CRM:'Technology',ADBE:'Technology',QCOM:'Technology',AVGO:'Technology',
+                    GOOGL:'Communication Services',GOOG:'Communication Services',META:'Communication Services',DIS:'Communication Services',NFLX:'Communication Services',CMCSA:'Communication Services',T:'Communication Services',VZ:'Communication Services',
+                    AMZN:'Consumer Cyclical',TSLA:'Consumer Cyclical',HD:'Consumer Cyclical',NKE:'Consumer Cyclical',MCD:'Consumer Cyclical',SBUX:'Consumer Cyclical',F:'Consumer Cyclical',GM:'Consumer Cyclical',BKNG:'Consumer Cyclical',
+                    KO:'Consumer Defensive',PEP:'Consumer Defensive',WMT:'Consumer Defensive',PG:'Consumer Defensive',COST:'Consumer Defensive',MDLZ:'Consumer Defensive',CL:'Consumer Defensive',
+                    JPM:'Financial Services',BAC:'Financial Services',V:'Financial Services',MA:'Financial Services',GS:'Financial Services',MS:'Financial Services',WFC:'Financial Services',C:'Financial Services',AXP:'Financial Services','BRK.B':'Financial Services',
+                    JNJ:'Healthcare',UNH:'Healthcare',PFE:'Healthcare',ABBV:'Healthcare',MRK:'Healthcare',LLY:'Healthcare',TMO:'Healthcare',ABT:'Healthcare',DHR:'Healthcare',
+                    XOM:'Energy',CVX:'Energy',COP:'Energy',SLB:'Energy',EOG:'Energy',
+                    CAT:'Industrials',BA:'Industrials',GE:'Industrials',HON:'Industrials',LMT:'Industrials',RTX:'Industrials',UPS:'Industrials',FDX:'Industrials',
+                    AMT:'Real Estate',PLD:'Real Estate',CCI:'Real Estate',EQIX:'Real Estate',
+                    LIN:'Basic Materials',APD:'Basic Materials',FCX:'Basic Materials',NEM:'Basic Materials',
+                    NEE:'Utilities',SO:'Utilities',DUK:'Utilities',AEP:'Utilities',
+                  };
+                  const SECTOR_COLORS = {
+                    'Technology':'#4da3ff','Healthcare':'#34d399','Financial Services':'#a78bfa',
+                    'Consumer Cyclical':'#fb923c','Consumer Defensive':'#22d3ee','Energy':'#f87171',
+                    'Industrials':'#94a3b8','Basic Materials':'#c8a97e','Real Estate':'#f472b6',
+                    'Communication Services':'#60a5fa','Utilities':'#facc15',
+                    'Broad Market':'#6ee7b7','Bonds':'#fbbf24','Commodities':'#d97706',
+                    'International':'#c084fc','Emerging Markets':'#e879f9','Other':'#4b5563',
+                  };
+                  const TYPE_COLORS = { stocks:'#4da3ff', etf:'#34d399', bonds:'#fbbf24', crypto:'#fb923c', cash:'#94a3b8' };
+                  const INV_TABS = [
+                    { key:'stocks', label:'Stocks' },
+                    { key:'etf',   label:'ETFs'  },
+                    { key:'bonds', label:'Bonds' },
+                    { key:'crypto',label:'Crypto'},
+                    { key:'cash',  label:'Cash'  },
+                  ];
+                  const sc = s => SECTOR_COLORS[s] || '#4b5563';
+
+                  const classified = activeHoldings.map(h => ({ ...h, _type: classifyHolding(h) }));
+
+                  const typeValues = { stocks:0, etf:0, bonds:0, crypto:0, cash:0 };
+                  classified.forEach(h => {
+                    const v = (h.quantity||0)*(h.institution_price||0);
+                    if (typeValues[h._type] !== undefined) typeValues[h._type] += v;
+                  });
+                  const pieTotal = Object.values(typeValues).reduce((s,v)=>s+v,0)||1;
+                  const pieSlices = INV_TABS.map(t=>({ label:t.label, value:typeValues[t.key], color:TYPE_COLORS[t.key] })).filter(s=>s.value>0);
+
+                  const tabHoldings = classified.filter(h => h._type === invTab);
+
+                  const sectorGroups = {};
+                  classified.filter(h=>h._type==='stocks').forEach(h=>{
+                    const t=h.security?.ticker_symbol; if(!t) return;
+                    const sect=ETF_SECTOR[t]||sectorData[t]||'Other';
+                    sectorGroups[sect]=(sectorGroups[sect]||0)+(h.quantity||0)*(h.institution_price||0);
+                  });
+                  const stockTotal=Object.values(sectorGroups).reduce((s,v)=>s+v,0)||1;
+                  const topSectors=Object.entries(sectorGroups).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([name,val])=>({name,val,pct:(val/stockTotal)*100}));
+
+                  const sectorHoldings = selectedSector
+                    ? classified.filter(h=>{ const t=h.security?.ticker_symbol; return t&&(ETF_SECTOR[t]||sectorData[t]||'Other')===selectedSector; })
+                    : [];
+
+                  const PieDonut = ({ slices, size=140 }) => {
+                    const R=size/2, r=R*0.55, cx=R, cy=R;
+                    let angle=-Math.PI/2;
+                    const tot=slices.reduce((s,x)=>s+x.value,0)||1;
+                    return (
+                      <svg viewBox={`0 0 ${size} ${size}`} style={{ width:size, height:'auto', display:'block' }}>
+                        {slices.map((s,i)=>{
+                          const frac=s.value/tot, sa=angle, ea=angle+frac*Math.PI*2; angle=ea;
+                          const la=frac>0.5?1:0;
+                          const x1=cx+R*Math.cos(sa),y1=cy+R*Math.sin(sa),x2=cx+R*Math.cos(ea),y2=cy+R*Math.sin(ea);
+                          const x3=cx+r*Math.cos(ea),y3=cy+r*Math.sin(ea),x4=cx+r*Math.cos(sa),y4=cy+r*Math.sin(sa);
+                          return <path key={i} d={`M ${x1} ${y1} A ${R} ${R} 0 ${la} 1 ${x2} ${y2} L ${x3} ${y3} A ${r} ${r} 0 ${la} 0 ${x4} ${y4} Z`} fill={s.color} stroke="transparent" strokeWidth={1.5}/>;
+                        })}
+                      </svg>
+                    );
+                  };
+
+                  const HoldingsTable = ({ holdings }) => holdings.length===0 ? (
+                    <div style={{ padding:'24px 0', textAlign:'center', color:TEXT2, fontSize:13 }}>No holdings in this category</div>
                   ) : (
-                    <>
-                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
+                    <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
+                      <table style={{ width:'100%', borderCollapse:'collapse', minWidth:480 }}>
                         <thead>
-                          <tr style={{ borderBottom: BORDER }}>
-                            {['Ticker', 'Name', 'Shares', 'Price', 'Value', 'P&L', '1D %', '1W %', '1M %'].map(h => (
-                              <th key={h} style={{ padding: '8px 12px', textAlign: ['Shares', 'Price', 'Value', 'P&L', '1D %', '1W %', '1M %'].includes(h) ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                          <tr style={{ borderBottom:BORDER }}>
+                            {['Ticker','Name','Shares','Price','Value','P&L'].map(col=>(
+                              <th key={col} style={{ padding:'8px 12px', textAlign:['Shares','Price','Value','P&L'].includes(col)?'right':'left', fontSize:11, color:TEXT2, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.5px' }}>{col}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
-                          {(holdingsExpanded ? activeHoldings : activeHoldings.slice(0, 4)).map((h, i) => {
-                            const ticker = h.security?.ticker_symbol || '—';
-                            const name   = h.security?.name || '—';
-                            const qty    = h.quantity || 0;
-                            const price  = h.institution_price || 0;
-                            const value  = qty * price;
-                            const cost   = h.cost_basis || 0;
-                            const pnl    = cost > 0 ? value - cost : null;
-                            const ext    = extendedTickerData[ticker] || {};
-                            const hPct   = (v) => {
-                              if (v == null) return <span style={{ color: TEXT3 }}>—</span>;
-                              const up = v >= 0;
-                              return <span style={{ color: up ? GREEN : RED, fontWeight: 700 }}>{up ? '▲' : '▼'} {Math.abs(v).toFixed(2)}%</span>;
-                            };
-                            const clickable = ticker !== '—';
+                          {holdings.map((h,i)=>{
+                            const ticker=h.security?.ticker_symbol||'—';
+                            const name=h.security?.name||'—';
+                            const qty=h.quantity||0, price=h.institution_price||0, value=qty*price;
+                            const pnl=h.cost_basis>0?value-h.cost_basis:null;
+                            const clickable=ticker!=='—';
                             return (
-                              <tr key={i} className="lr" style={{ borderBottom: `1px solid ${BORDER_C}`, cursor: clickable ? 'pointer' : 'default' }}
-                                onClick={() => {
-                                  if (!clickable) return;
-                                  setSelectedTicker({ symbol: ticker, name, price });
-                                  setTickerChartPeriod('3mo');
-                                  fetchTickerChart(ticker, '3mo');
-                                }}>
-                                <td style={{ padding: '10px 12px', fontWeight: 700, color: BLUE, fontSize: 13 }}>{ticker}</td>
-                                <td style={{ padding: '10px 12px', fontSize: 13, color: TEXT2, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{qty.toFixed(4)}</td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{fmt(price)}</td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, fontFamily: 'monospace' }}>{fmt(value)}</td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: pnl === null ? TEXT3 : pnl >= 0 ? GREEN : RED }}>
-                                  {pnl === null ? '—' : `${pnl >= 0 ? '+' : ''}${fmt(pnl)}`}
+                              <tr key={i} className="lr" style={{ borderBottom:`1px solid ${BORDER_C}`, cursor:clickable?'pointer':'default' }}
+                                onClick={()=>{ if(!clickable) return; setSelectedTicker({symbol:ticker,name,price}); setTickerChartPeriod('3mo'); fetchTickerChart(ticker,'3mo'); }}>
+                                <td style={{ padding:'10px 12px' }}>
+                                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                                    <CompanyLogo name={name} ticker={ticker!=='—'?ticker:undefined} size={26} radius={6}/>
+                                    <span style={{ fontWeight:700, color:BLUE, fontSize:13 }}>{ticker}</span>
+                                  </div>
                                 </td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{hPct(ext.changePct1d ?? null)}</td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{hPct(ext.changePct1w ?? null)}</td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{hPct(ext.changePct1m ?? null)}</td>
+                                <td style={{ padding:'10px 12px', fontSize:13, color:TEXT2, maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</td>
+                                <td style={{ padding:'10px 12px', textAlign:'right', fontFamily:'monospace', fontSize:13 }}>{qty.toFixed(3)}</td>
+                                <td style={{ padding:'10px 12px', textAlign:'right', fontFamily:'monospace', fontSize:13 }}>{fmt(price)}</td>
+                                <td style={{ padding:'10px 12px', textAlign:'right', fontWeight:600, fontFamily:'monospace' }}>{fmt(value)}</td>
+                                <td style={{ padding:'10px 12px', textAlign:'right', fontFamily:'monospace', fontSize:13, color:pnl===null?TEXT3:pnl>=0?GREEN:RED }}>
+                                  {pnl===null?'—':`${pnl>=0?'+':''}${fmt(pnl)}`}
+                                </td>
                               </tr>
                             );
                           })}
                         </tbody>
                       </table>
-                      </div>
-                      {activeHoldings.length > 4 && (
-                        <button
-                          onClick={() => setHoldingsExpanded(e => !e)}
-                          style={{ width: '100%', marginTop: 12, padding: '9px 0', background: 'none', border: `1px solid ${BORDER_C}`, borderRadius: 8, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'border-color 0.15s' }}
-                        >
-                          {holdingsExpanded ? `Show less ↑` : `Show all ${activeHoldings.length} positions ↓`}
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-                {activeHoldings.length > 0 && (() => {
-                  const ETF_SECTOR = {
-                    SPY:'Broad Market', VOO:'Broad Market', VTI:'Broad Market', IVV:'Broad Market', SCHB:'Broad Market', ITOT:'Broad Market', SCHD:'Broad Market', DVY:'Broad Market', VYM:'Broad Market',
-                    QQQ:'Technology', VGT:'Technology', XLK:'Technology', TQQQ:'Technology',
-                    XLE:'Energy', XLF:'Financial Services', XLV:'Healthcare', XLI:'Industrials',
-                    XLC:'Communication Services', XLY:'Consumer Cyclical', XLP:'Consumer Defensive',
-                    XLB:'Basic Materials', XLRE:'Real Estate', XLU:'Utilities',
-                    GLD:'Commodities', SLV:'Commodities', GDX:'Commodities',
-                    TLT:'Bonds', BND:'Bonds', AGG:'Bonds', HYG:'Bonds', LQD:'Bonds', BNDX:'Bonds',
-                    VHT:'Healthcare', VFH:'Financial Services', VDE:'Energy', VNQ:'Real Estate',
-                    ARKK:'Technology', ARKG:'Healthcare', ARKW:'Technology', ARKF:'Technology',
-                    VEA:'International', VXUS:'International', EFA:'International', EEM:'Emerging Markets',
-                    AAPL:'Technology', MSFT:'Technology', NVDA:'Technology', AMD:'Technology', INTC:'Technology', ORCL:'Technology', CRM:'Technology', ADBE:'Technology', QCOM:'Technology', AVGO:'Technology',
-                    GOOGL:'Communication Services', GOOG:'Communication Services', META:'Communication Services', DIS:'Communication Services', NFLX:'Communication Services', CMCSA:'Communication Services', T:'Communication Services', VZ:'Communication Services',
-                    AMZN:'Consumer Cyclical', TSLA:'Consumer Cyclical', HD:'Consumer Cyclical', NKE:'Consumer Cyclical', MCD:'Consumer Cyclical', SBUX:'Consumer Cyclical', F:'Consumer Cyclical', GM:'Consumer Cyclical', BKNG:'Consumer Cyclical',
-                    KO:'Consumer Defensive', PEP:'Consumer Defensive', WMT:'Consumer Defensive', PG:'Consumer Defensive', COST:'Consumer Defensive', MDLZ:'Consumer Defensive', CL:'Consumer Defensive',
-                    JPM:'Financial Services', BAC:'Financial Services', V:'Financial Services', MA:'Financial Services', GS:'Financial Services', MS:'Financial Services', WFC:'Financial Services', C:'Financial Services', AXP:'Financial Services', 'BRK.B':'Financial Services',
-                    JNJ:'Healthcare', UNH:'Healthcare', PFE:'Healthcare', ABBV:'Healthcare', MRK:'Healthcare', LLY:'Healthcare', TMO:'Healthcare', ABT:'Healthcare', DHR:'Healthcare',
-                    XOM:'Energy', CVX:'Energy', COP:'Energy', SLB:'Energy', EOG:'Energy',
-                    CAT:'Industrials', BA:'Industrials', GE:'Industrials', HON:'Industrials', LMT:'Industrials', RTX:'Industrials', UPS:'Industrials', FDX:'Industrials',
-                    AMT:'Real Estate', PLD:'Real Estate', CCI:'Real Estate', EQIX:'Real Estate',
-                    LIN:'Basic Materials', APD:'Basic Materials', FCX:'Basic Materials', NEM:'Basic Materials',
-                    NEE:'Utilities', SO:'Utilities', DUK:'Utilities', AEP:'Utilities',
-                  };
-                  const SECTOR_COLORS = {
-                    'Technology':'#4da3ff', 'Healthcare':'#34d399', 'Financial Services':'#a78bfa',
-                    'Consumer Cyclical':'#fb923c', 'Consumer Defensive':'#22d3ee', 'Energy':'#f87171',
-                    'Industrials':'#94a3b8', 'Basic Materials':'#c8a97e', 'Real Estate':'#f472b6',
-                    'Communication Services':'#60a5fa', 'Utilities':'#facc15',
-                    'Broad Market':'#6ee7b7', 'Bonds':'#fbbf24', 'Commodities':'#d97706',
-                    'International':'#c084fc', 'Emerging Markets':'#e879f9',
-                    'ETF':'#6b7280', 'Fund':'#6b7280', 'Other':'#4b5563',
-                  };
-                  const sectorColor = s => SECTOR_COLORS[s] || '#4b5563';
+                    </div>
+                  );
 
-                  // Build sector groups from holdings
-                  const sectorGroups = {};
-                  activeHoldings.forEach(h => {
-                    const ticker = h.security?.ticker_symbol;
-                    if (!ticker) return;
-                    const sect = ETF_SECTOR[ticker] || sectorData[ticker] || 'Other';
-                    const val = (h.quantity || 0) * (h.institution_price || 0);
-                    sectorGroups[sect] = (sectorGroups[sect] || 0) + val;
-                  });
-                  const CORE_SECTORS = ['Technology','Healthcare','Financial Services','Consumer Cyclical','Consumer Defensive','Energy','Industrials','Communication Services','Basic Materials','Real Estate','Utilities'];
-                  CORE_SECTORS.forEach(s => { if (!(s in sectorGroups)) sectorGroups[s] = 0; });
-                  const totalVal = Object.values(sectorGroups).reduce((s, v) => s + v, 0) || 1;
-                  const sectors = Object.entries(sectorGroups)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([name, val]) => ({ name, val, pct: (val / totalVal) * 100 }));
-
-                  // Performance chart data
-                  const pfData  = portfolioPerf.portfolio;
-                  const spData  = portfolioPerf.sp500;
-                  const hasPerf = pfData.length >= 2 && spData.length >= 2;
-                  const pfLast  = hasPerf ? pfData[pfData.length - 1].value : 100;
-                  const spLast  = hasPerf ? spData[spData.length - 1].value : 100;
-                  const pfChg   = pfLast - 100;
-                  const spChg   = spLast - 100;
-                  const alpha   = pfChg - spChg;
-
-                  // SVG dual-line chart renderer
+                  const pfData=portfolioPerf.portfolio, spData=portfolioPerf.sp500;
+                  const hasPerf=pfData.length>=2&&spData.length>=2;
+                  const pfChg=hasPerf?pfData[pfData.length-1].value-100:0;
+                  const spChg=hasPerf?spData[spData.length-1].value-100:0;
+                  const alpha=pfChg-spChg;
                   const PerfChart = () => {
-                    if (!hasPerf) return (
-                      <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT2, fontSize: 13 }}>
-                        {perfLoading ? 'Loading chart...' : 'Chart unavailable'}
-                      </div>
-                    );
-                    const W = 600, H = 160, PAD = { top: 12, right: 12, bottom: 28, left: 44 };
-                    const iW = W - PAD.left - PAD.right, iH = H - PAD.top - PAD.bottom;
-                    const allV = [...pfData.map(d => d.value), ...spData.map(d => d.value)];
-                    const minV = Math.min(...allV), maxV = Math.max(...allV);
-                    const range = maxV - minV || 1;
-                    const n = pfData.length;
-                    const toX = i => PAD.left + (i / (n - 1)) * iW;
-                    const toY = v => PAD.top + iH - ((v - minV) / range) * iH;
-                    const pfPts = pfData.map((d, i) => `${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' ');
-                    const spPts = spData.map((d, i) => `${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' ');
-                    const labelCount = isMobile ? 3 : 5;
-                    const labelIdxs = Array.from({ length: labelCount }, (_, i) => Math.round((i / (labelCount - 1)) * (n - 1)));
-                    const base100Y = toY(100);
+                    if(!hasPerf) return <div style={{ height:160, display:'flex', alignItems:'center', justifyContent:'center', color:TEXT2, fontSize:13 }}>{perfLoading?'Loading chart...':'Chart unavailable'}</div>;
+                    const W=600,H=160,PAD={top:12,right:12,bottom:28,left:44};
+                    const iW=W-PAD.left-PAD.right,iH=H-PAD.top-PAD.bottom;
+                    const allV=[...pfData.map(d=>d.value),...spData.map(d=>d.value)];
+                    const minV=Math.min(...allV),maxV=Math.max(...allV),range=maxV-minV||1;
+                    const n=pfData.length;
+                    const toX=i=>PAD.left+(i/(n-1))*iW;
+                    const toY=v=>PAD.top+iH-((v-minV)/range)*iH;
+                    const pfPts=pfData.map((d,i)=>`${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' ');
+                    const spPts=spData.map((d,i)=>`${toX(i).toFixed(1)},${toY(d.value).toFixed(1)}`).join(' ');
+                    const lblCnt=isMobile?3:5;
+                    const lblIdxs=Array.from({length:lblCnt},(_,i)=>Math.round((i/(lblCnt-1))*(n-1)));
+                    const b100Y=toY(100);
                     return (
-                      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-                        {base100Y >= PAD.top && base100Y <= H - PAD.bottom && (
-                          <line x1={PAD.left} y1={base100Y} x2={W - PAD.right} y2={base100Y} stroke={BORDER_C} strokeWidth={1} strokeDasharray="4,3" />
-                        )}
-                        <polyline fill="none" stroke="#6b7280" strokeWidth={1.5} points={spPts} />
-                        <polyline fill="none" stroke={BLUE} strokeWidth={2.5} points={pfPts} />
-                        {labelIdxs.map(i => (
-                          <text key={i} x={toX(i)} y={H - 4} textAnchor="middle" fill={TEXT3} fontSize={10} fontFamily="sans-serif">
-                            {new Date(pfData[i]?.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', height:'auto', display:'block' }}>
+                        {b100Y>=PAD.top&&b100Y<=H-PAD.bottom&&<line x1={PAD.left} y1={b100Y} x2={W-PAD.right} y2={b100Y} stroke={BORDER_C} strokeWidth={1} strokeDasharray="4,3"/>}
+                        <polyline fill="none" stroke="#6b7280" strokeWidth={1.5} points={spPts}/>
+                        <polyline fill="none" stroke={BLUE} strokeWidth={2.5} points={pfPts}/>
+                        {lblIdxs.map(i=>(
+                          <text key={i} x={toX(i)} y={H-4} textAnchor="middle" fill={TEXT3} fontSize={10} fontFamily="sans-serif">
+                            {new Date(pfData[i]?.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}
                           </text>
                         ))}
-                        {[minV, (minV + maxV) / 2, maxV].map((v, i) => (
-                          <text key={i} x={PAD.left - 5} y={toY(v) + 4} textAnchor="end" fill={TEXT3} fontSize={10} fontFamily="sans-serif">
-                            {v.toFixed(0)}
-                          </text>
+                        {[minV,(minV+maxV)/2,maxV].map((v,i)=>(
+                          <text key={i} x={PAD.left-5} y={toY(v)+4} textAnchor="end" fill={TEXT3} fontSize={10} fontFamily="sans-serif">{v.toFixed(0)}</text>
                         ))}
                       </svg>
                     );
@@ -8463,73 +8504,141 @@ export default function Dashboard() {
 
                   return (
                     <>
-                      {/* Portfolio vs S&P 500 */}
-                      <div className="lc" style={{ ...CARD, marginTop: 16 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
-                          <div style={{ fontWeight: 600 }}>Portfolio vs S&P 500</div>
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            {[['1mo','1M'],['3mo','3M'],['6mo','6M'],['1y','1Y']].map(([k, l]) => (
-                              <button key={k} onClick={() => setPerfPeriod(k)} style={{ padding: '4px 11px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600, cursor: 'pointer', background: perfPeriod === k ? BLUE_BTN : MUTED, color: perfPeriod === k ? '#fff' : TEXT2 }}>{l}</button>
-                            ))}
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 20, marginBottom: 12, flexWrap: 'wrap' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 20, height: 2.5, background: BLUE, borderRadius: 1 }} />
-                            <span style={{ fontSize: 12, color: TEXT2 }}>Portfolio</span>
-                            {hasPerf && <span style={{ fontSize: 13, fontWeight: 700, color: pfChg >= 0 ? GREEN : RED, marginLeft: 2 }}>{pfChg >= 0 ? '+' : ''}{pfChg.toFixed(2)}%</span>}
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 20, height: 2, background: '#6b7280', borderRadius: 1 }} />
-                            <span style={{ fontSize: 12, color: TEXT2 }}>S&P 500</span>
-                            {hasPerf && <span style={{ fontSize: 13, fontWeight: 700, color: spChg >= 0 ? GREEN : RED, marginLeft: 2 }}>{spChg >= 0 ? '+' : ''}{spChg.toFixed(2)}%</span>}
-                          </div>
-                          {hasPerf && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontSize: 12, color: TEXT2 }}>vs Benchmark</span>
-                              <span style={{ fontSize: 13, fontWeight: 700, color: alpha >= 0 ? GREEN : RED }}>{alpha >= 0 ? '+' : ''}{alpha.toFixed(2)}%</span>
-                            </div>
-                          )}
-                        </div>
-                        {PerfChart()}
+                      {/* Type tabs */}
+                      <div data-tour="investments-holdings" style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap' }}>
+                        {INV_TABS.map(t=>{
+                          const count=classified.filter(h=>h._type===t.key).length;
+                          const active=invTab===t.key;
+                          return (
+                            <button key={t.key} onClick={()=>{ setInvTab(t.key); setSelectedSector(null); }}
+                              style={{ padding:'7px 16px', borderRadius:8, border:active?`1px solid ${BLUE}`:BORDER, background:active?'rgba(77,163,255,0.1)':MUTED, color:active?BLUE:TEXT2, fontSize:12, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
+                              {t.label}
+                              {count>0&&<span style={{ background:active?BLUE_BTN:BORDER_C, color:active?'#fff':TEXT2, borderRadius:10, padding:'1px 6px', fontSize:10, fontWeight:700 }}>{count}</span>}
+                            </button>
+                          );
+                        })}
                       </div>
 
-                      {/* Sector Allocation */}
-                      <div className="lc" style={{ ...CARD, marginTop: 16 }}>
-                        <div style={{ fontWeight: 600, marginBottom: 14 }}>Sector Allocation</div>
-                        {sectors.length === 0 ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 0' }}>
-                            {[90, 70, 55, 80, 65].map((w, i) => <div key={i} className="skel" style={{ height: 12, width: `${w}%` }} />)}
-                          </div>
-                        ) : (
-                          <>
-                            {/* Stacked bar — only sectors with actual allocation */}
-                            <div style={{ display: 'flex', height: 10, borderRadius: 6, overflow: 'hidden', marginBottom: 18, gap: 1 }}>
-                              {sectors.filter(s => s.val > 0).map(s => (
-                                <div key={s.name} style={{ flex: s.pct, background: sectorColor(s.name), minWidth: 2 }} title={`${s.name}: ${s.pct.toFixed(1)}%`} />
-                              ))}
-                            </div>
-                            {/* Rows */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                              {sectors.map(s => (
-                                <div key={s.name} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 48px' : '160px 1fr 56px 80px', alignItems: 'center', gap: 8, opacity: s.val === 0 ? 0.35 : 1 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                                    <div style={{ width: 9, height: 9, borderRadius: '50%', background: sectorColor(s.name), flexShrink: 0 }} />
-                                    <span style={{ fontSize: 13, color: TEXT, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
+                      {/* Pie + holdings grid */}
+                      {activeHoldings.length>0 ? (
+                        <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'200px 1fr', gap:16, marginBottom:16, alignItems:'start' }}>
+                          {/* Donut */}
+                          <div className="lc" style={{ ...CARD, display:'flex', flexDirection:'column', alignItems:'center', gap:12, padding:'20px 16px' }}>
+                            <div style={{ fontWeight:600, fontSize:13, alignSelf:'flex-start' }}>Allocation</div>
+                            {pieSlices.length>0 ? <>
+                              {PieDonut({ slices:pieSlices, size:140 })}
+                              <div style={{ display:'flex', flexDirection:'column', gap:7, width:'100%' }}>
+                                {pieSlices.map(s=>(
+                                  <div key={s.label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                                      <div style={{ width:8, height:8, borderRadius:'50%', background:s.color, flexShrink:0 }}/>
+                                      <span style={{ fontSize:11, color:TEXT2 }}>{s.label}</span>
+                                    </div>
+                                    <span style={{ fontSize:11, fontWeight:700 }}>{((s.value/pieTotal)*100).toFixed(1)}%</span>
                                   </div>
-                                  {!isMobile && (
-                                    <div style={{ height: 5, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
-                                      <div style={{ width: `${s.pct}%`, height: '100%', background: sectorColor(s.name), borderRadius: 3 }} />
+                                ))}
+                              </div>
+                            </> : <div style={{ fontSize:13, color:TEXT2 }}>No data</div>}
+                          </div>
+
+                          {/* Holdings / sector panel */}
+                          <div className="lc" style={CARD}>
+                            {invTab==='stocks' ? (
+                              selectedSector ? (
+                                <>
+                                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
+                                    <button onClick={()=>setSelectedSector(null)} style={{ background:'none', border:BORDER, borderRadius:6, padding:'4px 10px', fontSize:12, color:TEXT2, cursor:'pointer' }}>← Back</button>
+                                    <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                                      <div style={{ width:10, height:10, borderRadius:'50%', background:sc(selectedSector) }}/>
+                                      <span style={{ fontWeight:700 }}>{selectedSector}</span>
+                                    </div>
+                                  </div>
+                                  {HoldingsTable({ holdings:sectorHoldings })}
+                                </>
+                              ) : (
+                                <>
+                                  <div style={{ fontWeight:600, marginBottom:14 }}>Sectors <span style={{ fontSize:11, color:TEXT2, fontWeight:400 }}>(click to explore)</span></div>
+                                  {topSectors.length===0 ? (
+                                    <div style={{ color:TEXT2, fontSize:13, padding:'16px 0' }}>No stock holdings yet</div>
+                                  ) : (
+                                    <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:10 }}>
+                                      {topSectors.map(s=>(
+                                        <button key={s.name} onClick={()=>setSelectedSector(s.name)}
+                                          style={{ background:DARK, border:BORDER, borderRadius:10, padding:'14px 12px', cursor:'pointer', textAlign:'left', transition:'border-color 0.15s' }}>
+                                          <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:8 }}>
+                                            <div style={{ width:9, height:9, borderRadius:'50%', background:sc(s.name), flexShrink:0 }}/>
+                                            <span style={{ fontSize:11, fontWeight:700, color:TEXT, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.name}</span>
+                                          </div>
+                                          <div style={{ fontSize:20, fontWeight:700, letterSpacing:'-0.5px' }}>{s.pct.toFixed(1)}%</div>
+                                          <div style={{ fontSize:11, color:TEXT2, marginTop:2 }}>{fmt(s.val)}</div>
+                                        </button>
+                                      ))}
                                     </div>
                                   )}
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: TEXT, textAlign: 'right' }}>{s.pct.toFixed(1)}%</span>
-                                  {!isMobile && <span style={{ fontSize: 12, color: TEXT2, textAlign: 'right', fontFamily: 'monospace' }}>{fmt(s.val)}</span>}
-                                </div>
+                                </>
+                              )
+                            ) : (
+                              <>
+                                <div style={{ fontWeight:600, marginBottom:14 }}>{INV_TABS.find(t=>t.key===invTab)?.label} Holdings</div>
+                                {HoldingsTable({ holdings:tabHoldings })}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="lc" style={{ ...CARD, marginBottom:16 }}>
+                          <div style={{ textAlign:'center', padding:'32px 24px' }}>
+                            <div style={{ fontSize:28, marginBottom:12 }}>📈</div>
+                            <div style={{ fontSize:15, fontWeight:700, color:TEXT, marginBottom:8 }}>
+                              {!isDemoData&&activeAccounts.some(a=>a.type==='investment')?'Investment data syncing':'No brokerage account connected'}
+                            </div>
+                            <div style={{ fontSize:13, color:TEXT2, lineHeight:1.6, maxWidth:360, margin:'0 auto 20px' }}>
+                              {!isDemoData&&activeAccounts.some(a=>a.type==='investment')
+                                ?'Your brokerage is connected but holdings are still loading. Plaid can take a few minutes to sync investment data for the first time.'
+                                :'Connect an investment account to track your portfolio, holdings, and performance in real time.'}
+                            </div>
+                            {isAdmin&&!viewAs&&(
+                              <button onClick={()=>isPremium?setShowConnectModal(true):setShowUpgrade(true)}
+                                style={{ padding:'10px 24px', background:BLUE_BTN, color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:700, cursor:'pointer' }}>
+                                {isPremium?'+ Connect Brokerage':'Get Premium'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Portfolio vs S&P 500 */}
+                      {activeHoldings.length>0&&(
+                        <div className="lc" style={{ ...CARD, marginBottom:16 }}>
+                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14, flexWrap:'wrap', gap:8 }}>
+                            <div style={{ fontWeight:600 }}>Portfolio vs S&P 500</div>
+                            <div style={{ display:'flex', gap:4 }}>
+                              {[['1mo','1M'],['3mo','3M'],['6mo','6M'],['1y','1Y']].map(([k,l])=>(
+                                <button key={k} onClick={()=>setPerfPeriod(k)} style={{ padding:'4px 11px', borderRadius:6, border:'none', fontSize:11, fontWeight:600, cursor:'pointer', background:perfPeriod===k?BLUE_BTN:MUTED, color:perfPeriod===k?'#fff':TEXT2 }}>{l}</button>
                               ))}
                             </div>
-                          </>
-                        )}
-                      </div>
+                          </div>
+                          <div style={{ display:'flex', gap:20, marginBottom:12, flexWrap:'wrap' }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                              <div style={{ width:20, height:2.5, background:BLUE, borderRadius:1 }}/>
+                              <span style={{ fontSize:12, color:TEXT2 }}>Portfolio</span>
+                              {hasPerf&&<span style={{ fontSize:13, fontWeight:700, color:pfChg>=0?GREEN:RED, marginLeft:2 }}>{pfChg>=0?'+':''}{pfChg.toFixed(2)}%</span>}
+                            </div>
+                            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                              <div style={{ width:20, height:2, background:'#6b7280', borderRadius:1 }}/>
+                              <span style={{ fontSize:12, color:TEXT2 }}>S&P 500</span>
+                              {hasPerf&&<span style={{ fontSize:13, fontWeight:700, color:spChg>=0?GREEN:RED, marginLeft:2 }}>{spChg>=0?'+':''}{spChg.toFixed(2)}%</span>}
+                            </div>
+                            {hasPerf&&(
+                              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                                <span style={{ fontSize:12, color:TEXT2 }}>vs Benchmark</span>
+                                <span style={{ fontSize:13, fontWeight:700, color:alpha>=0?GREEN:RED }}>{alpha>=0?'+':''}{alpha.toFixed(2)}%</span>
+                              </div>
+                            )}
+                          </div>
+                          {PerfChart()}
+                        </div>
+                      )}
                     </>
                   );
                 })()}

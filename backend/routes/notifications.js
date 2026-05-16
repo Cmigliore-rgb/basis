@@ -72,8 +72,11 @@ router.get('/inbox', requireAuth, (req, res) => {
   res.json({ notifications: notifs, unread });
 });
 
-// POST /api/notifications/inbox  — professor sends to a list of user IDs
+// POST /api/notifications/inbox  — professor or admin sends to a list of user IDs
 router.post('/inbox', requireAuth, (req, res) => {
+  if (req.user.role !== 'admin' && req.user.role !== 'professor') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
   const { user_ids, title, body, type = 'announcement' } = req.body;
   if (!user_ids?.length || !title) {
     return res.status(400).json({ error: 'user_ids and title required' });

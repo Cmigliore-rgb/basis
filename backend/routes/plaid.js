@@ -50,9 +50,8 @@ router.post('/create_link_token', requireAuth, async (req, res) => {
     const response = await plaidClient.linkTokenCreate(base);
     res.json({ link_token: response.data.link_token });
   } catch (err) {
-    const detail = err.response?.data || err.message;
-    console.error('create_link_token error:', JSON.stringify(detail));
-    res.status(500).json({ error: typeof detail === 'object' ? JSON.stringify(detail) : detail });
+    console.error('create_link_token error:', JSON.stringify(err.response?.data || err.message));
+    res.status(500).json({ error: 'Failed to create link token' });
   }
 });
 
@@ -74,9 +73,8 @@ router.post('/create_update_token', requireAuth, async (req, res) => {
     const response = await plaidClient.linkTokenCreate(params);
     res.json({ link_token: response.data.link_token });
   } catch (err) {
-    const detail = err.response?.data || err.message;
-    console.error('create_update_token error:', JSON.stringify(detail));
-    res.status(500).json({ error: typeof detail === 'object' ? JSON.stringify(detail) : detail });
+    console.error('create_update_token error:', JSON.stringify(err.response?.data || err.message));
+    res.status(500).json({ error: 'Failed to create update token' });
   }
 });
 
@@ -138,7 +136,7 @@ router.get('/accounts', requireAuth, async (req, res) => {
     res.json(await getAccounts(req));
   } catch (err) {
     console.error('accounts error:', err.response?.data || err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Failed to load accounts' });
   }
 });
 
@@ -148,7 +146,7 @@ router.get('/liabilities', requireAuth, async (req, res) => {
     res.json(await getLiabilities(req));
   } catch (err) {
     console.error('liabilities error:', err.response?.data || err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Failed to load liabilities' });
   }
 });
 

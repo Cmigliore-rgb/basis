@@ -102,6 +102,8 @@ app.use('/api/auth/login',               loginLimiter);
 app.use('/api/auth/register',            registerLimiter);
 app.use('/api/auth/forgot-password',     strictLimiter);
 app.use('/api/auth/reset-password',      strictLimiter);
+app.use('/api/auth/verify-2fa',          strictLimiter);
+app.use('/api/auth/validate-code',       loginLimiter);
 app.use('/api/auth/resend-verification', strictLimiter);
 app.use('/api/feedback',                 strictLimiter);
 app.use('/api/auth', authRoutes);

@@ -4,6 +4,10 @@ const store = require('../store');
 const requireAuth = require('../middleware/requireAuth');
 const email = require('../email');
 
+const escapeHtml = (s) => String(s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 // POST /api/feedback — save feedback and email support
 router.post('/', requireAuth, async (req, res) => {
   const { rating, subject, message } = req.body;
@@ -29,10 +33,10 @@ router.post('/', requireAuth, async (req, res) => {
       subject: subject?.trim() ? `Feedback: ${subject.trim()}` : `Feedback: ${stars}`,
       html: `<div style="font-family:sans-serif;max-width:520px;padding:24px">
         <h2 style="margin-bottom:8px">New Feedback</h2>
-        <p><strong>From:</strong> ${req.user.name} (${req.user.email})</p>
+        <p><strong>From:</strong> ${escapeHtml(req.user.name)} (${escapeHtml(req.user.email)})</p>
         <p><strong>Rating:</strong> ${stars}</p>
-        ${subject?.trim() ? `<p><strong>Subject:</strong> ${subject.trim()}</p>` : ''}
-        <div style="background:#f5f5f5;border-radius:8px;padding:14px 18px;margin:16px 0;font-size:15px;color:#333;white-space:pre-wrap">${message.trim()}</div>
+        ${subject?.trim() ? `<p><strong>Subject:</strong> ${escapeHtml(subject.trim())}</p>` : ''}
+        <div style="background:#f5f5f5;border-radius:8px;padding:14px 18px;margin:16px 0;font-size:15px;color:#333;white-space:pre-wrap">${escapeHtml(message.trim())}</div>
       </div>`,
     }).catch(() => {});
   }

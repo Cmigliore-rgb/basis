@@ -93,7 +93,7 @@ db.exec(`
 `);
 
 // Seed admin account
-const adminHash = bcrypt.hashSync('PeakLedger2026!', 8);
+const adminHash = bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'PeakLedger2026!', 12);
 db.prepare(`
   INSERT OR IGNORE INTO users (email, password_hash, name, role, tier)
   VALUES ('connoraltonmigliore@gmail.com', ?, 'Connor', 'admin', 'premium')
