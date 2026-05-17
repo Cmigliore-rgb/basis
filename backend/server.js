@@ -134,4 +134,23 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Ledger backend running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Ledger backend running on port ${PORT}`);
+  // Seed test account on every boot so it exists in production
+  try {
+    const bcrypt = require('bcryptjs');
+    const db = require('./db');
+    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get('test@peakledger.app');
+    const hash = bcrypt.hashSync('Ledger123', 10);
+    if (existing) {
+      db.prepare('UPDATE users SET password_hash = ?, role = ?, tier = ?, email_verified = 1 WHERE email = ?')
+        .run(hash, 'free', 'free', 'test@peakledger.app');
+    } else {
+      db.prepare('INSERT INTO users (email, password_hash, name, role, tier, email_verified) VALUES (?, ?, ?, ?, ?, 1)')
+        .run('test@peakledger.app', hash, 'Test User', 'free', 'free');
+    }
+    console.log('[seed] test@peakledger.app ready');
+  } catch (e) {
+    console.warn('[seed] test account error:', e.message);
+  }
+});
