@@ -1200,6 +1200,7 @@ const GAS_RE = /\bshell\b|exxon|mobil(?! supermarket)|\bbp\b|chevron|marathon ga
 function resolveCategory(txn) {
   const base = txn.personal_finance_category?.primary || txn.category?.[0] || 'OTHER';
   const name = (txn.merchant_name || txn.name || '').toLowerCase();
+  if (/publix\s+pharm/i.test(name)) return 'MEDICAL';
   if (GAS_RE.test(name)) return 'GAS_STATIONS';
   if (GROCERY_RE.test(name)) return 'GROCERIES';
   return base;
