@@ -3498,6 +3498,7 @@ export default function Dashboard() {
   const [notifPanelOpen, setNotifPanelOpen] = useState(false);
   const [expandedNotifId, setExpandedNotifId] = useState(null);
   const [streak, setStreak] = useState(0);
+  const [nwCardOrder, setNwCardOrder] = useState(() => { try { return JSON.parse(localStorage.getItem('pl_nw_order') || 'null') || [0, 1, 2]; } catch { return [0, 1, 2]; } });
   const [projReturnRate, setProjReturnRate] = useState(7);
   const [projSavingsAdj, setProjSavingsAdj] = useState(0);
   const [assignMode, setAssignMode] = useState(false);
@@ -6007,26 +6008,7 @@ export default function Dashboard() {
                 {(() => {
                   const now = new Date();
                   const insights = [];
-                  const daysElapsed = now.getDate() || 1;
-                  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                  const projectedMonthly = activeMonthlySpend / daysElapsed * daysInMonth;
-                  const totalBudgeted = Object.values(budgetLimits).reduce((s, v) => s + v, 0);
                   if (!isDemoData) {
-                    if (totalBudgeted > 0 && projectedMonthly > totalBudgeted * 1.05) {
-                      insights.push({ type: 'warn', text: `Spending pace: on track to exceed budget by ${fmt(Math.round(projectedMonthly - totalBudgeted))} this month` });
-                    } else if (totalBudgeted > 0 && projectedMonthly <= totalBudgeted * 0.85) {
-                      insights.push({ type: 'good', text: `Budget pace: ${fmt(Math.round(totalBudgeted - projectedMonthly))} under budget at current rate` });
-                    }
-                    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                    const monthTxns = activeTxns.filter(t => { const d = new Date(t.date); return d >= monthStart && d <= now; });
-                    const mInc = monthTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
-                    const saved = mInc - activeMonthlySpend;
-                    const rate = mInc > 0 ? Math.round((saved / mInc) * 100) : null;
-                    if (rate !== null && rate >= 20) {
-                      insights.push({ type: 'good', text: `Saving ${rate}% of income this month — on target` });
-                    } else if (rate !== null && rate < 0) {
-                      insights.push({ type: 'warn', text: `Spending exceeds income by ${fmt(Math.abs(saved))} this month` });
-                    }
                     const nearGoal = goals.find(g => { const p = g.target > 0 ? ((g.current || 0) / g.target) * 100 : 0; return p >= 80 && p < 100; });
                     if (nearGoal) {
                       insights.push({ type: 'good', text: `Almost there: ${fmt(nearGoal.target - (nearGoal.current || 0))} left to reach "${nearGoal.name}"` });
@@ -6037,7 +6019,7 @@ export default function Dashboard() {
                       insights.push({ type: 'good', text: `${fmt(nextMile - netWorth)} from your next net worth milestone: ${fmt(nextMile)}` });
                     }
                   } else {
-                    insights.push({ type: 'good', text: 'Saving 25% of income this month — on target' });
+                    insights.push({ type: 'good', text: 'Emergency fund covers 2.1 months of expenses' });
                     insights.push({ type: 'warn', text: 'Food & Dining is 18% above your 3-month average' });
                     insights.push({ type: 'neutral', text: 'Emergency fund covers 2.1 months of expenses' });
                   }
@@ -6066,17 +6048,28 @@ export default function Dashboard() {
                 <DragSection id="stats" panel="overview" order={_ovOrder} onReorder={_ovReorder} handleTop={30}>
                 <div data-tour="overview-snapshot">
                 <div data-tour="overview-cards" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : g3, gap: isMobile ? 10 : 16, marginBottom: 24, marginTop: 24 }}>
-                  {[
-                    { label: 'Net Worth',         value: fmt(animNetWorth),   sub: 'Assets − Liabilities' },
-                    { label: 'Total Assets',      value: fmt(animAssets),     sub: (() => { const n = accounts.filter(a => !a.closed && a.type !== 'investment').length; return `${n} account${n !== 1 ? 's' : ''} · ${holdings.length} position${holdings.length !== 1 ? 's' : ''}`; })() },
-                    { label: 'Total Liabilities', value: fmt(animLiabilities), sub: (() => { const n = (liabilities.credit?.length || 0) + (liabilities.student?.length || 0) + (liabilities.mortgage?.length || 0) + (liabilities.car?.length || 0); return `${n} account${n !== 1 ? 's' : ''}`; })() },
-                  ].map(({ label, value, sub, color }) => (
-                    <div key={label} className="lc" style={{ ...CARD, ...(isMobile ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } : {}) }}>
-                      <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-                      <div style={{ fontSize: isMobile ? 20 : 30, fontWeight: 700, margin: isMobile ? 0 : '8px 0 4px', letterSpacing: '-1px', color: color || TEXT }}>{value}</div>
-                      {!isMobile && <div style={{ fontSize: 12, color: TEXT2 }}>{sub}</div>}
-                    </div>
-                  ))}
+                  {(() => {
+                    const NW_CARDS = [
+                      { key: 'nw',   label: 'Net Worth',         value: fmt(animNetWorth),    sub: 'Assets − Liabilities' },
+                      { key: 'ast',  label: 'Total Assets',      value: fmt(animAssets),      sub: (() => { const n = accounts.filter(a => !a.closed && a.type !== 'investment').length; return `${n} account${n !== 1 ? 's' : ''} · ${holdings.length} position${holdings.length !== 1 ? 's' : ''}`; })() },
+                      { key: 'liab', label: 'Total Liabilities', value: fmt(animLiabilities), sub: (() => { const n = (liabilities.credit?.length || 0) + (liabilities.student?.length || 0) + (liabilities.mortgage?.length || 0) + (liabilities.car?.length || 0); return `${n} account${n !== 1 ? 's' : ''}`; })() },
+                    ];
+                    const order = nwCardOrder.map(i => NW_CARDS[i]);
+                    const swap = (a, b) => { const o = [...nwCardOrder]; [o[a], o[b]] = [o[b], o[a]]; setNwCardOrder(o); try { localStorage.setItem('pl_nw_order', JSON.stringify(o)); } catch {} };
+                    return order.map((card, pos) => (
+                      <div key={card.key} className="lc" style={{ ...CARD, position: 'relative', ...(isMobile ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } : {}) }}>
+                        {!isMobile && (
+                          <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 2, opacity: 0.25 }} className="nw-arrows">
+                            <button onClick={() => swap(pos, pos - 1)} disabled={pos === 0} style={{ background: 'none', border: 'none', cursor: pos === 0 ? 'default' : 'pointer', color: TEXT2, fontSize: 13, padding: '1px 3px', opacity: pos === 0 ? 0 : 1 }}>←</button>
+                            <button onClick={() => swap(pos, pos + 1)} disabled={pos === 2} style={{ background: 'none', border: 'none', cursor: pos === 2 ? 'default' : 'pointer', color: TEXT2, fontSize: 13, padding: '1px 3px', opacity: pos === 2 ? 0 : 1 }}>→</button>
+                          </div>
+                        )}
+                        <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{card.label}</div>
+                        <div style={{ fontSize: isMobile ? 20 : 30, fontWeight: 700, margin: isMobile ? 0 : '8px 0 4px', letterSpacing: '-1px' }}>{card.value}</div>
+                        {!isMobile && <div style={{ fontSize: 12, color: TEXT2 }}>{card.sub}</div>}
+                      </div>
+                    ));
+                  })()}
                 </div>
                 </div>{/* overview-snapshot */}
                 </DragSection>
@@ -6227,6 +6220,30 @@ export default function Dashboard() {
                         <span style={{ position: 'absolute', left: `${TARGET}%`, transform: 'translateX(-50%)', color: rate !== null && rate >= TARGET ? GREEN : TEXT3 }}>{TARGET}% target</span>
                         <span style={{ position: 'absolute', right: 0 }}>100%</span>
                       </div>
+                      {!isDemoData && (() => {
+                        const _now = new Date();
+                        const daysElapsed = _now.getDate() || 1;
+                        const daysInMonth = new Date(_now.getFullYear(), _now.getMonth() + 1, 0).getDate();
+                        const projectedMonthly = activeMonthlySpend / daysElapsed * daysInMonth;
+                        const totalBudgeted = Object.values(budgetLimits).reduce((s, v) => s + v, 0);
+                        const msgs = [];
+                        if (rate !== null && rate < 0) {
+                          msgs.push({ color: RED, text: `Spending exceeds income by ${fmt(Math.abs(saved))} this month` });
+                        }
+                        if (totalBudgeted > 0 && projectedMonthly > totalBudgeted * 1.05) {
+                          msgs.push({ color: RED, text: `Spending pace: on track to exceed budget by ${fmt(Math.round(projectedMonthly - totalBudgeted))}` });
+                        } else if (totalBudgeted > 0 && projectedMonthly <= totalBudgeted * 0.85) {
+                          msgs.push({ color: GREEN, text: `Pace: ${fmt(Math.round(totalBudgeted - projectedMonthly))} under budget at current rate` });
+                        }
+                        if (msgs.length === 0) return null;
+                        return (
+                          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            {msgs.map((m, i) => (
+                              <div key={i} style={{ fontSize: 12, padding: '5px 10px', borderRadius: 6, background: `${m.color}12`, color: m.color, fontWeight: 500 }}>{m.text}</div>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 })()}
@@ -7799,19 +7816,6 @@ export default function Dashboard() {
 
                   return (
                     <div data-tour="budget-expenses">
-                      {/* ── Plan This Month (YNAB-style assignment) ── */}
-                      {selectedExpenseMonth === 0 && !assignMode && (
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-                          <button onClick={() => {
-                            const init = {};
-                            displayBudget.forEach(b => { if (budgetLimits[b.category]) init[b.category] = String(budgetLimits[b.category]); });
-                            setPendingAlloc(init);
-                            setAssignMode(true);
-                          }} style={{ padding: '7px 16px', background: BLUE_BTN, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                            Plan This Month
-                          </button>
-                        </div>
-                      )}
                       {assignMode && selectedExpenseMonth === 0 && (() => {
                         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
                         const monthTxns = activeTxns.filter(t => { const d = new Date(t.date); return d >= monthStart && d <= now; });
@@ -7878,6 +7882,18 @@ export default function Dashboard() {
                         loading={adviceState.budgeting?.loading}
                         text={adviceState.budgeting?.text}
                       />
+                      {selectedExpenseMonth === 0 && !assignMode && (
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12, marginTop: 4 }}>
+                          <button onClick={() => {
+                            const init = {};
+                            displayBudget.forEach(b => { if (budgetLimits[b.category]) init[b.category] = String(budgetLimits[b.category]); });
+                            setPendingAlloc(init);
+                            setAssignMode(true);
+                          }} style={{ padding: '7px 16px', background: BLUE_BTN, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                            Plan This Month
+                          </button>
+                        </div>
+                      )}
                       <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 16, marginBottom: 24, marginTop: 20 }}>
                         {[
                           { label: 'Month-to-Date Spend', value: fmt(hasRealExp ? activeMonthlySpend : selExp.total) },
