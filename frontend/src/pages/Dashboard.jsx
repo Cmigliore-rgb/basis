@@ -17867,15 +17867,15 @@ export default function Dashboard() {
 
         {/* ── AI ASSISTANT FLOATING BUBBLE / MINIMIZED CHAT ── */}
         {(isPremium || isDemoData) && panel !== 'assistant' && chatMessages.length > 0 && (
-          <div style={{ position: 'fixed', bottom: 24, right: 24, width: 340, background: '#0f1420', border: `1px solid rgba(77,163,255,0.25)`, borderRadius: 16, boxShadow: '0 12px 40px rgba(0,0,0,0.6)', zIndex: 90, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(77,163,255,0.08)', borderBottom: `1px solid rgba(77,163,255,0.15)` }}>
+          <div style={{ position: 'fixed', bottom: 24, right: 24, width: 340, background: CARD_BG, border: BORDER, borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 90, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: BORDER }}>
               <button onClick={() => { setPanel('assistant'); switchEduMode(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                 <span style={{ color: BLUE, fontSize: 16 }}>✦</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>AI Assistant</span>
                 <span style={{ fontSize: 11, color: BLUE, fontWeight: 500 }}>↗ expand</span>
               </button>
               <button onClick={() => { setChatMessages([]); setChatInput(''); }}
-                style={{ background: 'rgba(255,255,255,0.06)', border: 'none', cursor: 'pointer', color: TEXT2, fontSize: 13, lineHeight: 1, padding: '4px 7px', borderRadius: 6 }}>✕</button>
+                style={{ background: MUTED, border: 'none', cursor: 'pointer', color: TEXT2, fontSize: 13, lineHeight: 1, padding: '4px 8px', borderRadius: 6 }}>✕</button>
             </div>
             <div style={{ maxHeight: 150, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {chatMessages.slice(-2).map((msg, i) => (
@@ -17883,23 +17883,23 @@ export default function Dashboard() {
                   <div style={{ fontSize: 10, fontWeight: 600, color: TEXT3, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     {msg.role === 'user' ? 'You' : 'AI'}
                   </div>
-                  <div style={{ fontSize: 13, lineHeight: 1.5, color: msg.role === 'user' ? TEXT : TEXT2, background: msg.role === 'user' ? 'rgba(77,163,255,0.15)' : 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '8px 12px', maxWidth: '92%' }}>
+                  <div style={{ fontSize: 13, lineHeight: 1.5, color: msg.role === 'user' ? TEXT : TEXT2, background: msg.role === 'user' ? 'rgba(77,163,255,0.12)' : DARK, borderRadius: 10, padding: '8px 12px', maxWidth: '92%' }}>
                     {msg.content.length > 140 ? msg.content.slice(0, 140) + '…' : msg.content}
                   </div>
                 </div>
               ))}
             </div>
-            <div style={{ padding: '10px 12px', borderTop: `1px solid rgba(255,255,255,0.06)`, background: 'rgba(0,0,0,0.2)' }}>
+            <div style={{ padding: '10px 12px', borderTop: BORDER }}>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                   placeholder="Ask anything..."
-                  style={{ flex: 1, padding: '8px 12px', background: 'rgba(255,255,255,0.06)', border: `1px solid rgba(255,255,255,0.1)`, borderRadius: 9, color: TEXT, fontSize: 13, outline: 'none' }}
+                  style={{ flex: 1, padding: '8px 12px', background: MUTED, border: BORDER, borderRadius: 9, color: TEXT, fontSize: 13, outline: 'none' }}
                 />
                 <button onClick={sendMessage} disabled={!chatInput.trim() || chatLoading}
-                  style={{ padding: '8px 14px', background: chatInput.trim() && !chatLoading ? BLUE_BTN : 'rgba(255,255,255,0.06)', color: chatInput.trim() && !chatLoading ? '#fff' : TEXT3, border: 'none', borderRadius: 9, fontSize: 14, cursor: chatInput.trim() && !chatLoading ? 'pointer' : 'default', transition: 'background 0.15s' }}>
+                  style={{ padding: '8px 14px', background: chatInput.trim() && !chatLoading ? BLUE_BTN : MUTED, color: chatInput.trim() && !chatLoading ? '#fff' : TEXT3, border: 'none', borderRadius: 9, fontSize: 14, cursor: chatInput.trim() && !chatLoading ? 'pointer' : 'default', transition: 'background 0.15s' }}>
                   →
                 </button>
               </div>
