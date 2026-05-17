@@ -5124,7 +5124,7 @@ export default function Dashboard() {
               </a>
             </div>
             {checkoutError && <div style={{ textAlign: 'center', fontSize: 12, color: RED, marginBottom: 8 }}>{checkoutError}</div>}
-            <div style={{ textAlign: 'center', fontSize: 13, color: TEXT2, marginBottom: 8 }}>☕ Less than a Starbucks latte per month.</div>
+            <div style={{ textAlign: 'center', fontSize: 13, color: TEXT2, marginBottom: 8 }}>Less than $1 a day for full financial clarity.</div>
             <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3, marginBottom: 8 }}>Secured by Stripe. Cancel anytime.</div>
             <div style={{ textAlign: 'center', fontSize: 11, color: TEXT3 }}>
               By subscribing you agree to our{' '}
@@ -9415,8 +9415,8 @@ export default function Dashboard() {
                                   {(t.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                                 <td style={{ padding: '11px 14px', textAlign: 'right', fontSize: 13 }}>{pctCell(d1)}</td>
-                                <td style={{ padding: '11px 14px', textAlign: 'right', fontSize: 13 }}>{pctCell(ext.changePct1w ?? null)}</td>
-                                <td style={{ padding: '11px 14px', textAlign: 'right', fontSize: 13 }}>{pctCell(ext.changePct1m ?? null)}</td>
+                                <td style={{ padding: '11px 14px', textAlign: 'right', fontSize: 13 }}>{pctCell(ext.changePct5d ?? null)}</td>
+                                <td style={{ padding: '11px 14px', textAlign: 'right', fontSize: 13 }}>{pctCell(ext.changePct1mo ?? null)}</td>
                                 {marketView === 'your_list' && (
                                   <td style={{ padding: '11px 14px', textAlign: 'right' }}>
                                     <button onClick={() => {
@@ -18021,8 +18021,8 @@ export default function Dashboard() {
               return (
                 <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
                   {pct(d1, '1 Day')}
-                  {pct(ext.changePct1w ?? null, '1 Week')}
-                  {pct(ext.changePct1m ?? null, '1 Month')}
+                  {pct(ext.changePct5d ?? null, '1 Week')}
+                  {pct(ext.changePct1mo ?? null, '1 Month')}
                   <div style={{ flex: 1, padding: '12px 16px', background: DARK, borderRadius: 10, textAlign: 'center', border: BORDER }}>
                     <div style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>Price</div>
                     <div style={{ fontSize: 16, fontWeight: 800, color: TEXT, fontFamily: 'monospace' }}>
