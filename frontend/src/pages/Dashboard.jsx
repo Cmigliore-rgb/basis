@@ -3553,7 +3553,8 @@ export default function Dashboard() {
 
   const effectiveProfessor = isAdmin && viewAs ? viewAs === 'professor' : isProfessor;
   const effectiveStudent   = isAdmin && viewAs ? viewAs === 'student'   : user?.role === 'student';
-  const canSeeAI           = !isDemoData && isPremium;
+  const effectivePremium   = (isAdmin && viewAs === 'free') ? false : isPremium;
+  const canSeeAI           = !isDemoData && effectivePremium;
 
   const openTourAt = (stepIndex) => {
     const steps = effectiveProfessor ? PROFESSOR_TOUR_STEPS : effectiveStudent ? STUDENT_TOUR_STEPS : FINANCE_TOUR_STEPS;
@@ -4187,7 +4188,7 @@ export default function Dashboard() {
           { label: 'Market Insights', icon: '◬', action: () => { setPanel('insights'); switchEduMode(false); } },
           { label: 'Learn',           icon: '✦', action: () => { setPanel('learn'); switchEduMode(false); } },
           { label: 'Settings',        icon: '⚙', action: () => { setPanel('settings'); switchEduMode(false); } },
-          ...((isPremium || isDemoData) ? [{ label: 'AI Assistant', icon: '✦', action: () => { setPanel('assistant'); switchEduMode(false); } }] : []),
+          ...((effectivePremium || isDemoData) ? [{ label: 'AI Assistant', icon: '✦', action: () => { setPanel('assistant'); switchEduMode(false); } }] : []),
           ...(isStudent || isAdmin ? [{ label: 'My Courses', icon: '◫', action: () => { setPanel('edu-courses'); switchEduMode(true); } }] : []),
         ];
         const txnItems = cmdQuery.length >= 2
@@ -5465,8 +5466,10 @@ export default function Dashboard() {
             {viewAs && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 10, marginBottom: 24 }}>
                 <span style={{ fontSize: 13 }}>👁</span>
-                <span style={{ fontSize: 13, color: YELLOW, fontWeight: 600 }}>Previewing as {viewAs === 'professor' ? 'Professor' : 'Student'}</span>
-                <span style={{ fontSize: 12, color: TEXT2 }}>— instructor-only controls are {viewAs === 'professor' ? 'visible' : 'hidden'}</span>
+                <span style={{ fontSize: 13, color: YELLOW, fontWeight: 600 }}>Previewing as {viewAs === 'professor' ? 'Professor' : viewAs === 'free' ? 'Free User' : 'Student'}</span>
+                <span style={{ fontSize: 12, color: TEXT2 }}>
+                  {viewAs === 'free' ? '— AI insights and assistant are hidden' : `— instructor-only controls are ${viewAs === 'professor' ? 'visible' : 'hidden'}`}
+                </span>
                 <button onClick={() => setViewAs(null)} style={{ marginLeft: 'auto', padding: '5px 12px', background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 6, color: YELLOW, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Exit Preview</button>
               </div>
             )}
@@ -10721,7 +10724,7 @@ export default function Dashboard() {
             })()}
 
             {/* ── AI ASSISTANT ──────────────────────────── */}
-            {panel === 'assistant' && (isPremium || isDemoData) && (
+            {panel === 'assistant' && (effectivePremium || isDemoData) && (
               <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 16px', flexShrink: 0 }}>
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>AI Assistant</h1>
@@ -11103,6 +11106,7 @@ export default function Dashboard() {
                     <div style={{ display: 'flex', gap: 10 }}>
                       {[
                         { key: null,        label: 'Admin',     icon: '◈', desc: 'Your real role',        color: '#a78bfa', activeBg: 'rgba(167,139,250,0.1)', activeBorder: 'rgba(167,139,250,0.4)' },
+                        { key: 'free',      label: 'Free User', icon: '◎', desc: 'No premium features',   color: TEXT2,   activeBg: 'rgba(148,163,184,0.08)', activeBorder: 'rgba(148,163,184,0.35)' },
                         { key: 'professor', label: 'Professor', icon: '◫', desc: 'Instructor controls on', color: GREEN,   activeBg: 'rgba(74,222,128,0.08)', activeBorder: 'rgba(74,222,128,0.35)' },
                         { key: 'student',   label: 'Student',   icon: '◩', desc: 'Student-only view',     color: BLUE,    activeBg: 'rgba(77,163,255,0.08)', activeBorder: 'rgba(77,163,255,0.35)' },
                       ].map(({ key, label, icon, desc, color, activeBg, activeBorder }) => {
@@ -17820,7 +17824,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── AI ASSISTANT FLOATING BUBBLE ── */}
-        {(isPremium || isDemoData) && panel !== 'assistant' && (
+        {(effectivePremium || isDemoData) && panel !== 'assistant' && (
           <button
             onClick={() => { setPanel('assistant'); switchEduMode(false); }}
             title="AI Assistant (⌘K)"
