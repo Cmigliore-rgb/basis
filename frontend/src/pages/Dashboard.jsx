@@ -4452,10 +4452,7 @@ export default function Dashboard() {
           {!sidebarCollapsed && (
             <>
               {streak > 0 && (
-                <div title={`${streak}-day login streak`} style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 7px', background: streak >= 7 ? 'rgba(251,146,60,0.12)' : 'transparent', border: streak >= 7 ? '1px solid rgba(251,146,60,0.25)' : '1px solid transparent', borderRadius: 7, flexShrink: 0 }}>
-                  <span style={{ fontSize: 13, lineHeight: 1 }}>🔥</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: streak >= 30 ? '#f97316' : streak >= 7 ? '#fb923c' : TEXT2 }}>{streak}</span>
-                </div>
+                <span title={`${streak}-day login streak`} style={{ fontSize: 14, lineHeight: 1, flexShrink: 0, cursor: 'default' }}>🔥</span>
               )}
               <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : 'transparent', border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : '1px solid transparent', borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="#4b5563" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
@@ -9362,20 +9359,6 @@ export default function Dashboard() {
                   return (
                     <>
                       {/* Type tabs */}
-                      <div data-tour="investments-holdings" style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap' }}>
-                        {INV_TABS.map(t=>{
-                          const count=classified.filter(h=>h._type===t.key).length;
-                          const active=invTab===t.key;
-                          return (
-                            <button key={t.key} onClick={()=>{ setInvTab(t.key); setSelectedSector(null); }}
-                              style={{ padding:'7px 16px', borderRadius:8, border:active?`1px solid ${BLUE}`:BORDER, background:active?'rgba(77,163,255,0.1)':MUTED, color:active?BLUE:TEXT2, fontSize:12, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
-                              {t.label}
-                              {count>0&&<span style={{ background:active?BLUE_BTN:BORDER_C, color:active?'#fff':TEXT2, borderRadius:10, padding:'1px 6px', fontSize:10, fontWeight:700 }}>{count}</span>}
-                            </button>
-                          );
-                        })}
-                      </div>
-
                       {/* Investment Fee Tracker */}
                       {(() => {
                         const EXPENSE_RATIOS = {
@@ -9441,6 +9424,20 @@ export default function Dashboard() {
                           </div>
                         );
                       })()}
+
+                      <div data-tour="investments-holdings" style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap' }}>
+                        {INV_TABS.map(t=>{
+                          const count=classified.filter(h=>h._type===t.key).length;
+                          const active=invTab===t.key;
+                          return (
+                            <button key={t.key} onClick={()=>{ setInvTab(t.key); setSelectedSector(null); }}
+                              style={{ padding:'7px 16px', borderRadius:8, border:active?`1px solid ${BLUE}`:BORDER, background:active?'rgba(77,163,255,0.1)':MUTED, color:active?BLUE:TEXT2, fontSize:12, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
+                              {t.label}
+                              {count>0&&<span style={{ background:active?BLUE_BTN:BORDER_C, color:active?'#fff':TEXT2, borderRadius:10, padding:'1px 6px', fontSize:10, fontWeight:700 }}>{count}</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
 
                       {/* Pie + holdings grid */}
                       {activeHoldings.length>0 ? (
