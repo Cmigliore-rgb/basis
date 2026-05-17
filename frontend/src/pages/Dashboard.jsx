@@ -285,8 +285,9 @@ const NAME_DOMAIN = {
   'wm ':'walmart.com','wholefds':'wholefoodsmarket.com','sq ':'squareup.com',
 };
 
-function logoUrls(name, ticker) {
+function logoUrls(name, ticker, logoUrl) {
   const urls = [];
+  if (logoUrl) urls.push(logoUrl);
   if (ticker) {
     urls.push(`https://financialmodelingprep.com/image-stock/${ticker}.png`);
     const d = TICKER_DOMAIN[ticker];
@@ -324,9 +325,9 @@ function classifyHolding(h) {
   return 'stocks';
 }
 
-function CompanyLogo({ name, ticker, size = 26, radius = 6 }) {
+function CompanyLogo({ name, ticker, logoUrl, size = 26, radius = 6 }) {
   const [idx, setIdx] = useState(0);
-  const urls = logoUrls(name, ticker);
+  const urls = logoUrls(name, ticker, logoUrl);
   const label = (ticker || name || '?')[0].toUpperCase();
   const LOGO_COLORS = ['#4da3ff','#34d399','#a78bfa','#fb923c','#f87171','#22d3ee','#fbbf24','#60a5fa','#c084fc'];
   const bg = LOGO_COLORS[(label.charCodeAt(0) + (name || '').length) % LOGO_COLORS.length];
@@ -888,82 +889,146 @@ function TickerBar({ indices, active }) {
 }
 
 function SP500Chart({ candles, period, onPeriodChange, hidePeriods }) {
-  const _mob = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const [hoverIdx, setHoverIdx] = useState(null);
+  const svgRef = useRef(null);
+
+  const PERIODS = [
+    { key: '1d',  label: '1D'  }, { key: '5d',  label: '5D'  },
+    { key: '1mo', label: '1M'  }, { key: '6mo', label: '6M'  },
+    { key: 'ytd', label: 'YTD' }, { key: '1y',  label: '1Y'  },
+    { key: '5y',  label: '5Y'  }, { key: 'max', label: 'All' },
+  ];
+
   if (!candles || candles.length < 2) {
     return (
-      <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT2, fontSize: 13 }}>
-        {!candles || candles.length === 0 ? 'Chart unavailable' : 'Loading chart…'}
-      </div>
+      <>
+        {!hidePeriods && (
+          <div style={{ display: 'flex', gap: 3, marginBottom: 14, flexWrap: 'wrap' }}>
+            {PERIODS.map(({ key, label }) => (
+              <button key={key} onClick={() => onPeriodChange(key)} style={{ padding: '4px 9px', borderRadius: 5, border: 'none', fontSize: 11, cursor: 'pointer', fontWeight: 600, background: period === key ? BLUE_BTN : MUTED, color: period === key ? '#fff' : TEXT2 }}>{label}</button>
+            ))}
+          </div>
+        )}
+        <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT2, fontSize: 13 }}>
+          {!candles || candles.length === 0 ? 'Chart unavailable' : 'Loading chart…'}
+        </div>
+      </>
     );
   }
 
-  const W = 600, H = 180, PAD = { top: 20, right: 16, bottom: 30, left: 72 };
-  const innerW = W - PAD.left - PAD.right;
-  const innerH = H - PAD.top - PAD.bottom;
+  const W = 600, H = 180, PAD = { top: 20, right: 24, bottom: 30, left: 72 };
+  const iW = W - PAD.left - PAD.right, iH = H - PAD.top - PAD.bottom;
+  const n = candles.length;
 
   const values = candles.map(c => c.close);
-  const minV = Math.min(...values);
-  const maxV = Math.max(...values);
-  const range = maxV - minV || 1;
+  const minV = Math.min(...values), maxV = Math.max(...values), range = maxV - minV || 1;
 
-  const toX = i => PAD.left + (i / (candles.length - 1)) * innerW;
-  const toY = v => PAD.top + innerH - ((v - minV) / range) * innerH;
+  const toX = i => PAD.left + (i / Math.max(n - 1, 1)) * iW;
+  const toY = v => PAD.top + iH - ((v - minV) / range) * iH;
+
+  const first = values[0], last = values[n - 1];
+  const lineColor = last >= first ? GREEN : RED;
+  const fillId = last >= first ? 'sp5g' : 'sp5r';
 
   const points = candles.map((c, i) => `${toX(i).toFixed(1)},${toY(c.close).toFixed(1)}`).join(' ');
-  const areaPoints = `${PAD.left},${PAD.top + innerH} ${points} ${toX(candles.length - 1).toFixed(1)},${PAD.top + innerH}`;
+  const areaPath = `M ${PAD.left} ${PAD.top + iH} ` +
+    candles.map((c, i) => `L ${toX(i).toFixed(1)} ${toY(c.close).toFixed(1)}`).join(' ') +
+    ` L ${toX(n - 1).toFixed(1)} ${PAD.top + iH} Z`;
 
-  const first = values[0];
-  const last  = values[values.length - 1];
-  const change = last - first;
-  const changePct = (change / first) * 100;
-  const lineColor = change >= 0 ? GREEN : RED;
-  const fillId = change >= 0 ? 'sp500g' : 'sp500r';
+  const longPer  = ['5y','max'].includes(period);
+  const medPer   = ['1y','ytd','6mo'].includes(period);
+  const hrPer    = ['1d','5d'].includes(period);
+  const parseD   = d => new Date(d.length <= 10 ? d + 'T12:00:00' : d);
+  const fmtLbl   = d => {
+    const dt = parseD(d);
+    if (longPer) return dt.toLocaleDateString('en-US', { year: 'numeric' });
+    if (medPer)  return dt.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    if (hrPer)   return dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
 
-  const labelIdxs = Array.from({ length: Math.min(candles.length, 6) }, (_, i) =>
-    Math.round((i / (Math.min(candles.length, 6) - 1)) * (candles.length - 1))
-  );
+  const lblIdxs = Array.from({ length: 6 }, (_, i) => Math.round((i / 5) * (n - 1)));
 
-  const PERIODS = [
-    { key: '1mo', label: '1M' }, { key: '3mo', label: '3M' },
-    { key: '6mo', label: '6M' }, { key: '1y',  label: '1Y' },
-  ];
+  const getIdx = clientX => {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    const svgX = (clientX - rect.left) * (W / rect.width) - PAD.left;
+    return Math.max(0, Math.min(n - 1, Math.round((svgX / iW) * (n - 1))));
+  };
+
+  const hC = hoverIdx != null ? candles[hoverIdx] : null;
+  const hChg = hC ? hC.close - first : null;
+  const hChgPct = hChg != null ? (hChg / first) * 100 : null;
+  const dispPrice = hC ? hC.close : last;
+  const dispChg   = hC ? hChg : last - first;
+  const dispPct   = hC ? hChgPct : ((last - first) / first) * 100;
+  const dispColor = dispChg >= 0 ? GREEN : RED;
+  const hoverPct  = hoverIdx != null ? toX(hoverIdx) / W : 0;
+  const tipLeft   = hoverPct > 0.55;
 
   return (
-    <div>
+    <div style={{ position: 'relative', userSelect: 'none' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 14 }}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: 'monospace', fontSize: _mob ? 18 : 22, fontWeight: 700 }}>
-            {last.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <span style={{ fontFamily: 'monospace', fontSize: 22, fontWeight: 700 }}>
+            {dispPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: lineColor }}>
-            {change >= 0 ? '+' : ''}{change.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            {' '}({changePct >= 0 ? '+' : ''}{changePct.toFixed(2)}%)
+          <span style={{ fontSize: 12, fontWeight: 600, color: dispColor }}>
+            {dispChg >= 0 ? '+' : ''}{dispChg.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {' '}({dispPct >= 0 ? '+' : ''}{dispPct.toFixed(2)}%)
           </span>
         </div>
         {!hidePeriods && (
-          <div style={{ display: 'flex', gap: 4 }}>
+          <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
             {PERIODS.map(({ key, label }) => (
-              <button key={key} onClick={() => onPeriodChange(key)} style={{
-                padding: _mob ? '3px 9px' : '4px 12px', borderRadius: 6, border: 'none', fontSize: 11,
-                cursor: 'pointer', fontWeight: 600, transition: 'background 0.15s',
-                background: period === key ? BLUE_BTN : MUTED,
-                color: period === key ? '#fff' : TEXT2,
-              }}>{label}</button>
+              <button key={key} onClick={() => onPeriodChange(key)} style={{ padding: '4px 9px', borderRadius: 5, border: 'none', fontSize: 11, cursor: 'pointer', fontWeight: 600, background: period === key ? BLUE_BTN : MUTED, color: period === key ? '#fff' : TEXT2 }}>{label}</button>
             ))}
           </div>
         )}
       </div>
 
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+      {hC && (
+        <div style={{
+          position: 'absolute', top: 0, pointerEvents: 'none', zIndex: 10,
+          ...(tipLeft
+            ? { right: `${((1 - hoverPct) * 100).toFixed(1)}%`, marginRight: 14 }
+            : { left: `${(hoverPct * 100).toFixed(1)}%`, marginLeft: 14 }),
+          background: CARD_BG, border: `1px solid ${BORDER_C}`, borderRadius: 8,
+          padding: '8px 12px', minWidth: 152, boxShadow: '0 4px 16px rgba(0,0,0,0.45)',
+        }}>
+          <div style={{ color: TEXT2, fontSize: 11, marginBottom: 6 }}>
+            {parseD(hC.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', ...(hrPer ? { hour: 'numeric', minute: '2-digit' } : {}) })}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 3 }}>
+            <span style={{ color: TEXT2, fontSize: 12 }}>S&P 500</span>
+            <span style={{ fontWeight: 700, fontSize: 12, color: TEXT }}>{hC.close.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 3 }}>
+            <span style={{ color: TEXT2, fontSize: 12 }}>Change</span>
+            <span style={{ fontWeight: 600, fontSize: 12, color: hChg >= 0 ? GREEN : RED }}>{hChg >= 0 ? '+' : ''}{hChg.toFixed(2)}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+            <span style={{ color: TEXT2, fontSize: 12 }}>Return</span>
+            <span style={{ fontWeight: 700, fontSize: 12, color: hChgPct >= 0 ? GREEN : RED }}>{hChgPct >= 0 ? '+' : ''}{hChgPct.toFixed(2)}%</span>
+          </div>
+        </div>
+      )}
+
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`}
+        style={{ width: '100%', height: 'auto', display: 'block', cursor: 'crosshair' }}
+        onMouseMove={e => setHoverIdx(getIdx(e.clientX))}
+        onMouseLeave={() => setHoverIdx(null)}
+        onTouchMove={e => { e.preventDefault(); setHoverIdx(getIdx(e.touches[0].clientX)); }}
+        onTouchEnd={() => setHoverIdx(null)}>
         <defs>
           <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={lineColor} stopOpacity={0.18} />
+            <stop offset="0%" stopColor={lineColor} stopOpacity={0.22} />
             <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
           </linearGradient>
         </defs>
         {[0, 0.5, 1].map(t => {
-          const v = minV + t * range;
-          const y = toY(v);
+          const v = minV + t * range, y = toY(v);
           return (
             <g key={t}>
               <line x1={PAD.left} x2={W - PAD.right} y1={y} y2={y} stroke={BORDER_C} strokeWidth={1} strokeDasharray="4 4" />
@@ -973,12 +1038,19 @@ function SP500Chart({ candles, period, onPeriodChange, hidePeriods }) {
             </g>
           );
         })}
-        <polygon points={areaPoints} fill={`url(#${fillId})`} />
+        <path d={areaPath} fill={`url(#${fillId})`} />
         <polyline points={points} fill="none" stroke={lineColor} strokeWidth={1.8} strokeLinejoin="round" />
-        <circle cx={toX(candles.length - 1)} cy={toY(last)} r={3.5} fill={lineColor} />
-        {labelIdxs.map(i => (
+        {hoverIdx != null ? (
+          <>
+            <line x1={toX(hoverIdx)} y1={PAD.top} x2={toX(hoverIdx)} y2={H - PAD.bottom} stroke={BORDER_C} strokeWidth={1} strokeDasharray="3,2" />
+            <circle cx={toX(hoverIdx)} cy={toY(candles[hoverIdx].close)} r={4.5} fill={lineColor} stroke={CARD_BG} strokeWidth={2} />
+          </>
+        ) : (
+          <circle cx={toX(n - 1)} cy={toY(last)} r={3.5} fill={lineColor} />
+        )}
+        {lblIdxs.map(i => (
           <text key={i} x={toX(i)} y={H - 4} textAnchor="middle" fontSize={10} fill={TEXT3}>
-            {new Date(candles[i].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            {fmtLbl(candles[i]?.date)}
           </text>
         ))}
       </svg>
@@ -2829,7 +2901,7 @@ export default function Dashboard() {
   const [adviceState, setAdviceState] = useState({});
   const [marketTickers, setMarketTickers] = useState({ indices: [], active: [] });
   const [sp500Candles, setSp500Candles] = useState([]);
-  const [sp500Period, setSp500Period] = useState('3mo');
+  const [sp500Period, setSp500Period] = useState('1y');
   const [learnCategory, setLearnCategory] = useState(() => {
     try {
       const h = new Set(JSON.parse(localStorage.getItem('pl_hidden_subtabs') || '[]'));
@@ -3404,7 +3476,7 @@ export default function Dashboard() {
         api.get('/goals'),
         api.get('/market/fear-greed'),
         api.get('/market/tickers'),
-        api.get('/market/sp500', { params: { period: '3mo' } }),
+        api.get('/market/sp500', { params: { period: '1y' } }),
         api.get('/market/yield-curve'),
         api.get('/plaid/connections'),
       ]);
@@ -6035,7 +6107,7 @@ export default function Dashboard() {
                         {transactions.map((t, i, arr) => (
                           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER_C}` : 'none', gap: 10 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                              <CompanyLogo name={t.merchant_name || t.name} size={32} radius={8} />
+                              <CompanyLogo name={t.merchant_name || t.name} logoUrl={t.logo_url} size={32} radius={8} />
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.merchant_name || t.name}</div>
                                 <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)} · {fmtCat(resolveCategory(t))}</div>
@@ -6337,7 +6409,7 @@ export default function Dashboard() {
                                   <td style={{ padding: '8px 12px', color: TEXT2, fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(t.date)}</td>
                                   <td style={{ padding: '8px 12px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                      <CompanyLogo name={t.merchant_name || t.name} size={22} radius={5} />
+                                      <CompanyLogo name={t.merchant_name || t.name} logoUrl={t.logo_url} size={22} radius={5} />
                                       <span style={{ fontSize: 13, fontWeight: 500 }}>{t.merchant_name || t.name}</span>
                                     </div>
                                   </td>
@@ -7186,7 +7258,7 @@ export default function Dashboard() {
                           {catTxns.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, i) => (
                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < catTxns.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <CompanyLogo name={t.merchant_name || t.name} size={34} radius={8} />
+                                <CompanyLogo name={t.merchant_name || t.name} logoUrl={t.logo_url} size={34} radius={8} />
                                 <div>
                                   <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
                                   <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)}</div>

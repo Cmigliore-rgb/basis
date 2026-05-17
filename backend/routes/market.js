@@ -240,28 +240,33 @@ router.get('/chart/:symbol', async (req, res) => {
 
 // ── S&P 500 historical chart ───────────────────────────────────────────────────
 router.get('/sp500', async (req, res) => {
-  const period = req.query.period || '3mo';
+  const VALID = ['1d','5d','1mo','3mo','6mo','ytd','1y','5y','max'];
+  const period = VALID.includes(req.query.period) ? req.query.period : '1y';
   const cacheKey = `sp500-${period}`;
   if (chartCache[cacheKey] && Date.now() - chartCache[cacheKey].ts < CACHE.CHART) {
     return res.json(chartCache[cacheKey].data);
   }
   if (!yahooFinance) return res.json({ candles: [] });
   try {
-    const daysMap = { '1mo': 31, '3mo': 92, '6mo': 183, '1y': 366 };
-    const days = daysMap[period] || 92;
-    const period1 = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const daysMap = { '1d': 2, '5d': 7, '1mo': 35, '3mo': 95, '6mo': 185, '1y': 370, '5y': 1830, 'max': 7300 };
+    const interval = (period === '1d' || period === '5d') ? '1h' : '1d';
+    let period1;
+    if (period === 'ytd') {
+      period1 = new Date(new Date().getFullYear(), 0, 1);
+    } else {
+      period1 = new Date(Date.now() - (daysMap[period] || 370) * 24 * 60 * 60 * 1000);
+    }
     const period2 = new Date();
-    const result = await yahooFinance.chart('^GSPC', { period1, period2, interval: '1d' });
-    const candles = (result.quotes || [])
+    const result = await yahooFinance.chart('^GSPC', { period1, period2, interval });
+    const toDate = c => (c.date instanceof Date ? c.date : new Date(c.date)).toISOString().slice(0, interval === '1h' ? 16 : 10);
+    let candles = (result.quotes || [])
       .filter(c => c.close != null)
-      .map(c => ({
-        date: c.date instanceof Date ? c.date.toISOString().slice(0, 10) : String(c.date).slice(0, 10),
-        close: c.close,
-        open: c.open,
-        high: c.high,
-        low: c.low,
-      }));
-    console.log(`SP500 ${period}: ${candles.length} candles`);
+      .map(c => ({ date: toDate(c), close: c.close, open: c.open, high: c.high, low: c.low }));
+    if (period === '1d') {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayOnly = candles.filter(c => c.date.slice(0, 10) === todayStr);
+      if (todayOnly.length) candles = todayOnly;
+    }
     chartCache[cacheKey] = { data: { candles }, ts: Date.now() };
     res.json({ candles });
   } catch (err) {
