@@ -5925,7 +5925,7 @@ export default function Dashboard() {
               const _h = new Date().getHours();
               const _g = _h < 12 ? 'Good morning' : _h < 17 ? 'Good afternoon' : 'Good evening';
               const _n = user?.name?.split(' ')[0] || 'there';
-              const _OV_DEF = ['stats', 'free-to-spend', 'age-of-money', 'savings-rate', 'projections', 'chart', 'health', 'goals', 'txns', 'calendar'];
+              const _OV_DEF = ['stats', 'free-to-spend', 'age-of-money', 'savings-rate', 'chart', 'health', 'goals', 'txns', 'calendar'];
               const _ovOrder = getOrder('overview', _OV_DEF);
               const _ovReorder = handleReorder('overview', _OV_DEF);
               const _ovCustom = !!layoutOrder['overview'];
@@ -6244,101 +6244,6 @@ export default function Dashboard() {
                           </div>
                         );
                       })()}
-                    </div>
-                  );
-                })()}
-                </DragSection>
-
-                <DragSection id="projections" panel="overview" order={_ovOrder} onReorder={_ovReorder}>
-                {/* ── Net Worth Projections Card ── */}
-                {(() => {
-                  const now = new Date();
-                  let pv, monthlySavings;
-                  if (isDemoData) {
-                    pv = 12500; monthlySavings = 1230;
-                  } else {
-                    pv = Math.max(netWorth, 0);
-                    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                    const monthTxns = activeTxns.filter(t => { const d = new Date(t.date); return d >= monthStart && d <= now; });
-                    const mInc = monthTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
-                    monthlySavings = Math.max(mInc - activeMonthlySpend, 0);
-                  }
-                  const adjSavings = monthlySavings * (1 + projSavingsAdj / 100);
-                  const r = (projReturnRate / 100) / 12;
-                  const fv = (n) => r === 0 ? pv + adjSavings * n : pv * Math.pow(1 + r, n) + adjSavings * ((Math.pow(1 + r, n) - 1) / r);
-                  const milestones = [
-                    { label: '1 Year',   n: 12  },
-                    { label: '5 Years',  n: 60  },
-                    { label: '10 Years', n: 120 },
-                    { label: '20 Years', n: 240 },
-                    { label: '30 Years', n: 360 },
-                  ];
-                  const values = milestones.map(m => ({ ...m, value: fv(m.n) }));
-                  const maxVal = Math.max(values[values.length - 1].value, 1);
-                  const goalMilestones = goals.filter(g => g.target > (g.current || 0) && adjSavings > 0).map(g => {
-                    const needed = g.target - (g.current || 0);
-                    const months = Math.ceil(needed / adjSavings);
-                    return { name: g.name, months };
-                  }).filter(g => g.months <= 360).slice(0, 3);
-                  return (
-                    <div className="lc" style={{ ...CARD, marginBottom: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Net Worth Projections</div>
-                          <div style={{ fontSize: 11, color: TEXT2 }}>{fmt(Math.round(adjSavings))}/mo savings · {projReturnRate}% return · {projSavingsAdj !== 0 ? `${projSavingsAdj > 0 ? '+' : ''}${projSavingsAdj}% savings adj` : 'current pace'}</div>
-                        </div>
-                        {isDemoData && <span style={{ fontSize: 10, color: BLUE, background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 6, padding: '3px 8px', flexShrink: 0 }}>Demo</span>}
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-                        {values.map(m => (
-                          <div key={m.label}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                              <span style={{ fontSize: 12, color: TEXT2 }}>{m.label}</span>
-                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: GREEN }}>{fmt(Math.round(m.value))}</span>
-                            </div>
-                            <div style={{ height: 5, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${(m.value / maxVal) * 100}%`, background: `linear-gradient(90deg, ${BLUE_BTN}, ${GREEN})`, borderRadius: 3, transition: 'width 0.4s ease' }} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, paddingTop: 14, borderTop: BORDER }}>
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                            <span style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Annual Return</span>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: BLUE }}>{projReturnRate}%</span>
-                          </div>
-                          <input type="range" min="0" max="12" step="0.5" value={projReturnRate}
-                            onChange={e => setProjReturnRate(Number(e.target.value))}
-                            style={{ width: '100%', accentColor: BLUE_BTN, cursor: 'pointer' }} />
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: TEXT3, marginTop: 2 }}>
-                            <span>0%</span><span>6%</span><span>12%</span>
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                            <span style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Save More</span>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: projSavingsAdj > 0 ? GREEN : TEXT2 }}>{projSavingsAdj > 0 ? `+${projSavingsAdj}` : projSavingsAdj}%</span>
-                          </div>
-                          <input type="range" min="-50" max="100" step="5" value={projSavingsAdj}
-                            onChange={e => setProjSavingsAdj(Number(e.target.value))}
-                            style={{ width: '100%', accentColor: GREEN, cursor: 'pointer' }} />
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: TEXT3, marginTop: 2 }}>
-                            <span>-50%</span><span>+0%</span><span>+100%</span>
-                          </div>
-                        </div>
-                      </div>
-                      {goalMilestones.length > 0 && (
-                        <div style={{ marginTop: 14, paddingTop: 12, borderTop: BORDER }}>
-                          <div style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Goals on This Path</div>
-                          {goalMilestones.map(g => (
-                            <div key={g.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '5px 0', borderBottom: `1px solid ${BORDER_C}` }}>
-                              <span style={{ color: TEXT2 }}>{g.name}</span>
-                              <span style={{ color: GREEN, fontWeight: 600 }}>{g.months < 12 ? `${g.months}mo` : `${(g.months / 12).toFixed(1)}yr`}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   );
                 })()}
@@ -7883,7 +7788,7 @@ export default function Dashboard() {
                         text={adviceState.budgeting?.text}
                       />
                       {selectedExpenseMonth === 0 && !assignMode && (
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12, marginTop: 4 }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12, marginTop: 20 }}>
                           <button onClick={() => {
                             const init = {};
                             displayBudget.forEach(b => { if (budgetLimits[b.category]) init[b.category] = String(budgetLimits[b.category]); });
@@ -8536,6 +8441,99 @@ export default function Dashboard() {
 
                   return (
                     <div>
+                      {/* ── Net Worth Projections ── */}
+                      {(() => {
+                        const _now = new Date();
+                        let pv, monthlySavings;
+                        const isDemoData2 = transactions.some(t => t.transaction_id?.startsWith('demo_'));
+                        if (isDemoData2) {
+                          pv = 12500; monthlySavings = 1230;
+                        } else {
+                          pv = Math.max(netWorth, 0);
+                          const monthStart = new Date(_now.getFullYear(), _now.getMonth(), 1);
+                          const monthTxns = activeTxns.filter(t => { const d = new Date(t.date); return d >= monthStart && d <= _now; });
+                          const mInc = monthTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+                          monthlySavings = Math.max(mInc - activeMonthlySpend, 0);
+                        }
+                        const adjSavings = monthlySavings * (1 + projSavingsAdj / 100);
+                        const r = (projReturnRate / 100) / 12;
+                        const fv = (n) => r === 0 ? pv + adjSavings * n : pv * Math.pow(1 + r, n) + adjSavings * ((Math.pow(1 + r, n) - 1) / r);
+                        const milestones = [
+                          { label: '1 Year',   n: 12  },
+                          { label: '5 Years',  n: 60  },
+                          { label: '10 Years', n: 120 },
+                          { label: '20 Years', n: 240 },
+                          { label: '30 Years', n: 360 },
+                        ];
+                        const values = milestones.map(m => ({ ...m, value: fv(m.n) }));
+                        const maxVal = Math.max(values[values.length - 1].value, 1);
+                        const goalMilestones = goals.filter(g => g.target > (g.current || 0) && adjSavings > 0).map(g => {
+                          const needed = g.target - (g.current || 0);
+                          return { name: g.name, months: Math.ceil(needed / adjSavings) };
+                        }).filter(g => g.months <= 360).slice(0, 5);
+                        return (
+                          <div className="lc" style={{ ...CARD, marginBottom: 20 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                              <div>
+                                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Net Worth Projections</div>
+                                <div style={{ fontSize: 11, color: TEXT2 }}>{fmt(Math.round(adjSavings))}/mo · {projReturnRate}% return · {projSavingsAdj !== 0 ? `${projSavingsAdj > 0 ? '+' : ''}${projSavingsAdj}% savings adj` : 'current pace'}</div>
+                              </div>
+                              {isDemoData2 && <span style={{ fontSize: 10, color: BLUE, background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.3)', borderRadius: 6, padding: '3px 8px', flexShrink: 0 }}>Demo</span>}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+                              {values.map(m => (
+                                <div key={m.label}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                    <span style={{ fontSize: 12, color: TEXT2 }}>{m.label}</span>
+                                    <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: GREEN }}>{fmt(Math.round(m.value))}</span>
+                                  </div>
+                                  <div style={{ height: 5, background: MUTED, borderRadius: 3, overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', width: `${(m.value / maxVal) * 100}%`, background: `linear-gradient(90deg, ${BLUE_BTN}, ${GREEN})`, borderRadius: 3, transition: 'width 0.4s ease' }} />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, paddingTop: 14, borderTop: BORDER }}>
+                              <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                                  <span style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Annual Return</span>
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: BLUE }}>{projReturnRate}%</span>
+                                </div>
+                                <input type="range" min="0" max="12" step="0.5" value={projReturnRate}
+                                  onChange={e => setProjReturnRate(Number(e.target.value))}
+                                  style={{ width: '100%', accentColor: BLUE_BTN, cursor: 'pointer' }} />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: TEXT3, marginTop: 2 }}>
+                                  <span>0%</span><span>6%</span><span>12%</span>
+                                </div>
+                              </div>
+                              <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                                  <span style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Save More</span>
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: projSavingsAdj > 0 ? GREEN : TEXT2 }}>{projSavingsAdj > 0 ? `+${projSavingsAdj}` : projSavingsAdj}%</span>
+                                </div>
+                                <input type="range" min="-50" max="100" step="5" value={projSavingsAdj}
+                                  onChange={e => setProjSavingsAdj(Number(e.target.value))}
+                                  style={{ width: '100%', accentColor: GREEN, cursor: 'pointer' }} />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: TEXT3, marginTop: 2 }}>
+                                  <span>-50%</span><span>+0%</span><span>+100%</span>
+                                </div>
+                              </div>
+                            </div>
+                            {goalMilestones.length > 0 && (
+                              <div style={{ marginTop: 14, paddingTop: 12, borderTop: BORDER }}>
+                                <div style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Goals on This Path</div>
+                                {goalMilestones.map(g => (
+                                  <div key={g.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '5px 0', borderBottom: `1px solid ${BORDER_C}` }}>
+                                    <span style={{ color: TEXT2 }}>{g.name}</span>
+                                    <span style={{ color: GREEN, fontWeight: 600 }}>{g.months < 12 ? `${g.months}mo` : `${(g.months / 12).toFixed(1)}yr`}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
                       {/* Summary stats */}
                       {goals.length > 0 && (
                         <div style={{ display: 'grid', gridTemplateColumns: g3, gap: 12, marginBottom: 20 }}>
