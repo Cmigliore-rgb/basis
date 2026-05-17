@@ -1,9 +1,20 @@
 ﻿const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const store = require('../store');
 const requireAuth = require('../middleware/requireAuth');
 const email = require('../email');
 const db = require('../db');
+
+function unsubToken(userId) {
+  return crypto.createHmac('sha256', process.env.JWT_SECRET || 'ledger_secret')
+    .update(String(userId)).digest('hex').slice(0, 24);
+}
+
+function unsubLink(userId) {
+  const base = process.env.APP_URL || 'https://peakledger.app';
+  return `${base}/api/notifications/unsubscribe?uid=${userId}&sig=${unsubToken(userId)}`;
+}
 
 // GET /api/notifications/prefs
 router.get('/prefs', requireAuth, (req, res) => {
@@ -24,7 +35,13 @@ router.put('/prefs', requireAuth, (req, res) => {
 router.post('/send', requireAuth, async (req, res) => {
   const { type, subject, details } = req.body;
   const prefs = (req.app.locals.notificationPrefs || {})[req.user.id] || {};
+  if (prefs.emailUnsubscribed && type !== 'test') return res.json({ ok: true, skipped: true });
   const to = prefs.email || req.user.email;
+  const unsub = unsubLink(req.user.id);
+  const unsubFooter = `<p style="color:#aaa;font-size:11px;margin-top:24px;padding-top:16px;border-top:1px solid #eee">
+    You're receiving this because you enabled PeakLedger alerts.
+    <a href="${unsub}" style="color:#aaa">Unsubscribe</a>
+  </p>`;
 
   const bodies = {
     budget_alert: `
@@ -35,23 +52,27 @@ router.post('/send', requireAuth, async (req, res) => {
           <strong>${details.category}</strong>: ${details.spent} of ${details.limit} limit (${details.pct}%)
         </div>` : ''}
         <p style="color:#888;font-size:13px;margin-top:24px">Open PeakLedger to review your spending.</p>
+        ${unsubFooter}
       </div>`,
     goal_reached: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
         <h2 style="color:#16a34a;margin-bottom:8px">Goal Reached! 🎉</h2>
         <p style="color:#555;font-size:15px">You've hit your savings goal: <strong>${details?.goalName || 'Savings Goal'}</strong></p>
         <p style="color:#888;font-size:13px;margin-top:24px">Log in to PeakLedger to celebrate and set your next goal.</p>
+        ${unsubFooter}
       </div>`,
     low_balance: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
         <h2 style="color:#dc2626;margin-bottom:8px">Low Balance Alert</h2>
         <p style="color:#555;font-size:15px">${details?.accountName || 'An account'} is below your threshold: <strong>${details?.balance}</strong></p>
         <p style="color:#888;font-size:13px;margin-top:24px">Open PeakLedger to review your accounts.</p>
+        ${unsubFooter}
       </div>`,
     test: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
         <h2 style="color:#1a1a1a;margin-bottom:8px">PeakLedger Notifications are working ✓</h2>
         <p style="color:#555;font-size:15px">Your email notifications are configured correctly. You'll receive alerts here for budget overruns, goals reached, and low balances.</p>
+        ${unsubFooter}
       </div>`,
   };
 
@@ -61,6 +82,19 @@ router.post('/send', requireAuth, async (req, res) => {
   } catch (e) {
     res.status(503).json({ error: e.message });
   }
+});
+
+// GET /api/notifications/unsubscribe — one-click unsubscribe from email link
+router.get('/unsubscribe', (req, res) => {
+  const { uid, sig } = req.query;
+  if (!uid || !sig || sig !== unsubToken(uid)) {
+    return res.status(400).send('<p>Invalid or expired unsubscribe link.</p>');
+  }
+  const all = req.app.locals.notificationPrefs || {};
+  all[uid] = { ...(all[uid] || {}), emailUnsubscribed: true };
+  req.app.locals.notificationPrefs = all;
+  store.save(req.app);
+  res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Unsubscribed</title></head><body style="font-family:sans-serif;max-width:480px;margin:80px auto;text-align:center;color:#333"><h2>You've been unsubscribed</h2><p style="color:#666">You won't receive any more email alerts from PeakLedger.<br>You can re-enable them anytime in your Settings.</p><a href="https://peakledger.app" style="color:#3b82f6">Back to PeakLedger</a></body></html>`);
 });
 
 // GET /api/notifications/inbox

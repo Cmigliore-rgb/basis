@@ -1197,7 +1197,7 @@ const GROCERY_RE = /publix|kroger(?! gas| fuel)| aldi |^aldi$|trader joe|whole f
 
 const GAS_RE = /\bshell\b|exxon|mobil(?! supermarket)|\bbp\b|chevron|marathon gas|sunoco|circle k|speedway|pilot flying|love.s travel|kwik trip|kwiktrip|kwik star|wawa(?! supermarket)|casey.s|racetrac|murphy gas|murphy usa|quiktrip|\bqt\b(?= gas)|buc-ee|costco gas|costco fuel|sam.s club gas|kroger gas|kroger fuel|walmart gas|walmart fuel|gas station|\bfuel\b|\bpetroleum\b|hearts gas|sheetz|holiday station|kum & go|road ranger|flash foods|weigel|thornton|minit mart|pak.a.sak|road runner/i;
 
-function resolveCategory(txn) {
+function _resolveCategory(txn) {
   const base = txn.personal_finance_category?.primary || txn.category?.[0] || 'OTHER';
   const name = (txn.merchant_name || txn.name || '').toLowerCase();
   if (/publix\s+pharm/i.test(name)) return 'MEDICAL';
@@ -2985,7 +2985,10 @@ export default function Dashboard() {
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
   const [goalForm, setGoalForm] = useState({ name: '', target: '', accountId: '' });
-  const [notifPrefs, setNotifPrefs] = useState({ email: '', budgetAlert: true, budgetThreshold: 80, goalAlert: true, lowBalanceAlert: true, lowBalanceAmt: 50 });
+  const [notifPrefs, setNotifPrefs] = useState({ email: '', budgetAlert: true, budgetThreshold: 80, categoryThresholds: {}, goalAlert: true, lowBalanceAlert: true, lowBalanceAmt: 50, emailUnsubscribed: false });
+  const [txnCategoryOverrides, setTxnCategoryOverrides] = React.useState(() => { try { return JSON.parse(localStorage.getItem('pl_cat_overrides') || '{}'); } catch { return {}; } });
+  const resolveCategory = React.useCallback((txn) => { const id = txn.transaction_id; if (id && txnCategoryOverrides[id]) return txnCategoryOverrides[id]; return _resolveCategory(txn); }, [txnCategoryOverrides]);
+  const saveCatOverride = React.useCallback((txnId, category) => { setTxnCategoryOverrides(prev => { const n = { ...prev }; if (category) n[txnId] = category; else delete n[txnId]; localStorage.setItem('pl_cat_overrides', JSON.stringify(n)); return n; }); }, []);
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifEmailStatus, setNotifEmailStatus] = useState(null);
   const [notifConfigured, setNotifConfigured] = useState(false);
@@ -3554,8 +3557,7 @@ export default function Dashboard() {
 
   const effectiveProfessor = isAdmin && viewAs ? viewAs === 'professor' : isProfessor;
   const effectiveStudent   = isAdmin && viewAs ? viewAs === 'student'   : user?.role === 'student';
-  const effectivePremium   = (isAdmin && viewAs === 'free') ? false : isPremium;
-  const canSeeAI           = !isDemoData && effectivePremium;
+  const canSeeAI           = !isDemoData && isPremium;
 
   const openTourAt = (stepIndex) => {
     const steps = effectiveProfessor ? PROFESSOR_TOUR_STEPS : effectiveStudent ? STUDENT_TOUR_STEPS : FINANCE_TOUR_STEPS;
@@ -3711,6 +3713,7 @@ export default function Dashboard() {
 
   // Check notification conditions after data loads
   useEffect(() => {
+    if (notifPrefs.emailUnsubscribed) return;
     if (!notifPrefs.budgetAlert && !notifPrefs.goalAlert && !notifPrefs.lowBalanceAlert) return;
     const COOLDOWN = 24 * 60 * 60 * 1000;
     const lastSent = JSON.parse(localStorage.getItem('pl_notif_sent') || '{}');
@@ -3752,7 +3755,7 @@ export default function Dashboard() {
         const pct = (b.total / limit) * 100;
         if (pct >= 100) {
           trigger('budget_over', `Over budget: ${fmtCat(b.category)}`, { category: fmtCat(b.category), spent: fmt(b.total), limit: fmt(limit), pct: Math.round(pct) }, `budget_over_${b.category}`);
-        } else if (pct >= notifPrefs.budgetThreshold) {
+        } else if (pct >= (notifPrefs.categoryThresholds?.[b.category] ?? notifPrefs.budgetThreshold)) {
           trigger('budget_alert', `Budget warning: ${fmtCat(b.category)}`, { category: fmtCat(b.category), spent: fmt(b.total), limit: fmt(limit), pct: Math.round(pct) }, `budget_warn_${b.category}`);
         }
       });
@@ -4189,7 +4192,7 @@ export default function Dashboard() {
           { label: 'Market Insights', icon: '◬', action: () => { setPanel('insights'); switchEduMode(false); } },
           { label: 'Learn',           icon: '✦', action: () => { setPanel('learn'); switchEduMode(false); } },
           { label: 'Settings',        icon: '⚙', action: () => { setPanel('settings'); switchEduMode(false); } },
-          ...((effectivePremium || isDemoData) ? [{ label: 'AI Assistant', icon: '✦', action: () => { setPanel('assistant'); switchEduMode(false); } }] : []),
+          ...((isPremium || isDemoData) ? [{ label: 'AI Assistant', icon: '✦', action: () => { setPanel('assistant'); switchEduMode(false); } }] : []),
           ...(isStudent || isAdmin ? [{ label: 'My Courses', icon: '◫', action: () => { setPanel('edu-courses'); switchEduMode(true); } }] : []),
         ];
         const txnItems = cmdQuery.length >= 2
@@ -5467,9 +5470,9 @@ export default function Dashboard() {
             {viewAs && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 10, marginBottom: 24 }}>
                 <span style={{ fontSize: 13 }}>👁</span>
-                <span style={{ fontSize: 13, color: YELLOW, fontWeight: 600 }}>Previewing as {viewAs === 'professor' ? 'Professor' : viewAs === 'free' ? 'Free User' : 'Student'}</span>
+                <span style={{ fontSize: 13, color: YELLOW, fontWeight: 600 }}>Previewing as {viewAs === 'professor' ? 'Professor' : 'Student'}</span>
                 <span style={{ fontSize: 12, color: TEXT2 }}>
-                  {viewAs === 'free' ? '— AI insights and assistant are hidden' : `— instructor-only controls are ${viewAs === 'professor' ? 'visible' : 'hidden'}`}
+                  {`Instructor-only controls are ${viewAs === 'professor' ? 'visible' : 'hidden'}`}
                 </span>
                 <button onClick={() => setViewAs(null)} style={{ marginLeft: 'auto', padding: '5px 12px', background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 6, color: YELLOW, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Exit Preview</button>
               </div>
@@ -7377,20 +7380,41 @@ export default function Dashboard() {
                             <div style={{ fontWeight: 600 }}>{fmtCat(selectedCategory)}</div>
                             <div style={{ fontSize: 12, color: TEXT2 }}>{selLabel}</div>
                           </div>
-                          {catTxns.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, i) => (
-                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < catTxns.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <CompanyLogo name={t.merchant_name || t.name} logoUrl={t.logo_url} size={34} radius={8} />
-                                <div>
-                                  <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
-                                  <div style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)}</div>
+                          {catTxns.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, i) => {
+                            const isOverridden = t.transaction_id && txnCategoryOverrides[t.transaction_id];
+                            return (
+                            <div key={i} style={{ padding: '10px 0', borderBottom: i < catTxns.length - 1 ? `1px solid ${BORDER_C}` : 'none' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                  <CompanyLogo name={t.merchant_name || t.name} logoUrl={t.logo_url} size={34} radius={8} />
+                                  <div>
+                                    <div style={{ fontWeight: 500 }}>{t.merchant_name || t.name}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                      <span style={{ fontSize: 12, color: TEXT2 }}>{fmtDate(t.date)}</span>
+                                      {isOverridden && <span style={{ fontSize: 10, color: BLUE, fontWeight: 600 }}>recategorized</span>}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <div style={{ fontWeight: 600, color: RED, fontFamily: 'monospace' }}>-{fmt(Math.abs(t.amount))}</div>
+                                  {t.transaction_id && (
+                                    <select
+                                      value={txnCategoryOverrides[t.transaction_id] || resolveCategory(t)}
+                                      onChange={e => {
+                                        const newCat = e.target.value;
+                                        if (newCat === '__reset__') { saveCatOverride(t.transaction_id, null); }
+                                        else { saveCatOverride(t.transaction_id, newCat); setSelectedCategory(newCat); }
+                                      }}
+                                      style={{ fontSize: 11, padding: '3px 6px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, cursor: 'pointer', outline: 'none', maxWidth: 130 }}>
+                                      {isOverridden && <option value="__reset__">Reset to original</option>}
+                                      {Object.entries(CATEGORY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                                    </select>
+                                  )}
                                 </div>
                               </div>
-                              <div style={{ fontWeight: 600, color: RED, fontFamily: 'monospace' }}>
-                                -{fmt(Math.abs(t.amount))}
-                              </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </>
                     );
@@ -7441,6 +7465,22 @@ export default function Dashboard() {
                           })}
                         </div>
                       </div>
+                      {notifPrefs.budgetAlert && (
+                        <div style={{ ...CARD, marginBottom: 16, padding: '14px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>Budget Alert Threshold</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 160, justifyContent: 'flex-end' }}>
+                              <input type="range" min="50" max="100" value={notifPrefs.budgetThreshold}
+                                onChange={e => setNotifPrefs(p => ({ ...p, budgetThreshold: Number(e.target.value) }))}
+                                style={{ flex: 1, maxWidth: 180, accentColor: BLUE_BTN }} />
+                              <span style={{ fontSize: 13, fontWeight: 700, color: TEXT, width: 36, textAlign: 'right' }}>{notifPrefs.budgetThreshold}%</span>
+                              <button onClick={async () => { try { await api.put('/notifications/prefs', notifPrefs); } catch {} }}
+                                style={{ padding: '4px 12px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>Save</button>
+                            </div>
+                          </div>
+                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 6 }}>Alert when a category reaches this % of its limit. Override per category below.</div>
+                        </div>
+                      )}
                       <div className="lc" style={CARD}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
                           <div>
@@ -7624,6 +7664,22 @@ export default function Dashboard() {
                                       <div style={{ height: '100%', width: `${pct !== null ? pct : Math.min((b.total / (displayBudget[0]?.total || 1)) * 100, 100)}%`, background: barColor, borderRadius: 3, transition: 'width 0.3s ease' }} />
                                     </div>
                                     {over && <div style={{ fontSize: 11, color: RED, marginTop: 4 }}>Over budget by {fmt(b.total - limit)}</div>}
+                                    {limit && notifPrefs.budgetAlert && (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                                        <span style={{ fontSize: 11, color: TEXT3, flexShrink: 0 }}>Alert at</span>
+                                        <input type="range" min="50" max="100"
+                                          value={notifPrefs.categoryThresholds?.[b.category] ?? notifPrefs.budgetThreshold}
+                                          onChange={e => setNotifPrefs(p => ({ ...p, categoryThresholds: { ...p.categoryThresholds, [b.category]: Number(e.target.value) } }))}
+                                          style={{ flex: 1, accentColor: BLUE_BTN }} />
+                                        <span style={{ fontSize: 11, fontWeight: 700, color: TEXT3, width: 30, textAlign: 'right' }}>{notifPrefs.categoryThresholds?.[b.category] ?? notifPrefs.budgetThreshold}%</span>
+                                        {notifPrefs.categoryThresholds?.[b.category] != null && (
+                                          <button onClick={() => setNotifPrefs(p => { const t = { ...p.categoryThresholds }; delete t[b.category]; return { ...p, categoryThresholds: t }; })}
+                                            style={{ fontSize: 10, color: TEXT3, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>reset</button>
+                                        )}
+                                        <button onClick={async () => { try { await api.put('/notifications/prefs', notifPrefs); } catch {} }}
+                                          style={{ fontSize: 10, color: BLUE, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 600 }}>save</button>
+                                      </div>
+                                    )}
                                   </div>
                                 );
                               })}
@@ -10725,7 +10781,7 @@ export default function Dashboard() {
             })()}
 
             {/* ── AI ASSISTANT ──────────────────────────── */}
-            {panel === 'assistant' && (effectivePremium || isDemoData) && (
+            {panel === 'assistant' && (isPremium || isDemoData) && (
               <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 16px', flexShrink: 0 }}>
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>AI Assistant</h1>
@@ -11107,7 +11163,6 @@ export default function Dashboard() {
                     <div style={{ display: 'flex', gap: 10 }}>
                       {[
                         { key: null,        label: 'Admin',     icon: '◈', desc: 'Your real role',        color: '#a78bfa', activeBg: 'rgba(167,139,250,0.1)', activeBorder: 'rgba(167,139,250,0.4)' },
-                        { key: 'free',      label: 'Free User', icon: '◎', desc: 'No premium features',   color: TEXT2,   activeBg: 'rgba(148,163,184,0.08)', activeBorder: 'rgba(148,163,184,0.35)' },
                         { key: 'professor', label: 'Professor', icon: '◫', desc: 'Instructor controls on', color: GREEN,   activeBg: 'rgba(74,222,128,0.08)', activeBorder: 'rgba(74,222,128,0.35)' },
                         { key: 'student',   label: 'Student',   icon: '◩', desc: 'Student-only view',     color: BLUE,    activeBg: 'rgba(77,163,255,0.08)', activeBorder: 'rgba(77,163,255,0.35)' },
                       ].map(({ key, label, icon, desc, color, activeBg, activeBorder }) => {
@@ -11367,7 +11422,18 @@ export default function Dashboard() {
                       style={{ width: '100%', padding: '9px 12px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
 
-                  {[
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: `1px solid ${BORDER_C}`, marginBottom: 4 }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>Unsubscribe from all emails</div>
+                      <div style={{ fontSize: 11, color: TEXT2 }}>Turn off all PeakLedger notification emails</div>
+                    </div>
+                    <button onClick={() => setNotifPrefs(p => ({ ...p, emailUnsubscribed: !p.emailUnsubscribed }))}
+                      style={{ width: 42, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', background: notifPrefs.emailUnsubscribed ? RED : MUTED, position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                      <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: notifPrefs.emailUnsubscribed ? 21 : 3, transition: 'left 0.18s' }} />
+                    </button>
+                  </div>
+
+                  {!notifPrefs.emailUnsubscribed && [
                     { key: 'budgetAlert',      label: 'Budget alerts',       desc: `Notify when a category hits ${notifPrefs.budgetThreshold}% of its limit` },
                     { key: 'goalAlert',         label: 'Goal reached',        desc: 'Notify when a savings goal is complete' },
                     { key: 'lowBalanceAlert',   label: 'Low balance',         desc: `Notify when any account drops below ${fmt(notifPrefs.lowBalanceAmt)}` },
@@ -11384,7 +11450,7 @@ export default function Dashboard() {
                     </div>
                   ))}
 
-                  {notifPrefs.budgetAlert && (
+                  {!notifPrefs.emailUnsubscribed && notifPrefs.budgetAlert && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
                       <span style={{ fontSize: 12, color: TEXT2, flexShrink: 0 }}>Alert threshold</span>
                       <input type="range" min="50" max="100" value={notifPrefs.budgetThreshold}
@@ -11393,7 +11459,7 @@ export default function Dashboard() {
                       <span style={{ fontSize: 12, fontWeight: 700, color: TEXT, width: 36 }}>{notifPrefs.budgetThreshold}%</span>
                     </div>
                   )}
-                  {notifPrefs.lowBalanceAlert && (
+                  {!notifPrefs.emailUnsubscribed && notifPrefs.lowBalanceAlert && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
                       <span style={{ fontSize: 12, color: TEXT2, flexShrink: 0 }}>Low balance below</span>
                       <input type="number" value={notifPrefs.lowBalanceAmt} onChange={e => setNotifPrefs(p => ({ ...p, lowBalanceAmt: Number(e.target.value) }))}
@@ -17824,8 +17890,42 @@ export default function Dashboard() {
         )}
         </div>
 
-        {/* ── AI ASSISTANT FLOATING BUBBLE ── */}
-        {(effectivePremium || isDemoData) && panel !== 'assistant' && (
+        {/* ── AI ASSISTANT FLOATING BUBBLE / MINIMIZED CHAT ── */}
+        {(isPremium || isDemoData) && panel !== 'assistant' && chatMessages.length > 0 && (
+          <div style={{ position: 'fixed', bottom: 28, right: 28, width: 320, background: '#161b26', border: `1px solid ${BORDER_C}`, borderRadius: 14, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 90, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderBottom: `1px solid ${BORDER_C}`, background: 'rgba(77,163,255,0.06)' }}>
+              <button onClick={() => { setPanel('assistant'); switchEduMode(false); }} style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                <span style={{ color: BLUE, fontSize: 15 }}>✦</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>AI Assistant</span>
+                <span style={{ fontSize: 10, color: TEXT3 }}>— tap to expand</span>
+              </button>
+              <button onClick={() => { setChatMessages([]); setChatInput(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEXT3, fontSize: 16, lineHeight: 1, padding: 0 }}>✕</button>
+            </div>
+            <div style={{ maxHeight: 130, overflowY: 'auto', padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {chatMessages.slice(-2).map((msg, i) => (
+                <div key={i} style={{ fontSize: 12, color: msg.role === 'user' ? TEXT : TEXT2, background: msg.role === 'user' ? 'rgba(77,163,255,0.1)' : 'transparent', borderRadius: 6, padding: msg.role === 'user' ? '5px 8px' : 0, alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '90%' }}>
+                  {msg.content.length > 120 ? msg.content.slice(0, 120) + '…' : msg.content}
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: '8px 10px', borderTop: `1px solid ${BORDER_C}` }}>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                  placeholder="Ask anything..."
+                  style={{ flex: 1, padding: '7px 10px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 12, outline: 'none' }}
+                />
+                <button onClick={sendMessage} disabled={!chatInput.trim() || chatLoading}
+                  style={{ padding: '7px 12px', background: chatInput.trim() && !chatLoading ? BLUE_BTN : MUTED, color: chatInput.trim() && !chatLoading ? '#fff' : TEXT3, border: 'none', borderRadius: 8, fontSize: 13, cursor: chatInput.trim() && !chatLoading ? 'pointer' : 'default' }}>
+                  →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {(isPremium || isDemoData) && panel !== 'assistant' && chatMessages.length === 0 && (
           <button
             onClick={() => { setPanel('assistant'); switchEduMode(false); }}
             title="AI Assistant (⌘K)"
