@@ -2985,7 +2985,9 @@ export default function Dashboard() {
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
   const [goalForm, setGoalForm] = useState({ name: '', target: '', accountId: '' });
-  const [notifPrefs, setNotifPrefs] = useState({ email: '', budgetAlert: true, budgetThreshold: 80, categoryThresholds: {}, goalAlert: true, lowBalanceAlert: true, lowBalanceAmt: 50, emailUnsubscribed: false });
+  const [notifPrefs, setNotifPrefs] = useState({ email: '', budgetAlert: true, budgetThreshold: 80, categoryThresholds: {}, goalAlert: true, lowBalanceAlert: true, lowBalanceAmt: 50, emailUnsubscribed: false, weeklyDigest: false });
+  const [categoryEmojis, setCategoryEmojis] = React.useState(() => { try { return JSON.parse(localStorage.getItem('pl_cat_emojis') || '{}'); } catch { return {}; } });
+  const [emojiOpen, setEmojiOpen] = React.useState(null);
   const [txnCategoryOverrides, setTxnCategoryOverrides] = React.useState(() => { try { return JSON.parse(localStorage.getItem('pl_cat_overrides') || '{}'); } catch { return {}; } });
   const [recatOpen, setRecatOpen] = React.useState(null); // transaction_id of open dropdown
   const resolveCategory = React.useCallback((txn) => { const id = txn.transaction_id; if (id && txnCategoryOverrides[id]) return txnCategoryOverrides[id]; return _resolveCategory(txn); }, [txnCategoryOverrides]);
@@ -3714,7 +3716,6 @@ export default function Dashboard() {
 
   // Check notification conditions after data loads
   useEffect(() => {
-    if (notifPrefs.emailUnsubscribed) return;
     if (!notifPrefs.budgetAlert && !notifPrefs.goalAlert && !notifPrefs.lowBalanceAlert) return;
     const COOLDOWN = 24 * 60 * 60 * 1000;
     const lastSent = JSON.parse(localStorage.getItem('pl_notif_sent') || '{}');
@@ -3725,6 +3726,7 @@ export default function Dashboard() {
         await api.post('/notifications/send', { type, subject, details });
         lastSent[key] = now;
         localStorage.setItem('pl_notif_sent', JSON.stringify(lastSent));
+        api.get('/notifications/inbox').then(r => setInboxNotifs(r.data.notifications || [])).catch(() => {});
       } catch {}
     };
     if (notifPrefs.goalAlert) {
@@ -5124,7 +5126,7 @@ export default function Dashboard() {
               </a>
             </div>
             {checkoutError && <div style={{ textAlign: 'center', fontSize: 12, color: RED, marginBottom: 8 }}>{checkoutError}</div>}
-            <div style={{ textAlign: 'center', fontSize: 13, color: TEXT2, marginBottom: 8 }}>Less than $1 a day for full financial clarity.</div>
+            <div style={{ textAlign: 'center', fontSize: 13, color: TEXT2, fontStyle: 'italic', marginBottom: 8 }}>One less takeout order covers the whole month!</div>
             <div style={{ textAlign: 'center', fontSize: 12, color: TEXT3, marginBottom: 8 }}>Secured by Stripe. Cancel anytime.</div>
             <div style={{ textAlign: 'center', fontSize: 11, color: TEXT3 }}>
               By subscribing you agree to our{' '}
@@ -5966,6 +5968,47 @@ export default function Dashboard() {
                     </div>
                   ))}
                 </div>
+
+                {/* ── Free to Spend Card ── */}
+                {(() => {
+                  const now = new Date();
+                  let freeToSpend, subtitle;
+                  if (isDemoData) {
+                    freeToSpend = 480;
+                    subtitle = 'Remaining this month based on budget limits';
+                  } else {
+                    const totalBudgeted = Object.values(budgetLimits).reduce((s, v) => s + v, 0);
+                    if (totalBudgeted > 0) {
+                      freeToSpend = totalBudgeted - activeMonthlySpend;
+                      subtitle = `${fmt(activeMonthlySpend)} spent of ${fmt(totalBudgeted)} budgeted`;
+                    } else {
+                      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                      const monthTxns = activeTxns.filter(t => { const d = new Date(t.date); return d >= monthStart && d <= now; });
+                      const mIncome = monthTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+                      freeToSpend = mIncome - activeMonthlySpend;
+                      subtitle = mIncome > 0 ? `${fmt(activeMonthlySpend)} spent of ${fmt(mIncome)} income` : 'Set budget limits in Expenses for a precise view';
+                    }
+                  }
+                  const isPositive = freeToSpend >= 0;
+                  const color = isPositive ? GREEN : RED;
+                  return (
+                    <div className="lc" style={{ ...CARD, marginBottom: 16, borderColor: isPositive ? `${GREEN}50` : `${RED}50` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 8 }}>Free to Spend</div>
+                          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-1.5px', color, marginBottom: 4 }}>
+                            {isPositive ? '' : '−'}{fmt(Math.abs(freeToSpend))}
+                          </div>
+                          <div style={{ fontSize: 12, color: TEXT2 }}>{subtitle}</div>
+                        </div>
+                        <div style={{ fontSize: 11, color: TEXT3, textAlign: 'right', lineHeight: 1.5 }}>
+                          <div style={{ fontSize: 22, marginBottom: 2 }}>{isPositive ? '✓' : '⚠'}</div>
+                          <div style={{ color }}>{isPositive ? 'On track' : 'Over budget'}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* ── Savings Rate Card ── */}
                 {(() => {
@@ -7647,10 +7690,31 @@ export default function Dashboard() {
                                 return (
                                   <div key={i} style={{ marginBottom: 20 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                      <button onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
-                                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
-                                        <span style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{fmtCat(b.category)}</span>
-                                      </button>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}>
+                                        <button onClick={() => { setSelectedCategory(b.category); setEditingLimit(null); }}
+                                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                          {categoryEmojis[b.category] && <span style={{ fontSize: 14 }}>{categoryEmojis[b.category]}</span>}
+                                          <span style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{fmtCat(b.category)}</span>
+                                        </button>
+                                        <button onClick={e => { e.stopPropagation(); setEmojiOpen(emojiOpen === b.category ? null : b.category); }}
+                                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: TEXT3, padding: '1px 3px', opacity: 0.5, lineHeight: 1 }}
+                                          title="Set category emoji">☺</button>
+                                        {emojiOpen === b.category && (
+                                          <div style={{ position: 'absolute', left: 0, top: '100%', zIndex: 200, background: CARD_BG, border: BORDER, borderRadius: 8, padding: '8px 10px', display: 'flex', gap: 6, alignItems: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.3)', marginTop: 4 }}>
+                                            <input autoFocus
+                                              value={categoryEmojis[b.category] || ''}
+                                              onChange={e => { const v = e.target.value; const n = { ...categoryEmojis }; if (v) n[b.category] = v; else delete n[b.category]; setCategoryEmojis(n); localStorage.setItem('pl_cat_emojis', JSON.stringify(n)); }}
+                                              onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') setEmojiOpen(null); }}
+                                              placeholder="emoji"
+                                              style={{ width: 44, fontSize: 18, textAlign: 'center', padding: '4px 6px', background: DARK, border: BORDER, borderRadius: 6, outline: 'none', color: TEXT }} />
+                                            {categoryEmojis[b.category] && (
+                                              <button onClick={() => { const n = { ...categoryEmojis }; delete n[b.category]; setCategoryEmojis(n); localStorage.setItem('pl_cat_emojis', JSON.stringify(n)); setEmojiOpen(null); }}
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED, fontSize: 11, padding: 0 }}>Remove</button>
+                                            )}
+                                            <button onClick={() => setEmojiOpen(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEXT3, fontSize: 11, padding: 0 }}>Done</button>
+                                          </div>
+                                        )}
+                                      </div>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                         <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: over ? RED : TEXT }}>
                                           {fmt(b.total)}{limit && !isEditing ? ` / ${fmt(limit)}` : ''}
@@ -7914,6 +7978,61 @@ export default function Dashboard() {
                         </div>
                       )}
 
+                      {/* Bill Calendar */}
+                      {(() => {
+                        const calYear = today.getFullYear(), calMonth = today.getMonth();
+                        const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+                        const firstDay = new Date(calYear, calMonth, 1).getDay();
+                        const dayMap = {};
+                        withNext.forEach(sub => {
+                          const d = sub.nextExpected;
+                          if (d.getMonth() === calMonth && d.getFullYear() === calYear) {
+                            const day = d.getDate();
+                            if (!dayMap[day]) dayMap[day] = [];
+                            dayMap[day].push(sub);
+                          }
+                        });
+                        const cells = [];
+                        for (let i = 0; i < firstDay; i++) cells.push(null);
+                        for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+                        return (
+                          <div className="lc" style={{ ...CARD, marginBottom: 16 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>
+                              Bill Calendar — {today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 }}>
+                              {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
+                                <div key={d} style={{ fontSize: 10, color: TEXT3, textAlign: 'center', fontWeight: 600, padding: '4px 0' }}>{d}</div>
+                              ))}
+                              {cells.map((d, i) => {
+                                const subs = d ? (dayMap[d] || []) : [];
+                                const hasSub = subs.length > 0;
+                                const isToday = d === today.getDate();
+                                return (
+                                  <div key={i} title={hasSub ? subs.map(s => `${s.name}: ${fmt(s.avgAmt)}`).join(', ') : ''}
+                                    style={{ minHeight: 36, borderRadius: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '4px 2px',
+                                      background: isToday ? `${BLUE}20` : hasSub ? `${RED}12` : 'transparent',
+                                      border: isToday ? `1px solid ${BLUE}60` : hasSub ? `1px solid ${RED}30` : '1px solid transparent' }}>
+                                    {d && <span style={{ fontSize: 11, color: isToday ? BLUE : TEXT2, fontWeight: isToday ? 700 : 400 }}>{d}</span>}
+                                    {hasSub && (
+                                      <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center', marginTop: 2 }}>
+                                        {subs.slice(0, 3).map((_, idx) => (
+                                          <div key={idx} style={{ width: 5, height: 5, borderRadius: '50%', background: RED }} />
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <div style={{ fontSize: 11, color: TEXT3, display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
+                              <div style={{ width: 8, height: 8, borderRadius: '50%', background: RED, flexShrink: 0 }} />
+                              <span>Subscription charge expected. Hover a day to see details.</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
                       <div className="lc" style={CARD}>
                         <div style={{ fontWeight: 600, marginBottom: 20 }}>All Recurring Charges</div>
                         {isMobile ? (
@@ -7935,8 +8054,8 @@ export default function Dashboard() {
                           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                               <tr style={{ borderBottom: BORDER }}>
-                                {['Merchant', 'Frequency', 'Per Charge', 'Monthly Cost', 'Next Charge'].map(h => (
-                                  <th key={h} style={{ padding: '8px 12px', textAlign: ['Per Charge', 'Monthly Cost'].includes(h) ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                                {['Merchant', 'Frequency', 'Per Charge', 'Monthly Cost', 'Annual Cost', 'Next Charge'].map(h => (
+                                  <th key={h} style={{ padding: '8px 12px', textAlign: ['Per Charge', 'Monthly Cost', 'Annual Cost'].includes(h) ? 'right' : 'left', fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
                                 ))}
                               </tr>
                             </thead>
@@ -7949,6 +8068,7 @@ export default function Dashboard() {
                                     <td style={{ padding: '11px 12px' }}><span style={{ background: MUTED, color: TEXT2, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600 }}>{sub.frequency}</span></td>
                                     <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13 }}>{fmt(sub.avgAmt)}</td>
                                     <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: RED }}>{fmt(sub.monthlyCost)}</td>
+                                    <td style={{ padding: '11px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, color: TEXT2 }}>{fmt(sub.monthlyCost * 12)}</td>
                                     <td style={{ padding: '11px 12px', fontSize: 12, fontWeight: soon ? 700 : 400, color: soon ? YELLOW : TEXT2 }}>{fmtNext(sub.daysUntil, sub.nextExpected)}</td>
                                   </tr>
                                 );
@@ -11467,6 +11587,7 @@ export default function Dashboard() {
                     { key: 'budgetAlert',      label: 'Budget alerts',       desc: 'Notify when a category hits its alert threshold (set per category in Expenses)' },
                     { key: 'goalAlert',         label: 'Goal reached',        desc: 'Notify when a savings goal is complete' },
                     { key: 'lowBalanceAlert',   label: 'Low balance',         desc: `Notify when any account drops below ${fmt(notifPrefs.lowBalanceAmt)}` },
+                    { key: 'weeklyDigest',      label: 'Weekly digest',       desc: 'A weekly summary of your income, spending, and top categories sent to your email' },
                   ].map(({ key, label, desc }) => (
                     <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: `1px solid ${BORDER_C}` }}>
                       <div>
@@ -11508,9 +11629,31 @@ export default function Dashboard() {
                     }} style={{ padding: '8px 16px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                       Send Test Email
                     </button>
-                    {notifEmailStatus === 'saved' && <span style={{ fontSize: 12, color: GREEN, alignSelf: 'center' }}>Saved ✓</span>}
-                    {notifEmailStatus === 'sent'  && <span style={{ fontSize: 12, color: GREEN, alignSelf: 'center' }}>Test email sent ✓</span>}
-                    {notifEmailStatus === 'error' && <span style={{ fontSize: 12, color: RED,   alignSelf: 'center' }}>Failed — check .env credentials</span>}
+                    {!notifPrefs.emailUnsubscribed && notifPrefs.weeklyDigest && (
+                      <button onClick={async () => {
+                        try {
+                          const now = new Date();
+                          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                          const monthTxns = transactions.filter(t => { const d = new Date(t.date); return d >= monthStart && d <= now; });
+                          const income = monthTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+                          const spending = monthTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+                          const catMap = {};
+                          monthTxns.filter(t => t.amount > 0).forEach(t => { const c = fmtCat(resolveCategory(t)); catMap[c] = (catMap[c] || 0) + t.amount; });
+                          const topCategories = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, amount]) => ({ name, amount }));
+                          const nw = accounts.reduce((s, a) => s + (a.balance ?? a.balances?.current ?? 0), 0);
+                          await api.post('/notifications/digest', { income, spending, saved: income - spending, topCategories, netWorth: nw });
+                          setNotifEmailStatus('digest');
+                          api.get('/notifications/inbox').then(r => setInboxNotifs(r.data.notifications || [])).catch(() => {});
+                        } catch { setNotifEmailStatus('error'); }
+                        setTimeout(() => setNotifEmailStatus(null), 3000);
+                      }} style={{ padding: '8px 16px', background: MUTED, border: BORDER, borderRadius: 7, color: TEXT2, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                        Send Digest Now
+                      </button>
+                    )}
+                    {notifEmailStatus === 'saved'  && <span style={{ fontSize: 12, color: GREEN, alignSelf: 'center' }}>Saved ✓</span>}
+                    {notifEmailStatus === 'sent'   && <span style={{ fontSize: 12, color: GREEN, alignSelf: 'center' }}>Test email sent ✓</span>}
+                    {notifEmailStatus === 'digest' && <span style={{ fontSize: 12, color: GREEN, alignSelf: 'center' }}>Digest sent ✓</span>}
+                    {notifEmailStatus === 'error'  && <span style={{ fontSize: 12, color: RED,   alignSelf: 'center' }}>Failed — check .env credentials</span>}
                   </div>
                 </div>
 

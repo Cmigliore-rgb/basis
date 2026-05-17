@@ -35,8 +35,18 @@ router.put('/prefs', requireAuth, (req, res) => {
 router.post('/send', requireAuth, async (req, res) => {
   const { type, subject, details } = req.body;
   const prefs = (req.app.locals.notificationPrefs || {})[req.user.id] || {};
-  if (prefs.emailUnsubscribed && type !== 'test') return res.json({ ok: true, skipped: true });
   const to = prefs.email || req.user.email;
+
+  // Always insert into in-app inbox (except test pings)
+  if (type !== 'test') {
+    try {
+      db.prepare('INSERT INTO notifications (user_id, type, title, body) VALUES (?, ?, ?, ?)')
+        .run(req.user.id, type, subject || 'PeakLedger Alert', details?.message || '');
+    } catch {}
+  }
+
+  // Skip email if unsubscribed (except test type)
+  if (prefs.emailUnsubscribed && type !== 'test') return res.json({ ok: true, skipped: true });
   const unsub = unsubLink(req.user.id);
   const unsubFooter = `<p style="color:#aaa;font-size:11px;margin-top:24px;padding-top:16px;border-top:1px solid #eee">
     You're receiving this because you enabled PeakLedger alerts.
@@ -136,6 +146,69 @@ router.patch('/inbox/:id/read', requireAuth, (req, res) => {
   db.prepare('UPDATE notifications SET read = 1 WHERE id = ? AND user_id = ?')
     .run(Number(req.params.id), req.user.id);
   res.json({ ok: true });
+});
+
+// POST /api/notifications/digest  — weekly financial summary email
+router.post('/digest', requireAuth, async (req, res) => {
+  const prefs = (req.app.locals.notificationPrefs || {})[req.user.id] || {};
+  const to = prefs.email || req.user.email;
+  const unsub = unsubLink(req.user.id);
+  const unsubFooter = `<p style="color:#aaa;font-size:11px;margin-top:24px;padding-top:16px;border-top:1px solid #eee">
+    You're receiving this because you enabled PeakLedger weekly digests.
+    <a href="${unsub}" style="color:#aaa">Unsubscribe</a>
+  </p>`;
+
+  const { income, spending, saved, topCategories = [], netWorth } = req.body;
+  const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const money = (n) => `$${Math.abs(Number(n)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
+      <h2 style="color:#1a1a1a;margin-bottom:4px">Your Weekly PeakLedger Digest</h2>
+      <p style="color:#888;font-size:13px;margin-bottom:20px">${dateStr}</p>
+      ${netWorth != null ? `<div style="background:#f8f9fa;border-radius:8px;padding:16px 20px;margin-bottom:16px">
+        <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Net Worth</div>
+        <div style="font-size:24px;font-weight:700;color:#1a1a1a">${money(netWorth)}</div>
+      </div>` : ''}
+      ${income != null ? `<div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;padding:12px 16px;background:#f8f9fa;border-radius:8px;margin-bottom:8px">
+          <span style="color:#555;font-size:14px">This month's income</span>
+          <span style="font-weight:700;color:#16a34a;font-family:monospace">${money(income)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:12px 16px;background:#f8f9fa;border-radius:8px;margin-bottom:8px">
+          <span style="color:#555;font-size:14px">This month's spending</span>
+          <span style="font-weight:700;color:#dc2626;font-family:monospace">${money(spending)}</span>
+        </div>
+        ${saved != null ? `<div style="display:flex;justify-content:space-between;padding:12px 16px;background:${Number(saved)>=0?'#f0fdf4':'#fef2f2'};border-radius:8px">
+          <span style="color:#555;font-size:14px">Saved so far</span>
+          <span style="font-weight:700;color:${Number(saved)>=0?'#16a34a':'#dc2626'};font-family:monospace">${Number(saved)<0?'−':''}${money(saved)}</span>
+        </div>` : ''}
+      </div>` : ''}
+      ${topCategories.length ? `<div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Top Spending Categories</div>
+        ${topCategories.slice(0, 5).map(c => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee">
+          <span style="color:#333;font-size:14px">${c.name}</span>
+          <span style="font-weight:600;font-family:monospace;color:#555">${money(c.amount)}</span>
+        </div>`).join('')}
+      </div>` : ''}
+      <p style="margin-top:20px"><a href="https://peakledger.app" style="color:#3b82f6;text-decoration:none;font-weight:600">Open PeakLedger</a></p>
+      ${unsubFooter}
+    </div>`;
+
+  // Always insert into in-app inbox
+  try {
+    db.prepare('INSERT INTO notifications (user_id, type, title, body) VALUES (?, ?, ?, ?)')
+      .run(req.user.id, 'digest', 'Weekly Digest', 'Your weekly financial summary.');
+  } catch {}
+
+  if (prefs.emailUnsubscribed) return res.json({ ok: true, skipped: true });
+
+  try {
+    await email.send({ to, subject: 'Your Weekly PeakLedger Digest', html });
+    res.json({ ok: true, to });
+  } catch (e) {
+    res.status(503).json({ error: e.message });
+  }
 });
 
 module.exports = router;
