@@ -3496,6 +3496,7 @@ export default function Dashboard() {
   const [expandedStudent, setExpandedStudent] = useState(null);
   const [inboxNotifs, setInboxNotifs] = useState([]);
   const [notifPanelOpen, setNotifPanelOpen] = useState(false);
+  const [expandedNotifId, setExpandedNotifId] = useState(null);
   const [accent, setAccent] = useState(() => localStorage.getItem('pl_accent') || 'blue');
   const ACCENT_PRESETS = {
     blue:   { accent: '#4da3ff', btn: '#0066f5' },
@@ -4710,28 +4711,48 @@ export default function Dashboard() {
                   <div style={{ fontSize: 24, marginBottom: 8 }}><svg width="22" height="22" viewBox="0 0 24 24" fill="#4b5563" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></div>
                   No notifications yet
                 </div>
-              ) : inboxNotifs.map((n, i) => (
-                <div key={n.id} onClick={() => {
-                  if (!n.read) {
-                    api.patch(`/notifications/inbox/${n.id}/read`).catch(() => {});
-                    setInboxNotifs(p => p.map(x => x.id === n.id ? { ...x, read: 1 } : x));
-                  }
-                }} style={{ padding: '12px 16px', borderBottom: i < inboxNotifs.length - 1 ? `1px solid ${BORDER_C}` : 'none', cursor: 'pointer', background: n.read ? 'transparent' : 'rgba(77,163,255,0.04)', transition: 'background 0.15s' }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: n.read ? 'transparent' : BLUE, flexShrink: 0, marginTop: 5 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
-                        <div style={{ fontSize: 13, fontWeight: n.read ? 500 : 700, color: TEXT, lineHeight: 1.35 }}>{n.title}</div>
-                        <div style={{ fontSize: 10, color: TEXT3, flexShrink: 0, marginTop: 1 }}>
-                          {new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              ) : inboxNotifs.map((n, i) => {
+                const isExpanded = expandedNotifId === n.id;
+                const TYPE_ICONS = { budget_alert: '⚠', budget_over: '🔴', goal_reached: '🎉', goal_milestone: '🏅', low_balance: '💸', test: '✓', digest: '📊', announcement: '📣' };
+                return (
+                  <div key={n.id} onClick={() => {
+                    if (!n.read) {
+                      api.patch(`/notifications/inbox/${n.id}/read`).catch(() => {});
+                      setInboxNotifs(p => p.map(x => x.id === n.id ? { ...x, read: 1 } : x));
+                    }
+                    setExpandedNotifId(isExpanded ? null : n.id);
+                  }} style={{ padding: '12px 16px', borderBottom: i < inboxNotifs.length - 1 ? `1px solid ${BORDER_C}` : 'none', cursor: 'pointer', background: isExpanded ? `${BLUE}08` : n.read ? 'transparent' : 'rgba(77,163,255,0.04)', transition: 'background 0.15s' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: n.read ? 'transparent' : BLUE, flexShrink: 0, marginTop: 5 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
+                          <div style={{ fontSize: 13, fontWeight: n.read ? 500 : 700, color: TEXT, lineHeight: 1.35 }}>
+                            {TYPE_ICONS[n.type] ? <span style={{ marginRight: 5 }}>{TYPE_ICONS[n.type]}</span> : null}{n.title}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                            <div style={{ fontSize: 10, color: TEXT3, marginTop: 1 }}>
+                              {new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </div>
+                            <div style={{ fontSize: 11, color: TEXT3, transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</div>
+                          </div>
                         </div>
+                        {!isExpanded && n.body && (
+                          <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{n.body}</div>
+                        )}
+                        {isExpanded && (
+                          <div style={{ marginTop: 6 }}>
+                            {n.body && <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.6, marginBottom: 8, whiteSpace: 'pre-wrap' }}>{n.body}</div>}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 10, color: TEXT3, background: MUTED, padding: '2px 7px', borderRadius: 10, textTransform: 'capitalize' }}>{n.type.replace(/_/g, ' ')}</span>
+                              <span style={{ fontSize: 10, color: TEXT3 }}>{new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      {n.body && <div style={{ fontSize: 12, color: TEXT2, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{n.body}</div>}
-                      <div style={{ fontSize: 10, color: TEXT3, marginTop: 4, textTransform: 'capitalize' }}>{n.type.replace('_', ' ')}</div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </>
@@ -6357,7 +6378,38 @@ export default function Dashboard() {
                       _auto: true,
                     });
                   });
-                  const allCalEvents = (ds) => [...liabBillEvents.filter(e => e.date === ds), ...calendarEvents.filter(e => e.date === ds)];
+                  // Auto-generate subscription events from detected recurring charges
+                  const subBillEvents = [];
+                  if (!isDemoData && activeTxns.length > 0) {
+                    const subGroups = {};
+                    activeTxns.filter(t => t.amount > 0).forEach(t => {
+                      const key = (t.merchant_name || t.name || '').toLowerCase().trim();
+                      if (!key) return;
+                      if (!subGroups[key]) subGroups[key] = { name: t.merchant_name || t.name, txns: [] };
+                      subGroups[key].txns.push(t);
+                    });
+                    Object.values(subGroups).forEach(({ name, txns }) => {
+                      if (txns.length < 2) return;
+                      const sorted = [...txns].sort((a, b) => new Date(a.date) - new Date(b.date));
+                      const amounts = sorted.map(t => t.amount);
+                      const avgAmt = amounts.reduce((s, a) => s + a, 0) / amounts.length;
+                      if (amounts.some(a => Math.abs(a - avgAmt) / avgAmt > 0.15)) return;
+                      const gaps = [];
+                      for (let i = 1; i < sorted.length; i++) gaps.push((new Date(sorted[i].date) - new Date(sorted[i-1].date)) / 86400000);
+                      const avgGap = gaps.reduce((s, g) => s + g, 0) / gaps.length;
+                      if (gaps.some(g => Math.abs(g - avgGap) > avgGap * 0.5)) return;
+                      if (!((avgGap>=5&&avgGap<=9)||(avgGap>=12&&avgGap<=18)||(avgGap>=26&&avgGap<=40)||(avgGap>=85&&avgGap<=100)||(avgGap>=340&&avgGap<=390))) return;
+                      const last = new Date(sorted[sorted.length-1].date + 'T12:00:00');
+                      const next = new Date(last.getTime() + avgGap * 86400000);
+                      if (next.getFullYear() === yr && next.getMonth() === mo) {
+                        const day = next.getDate();
+                        const dateStr = `${monthStr}-${String(day).padStart(2,'0')}`;
+                        subBillEvents.push({ id: `sub-${name.replace(/\s+/g,'-').toLowerCase()}-${day}`, title: name, date: dateStr, type: 'subscription', note: fmt(avgAmt), _auto: true });
+                      }
+                    });
+                  }
+
+                  const allCalEvents = (ds) => [...liabBillEvents.filter(e => e.date === ds), ...subBillEvents.filter(e => e.date === ds), ...calendarEvents.filter(e => e.date === ds)];
 
                   const saveEvent = () => {
                     if (!eventForm.title.trim() || !eventForm.date) return;
@@ -6478,7 +6530,7 @@ export default function Dashboard() {
 
                       {/* Upcoming events */}
                       {(() => {
-                        const upcoming = [...liabBillEvents, ...calendarEvents].filter(e => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+                        const upcoming = [...liabBillEvents, ...subBillEvents, ...calendarEvents].filter(e => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
                         if (!upcoming.length) return null;
                         return (
                           <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${BORDER_C}` }}>
@@ -7699,21 +7751,55 @@ export default function Dashboard() {
                                         <button onClick={e => { e.stopPropagation(); setEmojiOpen(emojiOpen === b.category ? null : b.category); }}
                                           style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: TEXT3, padding: '1px 3px', opacity: 0.5, lineHeight: 1 }}
                                           title="Set category emoji">☺</button>
-                                        {emojiOpen === b.category && (
-                                          <div style={{ position: 'absolute', left: 0, top: '100%', zIndex: 200, background: CARD_BG, border: BORDER, borderRadius: 8, padding: '8px 10px', display: 'flex', gap: 6, alignItems: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.3)', marginTop: 4 }}>
-                                            <input autoFocus
-                                              value={categoryEmojis[b.category] || ''}
-                                              onChange={e => { const v = e.target.value; const n = { ...categoryEmojis }; if (v) n[b.category] = v; else delete n[b.category]; setCategoryEmojis(n); localStorage.setItem('pl_cat_emojis', JSON.stringify(n)); }}
-                                              onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') setEmojiOpen(null); }}
-                                              placeholder="emoji"
-                                              style={{ width: 44, fontSize: 18, textAlign: 'center', padding: '4px 6px', background: DARK, border: BORDER, borderRadius: 6, outline: 'none', color: TEXT }} />
-                                            {categoryEmojis[b.category] && (
-                                              <button onClick={() => { const n = { ...categoryEmojis }; delete n[b.category]; setCategoryEmojis(n); localStorage.setItem('pl_cat_emojis', JSON.stringify(n)); setEmojiOpen(null); }}
-                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED, fontSize: 11, padding: 0 }}>Remove</button>
-                                            )}
-                                            <button onClick={() => setEmojiOpen(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEXT3, fontSize: 11, padding: 0 }}>Done</button>
-                                          </div>
-                                        )}
+                                        {emojiOpen === b.category && (() => {
+                                          const PRESETS = {
+                                            'food and drink': ['🍔','🍕','🌮','🥗','☕','🍜','🛒','🍱'],
+                                            'restaurants': ['🍽️','🍔','🍕','🌮','☕','🥗','🍜','🥢'],
+                                            'shopping': ['🛍️','👕','👟','📦','🏷️','🛒','💳','🎁'],
+                                            'transportation': ['🚗','⛽','🚌','✈️','🚇','🚕','🛞','🚦'],
+                                            'travel': ['✈️','🌍','🏨','🚢','🎒','🗺️','🏖️','🧳'],
+                                            'entertainment': ['🎬','🎮','🎵','📺','🎭','🎪','🎧','🎉'],
+                                            'health': ['💊','🏥','💪','🧘','🩺','🏋️','🥦','❤️'],
+                                            'personal care': ['💄','💅','✂️','🛁','🧴','🪥','🧖','🪞'],
+                                            'utilities': ['💡','💧','🔥','📡','🌐','🏠','🔌','♻️'],
+                                            'rent and utilities': ['🏠','💡','💧','🔥','🏦','📋','🔑','🌡️'],
+                                            'housing': ['🏠','🏡','🛋️','🔑','🏗️','🪣','🧹','🛏️'],
+                                            'education': ['📚','🎓','✏️','🖥️','📖','🧑‍💻','🔬','📐'],
+                                            'insurance': ['🛡️','🏥','🚗','🏠','📋','✅','🔒','📜'],
+                                            'subscriptions': ['📱','🎵','📺','🎮','☁️','🔔','🔄','💻'],
+                                            'savings': ['💰','🐖','🏦','📈','💎','🎯','🌱','🏅'],
+                                            'investments': ['📈','💹','🏦','💎','📊','🚀','🎯','💡'],
+                                            'income': ['💵','💼','🏦','✅','📥','🎉','💚','🤑'],
+                                            'fees': ['💸','📋','🔖','💳','❗','⚠️','🧾','📑'],
+                                          };
+                                          const opts = PRESETS[b.category?.toLowerCase()] || ['⭐','❤️','🏷️','📌','✨','🎯','💡','🔖'];
+                                          const saveEmoji = (v) => { const n = { ...categoryEmojis }; if (v) n[b.category] = v; else delete n[b.category]; setCategoryEmojis(n); localStorage.setItem('pl_cat_emojis', JSON.stringify(n)); };
+                                          return (
+                                            <div style={{ position: 'absolute', left: 0, top: '100%', zIndex: 200, background: CARD_BG, border: BORDER, borderRadius: 10, padding: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.35)', marginTop: 4, minWidth: 228 }}>
+                                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                                <span style={{ fontSize: 10, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Choose emoji</span>
+                                                <button onClick={() => setEmojiOpen(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEXT3, fontSize: 14, lineHeight: 1, padding: '0 2px' }}>✕</button>
+                                              </div>
+                                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 3, marginBottom: 10 }}>
+                                                {opts.map(emoji => (
+                                                  <button key={emoji} onClick={() => { saveEmoji(emoji); setEmojiOpen(null); }}
+                                                    style={{ fontSize: 16, background: categoryEmojis[b.category] === emoji ? `${BLUE}30` : 'transparent', border: categoryEmojis[b.category] === emoji ? `1px solid ${BLUE}60` : '1px solid transparent', borderRadius: 6, cursor: 'pointer', padding: '4px 2px', lineHeight: 1, textAlign: 'center' }}>
+                                                    {emoji}
+                                                  </button>
+                                                ))}
+                                              </div>
+                                              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                                <input value={categoryEmojis[b.category] || ''} onChange={e => saveEmoji(e.target.value)}
+                                                  onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') setEmojiOpen(null); }}
+                                                  placeholder="Or type/paste..."
+                                                  style={{ flex: 1, fontSize: 13, padding: '5px 8px', background: DARK, border: BORDER, borderRadius: 6, outline: 'none', color: TEXT }} />
+                                                {categoryEmojis[b.category] && (
+                                                  <button onClick={() => { saveEmoji(''); setEmojiOpen(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED, fontSize: 11, padding: 0, whiteSpace: 'nowrap' }}>Remove</button>
+                                                )}
+                                              </div>
+                                            </div>
+                                          );
+                                        })()}
                                       </div>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                         <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'monospace', color: over ? RED : TEXT }}>
@@ -7945,15 +8031,16 @@ export default function Dashboard() {
                         </div>
                       )}
 
-                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
                         {[
                           { label: 'Monthly Total',    value: fmt(totalMonthly) },
+                          { label: 'Annual Total',     value: fmt(totalMonthly * 12), color: RED },
                           { label: 'Due Next 30 Days', value: fmt(upcomingAmt), color: upcomingAmt > 0 ? YELLOW : TEXT },
                           { label: isMockData ? 'Sample' : 'Detected', value: withNext.length },
                         ].map(({ label, value, color }) => (
                           <div key={label} className="lc" style={{ ...CARD, ...(isMobile ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } : {}) }}>
                             <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-                            <div style={{ fontSize: isMobile ? 20 : 28, fontWeight: 700, marginTop: isMobile ? 0 : 8, letterSpacing: '-0.5px', color: color || TEXT }}>{value}</div>
+                            <div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, marginTop: isMobile ? 0 : 8, letterSpacing: '-0.5px', color: color || TEXT }}>{value}</div>
                           </div>
                         ))}
                       </div>
