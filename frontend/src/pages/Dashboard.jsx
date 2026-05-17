@@ -2985,7 +2985,7 @@ export default function Dashboard() {
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
   const [goalForm, setGoalForm] = useState({ name: '', target: '', accountId: '' });
-  const [notifPrefs, setNotifPrefs] = useState({ email: '', budgetAlert: true, budgetThreshold: 80, goalAlert: true, lowBalanceAlert: true, lowBalanceAmt: 500 });
+  const [notifPrefs, setNotifPrefs] = useState({ email: '', budgetAlert: true, budgetThreshold: 80, goalAlert: true, lowBalanceAlert: true, lowBalanceAmt: 50 });
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifEmailStatus, setNotifEmailStatus] = useState(null);
   const [notifConfigured, setNotifConfigured] = useState(false);
