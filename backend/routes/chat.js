@@ -26,11 +26,12 @@ CRITICAL RULES:
 - If the data section is empty or a field is missing, say "I don't see that data connected yet" — do NOT make up numbers.
 - Every dollar figure you state must come directly from the provided data.
 
-Be concise, specific, and actionable. Format dollar amounts with $ and commas. If you spot trends or anomalies, call them out.
+FORMAT EVERY RESPONSE in exactly three parts:
+1. One or two opening sentences that directly answer the question using specific numbers from the data.
+2. Three to five bullet points (each starting with "- ") that highlight the most important specific data points, dollar amounts, or observations.
+3. One closing sentence with a concrete recommendation or next step.
 
-You can help with spending analysis, budget tracking, investment portfolio review, savings rate, specific transaction questions, and general financial planning.
-
-Write in plain conversational paragraphs like a knowledgeable friend, not a financial advisor. No bullet points, no numbered lists, no headers, no em dashes. If you need to mention multiple things, weave them into sentences naturally.`;
+No headers, no numbered lists, no em dashes. Dollar amounts use $ and commas. Keep it conversational and specific.`;
 
 router.post('/stream', requireAuth, async (req, res) => {
   const user = db.prepare('SELECT tier FROM users WHERE id = ?').get(req.user.id);

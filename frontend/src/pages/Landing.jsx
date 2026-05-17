@@ -174,6 +174,84 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Security */}
+      <section style={{ padding: '80px 40px', borderTop: `1px solid ${BORDER}` }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: GREEN, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 12 }}>Security</div>
+            <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, letterSpacing: '-1.5px', margin: '0 0 14px', color: TEXT }}>Bank-level security, built in</h2>
+            <p style={{ fontSize: 17, color: TEXT2, margin: '0 auto', maxWidth: 540, lineHeight: 1.65 }}>
+              Your financial data is handled with the same security standards as the institutions that hold it.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+            <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 28 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 11, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: GREEN, marginBottom: 18 }}>⊕</div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: TEXT }}>Bank connections via Plaid</div>
+              <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.65, marginBottom: 16 }}>
+                Plaid is the financial data platform trusted by Venmo, Robinhood, Coinbase, and thousands of other apps. Your bank login goes directly to Plaid; PeakLedger never sees or stores your credentials.
+              </div>
+              {[
+                'Read-only access: Plaid can never move or modify your money',
+                'Bank credentials go to Plaid directly, never to our servers',
+                '256-bit AES encryption in transit and at rest',
+                'OAuth connections supported by major banks',
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
+                  <span style={{ color: GREEN, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>·</span>
+                  <span style={{ fontSize: 13, color: TEXT2, lineHeight: 1.55 }}>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 28 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 11, background: 'rgba(99,91,255,0.1)', border: '1px solid rgba(99,91,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: PURPLE, marginBottom: 18 }}>◈</div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: TEXT }}>Payments via Stripe</div>
+              <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.65, marginBottom: 16 }}>
+                All billing is handled by Stripe, the payment infrastructure behind millions of businesses worldwide. Your card number never touches PeakLedger's servers at any point in the transaction.
+              </div>
+              {[
+                'PCI DSS Level 1 certified, the highest payment security standard',
+                'Card data is tokenized and stored only by Stripe',
+                '3D Secure authentication supported',
+                'Cancel your subscription anytime from Settings',
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
+                  <span style={{ color: PURPLE, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>·</span>
+                  <span style={{ fontSize: 13, color: TEXT2, lineHeight: 1.55 }}>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 28 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 11, background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#60a5fa', marginBottom: 18 }}>◉</div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: TEXT }}>Your data, your control</div>
+              <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.65, marginBottom: 16 }}>
+                We request only the permissions necessary to power your dashboard. Your data is used to show you your own financial picture; nothing is sold or shared with advertisers or third parties.
+              </div>
+              {[
+                'Disconnect any linked account at any time from Settings',
+                'Data is never sold to advertisers or third parties',
+                'Only the minimum permissions needed to read balances and transactions',
+                'Account data stays within PeakLedger and its service providers',
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
+                  <span style={{ color: '#60a5fa', fontWeight: 700, flexShrink: 0, marginTop: 2 }}>·</span>
+                  <span style={{ fontSize: 13, color: TEXT2, lineHeight: 1.55 }}>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', alignItems: 'center', marginTop: 48, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, color: TEXT3 }}>Secured by</span>
+            <div style={{ background: '#fff', borderRadius: 8, padding: '7px 18px', fontSize: 13, fontWeight: 800, color: '#000', letterSpacing: '-0.5px' }}>Plaid</div>
+            <div style={{ background: '#635bff', borderRadius: 8, padding: '7px 18px', fontSize: 13, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>Stripe</div>
+          </div>
+        </div>
+      </section>
+
       {/* Download CTA */}
       <section style={{ padding: '80px 40px', borderTop: `1px solid ${BORDER}` }}>
         <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center', background: '#0f172a', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 20, padding: '56px 48px', boxShadow: '0 0 60px rgba(37,99,235,0.08)' }}>

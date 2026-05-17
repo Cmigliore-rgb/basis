@@ -1114,6 +1114,36 @@ function FearGreedGauge({ score, rating }) {
   );
 }
 
+const DEMO_CHAT_LIMIT = 3;
+const DEMO_CHAT_RESPONSES = [
+  `Your demo data shows you're spending about $80 more than you earn each month, which adds up to nearly $1,000 a year if nothing changes. Here are the main factors driving that gap:
+
+- Dining and restaurants are at $520 this month, roughly $140 above your monthly average
+- Entertainment and subscriptions together run about $135/month across streaming services, apps, and memberships
+- Your investment portfolio is up 8.2% year-to-date, tracking closely with the S&P 500 benchmark
+- Savings rate is positive but below the recommended 20% of take-home pay
+
+Cutting dining back to last month's level alone would nearly close the gap. Connect your real accounts to get this analysis applied to your actual spending numbers.`,
+
+  `Your demo investment portfolio is well-diversified across broad-market index funds with a dividend tilt. Here is how the positions break down:
+
+- VTI (Vanguard Total Market): $3,470, your largest position with full U.S. equity exposure
+- SPY (S&P 500 ETF): $2,366, adding weight to large-cap stocks with some VTI overlap
+- SCHD (Dividend ETF): $1,856, providing quarterly income and a more defensive tilt
+- AAPL (Apple): $1,056 as your only individual stock, roughly 13% of the portfolio
+
+One thing worth knowing: Apple already makes up about 7% of both VTI and SPY, so your effective Apple exposure is closer to 20% of the total. That is not necessarily a problem, but worth tracking as you rebalance over time.`,
+
+  `Your demo budget shows you are net positive this month, but the margin is thin and a couple of categories are trending in the wrong direction. Here is where things stand:
+
+- Housing is your largest fixed cost at about 32% of monthly spending, which is within the normal range
+- Food combined (dining plus groceries) is around 28%, above the recommended 20% target
+- Transportation and utilities are within normal ranges and not areas of concern right now
+- Emergency fund covers about 1.5 months of expenses, below the recommended 3 to 6 month cushion
+
+The highest-leverage move is building the emergency fund first, then redirecting any freed-up food spending toward it. Sign up and connect your real accounts to track this automatically each month.`,
+];
+
 const DEMO_AI = {
   cashflow: `You've spent more than you earned in 10 of the last 12 months, usually by about $80. Your worst month was 6 months ago when you overspent by $450. You had two good months back to back where you actually came out ahead ($40 and $20), but things slipped back after that.
 
@@ -1197,6 +1227,89 @@ function cleanAcctName(name, subtype, type, mask) {
   return name;
 }
 
+function renderAIText(text, isStreaming) {
+  if (!text) return isStreaming ? <span className="ai-cursor" /> : null;
+  const lines = text.split('\n');
+  const result = [];
+  let paraLines = [];
+  let bulletLines = [];
+
+  const flushPara = () => {
+    const joined = paraLines.filter(Boolean).join(' ').trim();
+    if (joined) result.push({ type: 'para', text: joined });
+    paraLines = [];
+  };
+  const flushBullets = () => {
+    if (bulletLines.length) result.push({ type: 'bullets', items: [...bulletLines] });
+    bulletLines = [];
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) { flushPara(); flushBullets(); continue; }
+    if (/^[-•*]\s+/.test(trimmed)) {
+      flushPara();
+      bulletLines.push(trimmed.replace(/^[-•*]\s+/, ''));
+    } else {
+      flushBullets();
+      paraLines.push(trimmed);
+    }
+  }
+  flushPara();
+  flushBullets();
+
+  return result.map((seg, i) => {
+    const isLast = i === result.length - 1;
+    if (seg.type === 'para') {
+      return (
+        <p key={i} style={{ margin: i === 0 ? '0 0 8px' : '8px 0 0', fontSize: 'inherit', lineHeight: 1.7, color: 'inherit' }}>
+          {seg.text}{isStreaming && isLast && <span className="ai-cursor" />}
+        </p>
+      );
+    }
+    return (
+      <ul key={i} style={{ margin: '8px 0', padding: 0, listStyle: 'none' }}>
+        {seg.items.map((item, j) => {
+          const isLastItem = j === seg.items.length - 1;
+          return (
+            <li key={j} style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'flex-start' }}>
+              <span style={{ color: BLUE, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>·</span>
+              <span style={{ fontSize: 'inherit', lineHeight: 1.65 }}>
+                {item}{isStreaming && isLast && isLastItem && <span className="ai-cursor" />}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  });
+}
+
+function ThinkingDots() {
+  const LABELS = [
+    'Receiving financial data',
+    'Analyzing your accounts',
+    'Thinking',
+    'Reviewing your transactions',
+    'Crunching the numbers',
+    'Checking your portfolio',
+    'Processing your request',
+    'Connecting the dots',
+  ];
+  const [idx, setIdx] = React.useState(0);
+  React.useEffect(() => {
+    const t = setInterval(() => setIdx(i => (i + 1) % LABELS.length), 2200);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+      <div style={{ padding: '12px 16px', borderRadius: '18px 18px 18px 4px', background: MUTED, fontSize: 13, color: TEXT2, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 6 }}>
+        {LABELS[idx]}<span className="ai-cursor" />
+      </div>
+    </div>
+  );
+}
+
 function AIInsightCard({ isDemoData, demoKey, onGetAdvice, loading, text }) {
   const [demoRevealed, setDemoRevealed] = React.useState(false);
   const demoText = DEMO_AI[demoKey];
@@ -1221,9 +1334,8 @@ function AIInsightCard({ isDemoData, demoKey, onGetAdvice, loading, text }) {
       </div>
       {revealed && (
         <>
-          <div style={{ fontSize: 13, lineHeight: 1.7, color: TEXT, whiteSpace: 'pre-wrap' }}>
-            {displayText}
-            {loading && <span className="ai-cursor" />}
+          <div style={{ fontSize: 13, lineHeight: 1.7, color: TEXT }}>
+            {renderAIText(displayText, loading)}
           </div>
           {!isDemoData && !loading && (
             <button onClick={onGetAdvice}
@@ -2896,6 +3008,7 @@ export default function Dashboard() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [demoChatCount, setDemoChatCount] = useState(0);
   const chatBottomRef = useRef(null);
   const [fearGreed, setFearGreed] = useState(null);
   const [adviceState, setAdviceState] = useState({});
@@ -4014,6 +4127,16 @@ export default function Dashboard() {
   const sendMessage = useCallback(async () => {
     const text = chatInput.trim();
     if (!text || chatLoading) return;
+
+    if (isDemoData) {
+      if (demoChatCount >= DEMO_CHAT_LIMIT) return;
+      const responseIdx = demoChatCount % DEMO_CHAT_RESPONSES.length;
+      setChatMessages(prev => [...prev, { role: 'user', content: text }, { role: 'assistant', content: DEMO_CHAT_RESPONSES[responseIdx] }]);
+      setChatInput('');
+      setDemoChatCount(c => c + 1);
+      return;
+    }
+
     const userMsg = { role: 'user', content: text };
     const newHistory = [...chatMessages, userMsg];
     setChatMessages(newHistory);
@@ -4037,7 +4160,7 @@ export default function Dashboard() {
       setChatMessages([...newHistory, { role: 'assistant', content: 'Sorry, couldn\'t get a response. Check GROQ_API_KEY in backend .env.' }]);
       setChatLoading(false);
     }
-  }, [chatInput, chatLoading, chatMessages, accounts, transactions, holdings, budget, budgetLimits, streamChat]);
+  }, [chatInput, chatLoading, chatMessages, accounts, transactions, holdings, budget, budgetLimits, streamChat, isDemoData, demoChatCount]);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -4064,7 +4187,7 @@ export default function Dashboard() {
           { label: 'Market Insights', icon: '◬', action: () => { setPanel('insights'); switchEduMode(false); } },
           { label: 'Learn',           icon: '✦', action: () => { setPanel('learn'); switchEduMode(false); } },
           { label: 'Settings',        icon: '⚙', action: () => { setPanel('settings'); switchEduMode(false); } },
-          ...(isPremium ? [{ label: 'AI Assistant', icon: '✦', action: () => { setPanel('assistant'); switchEduMode(false); } }] : []),
+          ...((isPremium || isDemoData) ? [{ label: 'AI Assistant', icon: '✦', action: () => { setPanel('assistant'); switchEduMode(false); } }] : []),
           ...(isStudent || isAdmin ? [{ label: 'My Courses', icon: '◫', action: () => { setPanel('edu-courses'); switchEduMode(true); } }] : []),
         ];
         const txnItems = cmdQuery.length >= 2
@@ -5900,7 +6023,7 @@ export default function Dashboard() {
                       Demo data. Connect an account to see your real history.
                     </div>
                   )}
-                  <NetWorthChart snapshots={!isDemoData && snapshots.length >= 2 ? snapshots : DEMO_SNAPSHOTS} />
+                  <NetWorthChart snapshots={isDemoData ? DEMO_SNAPSHOTS : snapshots} />
                 </div>
 
                 </DragSection>
@@ -6987,7 +7110,7 @@ export default function Dashboard() {
                     realMonths.push({ total: txns.reduce((s, t) => s + Math.abs(t.amount), 0), topSrc, txns });
                   }
                   const hasRealIncome = realMonths.some(m => m.total > 50);
-                  const useReal = hasRealIncome && !isDemoData;
+                  const useReal = !isDemoData;
 
                   const MOCK_TOTALS   = [1420, 1850, 1200, 1550, 1350, 1800];
                   const MOCK_TOP_SRCS = ['Wages', 'Financial Aid', 'Wages', 'Wages', 'Wages', 'Wages'];
@@ -7027,7 +7150,7 @@ export default function Dashboard() {
 
                   return (
                     <div data-tour="budget-income">
-                      {(!hasRealIncome || isDemoData) && (
+                      {isDemoData && (
                         <div style={{ padding: '9px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, fontSize: 12, color: BLUE, marginBottom: 20, marginTop: 4 }}>
                           Demo data. Connect accounts to see your real finances.
                         </div>
@@ -7125,12 +7248,7 @@ export default function Dashboard() {
                     const topCat = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
                     expMonths.push({ label, fullLabel, total, topCat, txns, isCurrent: i === 0, monthOffset: i });
                   }
-                  const hasRealIncomeCheck = activeTxns.some(t => {
-                    if (t.amount >= 0) return false;
-                    const cat = resolveCategory(t).toLowerCase().replace(/_/g, ' ');
-                    return ['income','payroll','wages','salary','deposit','financial aid'].some(k => cat.includes(k)) && Math.abs(t.amount) > 50;
-                  });
-                  const hasRealExp = hasRealIncomeCheck && expMonths.some(m => m.total > 20);
+                  const hasRealExp = !isDemoData;
                   const MOCK_EXPENSE_CATS = [
                     [{ category: 'food and drink', total: 480 }, { category: 'rent and utilities', total: 350 }, { category: 'shopping', total: 240 }, { category: 'transportation', total: 170 }, { category: 'entertainment', total: 100 }],
                     [{ category: 'food and drink', total: 560 }, { category: 'rent and utilities', total: 350 }, { category: 'shopping', total: 350 }, { category: 'transportation', total: 200 }, { category: 'entertainment', total: 180 }, { category: 'personal care', total: 80 }],
@@ -7276,7 +7394,7 @@ export default function Dashboard() {
 
                   return (
                     <div data-tour="budget-expenses">
-                      {!hasRealExp && (
+                      {isDemoData && (
                         <div style={{ padding: '9px 14px', background: 'rgba(77,163,255,0.06)', border: '1px solid rgba(77,163,255,0.2)', borderRadius: 8, fontSize: 12, color: BLUE, marginBottom: 16, marginTop: 4 }}>
                           Demo data. Connect accounts to see your real finances.
                         </div>
@@ -7344,7 +7462,7 @@ export default function Dashboard() {
                             if (c.includes('saving') || c.includes('invest')) return 'Savings';
                             return 'Flex';
                           };
-                          const activeCats = displayBudget.length === 0 ? (MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5]) : displayBudget;
+                          const activeCats = (isDemoData && displayBudget.length === 0) ? (MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5]) : displayBudget;
                           const buckets = { Fixed: [], Flex: [], Savings: [] };
                           activeCats.forEach(b => buckets[getBucket(b.category)].push(b));
                           const bucketTotals = { Fixed: buckets.Fixed.reduce((s, b) => s + b.total, 0), Flex: buckets.Flex.reduce((s, b) => s + b.total, 0), Savings: buckets.Savings.reduce((s, b) => s + b.total, 0) };
@@ -7392,7 +7510,7 @@ export default function Dashboard() {
                             </div>
                           );
                         })() : (() => {
-                          const activeCats = displayBudget.length === 0 ? (MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5]) : displayBudget;
+                          const activeCats = (isDemoData && displayBudget.length === 0) ? (MOCK_EXPENSE_CATS[selExpIdx] || MOCK_EXPENSE_CATS[5]) : displayBudget;
                           const CAT_COLORS = ['#4da3ff','#34d399','#fb923c','#a78bfa','#f87171','#22d3ee','#fbbf24','#60a5fa'];
                           const catSlices = activeCats.slice(0, 8).map((b, i) => ({ label: fmtCat(b.category), value: b.total, color: CAT_COLORS[i % CAT_COLORS.length] }));
                           const sliceTotal = catSlices.reduce((s, x) => s + x.value, 0) || 1;
@@ -10603,22 +10721,33 @@ export default function Dashboard() {
             })()}
 
             {/* ── AI ASSISTANT ──────────────────────────── */}
-            {panel === 'assistant' && isPremium && (
+            {panel === 'assistant' && (isPremium || isDemoData) && (
               <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
-                <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>AI Assistant</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 16px', flexShrink: 0 }}>
+                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>AI Assistant</h1>
+                  {isDemoData && (
+                    <span style={{ fontSize: 12, color: TEXT3, background: MUTED, border: BORDER, borderRadius: 6, padding: '3px 8px', fontWeight: 500 }}>
+                      Demo: {DEMO_CHAT_LIMIT - demoChatCount} message{DEMO_CHAT_LIMIT - demoChatCount !== 1 ? 's' : ''} remaining
+                    </span>
+                  )}
+                </div>
                 <div style={{ ...CARD, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, padding: 0, overflow: 'hidden' }}>
                   <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {chatMessages.length === 0 && (
                       <div style={{ textAlign: 'center', color: TEXT2, marginTop: 60 }}>
                         <div style={{ fontSize: 32, marginBottom: 12 }}>✦</div>
                         <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, color: TEXT }}>Financial Assistant</div>
-                        <div style={{ fontSize: 13 }}>Ask about your spending, investments, budget, or anything in your accounts.</div>
+                        <div style={{ fontSize: 13 }}>
+                          {isDemoData
+                            ? 'Ask about your demo finances. Try a few questions to see how the assistant works, then upgrade for unlimited access with your real data.'
+                            : 'Ask about your spending, investments, budget, or anything in your accounts.'}
+                        </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 20 }}>
                           {[
                             'How much did I spend on food this month?',
                             "What's my biggest expense category?",
                             'Summarize my financial health',
-                            'What are my account balances?',
+                            'How is my portfolio performing?',
                           ].map(q => (
                             <button key={q} onClick={() => setChatInput(q)} style={{ padding: '8px 14px', background: MUTED, border: BORDER, borderRadius: 20, fontSize: 12, cursor: 'pointer', color: TEXT2 }}>
                               {q}
@@ -10636,48 +10765,55 @@ export default function Dashboard() {
                             borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                             background: msg.role === 'user' ? BLUE_BTN : MUTED,
                             color: msg.role === 'user' ? '#fff' : TEXT,
-                            fontSize: 14, lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                            fontSize: 14, lineHeight: 1.55, wordBreak: 'break-word',
                           }}>
-                            {msg.content}
-                            {isStreamingThis && <span className="ai-cursor" />}
+                            {msg.role === 'user' ? msg.content : renderAIText(msg.content, isStreamingThis)}
                           </div>
                         </div>
                       );
                     })}
                     {chatLoading && !chatMessages.some((m, i) => i === chatMessages.length - 1 && m.role === 'assistant') && (
-                      <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                        <div style={{ padding: '12px 16px', borderRadius: '18px 18px 18px 4px', background: MUTED, display: 'flex', gap: 5, alignItems: 'center' }}>
-                          {[0, 1, 2].map(j => (
-                            <div key={j} style={{ width: 7, height: 7, borderRadius: '50%', background: TEXT2, animation: 'bounce 1.2s ease-in-out infinite', animationDelay: `${j * 0.2}s` }} />
-                          ))}
-                        </div>
-                      </div>
+                      <ThinkingDots />
                     )}
                     <div ref={chatBottomRef} />
                   </div>
-                  <div data-tour="assistant-input" style={{ padding: '16px 24px', borderTop: BORDER, display: 'flex', gap: 10, flexShrink: 0 }}>
-                    <input
-                      value={chatInput}
-                      onChange={e => setChatInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                      placeholder="Ask anything about your finances…"
-                      style={{ flex: 1, padding: '12px 16px', border: BORDER, borderRadius: 24, fontSize: 14, outline: 'none', background: MUTED, color: TEXT }}
-                    />
-                    <button
-                      onClick={sendMessage}
-                      disabled={!chatInput.trim() || chatLoading}
-                      style={{
-                        width: 44, height: 44, borderRadius: '50%', border: 'none',
-                        background: chatInput.trim() && !chatLoading ? BLUE_BTN : MUTED,
-                        color: chatInput.trim() && !chatLoading ? '#fff' : TEXT3,
-                        cursor: chatInput.trim() && !chatLoading ? 'pointer' : 'default',
-                        fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'background 0.15s', flexShrink: 0,
-                      }}
-                    >
-                      ↑
-                    </button>
-                  </div>
+                  {isDemoData && demoChatCount >= DEMO_CHAT_LIMIT ? (
+                    <div style={{ padding: '24px', borderTop: BORDER, textAlign: 'center', flexShrink: 0 }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 8 }}>You've used your demo messages</div>
+                      <div style={{ fontSize: 13, color: TEXT2, marginBottom: 20, maxWidth: 360, margin: '0 auto 20px' }}>
+                        Sign up for Premium to get unlimited access to your personal financial assistant with your real account data.
+                      </div>
+                      <button
+                        onClick={() => setShowUpgrade(true)}
+                        style={{ padding: '11px 28px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,102,245,0.35)' }}>
+                        Get Premium
+                      </button>
+                    </div>
+                  ) : (
+                    <div data-tour="assistant-input" style={{ padding: '16px 24px', borderTop: BORDER, display: 'flex', gap: 10, flexShrink: 0 }}>
+                      <input
+                        value={chatInput}
+                        onChange={e => setChatInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                        placeholder={isDemoData ? `Ask about your demo finances… (${DEMO_CHAT_LIMIT - demoChatCount} left)` : 'Ask anything about your finances…'}
+                        style={{ flex: 1, padding: '12px 16px', border: BORDER, borderRadius: 24, fontSize: 14, outline: 'none', background: MUTED, color: TEXT }}
+                      />
+                      <button
+                        onClick={sendMessage}
+                        disabled={!chatInput.trim() || chatLoading}
+                        style={{
+                          width: 44, height: 44, borderRadius: '50%', border: 'none',
+                          background: chatInput.trim() && !chatLoading ? BLUE_BTN : MUTED,
+                          color: chatInput.trim() && !chatLoading ? '#fff' : TEXT3,
+                          cursor: chatInput.trim() && !chatLoading ? 'pointer' : 'default',
+                          fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'background 0.15s', flexShrink: 0,
+                        }}
+                      >
+                        ↑
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -17684,7 +17820,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── AI ASSISTANT FLOATING BUBBLE ── */}
-        {isPremium && panel !== 'assistant' && (
+        {(isPremium || isDemoData) && panel !== 'assistant' && (
           <button
             onClick={() => { setPanel('assistant'); switchEduMode(false); }}
             title="AI Assistant (⌘K)"
