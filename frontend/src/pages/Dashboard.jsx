@@ -2987,6 +2987,7 @@ export default function Dashboard() {
   const [goalForm, setGoalForm] = useState({ name: '', target: '', accountId: '' });
   const [notifPrefs, setNotifPrefs] = useState({ email: '', budgetAlert: true, budgetThreshold: 80, categoryThresholds: {}, goalAlert: true, lowBalanceAlert: true, lowBalanceAmt: 50, emailUnsubscribed: false });
   const [txnCategoryOverrides, setTxnCategoryOverrides] = React.useState(() => { try { return JSON.parse(localStorage.getItem('pl_cat_overrides') || '{}'); } catch { return {}; } });
+  const [recatOpen, setRecatOpen] = React.useState(null); // transaction_id of open dropdown
   const resolveCategory = React.useCallback((txn) => { const id = txn.transaction_id; if (id && txnCategoryOverrides[id]) return txnCategoryOverrides[id]; return _resolveCategory(txn); }, [txnCategoryOverrides]);
   const saveCatOverride = React.useCallback((txnId, category) => { setTxnCategoryOverrides(prev => { const n = { ...prev }; if (category) n[txnId] = category; else delete n[txnId]; localStorage.setItem('pl_cat_overrides', JSON.stringify(n)); return n; }); }, []);
   const [notifSaving, setNotifSaving] = useState(false);
@@ -3755,8 +3756,13 @@ export default function Dashboard() {
         const pct = (b.total / limit) * 100;
         if (pct >= 100) {
           trigger('budget_over', `Over budget: ${fmtCat(b.category)}`, { category: fmtCat(b.category), spent: fmt(b.total), limit: fmt(limit), pct: Math.round(pct) }, `budget_over_${b.category}`);
-        } else if (pct >= (notifPrefs.categoryThresholds?.[b.category] ?? notifPrefs.budgetThreshold)) {
-          trigger('budget_alert', `Budget warning: ${fmtCat(b.category)}`, { category: fmtCat(b.category), spent: fmt(b.total), limit: fmt(limit), pct: Math.round(pct) }, `budget_warn_${b.category}`);
+        } else {
+          const thresholds = Array.isArray(notifPrefs.categoryThresholds?.[b.category])
+            ? notifPrefs.categoryThresholds[b.category]
+            : [notifPrefs.budgetThreshold || 80];
+          thresholds.forEach(threshold => {
+            if (pct >= threshold) trigger('budget_alert', `Budget warning: ${fmtCat(b.category)}`, { category: fmtCat(b.category), spent: fmt(b.total), limit: fmt(limit), pct: Math.round(pct) }, `budget_warn_${b.category}_${threshold}`);
+          });
         }
       });
     }
@@ -7284,7 +7290,14 @@ export default function Dashboard() {
                   if (!hasRealExp) {
                     displayBudget = [];
                   } else if (selectedExpenseMonth === 0) {
-                    displayBudget = activeBudget;
+                    if (Object.keys(txnCategoryOverrides).length > 0) {
+                      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                      const ct = {};
+                      activeTxns.filter(t => t.amount > 0 && new Date(t.date) >= monthStart).forEach(t => { const c = resolveCategory(t); ct[c] = (ct[c] || 0) + t.amount; });
+                      displayBudget = Object.entries(ct).map(([category, total]) => ({ category, total: Math.round(total * 100) / 100 })).sort((a, b) => b.total - a.total);
+                    } else {
+                      displayBudget = activeBudget;
+                    }
                   } else {
                     const catTotals = {};
                     selExp.txns.forEach(t => {
@@ -7398,17 +7411,33 @@ export default function Dashboard() {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                   <div style={{ fontWeight: 600, color: RED, fontFamily: 'monospace' }}>-{fmt(Math.abs(t.amount))}</div>
                                   {t.transaction_id && (
-                                    <select
-                                      value={txnCategoryOverrides[t.transaction_id] || resolveCategory(t)}
-                                      onChange={e => {
-                                        const newCat = e.target.value;
-                                        if (newCat === '__reset__') { saveCatOverride(t.transaction_id, null); }
-                                        else { saveCatOverride(t.transaction_id, newCat); setSelectedCategory(newCat); }
-                                      }}
-                                      style={{ fontSize: 11, padding: '3px 6px', background: MUTED, border: BORDER, borderRadius: 6, color: TEXT2, cursor: 'pointer', outline: 'none', maxWidth: 130 }}>
-                                      {isOverridden && <option value="__reset__">Reset to original</option>}
-                                      {Object.entries(CATEGORY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                                    </select>
+                                    <div style={{ position: 'relative' }}>
+                                      <button
+                                        onClick={() => setRecatOpen(recatOpen === t.transaction_id ? null : t.transaction_id)}
+                                        style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', background: isOverridden ? 'rgba(77,163,255,0.1)' : MUTED, border: isOverridden ? `1px solid rgba(77,163,255,0.35)` : BORDER, borderRadius: 8, color: isOverridden ? BLUE : TEXT2, fontSize: 11, fontWeight: isOverridden ? 600 : 400, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                        {fmtCat(txnCategoryOverrides[t.transaction_id] || resolveCategory(t))}
+                                        <span style={{ fontSize: 9, opacity: 0.7 }}>▾</span>
+                                      </button>
+                                      {recatOpen === t.transaction_id && (
+                                        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 200, background: CARD_BG, border: BORDER, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', minWidth: 180, maxHeight: 240, overflowY: 'auto', padding: '4px 0' }}>
+                                          {isOverridden && (
+                                            <button onClick={() => { saveCatOverride(t.transaction_id, null); setRecatOpen(null); setSelectedCategory(_resolveCategory(t)); }}
+                                              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: BLUE, fontWeight: 600, borderBottom: BORDER }}>
+                                              ↩ Reset to original
+                                            </button>
+                                          )}
+                                          {Object.entries(CATEGORY_LABEL).map(([k, v]) => {
+                                            const isCurrent = (txnCategoryOverrides[t.transaction_id] || resolveCategory(t)) === k;
+                                            return (
+                                              <button key={k} onClick={() => { saveCatOverride(t.transaction_id, k); setSelectedCategory(k); setRecatOpen(null); }}
+                                                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: isCurrent ? 'rgba(77,163,255,0.1)' : 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: isCurrent ? BLUE : TEXT, fontWeight: isCurrent ? 600 : 400 }}>
+                                                {v}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                               </div>
@@ -7648,22 +7677,39 @@ export default function Dashboard() {
                                       <div style={{ height: '100%', width: `${pct !== null ? pct : Math.min((b.total / (displayBudget[0]?.total || 1)) * 100, 100)}%`, background: barColor, borderRadius: 3, transition: 'width 0.3s ease' }} />
                                     </div>
                                     {over && <div style={{ fontSize: 11, color: RED, marginTop: 4 }}>Over budget by {fmt(b.total - limit)}</div>}
-                                    {limit && notifPrefs.budgetAlert && (
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                                        <span style={{ fontSize: 11, color: TEXT3, flexShrink: 0 }}>Alert at</span>
-                                        <input type="range" min="50" max="100"
-                                          value={notifPrefs.categoryThresholds?.[b.category] ?? notifPrefs.budgetThreshold}
-                                          onChange={e => setNotifPrefs(p => ({ ...p, categoryThresholds: { ...p.categoryThresholds, [b.category]: Number(e.target.value) } }))}
-                                          style={{ flex: 1, accentColor: BLUE_BTN }} />
-                                        <span style={{ fontSize: 11, fontWeight: 700, color: TEXT3, width: 30, textAlign: 'right' }}>{notifPrefs.categoryThresholds?.[b.category] ?? notifPrefs.budgetThreshold}%</span>
-                                        {notifPrefs.categoryThresholds?.[b.category] != null && (
-                                          <button onClick={() => setNotifPrefs(p => { const t = { ...p.categoryThresholds }; delete t[b.category]; return { ...p, categoryThresholds: t }; })}
-                                            style={{ fontSize: 10, color: TEXT3, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>reset</button>
-                                        )}
-                                        <button onClick={async () => { try { await api.put('/notifications/prefs', notifPrefs); } catch {} }}
-                                          style={{ fontSize: 10, color: BLUE, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 600 }}>save</button>
-                                      </div>
-                                    )}
+                                    {limit && notifPrefs.budgetAlert && (() => {
+                                      const catThresholds = Array.isArray(notifPrefs.categoryThresholds?.[b.category])
+                                        ? notifPrefs.categoryThresholds[b.category]
+                                        : [];
+                                      const updateThresholds = (newArr) => setNotifPrefs(p => ({ ...p, categoryThresholds: { ...p.categoryThresholds, [b.category]: newArr } }));
+                                      return (
+                                        <div style={{ marginTop: 10, padding: '10px 12px', background: DARK, borderRadius: 8, border: BORDER }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: catThresholds.length > 0 ? 8 : 0 }}>
+                                            <span style={{ fontSize: 11, color: TEXT3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Budget Alerts</span>
+                                            <div style={{ display: 'flex', gap: 6 }}>
+                                              <button onClick={() => updateThresholds([...catThresholds, 80])}
+                                                style={{ fontSize: 11, padding: '3px 9px', background: MUTED, border: BORDER, borderRadius: 6, color: BLUE, cursor: 'pointer', fontWeight: 600 }}>+ Add</button>
+                                              <button onClick={async () => { try { await api.put('/notifications/prefs', notifPrefs); } catch {} }}
+                                                style={{ fontSize: 11, padding: '3px 9px', background: BLUE_BTN, border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontWeight: 600 }}>Save</button>
+                                            </div>
+                                          </div>
+                                          {catThresholds.length === 0 && (
+                                            <div style={{ fontSize: 11, color: TEXT3 }}>Default: alert at 80%. Click + Add to set a custom threshold.</div>
+                                          )}
+                                          {catThresholds.map((val, idx) => (
+                                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                                              <span style={{ fontSize: 11, color: TEXT3, width: 20 }}>#{idx + 1}</span>
+                                              <input type="range" min="1" max="100" value={val}
+                                                onChange={e => { const arr = [...catThresholds]; arr[idx] = Number(e.target.value); updateThresholds(arr); }}
+                                                style={{ flex: 1, accentColor: BLUE_BTN }} />
+                                              <span style={{ fontSize: 12, fontWeight: 700, color: TEXT, width: 34, textAlign: 'right' }}>{val}%</span>
+                                              <button onClick={() => updateThresholds(catThresholds.filter((_, j) => j !== idx))}
+                                                style={{ fontSize: 12, color: TEXT3, background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}>✕</button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      );
+                                    })()}
                                   </div>
                                 );
                               })}
