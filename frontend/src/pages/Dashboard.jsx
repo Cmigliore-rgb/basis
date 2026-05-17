@@ -3497,6 +3497,7 @@ export default function Dashboard() {
   const [inboxNotifs, setInboxNotifs] = useState([]);
   const [notifPanelOpen, setNotifPanelOpen] = useState(false);
   const [expandedNotifId, setExpandedNotifId] = useState(null);
+  const [streak, setStreak] = useState(0);
   const [accent, setAccent] = useState(() => localStorage.getItem('pl_accent') || 'blue');
   const ACCENT_PRESETS = {
     blue:   { accent: '#4da3ff', btn: '#0066f5' },
@@ -3557,6 +3558,18 @@ export default function Dashboard() {
     fetchNotifs();
     const id = setInterval(fetchNotifs, 30000);
     return () => clearInterval(id);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    let d; try { d = JSON.parse(localStorage.getItem('pl_streak') || 'null'); } catch { d = null; }
+    if (!d) { localStorage.setItem('pl_streak', JSON.stringify({ streak: 1, lastDate: today })); setStreak(1); return; }
+    if (d.lastDate === today) { setStreak(d.streak); return; }
+    const prev = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const next = d.lastDate === prev ? d.streak + 1 : 1;
+    localStorage.setItem('pl_streak', JSON.stringify({ streak: next, lastDate: today }));
+    setStreak(next);
   }, [user]);
 
   const effectiveProfessor = isAdmin && viewAs ? viewAs === 'professor' : isProfessor;
@@ -4408,6 +4421,12 @@ export default function Dashboard() {
               <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>
               {eduMode && <span style={{ fontSize: 9, fontWeight: 700, color: GREEN, background: 'rgba(74,222,128,0.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Edu</span>}
             </div>
+            {streak > 0 && (
+              <div title={`${streak}-day login streak`} style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '4px 8px', background: streak >= 7 ? 'rgba(251,146,60,0.12)' : 'transparent', border: streak >= 7 ? '1px solid rgba(251,146,60,0.25)' : '1px solid transparent', borderRadius: 8, flexShrink: 0 }}>
+                <span style={{ fontSize: 14, lineHeight: 1 }}>🔥</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: streak >= 30 ? '#f97316' : streak >= 7 ? '#fb923c' : TEXT2 }}>{streak}</span>
+              </div>
+            )}
             <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : 'transparent', border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : '1px solid transparent', borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="#4b5563" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
               {inboxNotifs.filter(n => !n.read).length > 0 && (
@@ -4431,14 +4450,22 @@ export default function Dashboard() {
             {!sidebarCollapsed && <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.5px', color: TEXT }}>PeakLedger</span>}
           </div>
           {!sidebarCollapsed && (
-            <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : 'transparent', border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : '1px solid transparent', borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="#4b5563" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-              {inboxNotifs.filter(n => !n.read).length > 0 && (
-                <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 17, height: 17, background: RED, borderRadius: 9, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', border: `2px solid ${SIDE_BG}` }}>
-                  {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
-                </span>
+            <>
+              {streak > 0 && (
+                <div title={`${streak}-day login streak`} style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 7px', background: streak >= 7 ? 'rgba(251,146,60,0.12)' : 'transparent', border: streak >= 7 ? '1px solid rgba(251,146,60,0.25)' : '1px solid transparent', borderRadius: 7, flexShrink: 0 }}>
+                  <span style={{ fontSize: 13, lineHeight: 1 }}>🔥</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: streak >= 30 ? '#f97316' : streak >= 7 ? '#fb923c' : TEXT2 }}>{streak}</span>
+                </div>
               )}
-            </button>
+              <button onClick={() => setNotifPanelOpen(v => !v)} style={{ position: 'relative', background: notifPanelOpen ? 'rgba(77,163,255,0.12)' : 'transparent', border: notifPanelOpen ? `1px solid rgba(77,163,255,0.3)` : '1px solid transparent', borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#4b5563" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                {inboxNotifs.filter(n => !n.read).length > 0 && (
+                  <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 17, height: 17, background: RED, borderRadius: 9, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', border: `2px solid ${SIDE_BG}` }}>
+                    {inboxNotifs.filter(n => !n.read).length > 9 ? '9+' : inboxNotifs.filter(n => !n.read).length}
+                  </span>
+                )}
+              </button>
+            </>
           )}
           <button onClick={() => setSidebarCollapsed(v => !v)} title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} style={{ background: 'transparent', border: '1px solid transparent', borderRadius: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: TEXT3, fontSize: 16, flexShrink: 0 }}>{sidebarCollapsed ? '›' : '‹'}</button>
         </div>
@@ -6031,6 +6058,52 @@ export default function Dashboard() {
                   );
                 })()}
 
+                {/* ── Age of Money Card ── */}
+                {(() => {
+                  const now = new Date();
+                  let ageOfMoney, subtitle;
+                  if (isDemoData) {
+                    ageOfMoney = 21;
+                    subtitle = 'Days your cash covers at this spending pace';
+                  } else {
+                    const totalCash = accounts.filter(a => a.type === 'depository').reduce((s, a) => s + (a.balances?.current || 0), 0);
+                    const daysElapsed = now.getDate() || 1;
+                    const avgDailySpend = activeMonthlySpend / daysElapsed;
+                    ageOfMoney = avgDailySpend > 0 ? Math.round(totalCash / avgDailySpend) : null;
+                    subtitle = totalCash > 0 && avgDailySpend > 0
+                      ? `${fmt(totalCash)} cash / ${fmt(Math.round(avgDailySpend * 100) / 100)}/day avg spend`
+                      : 'Connect accounts to see your age of money';
+                  }
+                  const color = ageOfMoney === null ? TEXT2 : ageOfMoney >= 30 ? GREEN : ageOfMoney >= 14 ? YELLOW : RED;
+                  const label = ageOfMoney === null ? 'No data' : ageOfMoney >= 30 ? 'Healthy buffer' : ageOfMoney >= 14 ? 'Moderate' : 'Low buffer';
+                  const TARGET = 30;
+                  const barPct = ageOfMoney !== null ? Math.min((ageOfMoney / 60) * 100, 100) : 0;
+                  const targetPct = (TARGET / 60) * 100;
+                  return (
+                    <div className="lc" style={{ ...CARD, marginBottom: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 11, color: TEXT2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>Age of Money</div>
+                          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-1.5px', color, marginBottom: 4 }}>
+                            {ageOfMoney !== null ? `${ageOfMoney}d` : '—'}
+                          </div>
+                          <div style={{ fontSize: 12, color: TEXT2 }}>{subtitle}</div>
+                        </div>
+                        <div style={{ fontSize: 11, color, textAlign: 'right', fontWeight: 700 }}>{label}</div>
+                      </div>
+                      <div style={{ position: 'relative', height: 6, background: MUTED, borderRadius: 3, overflow: 'visible', marginBottom: 6 }}>
+                        <div style={{ height: '100%', width: `${barPct}%`, background: color, borderRadius: 3, transition: 'width 0.6s ease' }} />
+                        <div style={{ position: 'absolute', left: `${targetPct}%`, top: -3, width: 2, height: 12, background: TEXT3, borderRadius: 1 }} title="30-day target" />
+                      </div>
+                      <div style={{ position: 'relative', fontSize: 11, color: TEXT3, height: 16 }}>
+                        <span style={{ position: 'absolute', left: 0 }}>0d</span>
+                        <span style={{ position: 'absolute', left: `${targetPct}%`, transform: 'translateX(-50%)', color: ageOfMoney !== null && ageOfMoney >= TARGET ? GREEN : TEXT3 }}>30d target</span>
+                        <span style={{ position: 'absolute', right: 0 }}>60d</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* ── Savings Rate Card ── */}
                 {(() => {
                   const now = new Date();
@@ -7356,6 +7429,21 @@ export default function Dashboard() {
                     const topCat = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
                     expMonths.push({ label, fullLabel, total, topCat, txns, isCurrent: i === 0, monthOffset: i });
                   }
+
+                  // Historical baseline: per-category average over the 3 most recent complete months
+                  const catBaseline = {};
+                  if (!isDemoData) {
+                    expMonths.slice(2, 5).forEach(m => {
+                      m.txns.forEach(t => {
+                        const c = resolveCategory(t);
+                        catBaseline[c] = (catBaseline[c] || 0) + t.amount;
+                      });
+                    });
+                  }
+                  const catAvg = Object.fromEntries(
+                    Object.entries(catBaseline).map(([c, total]) => [c, Math.round(total / 3 * 100) / 100])
+                  );
+
                   const hasRealExp = !isDemoData;
                   const MOCK_EXPENSE_CATS = [
                     [{ category: 'food and drink', total: 480 }, { category: 'rent and utilities', total: 350 }, { category: 'shopping', total: 240 }, { category: 'transportation', total: 170 }, { category: 'entertainment', total: 100 }],
@@ -7827,6 +7915,16 @@ export default function Dashboard() {
                                       <div style={{ height: '100%', width: `${pct !== null ? pct : Math.min((b.total / (displayBudget[0]?.total || 1)) * 100, 100)}%`, background: barColor, borderRadius: 3, transition: 'width 0.3s ease' }} />
                                     </div>
                                     {over && <div style={{ fontSize: 11, color: RED, marginTop: 4 }}>Over budget by {fmt(b.total - limit)}</div>}
+                                    {catAvg[b.category] != null && !isDemoData && (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                                        <span style={{ fontSize: 11, color: TEXT3 }}>3mo avg: {fmt(catAvg[b.category])}</span>
+                                        {b.total > catAvg[b.category] * 1.1 ? (
+                                          <span style={{ fontSize: 10, background: `${RED}18`, color: RED, borderRadius: 8, padding: '1px 6px', fontWeight: 600 }}>+{Math.round(((b.total / catAvg[b.category]) - 1) * 100)}% vs avg</span>
+                                        ) : b.total < catAvg[b.category] * 0.9 ? (
+                                          <span style={{ fontSize: 10, background: `${GREEN}18`, color: GREEN, borderRadius: 8, padding: '1px 6px', fontWeight: 600 }}>{Math.round((1 - b.total / catAvg[b.category]) * 100)}% below avg</span>
+                                        ) : null}
+                                      </div>
+                                    )}
                                     {limit && notifPrefs.budgetAlert && (() => {
                                       const catThresholds = Array.isArray(notifPrefs.categoryThresholds?.[b.category])
                                         ? notifPrefs.categoryThresholds[b.category]
@@ -9277,6 +9375,72 @@ export default function Dashboard() {
                           );
                         })}
                       </div>
+
+                      {/* Investment Fee Tracker */}
+                      {(() => {
+                        const EXPENSE_RATIOS = {
+                          VTI:0.03, VOO:0.03, VEA:0.05, VWO:0.08, VIG:0.06, BND:0.03,
+                          VXUS:0.07, VNQ:0.12, QQQ:0.20, SPY:0.0945, IVV:0.03, AGG:0.03,
+                          GLD:0.40, SLV:0.50, IAU:0.25, IWM:0.19, EFA:0.32, EEM:0.68,
+                          LQD:0.14, HYG:0.48, TLT:0.15, XLK:0.09, XLV:0.09, XLF:0.09,
+                          XLE:0.09, XLC:0.09, SCHB:0.03, SCHX:0.03, SCHF:0.06, SCHA:0.04,
+                          SCHD:0.06, IEMG:0.09, ITOT:0.03, IXUS:0.07, ARKK:0.75, ARKG:0.75,
+                          ARKW:0.75, SPYG:0.04, IWF:0.19, VCSH:0.04, VCIT:0.04, VGSH:0.04,
+                          VGIT:0.04, VGLT:0.04, DIA:0.16, MDY:0.23, IJH:0.05, IJR:0.06,
+                          VBR:0.07, VBK:0.07, VTV:0.04, VUG:0.04, VONG:0.08, VONV:0.08,
+                        };
+                        const feeHoldings = classified.map(h => {
+                          const ticker = h.security?.ticker_symbol?.toUpperCase();
+                          const er = ticker ? EXPENSE_RATIOS[ticker] : undefined;
+                          if (er == null) return null;
+                          const value = (h.quantity || 0) * (h.institution_price || 0);
+                          return { ticker, name: h.security?.name || ticker, value, er, annualDrag: value * er / 100 };
+                        }).filter(Boolean).sort((a, b) => b.annualDrag - a.annualDrag);
+                        if (feeHoldings.length === 0) return null;
+                        const totalDrag = feeHoldings.reduce((s, h) => s + h.annualDrag, 0);
+                        const totalValue = feeHoldings.reduce((s, h) => s + h.value, 0);
+                        const weightedER = totalValue > 0 ? (totalDrag / totalValue) * 100 : 0;
+                        return (
+                          <div className="lc" style={{ ...CARD, marginBottom: 16 }}>
+                            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                              <div>
+                                <div style={{ fontSize:13, fontWeight:700, marginBottom:2 }}>Investment Fees</div>
+                                <div style={{ fontSize:11, color:TEXT2 }}>Estimated annual expense ratio drag</div>
+                              </div>
+                              <div style={{ textAlign:'right' }}>
+                                <div style={{ fontSize:22, fontWeight:800, color:RED, letterSpacing:'-0.5px' }}>{fmt(totalDrag)}/yr</div>
+                                <div style={{ fontSize:11, color:TEXT2 }}>Weighted avg: {weightedER.toFixed(3)}%</div>
+                              </div>
+                            </div>
+                            <div style={{ overflowX:'auto' }}>
+                              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                                <thead>
+                                  <tr style={{ borderBottom:BORDER }}>
+                                    {['Ticker','Expense Ratio','Value','Annual Drag'].map(col=>(
+                                      <th key={col} style={{ padding:'6px 8px', textAlign:col==='Ticker'?'left':'right', fontSize:10, color:TEXT2, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.5px' }}>{col}</th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {feeHoldings.map(h=>(
+                                    <tr key={h.ticker} style={{ borderBottom:`1px solid ${BORDER_C}` }}>
+                                      <td style={{ padding:'7px 8px', fontWeight:700 }}>{h.ticker}</td>
+                                      <td style={{ padding:'7px 8px', textAlign:'right', color:h.er>0.3?RED:h.er>0.1?YELLOW:GREEN, fontWeight:600, fontFamily:'monospace' }}>{h.er.toFixed(2)}%</td>
+                                      <td style={{ padding:'7px 8px', textAlign:'right', fontFamily:'monospace', color:TEXT2 }}>{fmt(h.value)}</td>
+                                      <td style={{ padding:'7px 8px', textAlign:'right', color:RED, fontFamily:'monospace', fontWeight:600 }}>{fmt(h.annualDrag)}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            {feeHoldings.length < classified.length && (
+                              <div style={{ fontSize:11, color:TEXT3, marginTop:8 }}>
+                                {classified.length - feeHoldings.length} holding{classified.length - feeHoldings.length !== 1 ? 's' : ''} without known expense ratio not shown.
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* Pie + holdings grid */}
                       {activeHoldings.length>0 ? (
