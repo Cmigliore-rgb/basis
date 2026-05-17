@@ -7465,22 +7465,6 @@ export default function Dashboard() {
                           })}
                         </div>
                       </div>
-                      {notifPrefs.budgetAlert && (
-                        <div style={{ ...CARD, marginBottom: 16, padding: '14px 16px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>Budget Alert Threshold</div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 160, justifyContent: 'flex-end' }}>
-                              <input type="range" min="50" max="100" value={notifPrefs.budgetThreshold}
-                                onChange={e => setNotifPrefs(p => ({ ...p, budgetThreshold: Number(e.target.value) }))}
-                                style={{ flex: 1, maxWidth: 180, accentColor: BLUE_BTN }} />
-                              <span style={{ fontSize: 13, fontWeight: 700, color: TEXT, width: 36, textAlign: 'right' }}>{notifPrefs.budgetThreshold}%</span>
-                              <button onClick={async () => { try { await api.put('/notifications/prefs', notifPrefs); } catch {} }}
-                                style={{ padding: '4px 12px', background: BLUE_BTN, color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>Save</button>
-                            </div>
-                          </div>
-                          <div style={{ fontSize: 11, color: TEXT3, marginTop: 6 }}>Alert when a category reaches this % of its limit. Override per category below.</div>
-                        </div>
-                      )}
                       <div className="lc" style={CARD}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
                           <div>
@@ -11434,7 +11418,7 @@ export default function Dashboard() {
                   </div>
 
                   {!notifPrefs.emailUnsubscribed && [
-                    { key: 'budgetAlert',      label: 'Budget alerts',       desc: `Notify when a category hits ${notifPrefs.budgetThreshold}% of its limit` },
+                    { key: 'budgetAlert',      label: 'Budget alerts',       desc: 'Notify when a category hits its alert threshold (set per category in Expenses)' },
                     { key: 'goalAlert',         label: 'Goal reached',        desc: 'Notify when a savings goal is complete' },
                     { key: 'lowBalanceAlert',   label: 'Low balance',         desc: `Notify when any account drops below ${fmt(notifPrefs.lowBalanceAmt)}` },
                   ].map(({ key, label, desc }) => (
@@ -11450,15 +11434,6 @@ export default function Dashboard() {
                     </div>
                   ))}
 
-                  {!notifPrefs.emailUnsubscribed && notifPrefs.budgetAlert && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
-                      <span style={{ fontSize: 12, color: TEXT2, flexShrink: 0 }}>Alert threshold</span>
-                      <input type="range" min="50" max="100" value={notifPrefs.budgetThreshold}
-                        onChange={e => setNotifPrefs(p => ({ ...p, budgetThreshold: Number(e.target.value) }))}
-                        style={{ flex: 1, accentColor: BLUE_BTN }} />
-                      <span style={{ fontSize: 12, fontWeight: 700, color: TEXT, width: 36 }}>{notifPrefs.budgetThreshold}%</span>
-                    </div>
-                  )}
                   {!notifPrefs.emailUnsubscribed && notifPrefs.lowBalanceAlert && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
                       <span style={{ fontSize: 12, color: TEXT2, flexShrink: 0 }}>Low balance below</span>
@@ -17892,33 +17867,39 @@ export default function Dashboard() {
 
         {/* ── AI ASSISTANT FLOATING BUBBLE / MINIMIZED CHAT ── */}
         {(isPremium || isDemoData) && panel !== 'assistant' && chatMessages.length > 0 && (
-          <div style={{ position: 'fixed', bottom: 28, right: 28, width: 320, background: '#161b26', border: `1px solid ${BORDER_C}`, borderRadius: 14, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 90, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderBottom: `1px solid ${BORDER_C}`, background: 'rgba(77,163,255,0.06)' }}>
-              <button onClick={() => { setPanel('assistant'); switchEduMode(false); }} style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                <span style={{ color: BLUE, fontSize: 15 }}>✦</span>
+          <div style={{ position: 'fixed', bottom: 24, right: 24, width: 340, background: '#0f1420', border: `1px solid rgba(77,163,255,0.25)`, borderRadius: 16, boxShadow: '0 12px 40px rgba(0,0,0,0.6)', zIndex: 90, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(77,163,255,0.08)', borderBottom: `1px solid rgba(77,163,255,0.15)` }}>
+              <button onClick={() => { setPanel('assistant'); switchEduMode(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                <span style={{ color: BLUE, fontSize: 16 }}>✦</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>AI Assistant</span>
-                <span style={{ fontSize: 10, color: TEXT3 }}>— tap to expand</span>
+                <span style={{ fontSize: 11, color: BLUE, fontWeight: 500 }}>↗ expand</span>
               </button>
-              <button onClick={() => { setChatMessages([]); setChatInput(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: TEXT3, fontSize: 16, lineHeight: 1, padding: 0 }}>✕</button>
+              <button onClick={() => { setChatMessages([]); setChatInput(''); }}
+                style={{ background: 'rgba(255,255,255,0.06)', border: 'none', cursor: 'pointer', color: TEXT2, fontSize: 13, lineHeight: 1, padding: '4px 7px', borderRadius: 6 }}>✕</button>
             </div>
-            <div style={{ maxHeight: 130, overflowY: 'auto', padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ maxHeight: 150, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {chatMessages.slice(-2).map((msg, i) => (
-                <div key={i} style={{ fontSize: 12, color: msg.role === 'user' ? TEXT : TEXT2, background: msg.role === 'user' ? 'rgba(77,163,255,0.1)' : 'transparent', borderRadius: 6, padding: msg.role === 'user' ? '5px 8px' : 0, alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '90%' }}>
-                  {msg.content.length > 120 ? msg.content.slice(0, 120) + '…' : msg.content}
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: TEXT3, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {msg.role === 'user' ? 'You' : 'AI'}
+                  </div>
+                  <div style={{ fontSize: 13, lineHeight: 1.5, color: msg.role === 'user' ? TEXT : TEXT2, background: msg.role === 'user' ? 'rgba(77,163,255,0.15)' : 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '8px 12px', maxWidth: '92%' }}>
+                    {msg.content.length > 140 ? msg.content.slice(0, 140) + '…' : msg.content}
+                  </div>
                 </div>
               ))}
             </div>
-            <div style={{ padding: '8px 10px', borderTop: `1px solid ${BORDER_C}` }}>
-              <div style={{ display: 'flex', gap: 6 }}>
+            <div style={{ padding: '10px 12px', borderTop: `1px solid rgba(255,255,255,0.06)`, background: 'rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                   placeholder="Ask anything..."
-                  style={{ flex: 1, padding: '7px 10px', background: MUTED, border: BORDER, borderRadius: 8, color: TEXT, fontSize: 12, outline: 'none' }}
+                  style={{ flex: 1, padding: '8px 12px', background: 'rgba(255,255,255,0.06)', border: `1px solid rgba(255,255,255,0.1)`, borderRadius: 9, color: TEXT, fontSize: 13, outline: 'none' }}
                 />
                 <button onClick={sendMessage} disabled={!chatInput.trim() || chatLoading}
-                  style={{ padding: '7px 12px', background: chatInput.trim() && !chatLoading ? BLUE_BTN : MUTED, color: chatInput.trim() && !chatLoading ? '#fff' : TEXT3, border: 'none', borderRadius: 8, fontSize: 13, cursor: chatInput.trim() && !chatLoading ? 'pointer' : 'default' }}>
+                  style={{ padding: '8px 14px', background: chatInput.trim() && !chatLoading ? BLUE_BTN : 'rgba(255,255,255,0.06)', color: chatInput.trim() && !chatLoading ? '#fff' : TEXT3, border: 'none', borderRadius: 9, fontSize: 14, cursor: chatInput.trim() && !chatLoading ? 'pointer' : 'default', transition: 'background 0.15s' }}>
                   →
                 </button>
               </div>
